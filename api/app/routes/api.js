@@ -21,19 +21,7 @@ let router = require('express').Router(),
         router.post('/api/account/signin', accountController.signIn);
         router.post('/api/account/getAccountByToken', passport.authenticate('jwt', {session: false}),accountController.getAccountByToken);
 
-         // payments routers
-         router.post('/api/payment/find', passport.authenticate('jwt', {session: false}),paymentController.find);
-         router.get('/api/payment/findById/:entity_id', passport.authenticate('jwt', {session: false}), paymentController.findById);
-         router.put('/api/payment/update', passport.authenticate('jwt', {session: false}), paymentController.update);
-         router.delete('/api/payment/delete/:params', passport.authenticate('jwt', {session: false}), paymentController.delete);
-         router.post('/api/payment/save', passport.authenticate('jwt', {session: false}), paymentController.save);
 
-        //rate group routers
-        router.post('/api/rategroup/find/:params?', passport.authenticate('jwt', {session: false}), rategroupController.find);
-        router.get('/api/rategroup/findById/:entity_id', passport.authenticate('jwt', {session: false}), rategroupController.findById);
-        router.put('/api/rategroup/update', passport.authenticate('jwt', {session: false}), rategroupController.update);
-        router.delete('/api/rategroup/delete/:params', passport.authenticate('jwt', {session: false}), rategroupController.delete);
-        router.post('/api/rategroup/save', passport.authenticate('jwt', {session: false}), rategroupController.save);
 
 
         return router;

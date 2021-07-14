@@ -1,10 +1,10 @@
  {
   "development": {
-    "host": "152.228.180.204",
-    "username": "postgres",
-    "password": "Oxilog2020.",
-    "database": "sbc-dev-db",
-    "port":35792,
+    "host": "5.196.63.217",
+    "username": "oxilog",
+    "password": "oxilog",
+    "database": "oxilog-crm-app",
+    "port":5432,
     "dialect": "postgres",
     "pool": {
       "max": 500,

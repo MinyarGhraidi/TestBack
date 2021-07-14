@@ -1,180 +1,122 @@
 module.exports = (sequelize, Sequelize) => {
-    const account = sequelize.define("accounts", {
-        account_id: {
-            primaryKey: true,
-            autoIncrement: true,
-            type: Sequelize.INTEGER
+  const account = sequelize.define("accounts", {
+          account_id: {
+              primaryKey: true,
+              autoIncrement: true,
+              type: Sequelize.INTEGER
           },
-      
-         
-      
-          rate_group_id: {
-            type: Sequelize.INTEGER
+          account_code: {
+              type: Sequelize.STRING
           },
-      
-          account_number: {
-            type: Sequelize.STRING
-          },
-      
           first_name: {
-            type: Sequelize.STRING
+              type: Sequelize.STRING
           },
-      
           last_name: {
-            type: Sequelize.STRING
+              type: Sequelize.STRING
           },
-      
-          company_name: {
-            type: Sequelize.STRING
+          company: {
+              type: Sequelize.STRING
           },
-      
-          address_1: {
-            type: Sequelize.STRING
+          adresse: {
+              type: Sequelize.STRING
           },
-      
-          address_2: {
-            type: Sequelize.STRING
-          },
-      
-          postal_code: {
-            type: Sequelize.STRING
+          country: {
+              type: Sequelize.STRING
           },
           city: {
-            type: Sequelize.STRING
+              type: Sequelize.STRING
           },
-      
-          telephone_1: {
-            type: Sequelize.STRING
+          zip_code: {
+              type: Sequelize.STRING
           },
-      
-          telephone_2: {
-            type: Sequelize.STRING
+          tel: {
+              type: Sequelize.STRING
+          },
+          mobile: {
+              type: Sequelize.STRING
           },
           email: {
-            type: Sequelize.STRING
+              type: Sequelize.STRING
           },
-          maxchannels: {
-            type: Sequelize.INTEGER
+          nbr_account: {
+              type: Sequelize.INTEGER
           },
-         
-          maxcps: {
-            type: Sequelize.INTEGER
+          white_label: {
+              type: Sequelize.BOOLEAN
           },
-      
-          status: {
-            type: Sequelize.STRING
+          log: {
+              type: Sequelize.STRING
           },
-      
-          balance: {
-            type: Sequelize.DECIMAL
+          white_label_app_name: {
+              type: Sequelize.STRING
           },
-          overdraf_balance: {
-            type: Sequelize.DECIMAL
+          domain: {
+              type: Sequelize.STRING
           },
-          
-          login: {
-            type: Sequelize.STRING
+          active: {
+              allowNull: true,
+              type: Sequelize.STRING,
+              defaultValue: 'Y'
           },
-        
-          password: {
-            type: Sequelize.STRING
+          created_at:{
+              allowNull: true,
+              type: Sequelize.DATE,
+              defaultValue: new Date()
           },
-      
-          account_type: {
-            type: Sequelize.STRING
+          updated_at:{
+              allowNull: true,
+              type: Sequelize.DATE,
+              defaultValue: new Date()
           },
-      
-          checkcli: {
-            type: Sequelize.INTEGER
-          },
-       
-          check404: {
-            type: Sequelize.INTEGER
-          },
-      
-           
-          maxinboundchanels: {
-            type: Sequelize.INTEGER
-          },
-      
-          inbound_codecs: {
-            type: Sequelize.STRING
-          },
-      
-          outbound_codecs: {
-            type: Sequelize.STRING
-          },
-      
-        
-            active: {
-                allowNull: true,
-                type: Sequelize.STRING,
-                defaultValue: 'Y'
-            },
-           
-        },
-        {timestamps: false,}
-    );
+      },
+      {timestamps: false,}
+  );
 
-    account.prototype.fields = [
-      "account_id",
-      "rate_group_id",
-      "account_number",
-      "first_name",
-      "last_name",
-      "company_name",
-      "address_1",
-      "address_2",
-      "postal_code",
-      "city",
-      "telephone_1",
-      "telephone_2",
-      "email",
-      "maxchannels",
-      "maxcps",
-      "status",
-      "balance",
-      "overdraf_balance",
-      "login",
-      "password",
-      "account_type",
-      "checkcli",
-      "check404",
-      "maxinboundchanels",
-      "inbound_codecs",
-      "outbound_codecs",
-      "active"
-    ];
+  account.prototype.fields = [
+      'account_id',
+      'account_code',
+      'first_name',
+      'last_name',
+      'company',
+      'adresse',
+      'country',
+      'city',
+      'zip_code',
+      'tel',
+      'mobile',
+      'email',
+      'nbr_account',
+      'white_label',
+      'log',
+      'white_label_app_name',
+      'domain',
+      'active',
+      'created_at',
+      'updated_at'
+  ];
 
-    account.prototype.fieldsSearchMetas = [
-      "account_id",
-      "rate_group_id",
-      "account_number",
-      "first_name",
-      "last_name",
-      "company_name",
-      "address_1",
-      "address_2",
-      "postal_code",
-      "city",
-      "telephone_1",
-      "telephone_2",
-      "email",
-      "maxchannels",
-      "maxcps",
-      "status",
-      "balance",
-      "overdraf_balance",
-      "login",
-      "password",
-      "account_type",
-      "checkcli",
-      "check404",
-      "maxinboundchanels",
-      "inbound_codecs",
-      "outbound_codecs",
-      "active"
-    ];
+  account.prototype.fieldsSearchMetas = [
+      'account_id',
+      'account_code',
+      'first_name',
+      'last_name',
+      'company',
+      'adresse',
+      'country',
+      'city',
+      'zip_code',
+      'tel',
+      'mobile',
+      'email',
+      'nbr_account',
+      'white_label',
+      'log',
+      'white_label_app_name',
+      'domain',
+      'active',
+      'created_at',
+      'updated_at'
+  ];
 
-    return account;
+  return account;
 };
