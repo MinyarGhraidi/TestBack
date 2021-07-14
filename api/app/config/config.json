@@ -1,0 +1,17 @@
+ {
+  "development": {
+    "host": "152.228.180.204",
+    "username": "postgres",
+    "password": "Oxilog2020.",
+    "database": "sbc-dev-db",
+    "port":35792,
+    "dialect": "postgres",
+    "pool": {
+      "max": 500,
+      "min": 0,
+      "acquire": 3000000,
+      "idle": 100000
+    }
+  },
+   "secret": "'BL#,miQFau,amA!?FFW@oKO3<_<E-j-]PVO65d!c%|V2h{(3#~~*$8{X<H}BVm"
+ }

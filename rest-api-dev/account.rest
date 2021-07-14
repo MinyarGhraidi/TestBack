@@ -1,0 +1,102 @@
+                                    #########################################################################                                    
+                                    ######################  API ENDPOINTS TESTS   ###########################
+                                    #########################################################################
+
+
+#GET ALL Accounts by table name
+GET http://localhost:2001/api/generateTokenForUser/
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2MjQ3OTU2MTQsImV4cCI6MTYyNTMxMTYxNH0.jVgiO2CA-vVXlT3fkGZyFUtRPytSoqm7YU03IduLB8g
+
+{
+   
+}
+
+###
+
+#Find an item with his id
+POST http://localhost:2001/api/account/SignIn
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2MjU4NjI2MDIsImV4cCI6MTYyNjM3ODYwMn0.jtw845wk21XyGXMKavn7MQS8lEbp87WtKQ_KiYZVzgA
+
+{
+    "username":"admin",
+    "password":"Gabes2017."
+
+}
+###
+
+#Find an item with his id
+POST http://localhost:2001/api/account/getAccountByToken
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjo0MiwidXNlcm5hbWUiOiJhZG1pbiIsImlhdCI6MTYyNTkzNDEwNCwiZXhwIjoxNjI2NDUwMTA0fQ.Jxs_ij0d2IaW9H4SvNLmboW3JK6ks0uC5zWnV5GHlcE
+
+{
+
+}
+###
+
+#Find an item with his id
+POST http://localhost:2001/api/account/find/
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2MjU4NjI2MDIsImV4cCI6MTYyNjM3ODYwMn0.jtw845wk21XyGXMKavn7MQS8lEbp87WtKQ_KiYZVzgA
+
+{
+   
+
+}
+###
+
+#Create and Save a new item
+PUT http://localhost:2001/api/account/update
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2MjU4NjI2MDIsImV4cCI6MTYyNjM3ODYwMn0.jtw845wk21XyGXMKavn7MQS8lEbp87WtKQ_KiYZVzgA
+
+{
+        "account_id": 125,
+      
+      "account_number": "254548575",
+      "first_name": "First Na17",
+      "last_name": "Last Name",
+      "company_name": "Company",
+      "address_1": "Adresse 1"
+    
+}
+
+###
+
+###
+
+#Search Items by their accountname 
+GET  http://localhost:3000/api/account/search/
+Content-Type: application/json
+
+{
+    "accountname" : "test loger2"
+}
+
+###
+
+#Update an item by ID
+PUT http://localhost:3000/api/account/update
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2MjQ3OTU2MTQsImV4cCI6MTYyNTMxMTYxNH0.jVgiO2CA-vVXlT3fkGZyFUtRPytSoqm7YU03IduLB8g
+
+{
+     "account_id": 8,
+    "account_code": "account_code 4",
+    "first_name": "first_name 2",
+    "last_name": "last_name 2",
+    "company": "company 2"
+
+}
+
+###
+
+#Delete an item by ID
+DELETE http://localhost:3000/api/account/delete/2
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2MjQ3OTU2MTQsImV4cCI6MTYyNTMxMTYxNH0.jVgiO2CA-vVXlT3fkGZyFUtRPytSoqm7YU03IduLB8g
+
+
+###

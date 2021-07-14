@@ -1,0 +1,19 @@
+npm install express sequelize pg pg-hstore cors nodemon
+
+account 
+accoun code : string 
+first name : string 
+last name : string 
+company: string 
+adresse : string 
+country: string 
+city: string 
+zip code: string 
+tel : string 
+mobile : string 
+email: string 
+nbr_account : int *****
+white label : bool *****
+log : string 
+white label app name : string 
+domain: string 

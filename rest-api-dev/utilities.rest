@@ -1,0 +1,11 @@
+                                    #########################################################################                                    
+                                    ######################  API ENDPOINTS utilities   ###########################
+                                    #########################################################################
+
+
+#GET ALL Accounts by table name
+GET http://localhost:1444/api/generateTokenForUser
+Content-Type: application/json
+
+###
+
