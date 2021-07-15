@@ -3,8 +3,9 @@
 let router = require('express').Router(),
     accountController = require('../controllers/account.controller')
     utilityController = require('../controllers/utility.controller')
-    rategroupController = require('../controllers/rategroup.controller')
-    paymentController = require('../controllers/payment.controller')
+    campaignController = require('../controllers/campaign.controller')
+    rolesController = require('../controllers/roles.controller')
+    usersController = require('../controllers/users.controller')
 
     let apiRouters = function (passport) {
 
@@ -20,7 +21,31 @@ let router = require('express').Router(),
 
         router.post('/api/account/signin', accountController.signIn);
         router.post('/api/account/getAccountByToken', passport.authenticate('jwt', {session: false}),accountController.getAccountByToken);
+       
+        // campaigns routers 
+        router.post('/api/campaign/find', campaignController.find);
+        router.get('/api/campaign/findById/:entity_id',  campaignController.findById);
+        router.put('/api/campaign/update',  campaignController.update);
+        router.delete('/api/campaign/delete/:params',  campaignController.delete);
+        router.post('/api/campaign/save',  campaignController.save);
 
+        
+        //role routers
+        router.post('/api/role/find/:params?', passport.authenticate('jwt', {session: false}), rolesController.find);
+        router.get('/api/role/findById/:entity_id', passport.authenticate('jwt', {session: false}), rolesController.findById);
+        router.put('/api/role/update', passport.authenticate('jwt', {session: false}), rolesController.update);
+        router.delete('/api/role/delete/:params', passport.authenticate('jwt', {session: false}), rolesController.delete);
+        router.post('/api/role/save', passport.authenticate('jwt', {session: false}), rolesController.save);
+
+        //user routers
+         router.post('/api/user/find/:params?', usersController.find);
+         router.get('/api/user/findById/:entity_id', usersController.findById);
+         router.put('/api/user/update', usersController.update);
+         router.delete('/api/user/delete/:params', usersController.delete);
+         router.post('/api/user/save', usersController.save);
+        
+         router.post('/api/signup', usersController.signUp);
+         router.post('/api/signin', usersController.signIn);
 
 
 
