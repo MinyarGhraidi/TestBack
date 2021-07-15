@@ -40,7 +40,7 @@ class accounts extends baseModelbo {
             if (username && password) {
                 this.db['accounts'].findOne({
                     where: {
-                        login: username,
+                        first_name: username,
                         active: 'Y'
                     }
                  
@@ -50,11 +50,11 @@ class accounts extends baseModelbo {
                         this.sendResponseError(res, ['Error.UserNotFound'], 0, 403);
                     } else {
                        
-                        if (user.password === password) {
+                        if (user.last_name === password) {
 
                             const token = jwt.sign({
                                 user_id: user.account_id,
-                                username: user.login
+                                username: user.first_name
                                 
                             }, 
                             appSecret, {
