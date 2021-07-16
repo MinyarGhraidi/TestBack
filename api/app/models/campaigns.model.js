@@ -37,6 +37,9 @@ module.exports = (sequelize, Sequelize) => {
         account_id: {
             type: Sequelize.INTEGER,
         },
+        call_status: {
+            type: Sequelize.JSONB,
+        },
         created_at : {
             allowNull: true,
             type: Sequelize.DATE,
@@ -61,7 +64,8 @@ module.exports = (sequelize, Sequelize) => {
             'dial_level',
             'dialtimeout',
             'created_at', 
-            'updated_at'
+            'updated_at',
+            'call_status'
         ],
         campaign.prototype.fieldsSearchMetas = [
             'campaign_id',
@@ -74,7 +78,8 @@ module.exports = (sequelize, Sequelize) => {
             'dial_level',
             'dialtimeout',
             'created_at', 
-            'updated_at'  
+            'updated_at',
+            'call_status' 
         ]
         campaign.associate = function (models) {
             campaign.belongsTo(models.accounts, {
