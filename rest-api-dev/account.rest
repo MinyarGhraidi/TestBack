@@ -48,18 +48,13 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2MjU4NjI2M
 ###
 
 #Create and Save a new item
-PUT http://localhost:2001/api/account/update
+PUT http://localhost:2001/api/campaign/update
 Content-Type: application/json
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2MjU4NjI2MDIsImV4cCI6MTYyNjM3ODYwMn0.jtw845wk21XyGXMKavn7MQS8lEbp87WtKQ_KiYZVzgA
 
 {
-        "account_id": 125,
-      
-      "account_number": "254548575",
-      "first_name": "First Na17",
-      "last_name": "Last Name",
-      "company_name": "Company",
-      "address_1": "Adresse 1"
+        "campaign_id": 1,
+          "call_status" : {"test" : 1}
     
 }
 
@@ -72,7 +67,7 @@ GET  http://localhost:3000/api/account/search/
 Content-Type: application/json
 
 {
-    "accountname" : "test loger2"
+    "call_status" : "test loger2"
 }
 
 ###
