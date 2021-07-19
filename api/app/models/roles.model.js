@@ -47,6 +47,7 @@ module.exports = (sequelize, Sequelize) => {
         role.prototype.fieldsSearchMetas = [
             'role_id',
             'role_name',
+           'account_id',
         ],
         role.associate = function (models) {
             role.belongsTo(models.accounts, {

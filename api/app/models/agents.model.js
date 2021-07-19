@@ -2,7 +2,7 @@ const {} = require("http-errors")
 let bcrypt = require('bcryptjs');
 
 module.exports = (sequelize, Sequelize) => {
-    const user = sequelize.define("users", {
+    const agent = sequelize.define("agents", {
             user_id: {
                 primaryKey: true,
                 autoIncrement: true,
@@ -25,7 +25,7 @@ module.exports = (sequelize, Sequelize) => {
             },
             user_type: {
                 type: Sequelize.STRING,
-                defaultValue: 'admin'
+                defaultValue: 'agent'
             },
             account_id: {
                 type: Sequelize.INTEGER
@@ -55,7 +55,7 @@ module.exports = (sequelize, Sequelize) => {
         },
         {timestamps: false})
 
-    user.prototype.fields = [
+    agent.prototype.fields = [
         'user_id',
         'username',
         'password_hash',
@@ -69,9 +69,8 @@ module.exports = (sequelize, Sequelize) => {
         'active',
         'created_at',
         'updated_at'
-
     ],
-        user.prototype.fieldsSearchMetas = [
+        agent.prototype.fieldsSearchMetas = [
             'user_id',
             'username',
             'first_name',
@@ -82,21 +81,21 @@ module.exports = (sequelize, Sequelize) => {
             'role_id',
             'account_id'
         ],
-        user.prototype.setPassword_hash = function (password) {
+        agent.prototype.setPassword_hash = function (password) {
             let salt = bcrypt.genSaltSync();
             this.password_hash = bcrypt.hashSync(password, salt);
         };
-        user.prototype.verifyPassword = function (password) {
+        agent.prototype.verifyPassword = function (password) {
             return bcrypt.compareSync(password, this.password_hash);
         };
-    user.associate = function (models) {
-        user.belongsTo(models.roles, {
+    agent.associate = function (models) {
+        agent.belongsTo(models.roles, {
             foreignKey: 'role_id'
         });
-        user.belongsTo(models.accounts, {
+        agent.belongsTo(models.accounts, {
             foreignKey: 'account_id'
         })
     };
 
-    return user
+    return agent
 }

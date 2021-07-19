@@ -1,11 +1,11 @@
-// const rolesController = require('../controllers/roles.controller');
-
 let router = require('express').Router(),
     accountController = require('../controllers/account.controller')
     utilityController = require('../controllers/utility.controller')
     campaignController = require('../controllers/campaign.controller')
     rolesController = require('../controllers/roles.controller')
     usersController = require('../controllers/users.controller')
+    agentsController = require('../controllers/agents.controller')
+
 
     let apiRouters = function (passport) {
 
@@ -47,7 +47,15 @@ let router = require('express').Router(),
          router.post('/api/signup', usersController.signUp);
          router.post('/api/signin', usersController.signIn);
 
-
+        //agents routers
+         router.post('/api/agent/find/:params?', agentsController.find);
+         router.get('/api/agent/findById/:entity_id', agentsController.findById);
+         router.put('/api/agent/update', agentsController.update);
+         router.delete('/api/agent/delete/:params', agentsController.delete);
+         router.post('/api/agent/save', agentsController.save);
+        
+         router.post('/api/signup', agentsController.signUp);
+         router.post('/api/signin', agentsController.signIn);
 
         return router;
 }
