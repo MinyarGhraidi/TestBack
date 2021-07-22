@@ -43,6 +43,9 @@ module.exports = (sequelize, Sequelize) => {
         pause_status: {
             type: Sequelize.JSONB,
         },
+        agents: {
+            type: Sequelize.JSONB,
+        },
         created_at : {
             allowNull: true,
             type: Sequelize.DATE,
@@ -69,7 +72,8 @@ module.exports = (sequelize, Sequelize) => {
             'created_at', 
             'updated_at',
             'call_status',
-            'pause_status'
+            'pause_status', 
+            'agents'
         ],
         campaign.prototype.fieldsSearchMetas = [
             'campaign_id',
@@ -84,7 +88,8 @@ module.exports = (sequelize, Sequelize) => {
             'created_at', 
             'updated_at',
             'call_status',
-            'pause_status' 
+            'pause_status',
+            'agents'
         ]
         campaign.associate = function (models) {
             campaign.belongsTo(models.accounts, {

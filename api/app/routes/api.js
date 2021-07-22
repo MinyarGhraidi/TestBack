@@ -6,6 +6,7 @@ let router = require('express').Router(),
     usersController = require('../controllers/users.controller')
     agentsController = require('../controllers/agents.controller')
 
+//                         ====> don't forget to re-add : passport.authenticate('jwt', {session: false}) <=====
 
     let apiRouters = function (passport) {
 

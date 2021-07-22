@@ -228,25 +228,27 @@ class baseModelbo {
 
     update(req, res, next) {
         let _id = req.body[this.primaryKey];
-
+    
         let fields_to_update = {};
         let dataRequest = req.body;
+        
         const _this = this;
 
         const where_ = {};
         where_[this.primaryKey] = _id;
 
         let modalObj = this.db[this.baseModal].build();
+        
         let user_id = null;
         if (req.body && req.body.user_id) {
             user_id = req.body.user_id
         }
-
+        
         _this.beforeUpdate(req, res).then(() => {
             _this.db[this.baseModal].findOne({
                 where: where_
             }).then(obj => {
-              
+                
                 if (obj) {
                     const obj_before = obj.toJSON();
 
@@ -259,7 +261,6 @@ class baseModelbo {
                             obj[field] = dataRequest[field];
                         }
                     });
-
                     obj.save().then(objSaved => {
                      
                         _this.saveEntityNewRevision(objSaved, obj_before, req, res);
