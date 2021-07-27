@@ -4,16 +4,16 @@
 
 
 #GET ALL Accounts by table name
-POST http://localhost:2001/api/efile/save
+POST http://localhost:2001/api/listcallfile/save
 Content-Type: application/json
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2MjQ3OTU2MTQsImV4cCI6MTYyNTMxMTYxNH0.jVgiO2CA-vVXlT3fkGZyFUtRPytSoqm7YU03IduLB8g
 
 {
-    "file_name" : "test efile",
-    "original_name" : "test file"
+    "name" : "listcallfile2",
+    "description" : "listcallfile2"
 }
 ###
-DELETE  http://localhost:2001/api/efile/delete/2
+DELETE  http://localhost:2001/api/listcallfile/delete/2
 Content-Type: application/json
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2MjQ3OTU2MTQsImV4cCI6MTYyNTMxMTYxNH0.jVgiO2CA-vVXlT3fkGZyFUtRPytSoqm7YU03IduLB8g
 
@@ -22,18 +22,18 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2MjQ3OTU2M
 }
 ###
 
-PUT http://localhost:2001/api/efile/update
+PUT http://localhost:2001/api/listcallfile/update
 Content-Type: application/json
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2MjQ3OTU2MTQsImV4cCI6MTYyNTMxMTYxNH0.jVgiO2CA-vVXlT3fkGZyFUtRPytSoqm7YU03IduLB8g
 
 {
-    "file_id" : 1,
-    "file_name" : "test update efile",
-    "original_name" : "test file"
+    "listcallfile_id" : 1,
+    "name" : "listcallfile1",
+    "description" : "listcallfile1"
 }
 ###
 
-POST http://localhost:2001/api/efile/find
+POST http://localhost:2001/api/listcallfile/find
 Content-Type: application/json
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2MjQ3OTU2MTQsImV4cCI6MTYyNTMxMTYxNH0.jVgiO2CA-vVXlT3fkGZyFUtRPytSoqm7YU03IduLB8g
 

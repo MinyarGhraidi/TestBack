@@ -5,6 +5,8 @@ let router = require('express').Router(),
     rolesController = require('../controllers/roles.controller')
     usersController = require('../controllers/users.controller')
     agentsController = require('../controllers/agents.controller')
+    efilesController = require('../controllers/efiles.controller')
+    listcallfilesController = require('../controllers/listcallfiles.controller')
 
 //                         ====> don't forget to re-add : passport.authenticate('jwt', {session: false}) <=====
 
@@ -14,11 +16,11 @@ let router = require('express').Router(),
         router.get('/api/generateTokenForUser',utilityController.generateTokenForUser);
 
         // account routers
-        router.post('/api/account/find', passport.authenticate('jwt', {session: false}),accountController.find);
-        router.get('/api/account/findById/:entity_id', passport.authenticate('jwt', {session: false}), accountController.findById);
-        router.put('/api/account/update', passport.authenticate('jwt', {session: false}), accountController.update);
-        router.delete('/api/account/delete/:params', passport.authenticate('jwt', {session: false}), accountController.delete);
-        router.post('/api/account/save', passport.authenticate('jwt', {session: false}), accountController.save);
+        router.post('/api/account/find', accountController.find);
+        router.get('/api/account/findById/:entity_id', accountController.findById);
+        router.put('/api/account/update', accountController.update);
+        router.delete('/api/account/delete/:params',  accountController.delete);
+        router.post('/api/account/save', accountController.save);
 
         router.post('/api/account/signin', accountController.signIn);
         router.post('/api/account/getAccountByToken', passport.authenticate('jwt', {session: false}),accountController.getAccountByToken);
@@ -32,11 +34,11 @@ let router = require('express').Router(),
 
         
         //role routers
-        router.post('/api/role/find/:params?', passport.authenticate('jwt', {session: false}), rolesController.find);
-        router.get('/api/role/findById/:entity_id', passport.authenticate('jwt', {session: false}), rolesController.findById);
-        router.put('/api/role/update', passport.authenticate('jwt', {session: false}), rolesController.update);
-        router.delete('/api/role/delete/:params', passport.authenticate('jwt', {session: false}), rolesController.delete);
-        router.post('/api/role/save', passport.authenticate('jwt', {session: false}), rolesController.save);
+        router.post('/api/role/find/:params?', rolesController.find);
+        router.get('/api/role/findById/:entity_id', rolesController.findById);
+        router.put('/api/role/update', rolesController.update);
+        router.delete('/api/role/delete/:params',  rolesController.delete);
+        router.post('/api/role/save',  rolesController.save);
 
         //user routers
          router.post('/api/user/find/:params?', usersController.find);
@@ -44,7 +46,7 @@ let router = require('express').Router(),
          router.put('/api/user/update', usersController.update);
          router.delete('/api/user/delete/:params', usersController.delete);
          router.post('/api/user/save', usersController.save);
-        
+
          router.post('/api/signup', usersController.signUp);
          router.post('/api/signin', usersController.signIn);
 
@@ -57,6 +59,23 @@ let router = require('express').Router(),
         
          router.post('/api/signup', agentsController.signUp);
          router.post('/api/signin', agentsController.signIn);
+
+
+        //efiles routers
+         router.post('/api/efile/find/:params?', efilesController.find);
+         router.get('/api/efile/findById/:entity_id', efilesController.findById);
+         router.put('/api/efile/update', efilesController.update);
+         router.delete('/api/efile/delete/:params', efilesController.delete);
+         router.post('/api/efile/save', efilesController.save);
+
+        //listcallfiles routers
+         router.post('/api/listcallfile/find/:params?', listcallfilesController.find);
+         router.get('/api/listcallfile/findById/:entity_id', listcallfilesController.findById);
+         router.put('/api/listcallfile/update', listcallfilesController.update);
+         router.delete('/api/listcallfile/delete/:params', listcallfilesController.delete);
+         router.post('/api/listcallfile/save', listcallfilesController.save);
+        
+
 
         return router;
 }
