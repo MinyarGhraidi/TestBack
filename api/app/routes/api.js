@@ -48,12 +48,9 @@ let router = require('express').Router(),
          router.delete('/api/user/delete/:params', usersController.delete);
          router.post('/api/user/save', usersController.save);
 
-<<<<<<< HEAD
          router.post('/api/user/signin', usersController.signIn);
          router.post('/api/user/getUserByToken', passport.authenticate('jwt', {session: false}),usersController.getUserByToken);
         
-=======
->>>>>>> 2d479e60c331ba97705bdd567823521b24058ec0
          router.post('/api/signup', usersController.signUp);
          router.post('/api/signin', usersController.signIn);
 
@@ -67,7 +64,6 @@ let router = require('express').Router(),
          router.post('/api/signup', agentsController.signUp);
          router.post('/api/signin', agentsController.signIn);
 
-<<<<<<< HEAD
          //Lookups 
 
            // account routers
@@ -76,24 +72,6 @@ let router = require('express').Router(),
         router.put('/api/lookup/update', passport.authenticate('jwt', {session: false}), lookupController.update);
         router.delete('/api/lookup/delete/:params', passport.authenticate('jwt', {session: false}), lookupController.delete);
         router.post('/api/lookup/save', passport.authenticate('jwt', {session: false}), lookupController.save);
-=======
-
-        //efiles routers
-         router.post('/api/efile/find/:params?', efilesController.find);
-         router.get('/api/efile/findById/:entity_id', efilesController.findById);
-         router.put('/api/efile/update', efilesController.update);
-         router.delete('/api/efile/delete/:params', efilesController.delete);
-         router.post('/api/efile/save', efilesController.save);
-
-        //listcallfiles routers
-         router.post('/api/listcallfile/find/:params?', listcallfilesController.find);
-         router.get('/api/listcallfile/findById/:entity_id', listcallfilesController.findById);
-         router.put('/api/listcallfile/update', listcallfilesController.update);
-         router.delete('/api/listcallfile/delete/:params', listcallfilesController.delete);
-         router.post('/api/listcallfile/save', listcallfilesController.save);
-        
-
->>>>>>> 2d479e60c331ba97705bdd567823521b24058ec0
 
         return router;
 }
