@@ -1,5 +1,6 @@
 let router = require('express').Router(),
     accountController = require('../controllers/account.controller')
+    lookupController = require('../controllers/lookups.controller')
     utilityController = require('../controllers/utility.controller')
     campaignController = require('../controllers/campaign.controller')
     rolesController = require('../controllers/roles.controller')
@@ -44,6 +45,9 @@ let router = require('express').Router(),
          router.put('/api/user/update', usersController.update);
          router.delete('/api/user/delete/:params', usersController.delete);
          router.post('/api/user/save', usersController.save);
+
+         router.post('/api/user/signin', usersController.signIn);
+         router.post('/api/user/getUserByToken', passport.authenticate('jwt', {session: false}),usersController.getUserByToken);
         
          router.post('/api/signup', usersController.signUp);
          router.post('/api/signin', usersController.signIn);
@@ -57,6 +61,15 @@ let router = require('express').Router(),
         
          router.post('/api/signup', agentsController.signUp);
          router.post('/api/signin', agentsController.signIn);
+
+         //Lookups 
+
+           // account routers
+        router.post('/api/lookup/find', passport.authenticate('jwt', {session: false}),lookupController.find);
+        router.get('/api/lookup/findById/:entity_id', passport.authenticate('jwt', {session: false}), lookupController.findById);
+        router.put('/api/lookup/update', passport.authenticate('jwt', {session: false}), lookupController.update);
+        router.delete('/api/lookup/delete/:params', passport.authenticate('jwt', {session: false}), lookupController.delete);
+        router.post('/api/lookup/save', passport.authenticate('jwt', {session: false}), lookupController.save);
 
         return router;
 }

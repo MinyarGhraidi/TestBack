@@ -1,26 +1,29 @@
 const usersDao = require('../bo/usersbo');
-let usersDaoInst = new usersDao ; 
+let _itembo = new usersDao ; 
 
 module.exports = {
     update : function (req, res, next) {
-        usersDaoInst.update(req, res, next)
+        _itembo.update(req, res, next)
     },
     find: function (req, res, next) {
-        usersDaoInst.find(req, res, next);
+        _itembo.find(req, res, next);
     },
     findById: function (req, res, next) {
-        usersDaoInst.findById(req, res, next);
+        _itembo.findById(req, res, next);
     },
     save: function (req, res, next) {
-        usersDaoInst.save(req, res, next);
+        _itembo.save(req, res, next);
     },
     delete: function (req, res, next) {
-        usersDaoInst.delete(req, res, next);
+        _itembo.delete(req, res, next);
     },
     signUp: function (req, res, next) {
-        usersDaoInst.signUp(req, res, next)
+        _itembo.signUp(req, res, next)
     },
     signIn: function (req, res, next) {
-        usersDaoInst.signIn(req, res, next)
-    }
+        _itembo.signIn(req, res, next)
+    },
+    getUserByToken: function (req, res, next) {
+        _itembo.getUserByToken(req, res, next);
+    },
 }
