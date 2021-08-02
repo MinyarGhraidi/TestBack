@@ -41,6 +41,14 @@ module.exports = (sequelize, Sequelize) => {
                 type: Sequelize.STRING,
                 defaultValue: 'Y'
             },
+            isAssigned: {
+                type: Sequelize.BOOLEAN,
+                defaultValue: false
+            },
+            campaign_id: {
+                type: Sequelize.INTEGER,
+                defaultValue: 0
+            },
             created_at: {
                 allowNull: true,
                 type: Sequelize.DATE,
@@ -68,7 +76,9 @@ module.exports = (sequelize, Sequelize) => {
         'status',
         'active',
         'created_at',
-        'updated_at'
+        'updated_at',
+        'isAssigned',
+        'campaign_id'
 
     ],
         user.prototype.fieldsSearchMetas = [
@@ -80,7 +90,9 @@ module.exports = (sequelize, Sequelize) => {
             'user_type',
             'status',
             'role_id',
-            'account_id'
+            'account_id',
+            'isAssigned',
+            'campaign_id'
         ],
         user.prototype.setPassword_hash = function (password) {
             let salt = bcrypt.genSaltSync();
