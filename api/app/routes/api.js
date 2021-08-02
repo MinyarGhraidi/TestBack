@@ -1,5 +1,5 @@
 let multer = require("multer");
-const path = require('path');
+const path = require("path");
 let appDir = path.dirname(require.main.filename);
 
 let storage = multer.diskStorage({
@@ -7,10 +7,11 @@ let storage = multer.diskStorage({
     cb(null, appDir + "/app/resources/efiles/public/upload/");
   },
   filename: function (req, file, cb) {
-    cb(null, file.fieldname + "-" + Date.now())  },
+    cb(null, file.fieldname + "-" + Date.now());
+  },
 });
 
-let max_upload_size = 50 * 1024 * 1024; 
+let max_upload_size = 50 * 1024 * 1024;
 
 let upload = multer({
   storage: storage,
@@ -20,7 +21,7 @@ let upload = multer({
 });
 
 let router = require("express").Router(),
-  accountController = require("../controllers/account.controller");
+accountController = require("../controllers/account.controller");
 utilityController = require("../controllers/utility.controller");
 campaignController = require("../controllers/campaign.controller");
 rolesController = require("../controllers/roles.controller");
@@ -28,6 +29,7 @@ usersController = require("../controllers/users.controller");
 agentsController = require("../controllers/agents.controller");
 efilesController = require("../controllers/efiles.controller");
 listcallfilesController = require("../controllers/listcallfiles.controller");
+lookupController = require('../controllers/lookups.controller')
 
 //                         ====> don't forget to re-add : passport.authenticate('jwt', {session: false}) <=====
 
@@ -73,6 +75,13 @@ let apiRouters = function (passport) {
   router.delete("/api/user/delete/:params", usersController.delete);
   router.post("/api/user/save", usersController.save);
 
+  router.post("/api/user/signin", usersController.signIn);
+  router.post(
+    "/api/user/getUserByToken",
+    passport.authenticate("jwt", { session: false }),
+    usersController.getUserByToken
+  );
+
   router.post("/api/signup", usersController.signUp);
   router.post("/api/signin", usersController.signIn);
 
@@ -86,18 +95,54 @@ let apiRouters = function (passport) {
   router.post("/api/signup", agentsController.signUp);
   router.post("/api/signin", agentsController.signIn);
 
+  //Lookups
+
+  // account routers
+  router.post(
+    "/api/lookup/find",
+    passport.authenticate("jwt", { session: false }),
+    lookupController.find
+  );
+  router.get(
+    "/api/lookup/findById/:entity_id",
+    passport.authenticate("jwt", { session: false }),
+    lookupController.findById
+  );
+  router.put(
+    "/api/lookup/update",
+    passport.authenticate("jwt", { session: false }),
+    lookupController.update
+  );
+  router.delete(
+    "/api/lookup/delete/:params",
+    passport.authenticate("jwt", { session: false }),
+    lookupController.delete
+  );
+  router.post(
+    "/api/lookup/save",
+    passport.authenticate("jwt", { session: false }),
+    lookupController.save
+  );
+
   //efiles routers
   router.post("/api/efile/find/:params?", efilesController.find);
   router.get("/api/efile/findById/:entity_id", efilesController.findById);
   router.put("/api/efile/update", efilesController.update);
   router.delete("/api/efile/delete/:params", efilesController.delete);
   router.post("/api/efile/save", efilesController.save);
-  router.post('/api/uploadFile', upload.single('file'), efilesController.upload);
-  router.get('/api/file/thumb/full/:file_id/', efilesController.getImageByStyle);
+  router.post(
+    "/api/uploadFile",
+    upload.single("file"),
+    efilesController.upload
+  );
+  router.get(
+    "/api/file/thumb/full/:file_id/",
+    efilesController.getImageByStyle
+  );
 
   //listcallfiles routers
   router.post("/api/listcallfile/find/:params?", listcallfilesController.find);
-  router.get( 
+  router.get(
     "/api/listcallfile/findById/:entity_id",
     listcallfilesController.findById
   );
@@ -110,4 +155,4 @@ let apiRouters = function (passport) {
 
   return router;
 };
-module.exports = apiRouters; 
+module.exports = apiRouters;

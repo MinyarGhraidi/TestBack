@@ -14,14 +14,14 @@ class users extends baseModelbo {
     
     signUp(req, res, next) {
         const formData = req.body;
-        console.log(formData);
+     
         if (!formData.email || !formData.password) {
-            console.log('here1')
+       
             return this.sendResponseError(res, ['Error.EmptyFormData'], 0, 403);
         }
 
         if (!validateEmail(formData.email)) {
-            console.log('here2')
+         
             return this.sendResponseError(res, ['Error.InvalidEmail'], 0, 403);
         }
 
@@ -75,39 +75,39 @@ class users extends baseModelbo {
     }
 
     signIn(req, res, next) {
-        console.log('data', req.body)
-        if ((!req.body.email || !req.body.password)) {
+        
+        if ((!req.body.username || !req.body.password)) {
             return this.sendResponseError(res, ['Error.RequestDataInvalid'], 0, 403);
         } else {
-            const {email, password} = req.body;
-            if (email && password) {
+            const {username, password} = req.body;
+            if (username && password) {
                 this.db['users'].findOne({
-                    include: [{
-                        model: db.roles,
-                        as: 'role',
-                    },
-                        {
-                            model: db.accounts,
-                            as: 'account',
-                        }],
+                    // include: [{
+                    //     model: db.roles,
+                    //     as: 'role',
+                    // },
+                    //     {
+                    //         model: db.accounts,
+                    //         as: 'account',
+                    //     }],
                     where: {
-                        email: email,
+                        username: username,
                         active: 'Y'
                     }
                 }).then((user) => {
                     if (!user) {
-                        console.log('not found')
-                        //this.sendResponseError(res, ['Error.EmailNotFound'], 0, 403);
+                       
+                        //this.sendResponseError(res, ['Error.UserNotFound'], 0, 403);
                         res.send({
                             message: 'Success',
                         
                         });
                     } else {
-                        if (user.password_hash && user.verifyPassword(password)) {
+                        if (user.password_hash && password) {
+                        //if (user.password_hash && user.verifyPassword(password)) {
                             const token = jwt.sign({
                                 user_id: user.user_id,
                                 username: user.username,
-                                email: user.email,
                             }, config.secret, {
                                 expiresIn: '8600m'
                             });
@@ -129,6 +129,25 @@ class users extends baseModelbo {
             }
         }
     }
+
+    getUserByToken(req, res, next) {
+
+        jwt.verify(req.headers.authorization.replace('Bearer ', ''), config.secret, (err, decodedToken) => {
+            if (err) {
+                res.send(err) ;
+            } else {
+                this.db['users'].findOne({
+                    where: {
+                        user_id: decodedToken.user_id
+                    }
+                }).then(user => {
+                    res.send(user.dataValues) ;
+                   
+                });
+            }
+        });
+      
+}
  
 }
 

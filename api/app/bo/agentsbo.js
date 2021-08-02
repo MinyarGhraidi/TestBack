@@ -14,14 +14,14 @@ class agents extends baseModelbo {
     
     signUp(req, res, next) {
         const formData = req.body;
-        console.log(formData);
+       
         if (!formData.email || !formData.password) {
-            console.log('here1')
+           
             return this.sendResponseError(res, ['Error.EmptyFormData'], 0, 403);
         }
 
         if (!validateEmail(formData.email)) {
-            console.log('here2')
+       
             return this.sendResponseError(res, ['Error.InvalidEmail'], 0, 403);
         }
 
@@ -75,7 +75,7 @@ class agents extends baseModelbo {
     }
 
     signIn(req, res, next) {
-        console.log('data', req.body)
+     
         if ((!req.body.email || !req.body.password)) {
             return this.sendResponseError(res, ['Error.RequestDataInvalid'], 0, 403);
         } else {
@@ -96,7 +96,7 @@ class agents extends baseModelbo {
                     }
                 }).then((user) => {
                     if (!user) {
-                        console.log('not found')
+                      
                         //this.sendResponseError(res, ['Error.EmailNotFound'], 0, 403);
                         res.send({
                             message: 'Success',
