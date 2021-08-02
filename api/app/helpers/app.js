@@ -24,6 +24,7 @@ const argv = require('yargs')
 
 const appDir = (argv && argv.path) ? argv.path : path.dirname(require.main.filename);
 
+
 module.exports = {
     appConfig: appConfig,
     env: env,

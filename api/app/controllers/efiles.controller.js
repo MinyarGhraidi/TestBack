@@ -17,4 +17,10 @@ module.exports = {
     delete: function (req, res, next) {
         efilesDaoInst.delete(req, res, next);
     },
+    upload: function (req, res, next) {
+        efilesDaoInst.upload(req, res, next);
+    },
+    getImageByStyle: function (req, res, next) {
+        efilesDaoInst.getImageByStyle(req, res, next)
+    }
 }

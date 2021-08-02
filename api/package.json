@@ -215,11 +215,7 @@
       "resolved": "https://registry.npmjs.org/methods/-/methods-1.1.2.tgz",
       "version": "1.1.2"
     },
-    "mime": {
-      "integrity": "sha512-x0Vn8spI+wuJ1O6S7gnbaQg8Pxh4NNHb7KSINmEWKiPE4RKOplvijn+NkmYmmRgP68mc70j2EbeTFRsrswaQeg==",
-      "resolved": "https://registry.npmjs.org/mime/-/mime-1.6.0.tgz",
-      "version": "1.6.0"
-    },
+    "mime": "^2.5.2",
     "mime-db": {
       "integrity": "sha512-FM3QwxV+TnZYQ2aRqhlKBMHxk10lTbMt3bBkMAp54ddrNeVSfcQYOOKuGuy3Ddrm38I04If834fOUSq1yzslJQ==",
       "resolved": "https://registry.npmjs.org/mime-db/-/mime-db-1.48.0.tgz",
@@ -248,6 +244,7 @@
       "resolved": "https://registry.npmjs.org/ms/-/ms-2.0.0.tgz",
       "version": "2.0.0"
     },
+    "multer": "^1.4.2",
     "negotiator": {
       "integrity": "sha512-hZXc7K2e+PgeI1eDBe/10Ard4ekbfrrqG8Ep+8Jmf4JID2bNg7NvCPOZN+kfF574pFQI7mum2AUqDidoKqcTOw==",
       "resolved": "https://registry.npmjs.org/negotiator/-/negotiator-0.6.2.tgz",
@@ -433,7 +430,7 @@
         "etag": "~1.8.1",
         "fresh": "0.5.2",
         "http-errors": "~1.7.2",
-        "mime": "1.6.0",
+        "mime": "^2.4.6",
         "ms": "2.1.1",
         "on-finished": "~2.3.0",
         "range-parser": "~1.2.1",
