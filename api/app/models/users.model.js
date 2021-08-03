@@ -34,7 +34,8 @@ module.exports = (sequelize, Sequelize) => {
                 type: Sequelize.INTEGER
             },
             status: {
-                type: Sequelize.STRING
+                type: Sequelize.STRING,
+                defaultValue: 'Y'
             },
             active: {
                 allowNull: true,
