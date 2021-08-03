@@ -34,6 +34,10 @@ module.exports = (sequelize, Sequelize) => {
             type: Sequelize.STRING,
             defaultValue: 'Y'
         },
+        status: {
+            type: Sequelize.STRING,
+            defaultValue: 'Y'
+        },
         account_id: {
             type: Sequelize.INTEGER,
         },
@@ -73,7 +77,8 @@ module.exports = (sequelize, Sequelize) => {
             'updated_at',
             'call_status',
             'pause_status', 
-            'agents'
+            'agents',
+            'status'
         ],
         campaign.prototype.fieldsSearchMetas = [
             'campaign_id',
@@ -89,7 +94,8 @@ module.exports = (sequelize, Sequelize) => {
             'updated_at',
             'call_status',
             'pause_status',
-            'agents'
+            'agents',
+            'status'
         ]
         campaign.associate = function (models) {
             campaign.belongsTo(models.accounts, {
