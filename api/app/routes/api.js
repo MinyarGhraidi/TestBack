@@ -77,10 +77,9 @@ let apiRouters = function (passport) {
   router.delete("/api/user/delete/:params", passport.authenticate('jwt', {session: false}), usersController.delete);
   router.post("/api/user/save", passport.authenticate('jwt', {session: false}), usersController.save);
 
-  router.post("/api/user/signin", passport.authenticate('jwt', {session: false}), usersController.signIn);
+  router.post("/api/user/signin",  usersController.signIn);
   router.post(
     "/api/user/getUserByToken",
-    passport.authenticate("jwt", { session: false }),
     usersController.getUserByToken
   );
 
