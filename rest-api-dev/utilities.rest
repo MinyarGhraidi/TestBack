@@ -4,14 +4,15 @@
 
 
 #GET ALL Accounts by table name
-POST http://localhost:2001/api/efile/save
+POST http://localhost:3001/api/pausestatus/save
 Content-Type: application/json
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2MjQ3OTU2MTQsImV4cCI6MTYyNTMxMTYxNH0.jVgiO2CA-vVXlT3fkGZyFUtRPytSoqm7YU03IduLB8g
 
 {
-    "file_name" : "test efile",
-    "original_name" : "test file"
+    "code" : "test",
+     "label" : "test"
 }
+
 ###
 #GET ALL Accounts by table name
 POST http://localhost:3001/api/testUppy
@@ -22,7 +23,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2MjQ3OTU2M
     "file_name" : "test efile"
 }
 ###
-DELETE  http://localhost:2001/api/efile/delete/2
+DELETE  http://localhost:3001/api/callstatus/delete/1
 Content-Type: application/json
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2MjQ3OTU2MTQsImV4cCI6MTYyNTMxMTYxNH0.jVgiO2CA-vVXlT3fkGZyFUtRPytSoqm7YU03IduLB8g
 
@@ -31,18 +32,17 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2MjQ3OTU2M
 }
 ###
 
-PUT http://localhost:2001/api/efile/update
+PUT http://localhost:3001/api/pausestatus/update
 Content-Type: application/json
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2MjQ3OTU2MTQsImV4cCI6MTYyNTMxMTYxNH0.jVgiO2CA-vVXlT3fkGZyFUtRPytSoqm7YU03IduLB8g
 
 {
-    "file_id" : 1,
-    "file_name" : "test update efile",
-    "original_name" : "test file"
+    "pausestatus_id" : 1,
+    "code" : "test update "
 }
 ###
 
-POST http://localhost:3001/api/efile/find
+POST http://localhost:3001/api/pausestatus/find
 Content-Type: application/json
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2MjQ3OTU2MTQsImV4cCI6MTYyNTMxMTYxNH0.jVgiO2CA-vVXlT3fkGZyFUtRPytSoqm7YU03IduLB8g
 
