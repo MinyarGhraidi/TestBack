@@ -6,6 +6,8 @@ const EFile = db.efiles;
 const mime = require('mime');
 const path = require('path');
 const fs = require('fs')
+const csv=require('csvtojson')
+
 class efiles extends baseModelbo {
     constructor() {
         super('efiles', 'file_id');
@@ -80,6 +82,36 @@ class efiles extends baseModelbo {
                 }
             }
         });
+    }
+
+    getListCallFiles(req, res, next) {
+        let result = [];
+        if (parseInt(req.params.file_id)) {
+           
+            EFile.findById(req.params.file_id).then(efile => {
+               
+                if (efile) {
+                    let path = appDir + '/app/resources/efiles' + efile.uri
+                    
+                    if(efile.file_extension=='csv')
+                    {
+                        console.log(efile);
+                        if (fs.existsSync(path)) {
+                            csv({
+                                noheader:true,
+                                delimiter:[',',';']
+                            })
+                            .fromFile(path)
+                            .then((jsonObj)=>{
+                                result = jsonObj;
+                                res.send(result);
+                            })
+                        }
+                    }
+                } 
+            });
+        }
+        
     }
 }
 

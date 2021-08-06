@@ -24,6 +24,7 @@ let router = require("express").Router(),
 accountController = require("../controllers/account.controller");
 utilityController = require("../controllers/utility.controller");
 campaignController = require("../controllers/campaign.controller");
+callfileController = require("../controllers/callfile.controller");
 rolesController = require("../controllers/roles.controller");
 usersController = require("../controllers/users.controller");
 agentsController = require("../controllers/agents.controller");
@@ -142,19 +143,17 @@ let apiRouters = function (passport) {
     "/api/file/thumb/full/:file_id/", passport.authenticate('jwt', {session: false}),
     efilesController.getImageByStyle
   );
+  router.get(
+    "/api/efile/getListCallFiles/:file_id",
+    efilesController.getListCallFiles
+  );
 
   //listcallfiles routers
-  router.post("/api/listcallfile/find/:params?", passport.authenticate('jwt', {session: false}), listcallfilesController.find);
-  router.get(
-    "/api/listcallfile/findById/:entity_id", passport.authenticate('jwt', {session: false}),
-    listcallfilesController.findById
-  );
-  router.put("/api/listcallfile/update", passport.authenticate('jwt', {session: false}), listcallfilesController.update);
-  router.delete(
-    "/api/listcallfile/delete/:params", passport.authenticate('jwt', {session: false}),
-    listcallfilesController.delete
-  );
-  router.post("/api/listcallfile/save", passport.authenticate('jwt', {session: false}), listcallfilesController.save);
+  router.post("/api/listcallfile/find/:params?", listcallfilesController.find);
+  router.get("/api/listcallfile/findById/:entity_id",listcallfilesController.findById );
+  router.put("/api/listcallfile/update", listcallfilesController.update);
+  router.delete("/api/listcallfile/delete/:params",listcallfilesController.delete);
+  router.post("/api/listcallfile/save", listcallfilesController.save);
 
     //truncks routers
     router.post("/api/trunck/find/:params?",passport.authenticate('jwt', {session: false}), truncksController.find);
@@ -176,6 +175,14 @@ let apiRouters = function (passport) {
     router.put("/api/pausestatus/update", pausestatusController.update);
     router.delete("/api/pausestatus/delete/:params", pausestatusController.delete);
     router.post("/api/pausestatus/save", pausestatusController.save);
+
+
+    // callfiles routers
+    router.post("/api/callfile/find", callfileController.find);
+    router.get("/api/callfile/findById/:entity_id", callfileController.findById);
+    router.put("/api/callfile/update", callfileController.update);
+    router.delete("/api/callfile/delete/:params", callfileController.delete);
+    router.post("/api/callfile/save", callfileController.save);
 
   return router;
 };
