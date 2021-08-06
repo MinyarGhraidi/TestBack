@@ -4,13 +4,15 @@
 
 
 #GET ALL Accounts by table name
-POST http://localhost:3001/api/trunck/save
+POST http://localhost:3001/api/pausestatus/save
 Content-Type: application/json
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2MjQ3OTU2MTQsImV4cCI6MTYyNTMxMTYxNH0.jVgiO2CA-vVXlT3fkGZyFUtRPytSoqm7YU03IduLB8g
 
 {
-    "name" : "test trunck"
+    "code" : "test",
+     "label" : "test"
 }
+
 ###
 #GET ALL Accounts by table name
 POST http://localhost:3001/api/testUppy
@@ -21,7 +23,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2MjQ3OTU2M
     "file_name" : "test efile"
 }
 ###
-DELETE  http://localhost:3001/api/trunck/delete/2
+DELETE  http://localhost:3001/api/callstatus/delete/1
 Content-Type: application/json
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2MjQ3OTU2MTQsImV4cCI6MTYyNTMxMTYxNH0.jVgiO2CA-vVXlT3fkGZyFUtRPytSoqm7YU03IduLB8g
 
@@ -30,17 +32,17 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2MjQ3OTU2M
 }
 ###
 
-PUT http://localhost:3001/api/trunck/update
+PUT http://localhost:3001/api/pausestatus/update
 Content-Type: application/json
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2MjQ3OTU2MTQsImV4cCI6MTYyNTMxMTYxNH0.jVgiO2CA-vVXlT3fkGZyFUtRPytSoqm7YU03IduLB8g
 
 {
-    "trunck_id" : 1,
-    "name" : "test update trunck"
+    "pausestatus_id" : 1,
+    "code" : "test update "
 }
 ###
 
-POST http://localhost:3001/api/trunck/find
+POST http://localhost:3001/api/pausestatus/find
 Content-Type: application/json
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2MjQ3OTU2MTQsImV4cCI6MTYyNTMxMTYxNH0.jVgiO2CA-vVXlT3fkGZyFUtRPytSoqm7YU03IduLB8g
 

@@ -31,6 +31,8 @@ efilesController = require("../controllers/efiles.controller");
 listcallfilesController = require("../controllers/listcallfiles.controller");
 lookupController = require('../controllers/lookups.controller')
 truncksController = require('../controllers/truncks.controller')
+callstatusController = require('../controllers/callstatus.controller')
+pausestatusController = require('../controllers/pausestatus.controller')
 
 
 //                         ====> don't forget to re-add : passport.authenticate('jwt', {session: false}) <=====
@@ -155,11 +157,25 @@ let apiRouters = function (passport) {
   router.post("/api/listcallfile/save", passport.authenticate('jwt', {session: false}), listcallfilesController.save);
 
     //truncks routers
-    router.post("/api/trunck/find/:params?", truncksController.find);
-    router.get("/api/trunck/findById/:entity_id", truncksController.findById);
-    router.put("/api/trunck/update", truncksController.update);
-    router.delete("/api/trunck/delete/:params", truncksController.delete);
-    router.post("/api/trunck/save", truncksController.save);
+    router.post("/api/trunck/find/:params?",passport.authenticate('jwt', {session: false}), truncksController.find);
+    router.get("/api/trunck/findById/:entity_id",passport.authenticate('jwt', {session: false}), truncksController.findById);
+    router.put("/api/trunck/update",passport.authenticate('jwt', {session: false}), truncksController.update);
+    router.delete("/api/trunck/delete/:params",passport.authenticate('jwt', {session: false}), truncksController.delete);
+    router.post("/api/trunck/save",passport.authenticate('jwt', {session: false}), truncksController.save);
+
+    //callstatus routers
+    router.post("/api/callstatus/find/:params?", callstatusController.find);
+    router.get("/api/callstatus/findById/:entity_id", callstatusController.findById);
+    router.put("/api/callstatus/update", callstatusController.update);
+    router.delete("/api/callstatus/delete/:params", callstatusController.delete);
+    router.post("/api/callstatus/save", callstatusController.save);
+
+    //pausestatus routers
+    router.post("/api/pausestatus/find/:params?", pausestatusController.find);
+    router.get("/api/pausestatus/findById/:entity_id", pausestatusController.findById);
+    router.put("/api/pausestatus/update", pausestatusController.update);
+    router.delete("/api/pausestatus/delete/:params", pausestatusController.delete);
+    router.post("/api/pausestatus/save", pausestatusController.save);
 
   return router;
 };
