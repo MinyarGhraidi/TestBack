@@ -22,5 +22,8 @@ module.exports = {
     },
     getImageByStyle: function (req, res, next) {
         efilesDaoInst.getImageByStyle(req, res, next)
+    },
+    getListCallFiles: function (req, res, next) {
+        efilesDaoInst.getListCallFiles(req, res, next)
     }
 }
