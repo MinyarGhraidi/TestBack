@@ -64,6 +64,7 @@ module.exports = (sequelize, Sequelize) => {
         'status',
         "mapping",
         'processing',
+        'processing_status',
         'check_duplication',
         'created_at',
         'updated_at'
@@ -79,6 +80,7 @@ module.exports = (sequelize, Sequelize) => {
         "mapping",
         'processing',
         'check_duplication',
+        'processing_status',
         'created_at',
         'updated_at'
         ]
