@@ -34,7 +34,7 @@ module.exports = (sequelize, Sequelize) => {
                 type: Sequelize.INTEGER,
                 defaultValue: 1
             },
-            prcessing_status: {
+            processing_status: {
                 type: Sequelize.JSONB,
             },
             check_duplication: {
