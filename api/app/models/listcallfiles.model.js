@@ -32,6 +32,7 @@ module.exports = (sequelize, Sequelize) => {
             },
             processing: {
                 type: Sequelize.INTEGER,
+                defaultValue: 1
             },
             prcessing_status: {
                 type: Sequelize.JSONB,
