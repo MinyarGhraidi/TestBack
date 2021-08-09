@@ -15,7 +15,7 @@ class efiles extends baseModelbo {
         this.primaryKey = 'file_id';
     }
     upload(req, res, next) {
-        console.log(req.file)
+        console.log('upload',req.file)
         if (!req.file) {
             return res.json({msg:'File not exists' });
             
@@ -26,13 +26,13 @@ class efiles extends baseModelbo {
                 file_name: req.file.filename,
                 original_name: req.file.originalname,
                 file_size: req.file.size,
-                uri: req.file.destination + req.file.filename + '.' + mime.getExtension(req.file.mimetype),
+                uri: req.file.destination + req.file.filename + '.' + req.file.originalname.split('.').pop(),
                 created_at: Date.now(),
                 updated_at: Date.now(),
-                file_extension: mime.getExtension(req.file.mimetype)
+                file_extension: req.file.originalname.split('.').pop()
             }).then((row) => {
                 if (row.file_id) {
-                    const new_file_name = 'efile-' + row.file_id + '.' + mime.getExtension(req.file.mimetype);
+                    const new_file_name = 'efile-' + row.file_id + '.' + req.file.originalname.split('.').pop();
                     const file_uri = '/public/upload/' + new_file_name;
 
                     EFile.update({file_name: new_file_name, uri: file_uri},
