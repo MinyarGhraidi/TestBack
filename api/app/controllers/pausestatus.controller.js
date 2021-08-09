@@ -17,4 +17,7 @@ module.exports = {
     delete: function (req, res, next) {
         pausestatusDaoInst.delete(req, res, next);
     },
+    findByCampaignId: function (req, res, next) {
+        pausestatusDaoInst.findByCampaignId(req, res, next);
+    },
 }

@@ -168,6 +168,7 @@ let apiRouters = function (passport) {
     router.put("/api/callstatus/update", callstatusController.update);
     router.delete("/api/callstatus/delete/:params", callstatusController.delete);
     router.post("/api/callstatus/save", callstatusController.save);
+    router.post("/api/callstatus/findByCampaignId", callstatusController.findByCampaignId);
 
     //pausestatus routers
     router.post("/api/pausestatus/find/:params?", pausestatusController.find);
@@ -175,6 +176,7 @@ let apiRouters = function (passport) {
     router.put("/api/pausestatus/update", pausestatusController.update);
     router.delete("/api/pausestatus/delete/:params", pausestatusController.delete);
     router.post("/api/pausestatus/save", pausestatusController.save);
+    router.post("/api/pausestatus/findByCampaignId", pausestatusController.findByCampaignId);
 
 
     // callfiles routers
