@@ -26,6 +26,7 @@ module.exports = (sequelize, Sequelize) => {
             },
             status: {
                 type: Sequelize.STRING,
+                defaultValue: 'Y'
             },
             mapping: {
                 type: Sequelize.JSONB,
