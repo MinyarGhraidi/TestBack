@@ -1,9 +1,11 @@
 const express = require("express");
 var axios = require("axios").default
 const router = express.Router();
+const agent_token = require(__dirname + '/../config/config.json')["agent_token"];
+const base_url = require(__dirname + '/../config/config.json')["base_url"];
 
-const config = {
-  headers: { Authorization: "Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9cIi2IY5" }
+const authorization = {
+  headers: { Authorization: agent_token }
 };
 
 // to fix SSL certifcate Problem
@@ -14,7 +16,7 @@ let apiServices = function () {
     //Agents
     router.get("/apicallcenter/agents", (req, res, next) => {
            axios
-            .get('https://occ.oxilog.net:2443/api/v1/agents', config)
+            .get(`${base_url}api/v1/agents`, authorization)
             .then(resp => res.json(resp.data.result))
             .catch(err => res.json(err))
     
