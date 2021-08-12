@@ -19,7 +19,13 @@ let apiServices = function () {
             .get(`${base_url}api/v1/agents`, authorization)
             .then(resp => res.json(resp.data.result))
             .catch(err => res.json(err))
-    
+    })
+    router.get("/apicallcenter/agents/:id", (req, res, next) => {
+        let id = req.params.id;
+           axios
+            .get(`${base_url}api/v1/agents/${id}`, authorization)
+            .then(resp => res.json(resp.data.result))
+            .catch(err => res.json(err))
     })
 
 
