@@ -27,6 +27,27 @@ let apiServices = function () {
             .then(resp => res.json(resp.data.result))
             .catch(err => res.json(err))
     })
+    router.post("/apicallcenter/agents", (req, res, next) => {
+        console.log(req.body)
+           axios
+            .post(`${base_url}api/v1/agents`, req.body, authorization)
+            .then(resp => res.json(resp.data.result))
+            .catch(err => res.json(err))
+    })
+    router.put("/apicallcenter/agents/:id", (req, res, next) => {
+        let id = req.params.id;
+           axios
+            .put(`${base_url}api/v1/agents/${id}`, req.body, authorization)
+            .then(resp => res.json(resp.data))
+            .catch(err => res.json(err))
+    })
+    router.delete("/apicallcenter/agents/:id", (req, res, next) => {
+        let id = req.params.id;
+           axios
+            .delete(`${base_url}api/v1/agents/${id}`, authorization)
+            .then(resp => res.json(resp.data))
+            .catch(err => res.json(err))
+    })
 
 
 
