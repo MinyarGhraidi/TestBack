@@ -28,10 +28,12 @@ let apiServices = function () {
             .catch(err => res.json(err))
     })
     router.post("/apicallcenter/agents", (req, res, next) => {
-        console.log(req.body)
            axios
             .post(`${base_url}api/v1/agents`, req.body, authorization)
-            .then(resp => res.json(resp.data.result))
+            .then(resp => {
+                console.log('****',resp.data.result);
+                res.json(resp.data.result);
+            })
             .catch(err => res.json(err))
     })
     router.put("/apicallcenter/agents/:id", (req, res, next) => {

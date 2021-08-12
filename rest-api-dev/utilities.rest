@@ -43,15 +43,14 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2MjQ3OTU2M
 }
 ###
 
-PUT  http://localhost:3001/apicallcenter/agents/dc727a80-9c4d-4eec-90a5-55455f18c540
+POST  http://localhost:3001/apicallcenter/agents
 Content-Type: application/json
 
 {
-        "username": "agent00000",
+        "username": "agent97910",
     "domain": "occ.oxilog.net",
     "password": "pwdpwd",
     "accountcode": "1",
-    "caller_id_number": "",
     "options": {
         "call_timeout": 30,
         "max_no_answer": 0,
@@ -59,9 +58,7 @@ Content-Type: application/json
         "reject_delay_time": 50,
         "busy_delay_time": 20,
         "no_answer_delay_time": 20
-    },
-    "status": "available",
-    "enabled": 1
+    }
 
 }
 
