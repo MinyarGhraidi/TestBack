@@ -8,9 +8,6 @@ module.exports = (sequelize, Sequelize) => {
                 autoIncrement: true,
                 type: Sequelize.INTEGER
             },
-            uuid: {
-                type: Sequelize.STRING
-            },
             username: {
                 type: Sequelize.STRING
             },
@@ -36,10 +33,7 @@ module.exports = (sequelize, Sequelize) => {
             role_id: {
                 type: Sequelize.INTEGER
             },
-            domain: {
-                type: Sequelize.STRING
-            },
-            options: {
+            sip_device: {
                 type: Sequelize.JSONB
             },
             status: {
@@ -89,9 +83,7 @@ module.exports = (sequelize, Sequelize) => {
         'updated_at',
         'isAssigned',
         'campaign_id',
-        'domain',
-        'options',
-        'uuid'
+        'sip_device'
 
     ],
         user.prototype.fieldsSearchMetas = [
@@ -106,9 +98,7 @@ module.exports = (sequelize, Sequelize) => {
             'account_id',
             'isAssigned',
             'campaign_id',
-            'domain',
-            'options',
-            'uuid'
+            "sip_device"
         ],
         user.prototype.setPassword_hash = function (password) {
             let salt = bcrypt.genSaltSync();
