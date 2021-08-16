@@ -15,5 +15,7 @@
   },
    "secret": "'BL#,miQFau,amA!?FFW@oKO3<_<E-j-]PVO65d!c%|V2h{(3#~~*$8{X<H}BVm",
    "agent_token": "Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9cIi2IY5",
-   "base_url": "https://occ.oxilog.net:2443/"
+   "trunck_token": "Bearer LucH6JQhHjpXVhP8K6buVmGFrrYrQ9jR56Zx5Ftcq2X93fXcxRfFwrQU2Ka7J8Mr",
+   "base_url_agents": "https://occ.oxilog.net:2443/",
+   "base_url_truncks": "http://94.23.104.156:8091/"
  }

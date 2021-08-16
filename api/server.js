@@ -57,7 +57,7 @@ app.get('/.well-known/pki-validation/EBF28B389C9111A79CD6AB26AAA57B62.txt', (req
   res.send('F57B918D03C49042BE5A1250141658F806625F05F548F04076F5747757D159BE\ncomodoca.com\n264fffab69596e3');
 });
 
-app.use('/', require('./app/api_services/api')()) 
+app.use('/', require('./app/telco_api_services/api')()) 
 
 app.listen(3001, () => {
 });
