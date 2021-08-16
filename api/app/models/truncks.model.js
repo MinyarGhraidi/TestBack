@@ -39,6 +39,9 @@ module.exports = (sequelize, Sequelize) => {
                 type: Sequelize.STRING,
                 defaultValue: 'Y'
             },
+            gateways: {
+                type: Sequelize.JSONB
+            },
             active: {
                 allowNull: true,
                 type: Sequelize.STRING,
@@ -72,7 +75,8 @@ module.exports = (sequelize, Sequelize) => {
         'register',
         'codec_prefs',
         'channels', 
-        'status'
+        'status',
+        'gateways'
     ],
     trunck.prototype.fieldsSearchMetas = [
         'trunck_id',
@@ -88,8 +92,14 @@ module.exports = (sequelize, Sequelize) => {
         'register',
         'codec_prefs',
         'channels', 
-        'status'
-        ]
+        'status',
+        'gateways'
+        ],
+        trunck.associate = function (models) {
+            trunck.belongsTo(models.accounts, {
+                foreignKey: 'account_id'
+            })
+        };
        
     return trunck
 }

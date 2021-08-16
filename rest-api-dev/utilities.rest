@@ -33,13 +33,12 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2MjQ3OTU2M
 }
 ###
 
-PUT http://localhost:3001/api/pausestatus/update
+DELETE   http://localhost:3001/api/did/delete/1
 Content-Type: application/json
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2MjQ3OTU2MTQsImV4cCI6MTYyNTMxMTYxNH0.jVgiO2CA-vVXlT3fkGZyFUtRPytSoqm7YU03IduLB8g
 
 {
-    "pausestatus_id" : 1,
-    "code" : "test update "
+
 }
 ###
 

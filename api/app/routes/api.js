@@ -34,6 +34,7 @@ lookupController = require('../controllers/lookups.controller')
 truncksController = require('../controllers/truncks.controller')
 callstatusController = require('../controllers/callstatus.controller')
 pausestatusController = require('../controllers/pausestatus.controller')
+didsController = require('../controllers/did.controller')
 
 
 //                         ====> don't forget to re-add : passport.authenticate('jwt', {session: false}) <=====
@@ -185,6 +186,13 @@ let apiRouters = function (passport) {
     router.put("/api/callfile/update", callfileController.update);
     router.delete("/api/callfile/delete/:params", callfileController.delete);
     router.post("/api/callfile/save", callfileController.save);
+
+    // dids routers
+    router.post("/api/did/find", didsController.find);
+    router.get("/api/did/findById/:entity_id", didsController.findById);
+    router.put("/api/did/update", didsController.update);
+    router.delete("/api/did/delete/:params", didsController.delete);
+    router.post("/api/did/save", didsController.save);
 
   return router;
 };
