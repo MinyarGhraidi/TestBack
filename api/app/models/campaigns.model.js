@@ -41,13 +41,10 @@ module.exports = (sequelize, Sequelize) => {
         account_id: {
             type: Sequelize.INTEGER,
         },
-        call_status: {
-            type: Sequelize.JSONB,
-        },
-        pause_status: {
-            type: Sequelize.JSONB,
-        },
         agents: {
+            type: Sequelize.JSONB,
+        },
+        params: {
             type: Sequelize.JSONB,
         },
         created_at : {
@@ -74,11 +71,10 @@ module.exports = (sequelize, Sequelize) => {
             'dial_level',
             'dialtimeout',
             'created_at', 
-            'updated_at',
-            'call_status',
-            'pause_status', 
+            'updated_at', 
             'agents',
-            'status'
+            'status',
+            'params'
         ],
         campaign.prototype.fieldsSearchMetas = [
             'campaign_id',
@@ -92,8 +88,6 @@ module.exports = (sequelize, Sequelize) => {
             'dialtimeout',
             'created_at', 
             'updated_at',
-            'call_status',
-            'pause_status',
             'agents',
             'status'
         ]
