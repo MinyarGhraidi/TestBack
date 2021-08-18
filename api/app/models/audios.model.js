@@ -13,6 +13,9 @@ module.exports = (sequelize, Sequelize) => {
             account_id: {
                 type: Sequelize.INTEGER
             },
+            file_id: {
+                type: Sequelize.INTEGER
+            },
             active: {
                 allowNull: true,
                 type: Sequelize.TEXT,
@@ -38,6 +41,7 @@ module.exports = (sequelize, Sequelize) => {
         'account_id',
         "active",
         'created_at',
+        'file_id',
         'updated_at'
     ],
         audio.prototype.fieldsSearchMetas = [
@@ -46,6 +50,7 @@ module.exports = (sequelize, Sequelize) => {
             'account_id',
             "active",
             'created_at',
+            'file_id',
             'updated_at'
         ]
         // ,
