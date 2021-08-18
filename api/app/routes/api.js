@@ -35,6 +35,7 @@ truncksController = require('../controllers/truncks.controller')
 callstatusController = require('../controllers/callstatus.controller')
 pausestatusController = require('../controllers/pausestatus.controller')
 didsController = require('../controllers/did.controller')
+audiosController = require('../controllers/audio.controller')
 
 
 //                         ====> don't forget to re-add : passport.authenticate('jwt', {session: false}) <=====
@@ -193,6 +194,13 @@ let apiRouters = function (passport) {
     router.put("/api/did/update", didsController.update);
     router.delete("/api/did/delete/:params", didsController.delete);
     router.post("/api/did/save", didsController.save);
+
+    // dids routers
+    router.post("/api/audio/find", audiosController.find);
+    router.get("/api/audio/findById/:entity_id", audiosController.findById);
+    router.put("/api/audio/update", audiosController.update);
+    router.delete("/api/audio/delete/:params", audiosController.delete);
+    router.post("/api/audio/save", audiosController.save);
 
   return router;
 };

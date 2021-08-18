@@ -33,11 +33,11 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2MjQ3OTU2M
 }
 ###
 
-DELETE  http://localhost:3001/api/did/delete/1
+DELETE  http://localhost:3001/api/audio/delete/1
 Content-Type: application/json
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2MjQ3OTU2MTQsImV4cCI6MTYyNTMxMTYxNH0.jVgiO2CA-vVXlT3fkGZyFUtRPytSoqm7YU03IduLB8g
 
-{
+{   
 
 }
 ###
@@ -48,7 +48,7 @@ Content-Type: application/json
 {
     "name": "queue-callcenter11",
     "extension": "20014",
-    "accountcode": "1170",
+    "accountcode": "11970",
     "strategy": "longest-idle-agent",
     "greetings": [],
     "record": false,
