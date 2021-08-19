@@ -4,7 +4,12 @@ let appDir = path.dirname(require.main.filename);
 
 let storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, appDir + "/app/resources/efiles/public/upload/");
+    let myDir ="callfiles"
+    if(file.mimetype =="audio/mpeg") {
+       myDir ="audios"
+    }
+    cb(null, appDir + "/app/resources/efiles/public/upload/"+ myDir + "/");
+    // cb(null, appDir + "/app/resources/efiles/public/upload/");
   },
   filename: function (req, file, cb) {
     cb(null, file.fieldname + "-" + Date.now());
