@@ -10,6 +10,9 @@ module.exports = (sequelize, Sequelize) => {
             audio_name: {
                 type: Sequelize.STRING
             },
+            audio_type: {
+                type: Sequelize.STRING
+            },
             account_id: {
                 type: Sequelize.INTEGER
             },
@@ -38,6 +41,7 @@ module.exports = (sequelize, Sequelize) => {
     audio.prototype.fields = [
         'audio_id',
         'audio_name',
+        'audio_type',
         'account_id',
         "active",
         'created_at',
@@ -47,6 +51,7 @@ module.exports = (sequelize, Sequelize) => {
         audio.prototype.fieldsSearchMetas = [
             'audio_id',
             'audio_name',
+            'audio_type',
             'account_id',
             "active",
             'created_at',
