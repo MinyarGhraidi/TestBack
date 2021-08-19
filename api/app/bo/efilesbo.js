@@ -34,11 +34,11 @@ class efiles extends baseModelbo {
                 if (row.file_id) {
                     let extension = req.file.originalname.split('.').pop()
                     const new_file_name = 'efile-' + row.file_id + '.' + extension;
-                    let myDir ="callfiles"
+                    let dirType ="callfiles"
                     if(extension =="mp3" || extension =="wav") {
-                       myDir ="audios"
+                       dirType ="audios"
                     }
-                    const file_uri = '/public/upload/' + myDir + "/" + new_file_name;
+                    const file_uri = '/public/upload/' + dirType + "/" + new_file_name;
 
                     EFile.update({file_name: new_file_name, uri: file_uri},
                         {
