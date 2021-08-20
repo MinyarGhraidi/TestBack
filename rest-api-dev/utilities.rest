@@ -33,12 +33,13 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2MjQ3OTU2M
 }
 ###
 
-DELETE  http://localhost:3001/api/audio/delete/1
+GET   http://localhost:3001/apicallcenter/servers
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2MjQ3OTU2MTQsImV4cCI6MTYyNTMxMTYxNH0.jVgiO2CA-vVXlT3fkGZyFUtRPytSoqm7YU03IduLB8g
 
-{   
-
+{
+    "setid":1,
+    "destination":"sip:164.132.181.0:5060",
+    "description":"callcenter-dev-01"
 }
 ###
 
