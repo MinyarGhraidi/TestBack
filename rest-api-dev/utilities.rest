@@ -33,13 +33,11 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2MjQ3OTU2M
 }
 ###
 
-GET   http://localhost:3001/apicallcenter/servers
+DELETE   http://localhost:3001/apicallcenter/acl_groups/2
 Content-Type: application/json
 
 {
-    "setid":1,
-    "destination":"sip:164.132.181.0:5060",
-    "description":"callcenter-dev-01"
+
 }
 ###
 
