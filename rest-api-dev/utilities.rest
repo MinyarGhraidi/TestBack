@@ -41,30 +41,16 @@ Content-Type: application/json
 }
 ###
 
-POST  http://localhost:3001/apicallcenter/queues
+POST  http://localhost:3001/apicallcenter/queues/9b170edf-1a34-4f9d-90c7-64c8214032bb/tiers
 Content-Type: application/json
 
 {
-    "name": "queue-callcenter11",
-    "extension": "20014",
-    "accountcode": "11970",
-    "strategy": "longest-idle-agent",
-    "greetings": [],
-    "record": false,
-    "options": {
-         "max_wait_time": 0,
-        "time_base_score": "queue",
-        "tier_rules_apply": "false",
-        "tier_rule_wait_second": 300,
-        "agent_no_answer_status": "on-break",
-        "discard_abandoned_after": 900,
-        "abandoned_resume_allowed": "true",
-        "ring_progressively_delay": 10,
-        "tier_rule_no_agent_no_wait": "true",
-        "max_wait_time_with_no_agent": 120,
-        "tier_rule_wait_multiply_level": "false",
-        "skip_agents_with_external_calls": "false",
-        "max_wait_time_with_no_agent_time_reached": 5
-    }
+    "tiers": [
+        {
+            "agent_uuid": "2066dab4-279f-4c6e-88a8-cf82b9ffd1ce",
+            "tier_level": 1,
+            "tier_position": 1
+        }
+    ]
 }
 

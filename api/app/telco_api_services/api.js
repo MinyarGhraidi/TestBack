@@ -146,6 +146,22 @@ let apiServices = function () {
          .then(resp => res.json(resp.data))
          .catch(err => res.json(err))
  })
+       //add agent to queue 
+ router.post("/apicallcenter/queues/:id/tiers", (req, res, next) => {
+     let id = req.params.id;
+        axios
+         .post(`${base_url_cc_kam}api/v1/queues/${id}/tiers`, req.body, call_center_authorization)
+         .then(resp => res.json(resp.data))
+         .catch(err => res.json(err))
+ })
+       //delete agent from queue 
+ router.post("/apicallcenter/queues/:id/tiers/delete", (req, res, next) => {
+     let id = req.params.id;
+        axios
+         .post(`${base_url_cc_kam}api/v1/queues/${id}/tiers/delete`, req.body, call_center_authorization)
+         .then(resp => res.json(resp.data))
+         .catch(err => res.json(err))
+ })
 
  // **** acl_groups ****
 
