@@ -41,6 +41,7 @@ callstatusController = require('../controllers/callstatus.controller')
 pausestatusController = require('../controllers/pausestatus.controller')
 didsController = require('../controllers/did.controller')
 audiosController = require('../controllers/audio.controller')
+agent_log_eventsController = require('../controllers/agent_log_events.controller')
 
 
 //                         ====> don't forget to re-add : passport.authenticate('jwt', {session: false}) <=====
@@ -170,42 +171,49 @@ let apiRouters = function (passport) {
     router.post("/api/trunck/save",passport.authenticate('jwt', {session: false}), truncksController.save);
 
     //callstatus routers
-    router.post("/api/callstatus/find/:params?", callstatusController.find);
-    router.get("/api/callstatus/findById/:entity_id", callstatusController.findById);
-    router.put("/api/callstatus/update", callstatusController.update);
-    router.delete("/api/callstatus/delete/:params", callstatusController.delete);
-    router.post("/api/callstatus/save", callstatusController.save);
-    router.post("/api/callstatus/findByCampaignId", callstatusController.findByCampaignId);
+    router.post("/api/callstatus/find/:params?",passport.authenticate('jwt', {session: false}), callstatusController.find);
+    router.get("/api/callstatus/findById/:entity_id",passport.authenticate('jwt', {session: false}), callstatusController.findById);
+    router.put("/api/callstatus/update",passport.authenticate('jwt', {session: false}), callstatusController.update);
+    router.delete("/api/callstatus/delete/:params",passport.authenticate('jwt', {session: false}), callstatusController.delete);
+    router.post("/api/callstatus/save",passport.authenticate('jwt', {session: false}), callstatusController.save);
+    router.post("/api/callstatus/findByCampaignId",passport.authenticate('jwt', {session: false}), callstatusController.findByCampaignId);
 
     //pausestatus routers
-    router.post("/api/pausestatus/find/:params?", pausestatusController.find);
-    router.get("/api/pausestatus/findById/:entity_id", pausestatusController.findById);
-    router.put("/api/pausestatus/update", pausestatusController.update);
-    router.delete("/api/pausestatus/delete/:params", pausestatusController.delete);
-    router.post("/api/pausestatus/save", pausestatusController.save);
-    router.post("/api/pausestatus/findByCampaignId", pausestatusController.findByCampaignId);
+    router.post("/api/pausestatus/find/:params?",passport.authenticate('jwt', {session: false}), pausestatusController.find);
+    router.get("/api/pausestatus/findById/:entity_id",passport.authenticate('jwt', {session: false}), pausestatusController.findById);
+    router.put("/api/pausestatus/update",passport.authenticate('jwt', {session: false}), pausestatusController.update);
+    router.delete("/api/pausestatus/delete/:params",passport.authenticate('jwt', {session: false}), pausestatusController.delete);
+    router.post("/api/pausestatus/save",passport.authenticate('jwt', {session: false}), pausestatusController.save);
+    router.post("/api/pausestatus/findByCampaignId",passport.authenticate('jwt', {session: false}), pausestatusController.findByCampaignId);
 
 
     // callfiles routers
-    router.post("/api/callfile/find", callfileController.find);
-    router.get("/api/callfile/findById/:entity_id", callfileController.findById);
+    router.post("/api/callfile/find",passport.authenticate('jwt', {session: false}), callfileController.find);
+    router.get("/api/callfile/findById/:entity_id",passport.authenticate('jwt', {session: false}), callfileController.findById);
     router.put("/api/callfile/update", callfileController.update);
-    router.delete("/api/callfile/delete/:params", callfileController.delete);
-    router.post("/api/callfile/save", callfileController.save);
+    router.delete("/api/callfile/delete/:params",passport.authenticate('jwt', {session: false}), callfileController.delete);
+    router.post("/api/callfile/save",passport.authenticate('jwt', {session: false}), callfileController.save);
 
     // dids routers
-    router.post("/api/did/find", didsController.find);
-    router.get("/api/did/findById/:entity_id", didsController.findById);
-    router.put("/api/did/update", didsController.update);
-    router.delete("/api/did/delete/:params", didsController.delete);
-    router.post("/api/did/save", didsController.save);
+    router.post("/api/did/find",passport.authenticate('jwt', {session: false}), didsController.find);
+    router.get("/api/did/findById/:entity_id",passport.authenticate('jwt', {session: false}), didsController.findById);
+    router.put("/api/did/update",passport.authenticate('jwt', {session: false}), didsController.update);
+    router.delete("/api/did/delete/:params",passport.authenticate('jwt', {session: false}), didsController.delete);
+    router.post("/api/did/save",passport.authenticate('jwt', {session: false}), didsController.save);
 
-    // dids routers
-    router.post("/api/audio/find", audiosController.find);
-    router.get("/api/audio/findById/:entity_id", audiosController.findById);
-    router.put("/api/audio/update", audiosController.update);
-    router.delete("/api/audio/delete/:params", audiosController.delete);
-    router.post("/api/audio/save", audiosController.save);
+    // audios routers
+    router.post("/api/audio/find",passport.authenticate('jwt', {session: false}), audiosController.find);
+    router.get("/api/audio/findById/:entity_id",passport.authenticate('jwt', {session: false}), audiosController.findById);
+    router.put("/api/audio/update",passport.authenticate('jwt', {session: false}), audiosController.update);
+    router.delete("/api/audio/delete/:params",passport.authenticate('jwt', {session: false}), audiosController.delete);
+    router.post("/api/audio/save",passport.authenticate('jwt', {session: false}), audiosController.save);
+
+    // agent_log_events routers
+    router.post("/api/agent_log_event/find", agent_log_eventsController.find);
+    router.get("/api/agent_log_event/findById/:entity_id", agent_log_eventsController.findById);
+    router.put("/api/agent_log_event/update", agent_log_eventsController.update);
+    router.delete("/api/agent_log_event/delete/:params", agent_log_eventsController.delete);
+    router.post("/api/agent_log_event/save", agent_log_eventsController.save);
 
   return router;
 };

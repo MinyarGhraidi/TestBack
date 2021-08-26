@@ -36,6 +36,9 @@ module.exports = (sequelize, Sequelize) => {
             sip_device: {
                 type: Sequelize.JSONB
             },
+            params: {
+                type: Sequelize.JSONB
+            },
             status: {
                 type: Sequelize.STRING,
                 defaultValue: 'Y'
@@ -83,7 +86,8 @@ module.exports = (sequelize, Sequelize) => {
         'updated_at',
         'isAssigned',
         'campaign_id',
-        'sip_device'
+        'sip_device',
+        'params'
 
     ],
         user.prototype.fieldsSearchMetas = [
@@ -98,7 +102,8 @@ module.exports = (sequelize, Sequelize) => {
             'account_id',
             'isAssigned',
             'campaign_id',
-            "sip_device"
+            "sip_device",
+            'params'
         ],
         user.prototype.setPassword_hash = function (password) {
             let salt = bcrypt.genSaltSync();
