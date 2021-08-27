@@ -9,7 +9,11 @@ module.exports = (sequelize, Sequelize) => {
                 type: Sequelize.INTEGER
             },
             action_name: {
-                type: Sequelize.STRING
+                type: Sequelize.STRING,
+                defaultValue: 'logged-out'
+            },
+            user_id: {
+                type: Sequelize.INTEGER
             },
             active: {
                 allowNull: true,
@@ -35,12 +39,14 @@ module.exports = (sequelize, Sequelize) => {
         'action_name',
         'active',
         'created_at',
-        'updated_at'
+        'updated_at',
+        'user_id'
     ],
     agent_log_event.prototype.fieldsSearchMetas = [
         'agent_log_event_id',
         'action_name',
-        'active'
+        'active',
+        'user_id'
         ]
 
     return agent_log_event
