@@ -41,16 +41,11 @@ Content-Type: application/json
 }
 ###
 
-POST  http://localhost:3001/apicallcenter/queues/9b170edf-1a34-4f9d-90c7-64c8214032bb/tiers
+POST http://localhost:3001/api/meeting/getAvailableSales
 Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2MjQ3OTU2MTQsImV4cCI6MTYyNTMxMTYxNH0.jVgiO2CA-vVXlT3fkGZyFUtRPytSoqm7YU03IduLB8g
 
 {
-    "tiers": [
-        {
-            "agent_uuid": "2066dab4-279f-4c6e-88a8-cf82b9ffd1ce",
-            "tier_level": 1,
-            "tier_position": 1
-        }
-    ]
+ "day" : "2021-09-27 11:30:17.067"
 }
 

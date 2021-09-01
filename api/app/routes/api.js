@@ -42,9 +42,8 @@ pausestatusController = require('../controllers/pausestatus.controller')
 didsController = require('../controllers/did.controller')
 audiosController = require('../controllers/audio.controller')
 agent_log_eventsController = require('../controllers/agent_log_events.controller')
+meetingsController = require('../controllers/meeting.controller')
 
-
-//                         ====> don't forget to re-add : passport.authenticate('jwt', {session: false}) <=====
 
 let apiRouters = function (passport) {
   // Generic routers
@@ -209,11 +208,19 @@ let apiRouters = function (passport) {
     router.post("/api/audio/save",passport.authenticate('jwt', {session: false}), audiosController.save);
 
     // agent_log_events routers
-    router.post("/api/agent_log_event/find", agent_log_eventsController.find);
-    router.get("/api/agent_log_event/findById/:entity_id", agent_log_eventsController.findById);
-    router.put("/api/agent_log_event/update", agent_log_eventsController.update);
-    router.delete("/api/agent_log_event/delete/:params", agent_log_eventsController.delete);
-    router.post("/api/agent_log_event/save", agent_log_eventsController.save);
+    router.post("/api/agent_log_event/find",passport.authenticate('jwt', {session: false}), agent_log_eventsController.find);
+    router.get("/api/agent_log_event/findById/:entity_id",passport.authenticate('jwt', {session: false}), agent_log_eventsController.findById);
+    router.put("/api/agent_log_event/update",passport.authenticate('jwt', {session: false}), agent_log_eventsController.update);
+    router.delete("/api/agent_log_event/delete/:params",passport.authenticate('jwt', {session: false}), agent_log_eventsController.delete);
+    router.post("/api/agent_log_event/save",passport.authenticate('jwt', {session: false}), agent_log_eventsController.save);
+
+    // meetings routes
+    router.post("/api/meeting/find",passport.authenticate('jwt', {session: false}), meetingsController.find);
+    router.get("/api/meeting/findById/:entity_id",passport.authenticate('jwt', {session: false}), meetingsController.findById);
+    router.put("/api/meeting/update",passport.authenticate('jwt', {session: false}), meetingsController.update);
+    router.delete("/api/meeting/delete/:params",passport.authenticate('jwt', {session: false}), meetingsController.delete);
+    router.post("/api/meeting/save",passport.authenticate('jwt', {session: false}), meetingsController.save);
+    router.post("/api/meeting/getAvailableSales", meetingsController.getAvailableSales);
 
   return router;
 };
