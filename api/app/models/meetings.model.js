@@ -33,7 +33,11 @@ module.exports = (sequelize, Sequelize) => {
                 allowNull: true,
                 type: Sequelize.DATE
             },
-            hour: {
+            started_at: {
+                allowNull: true,
+                type: Sequelize.DATE
+            },
+            finished_at: {
                 allowNull: true,
                 type: Sequelize.DATE
             },
@@ -60,7 +64,8 @@ module.exports = (sequelize, Sequelize) => {
         'account_id',
         "active",
         "date",
-        "hour",
+        "started_at",
+        "finished_at",
         'address',
         'created_at',
         'updated_at'
@@ -77,13 +82,9 @@ module.exports = (sequelize, Sequelize) => {
         'created_at',
         'updated_at',
         "date",
-        "hour"
+        "started_at",
+        "finished_at"
         ]
-        ,
-        meeting.associate = function (models) {
-            meeting.belongsTo(models.campaigns, {
-                foreignKey: 'campaign_id'
-            });
-        };
+
     return meeting
 }
