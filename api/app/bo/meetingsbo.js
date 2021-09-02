@@ -2,6 +2,8 @@ const { baseModelbo } = require("./basebo");
 let sequelize = require("sequelize");
 let db = require("../models");
 let moment = require("moment");
+const tz = require(__dirname + '/../config/config.json')["tz"];
+
 
 class meetings extends baseModelbo {
   constructor() {
@@ -109,7 +111,44 @@ class meetings extends baseModelbo {
         let messages = "Cannot fetch data from database";
         this.sendResponseError(res, messages, err, (status = 500));
       });
-  }
+    }
+
+    saveMeetings(req, res, next) {
+        console.log(req.body.sales_id)
+        let sales_id = req.body.sales_id
+        let started_at = req.body.started_at
+        this.db["users"]
+        .find({
+          where: {
+            active: "Y",
+            user_id: sales_id,
+          },
+        })
+        .then(result =>             
+            {   
+                let updated_event = result;
+                let duration = result.params.availability.duration ;
+                let interval = result.params.availability.interval;
+                let totalTime = +duration + +interval;
+                let finished_at = moment.tz(started_at, tz).add(totalTime, 'minutes')
+                
+                updated_event.finished_at = finished_at
+                this.save(updated_event)
+
+            return (res.send({
+            message: "Success",
+            success: true,
+            result: {
+                started_at:started_at,
+                finished_at : finished_at,
+                totalTime : totalTime
+            },
+          }))
+        })
+    }
+
+
+
 }
 
 module.exports = meetings;
