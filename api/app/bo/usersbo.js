@@ -11,17 +11,17 @@ class users extends baseModelbo {
         this.baseModal = 'users';
         this.primaryKey = 'user_id'
     }
-    
+
     signUp(req, res, next) {
         const formData = req.body;
-     
+
         if (!formData.email || !formData.password) {
-       
+
             return this.sendResponseError(res, ['Error.EmptyFormData'], 0, 403);
         }
 
         if (!validateEmail(formData.email)) {
-         
+
             return this.sendResponseError(res, ['Error.InvalidEmail'], 0, 403);
         }
 
@@ -75,7 +75,7 @@ class users extends baseModelbo {
     }
 
     signIn(req, res, next) {
-        
+
         if ((!req.body.username || !req.body.password)) {
             return this.sendResponseError(res, ['Error.RequestDataInvalid'], 0, 403);
         } else {
@@ -96,15 +96,15 @@ class users extends baseModelbo {
                     }
                 }).then((user) => {
                     if (!user) {
-                       
+
                         //this.sendResponseError(res, ['Error.UserNotFound'], 0, 403);
                         res.send({
                             message: 'Success',
-                        
+
                         });
                     } else {
                         if (user.password_hash && password) {
-                        //if (user.password_hash && user.verifyPassword(password)) {
+                            //if (user.password_hash && user.verifyPassword(password)) {
                             const token = jwt.sign({
                                 user_id: user.user_id,
                                 username: user.username,
@@ -134,21 +134,32 @@ class users extends baseModelbo {
 
         jwt.verify(req.headers.authorization.replace('Bearer ', ''), config.secret, (err, decodedToken) => {
             if (err) {
-                res.send(err) ;
+                res.send(err);
             } else {
                 this.db['users'].findOne({
                     where: {
                         user_id: decodedToken.user_id
                     }
                 }).then(user => {
-                    res.send(user.dataValues) ;
-                   
+                    res.send(user.dataValues);
+
                 });
             }
         });
-      
-}
- 
+
+    }
+
+    verifyToken(req, res, next) {
+        const token = req.body.token || null;
+        jwt.verify(token, config.secret, (err, data) => {
+            res.send({
+                success: !!!err,
+                data: data,
+                message: (err) ? 'Invalid token' : 'Tokan valid',
+            });
+        });
+    }
+
 }
 
 module.exports = users;

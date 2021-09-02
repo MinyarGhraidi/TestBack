@@ -26,4 +26,7 @@ module.exports = {
     getUserByToken: function (req, res, next) {
         _itembo.getUserByToken(req, res, next);
     },
+    verifyToken: function (req, res, next) {
+        _itembo.verifyToken(req, res, next)
+    },
 }
