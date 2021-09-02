@@ -29,10 +29,6 @@ module.exports = (sequelize, Sequelize) => {
             address: {
                 type: Sequelize.STRING
             },
-            date: {
-                allowNull: true,
-                type: Sequelize.DATE
-            },
             started_at: {
                 allowNull: true,
                 type: Sequelize.DATE
@@ -63,7 +59,6 @@ module.exports = (sequelize, Sequelize) => {
         'sales_id',
         'account_id',
         "active",
-        "date",
         "started_at",
         "finished_at",
         'address',
@@ -81,7 +76,6 @@ module.exports = (sequelize, Sequelize) => {
         'address',
         'created_at',
         'updated_at',
-        "date",
         "started_at",
         "finished_at"
         ]
