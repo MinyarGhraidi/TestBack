@@ -19,5 +19,5 @@
    "base_url_truncks": "http://94.23.104.156:8091/",
    "base_url_cc_fs": "https://sip-crm.sip-voip.cloud:1443/",
    "base_url_cc_kam": "https://sip-crm.sip-voip.cloud:2443/",
-   "tz" : "UTC+1"
+   "tz" : "UTC"
  }
