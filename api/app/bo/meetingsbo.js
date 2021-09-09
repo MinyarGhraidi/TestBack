@@ -17,8 +17,7 @@ class meetings extends baseModelbo {
     let meeting_started_at = moment(day).format('HH:mm:ss');
     let startWorkHour = moment(first_day[0]).format('HH:mm:ss');
     let workOff_hour = moment(last_day[0]).format('HH:mm:ss');
-
-    if (moment(day).isBetween(first_day, last_day[0])) {
+    if (moment(day).isBetween(first_day[0], last_day[0])) {
       if(availableDays.includes(dayName)) {
           return (moment(meeting_started_at, 'HH:mm:ss').isBetween(moment(startWorkHour, 'HH:mm:ss'), moment(workOff_hour, 'HH:mm:ss')) 
           && moment(finished_at,'HH:mm:ss').isBetween(moment(startWorkHour,'HH:mm:ss'), moment(workOff_hour,'HH:mm:ss')))
@@ -37,9 +36,6 @@ class meetings extends baseModelbo {
            meetings.forEach((meeting)=> {
                let meeting_start = meeting?.started_at;
                let meeting_end = meeting?.finished_at;
-               let before = moment(meeting_start);
-               let after = moment(meeting_end);
-console.log(day, finished_at, meeting_start, meeting_end)
                if (moment(day).isBetween(moment(meeting_start), moment(meeting_end)) 
                || moment(finished_at).isBetween(moment(meeting_start), moment(meeting_end))) {
                    resolve(false)
@@ -54,26 +50,6 @@ console.log(day, finished_at, meeting_start, meeting_end)
     })
     
   }
-
-
-//   else {
-//     meetings.forEach((meeting)=> {
-//         let meeting_start = meeting?.started_at;
-//         let meeting_end = meeting?.finished_at;
-//         let before = moment(meeting_start).format('HH:mm:ss');
-//         let after = moment(meeting_end).format('HH:mm:ss');
-
-//         if (moment(started_at, 'HH:mm:ss').isBetween(moment(before, 'HH:mm:ss'), moment(after, 'HH:mm:ss')) 
-//         || moment(finished_at, 'HH:mm:ss').isBetween(moment(before, 'HH:mm:ss'), moment(after, 'HH:mm:ss'))) {
-//             resolve(false)
-//         } else {
-//             if(index<meetings.length-1){
-//                 index++
-//             }
-//             else resolve(true)
-//         }
-//     })
-// }
 
   getData(sales, day, finished_at) {
     return new Promise((resolve, reject) => {
@@ -95,12 +71,10 @@ console.log(day, finished_at, meeting_start, meeting_end)
   }
 
   getAvailableSales(req, res, next) {
-  
-    let day  = req.body?.day || Object.keys(req.body)[0];
-
-    let finished_ = req.body?.finished_at || "";
-    let finished_at = "";
-    let availableSales = [];
+      let day  = req.body?.day || Object.keys(req.body)[0];
+      let finished_ = req.body?.finished_at || "";
+      let finished_at = "";
+      let availableSales = [];
 
     const { Op } = db.sequelize;
     this.db["users"]
@@ -113,12 +87,13 @@ console.log(day, finished_at, meeting_start, meeting_end)
       .then((result) => {
         let _this = this;
         let indexCallFile = 0;
-        if (result) {
+        if (result && result.length !== 0) {
           let promise = new Promise(function (resolve, reject) {
               result.forEach((sale) => { 
                 let duration = sale?.params?.availability?.duration
                  finished_at = finished_ || moment(day).add(+duration, 'minutes');
                  _this.getData(sale, day, finished_at.format('HH:mm:ss')).then((availableSale) => {
+                     
                      if (availableSale) { 
                         _this.db["meetings"]
                         .findAll({
@@ -129,7 +104,7 @@ console.log(day, finished_at, meeting_start, meeting_end)
                         })
                         .then((meetings) => {
                             _this.isAvailableHour(day,  finished_at, meetings).then(data_meetings => {
-                               
+                                   
                                 if(data_meetings){
                                     availableSale.meetings = meetings;
                                     availableSales = [...availableSales, availableSale];
@@ -149,21 +124,31 @@ console.log(day, finished_at, meeting_start, meeting_end)
                       
 
                     })
+                } else {
+                    if (indexCallFile < result.length - 1 ) {
+                        indexCallFile++;
+                    } else {
+                        resolve(availableSales);
+                    }
                 }
               }).catch((err) => {
                 let res = [];
                 let messages = "Cannot fetch data from database Meetings";
                 this.sendResponseError(res, messages, err, (status = 500));
               }); ;
-            });
+            });  
           });
           Promise.all([promise]).then((availableSales) => {
-            //   console.log(availableSales[0])
             res.send({
               message: "Success",
               success: true,
               result: availableSales[0],
             });
+          })
+          .catch(err => {
+            let res = [];
+            let messages = "Cannot fetch data from database";
+            this.sendResponseError(res, messages, err, (status = 500));
           });
         } else {
           res.send({
