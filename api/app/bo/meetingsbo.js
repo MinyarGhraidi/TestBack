@@ -83,7 +83,7 @@ class meetings extends baseModelbo {
           active: "Y",
           user_type: "sales",
         },
-      })
+      }) 
       .then((result) => {
         let _this = this;
         let indexCallFile = 0;
@@ -93,7 +93,7 @@ class meetings extends baseModelbo {
                 let duration = sale?.params?.availability?.duration
                  finished_at = finished_ || moment(day).add(+duration, 'minutes');
                  _this.getData(sale, day, finished_at.format('HH:mm:ss')).then((availableSale) => {
-                     
+
                      if (availableSale) { 
                         _this.db["meetings"]
                         .findAll({
@@ -121,8 +121,6 @@ class meetings extends baseModelbo {
                           let messages = "Cannot fetch data from database Meetings";
                           this.sendResponseError(res, messages, err, (status = 500));
                         }); 
-                      
-
                     })
                 } else {
                     if (indexCallFile < result.length - 1 ) {

@@ -84,6 +84,12 @@ module.exports = (sequelize, Sequelize) => {
         "finished_at",
         'color' 
         ]
+        // ,
+        // meeting.associate = function (models) {
+        //     meeting.belongsTo(models.users, {
+        //         foreignKey: 'user_id'
+        //     });
+        // };
 
     return meeting
 }
