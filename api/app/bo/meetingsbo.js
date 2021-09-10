@@ -99,7 +99,7 @@ class meetings extends baseModelbo {
                         .findAll({
                           where: {
                             active: "Y",
-                            sales_id: availableSale.user_id,
+                            user_id: availableSale.user_id,
                           },
                         })
                         .then((meetings) => {
@@ -142,7 +142,7 @@ class meetings extends baseModelbo {
               success: true,
               result: availableSales[0],
             });
-          })
+          }) 
           .catch(err => {
             let res = [];
             let messages = "Cannot fetch data from database";
@@ -165,7 +165,7 @@ class meetings extends baseModelbo {
 
     saveMeetings(req, res, next) {
 
-        let sales_id = req.body.sales_id
+        let sales_id = req.body.user_id
         let started_at = req.body.started_at
         let finished_at = req.body.finished_at
 

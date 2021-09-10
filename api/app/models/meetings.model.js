@@ -15,7 +15,7 @@ module.exports = (sequelize, Sequelize) => {
             agent_id: {
                 type: Sequelize.INTEGER
             },
-            sales_id: {
+            user_id: {
                 type: Sequelize.INTEGER
             },
             account_id: {
@@ -59,7 +59,7 @@ module.exports = (sequelize, Sequelize) => {
         'name',
         'description',
         'agent_id',
-        'sales_id',
+        'user_id',
         'account_id',
         "active",
         "started_at",
@@ -74,7 +74,7 @@ module.exports = (sequelize, Sequelize) => {
         'name',
         'description',
         'agent_id',
-        'sales_id',
+        'user_id',
         'account_id',
         "active",
         'address',
@@ -84,12 +84,12 @@ module.exports = (sequelize, Sequelize) => {
         "finished_at",
         'color' 
         ]
-        // ,
-        // meeting.associate = function (models) {
-        //     meeting.belongsTo(models.users, {
-        //         foreignKey: 'user_id'
-        //     });
-        // };
+        ,
+        meeting.associate = function (models) {
+            meeting.belongsTo(models.users, {
+                foreignKey: 'user_id'
+            });
+        };
 
     return meeting
 }
