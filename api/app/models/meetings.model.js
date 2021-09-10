@@ -29,9 +29,6 @@ module.exports = (sequelize, Sequelize) => {
             address: {
                 type: Sequelize.STRING
             },
-            color: {
-                type: Sequelize.STRING
-            },
             started_at: {
                 allowNull: true,
                 type: Sequelize.DATE
@@ -66,8 +63,7 @@ module.exports = (sequelize, Sequelize) => {
         "finished_at",
         'address',
         'created_at',
-        'updated_at',
-        'color'
+        'updated_at'
     ],
     meeting.prototype.fieldsSearchMetas = [
         'did_id',
@@ -81,8 +77,7 @@ module.exports = (sequelize, Sequelize) => {
         'created_at',
         'updated_at',
         "started_at",
-        "finished_at",
-        'color' 
+        "finished_at"
         ]
         ,
         meeting.associate = function (models) {
