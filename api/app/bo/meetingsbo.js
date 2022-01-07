@@ -22,14 +22,14 @@ class meetings extends baseModelbo {
   getData(sales, day) {
     return new Promise((resolve, reject) => {
       let sales_json = sales.toJSON();
-      let first_day = sales_json?.params?.availability?.first_day;
-      let last_day = sales_json?.params?.availability?.last_day;
+      let first_day = sales_json.params.availability.first_day;
+      let last_day = sales_json.params.availability.last_day;
       if (
         this.isAvailableDay(
           day,
           first_day,
           last_day,
-          sales_json?.params?.availability?.days
+          sales_json.params.availability.days
         )
       )
         resolve(sales_json);
