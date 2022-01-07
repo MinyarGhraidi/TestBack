@@ -1,6 +1,6 @@
- {
+{
   "development": {
-    "host": "5.196.63.217",
+    "host": "188.165.157.213",
     "username": "oxilog",
     "password": "oxilog",
     "database": "oxilog-crm-app",
@@ -13,11 +13,12 @@
       "idle": 100000
     }
   },
-   "secret": "'BL#,miQFau,amA!?FFW@oKO3<_<E-j-]PVO65d!c%|V2h{(3#~~*$8{X<H}BVm",
-   "call_center_token": "Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9cIi2IY5",
-   "dialer_token": "Bearer LucH6JQhHjpXVhP8K6buVmGFrrYrQ9jR56Zx5Ftcq2X93fXcxRfFwrQU2Ka7J8Mr",
-   "base_url_truncks": "http://94.23.104.156:8091/",
-   "base_url_cc_fs": "https://sip-crm.sip-voip.cloud:1443/",
-   "base_url_cc_kam": "https://sip-crm.sip-voip.cloud:2443/",
-   "tz" : "UTC+1"
- }
+  "secret": "'BL#,miQFau,amA!?FFW@oKO3<_<E-j-]PVO65d!c%|V2h{(3#~~*$8{X<H}BVm",
+  "call_center_token": "Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9cIi2IY5",
+  "dialer_token": "Bearer LucH6JQhHjpXVhP8K6buVmGFrrYrQ9jR56Zx5Ftcq2X93fXcxRfFwrQU2Ka7J8Mr",
+  "base_url_truncks": "http://94.23.104.156:8091/",
+  "base_url_cc_fs": "https://sip-crm.sip-voip.cloud:1443/",
+  "base_url_cc_kam": "https://sip-crm.sip-voip.cloud:2443/",
+  "tz" : "UTC+1"
+}
+
