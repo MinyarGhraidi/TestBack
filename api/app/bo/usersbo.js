@@ -4,6 +4,9 @@ let db = require('../models');
 const {validateEmail} = require("../helpers/helpers");
 const config = require('../config/config.json');
 const jwt = require('jsonwebtoken');
+const salt = require("../config/config.json")["salt"]
+const bcrypt = require("bcrypt");
+const {appSecret} = require("../helpers/app");
 
 class users extends baseModelbo {
     constructor() {
@@ -11,6 +14,192 @@ class users extends baseModelbo {
         this.baseModal = 'users';
         this.primaryKey = 'user_id'
     }
+
+    switchToNewAccount(req, res, next) {
+        let _this = this;
+        if ((!req.body.username)) {
+            return _this.sendResponseError(res, ['Error.RequestDataInvalid'], 0, 403);
+        } else {
+            const {username} = req.body;
+            if (username) {
+                this.db['users'].findOne({
+                    where: {
+                        username: username,
+                        active: 'Y'
+                    }
+                }).then((user) => {
+                    if (!user) {
+                        _this.sendResponseError(res, ['Error.UserNotFound'], 0, 403);
+                    } else {
+
+                        // this.db['has_permissions'].findAll({
+                        //     include: [{
+                        //         model: db.permissions,
+                        //         as: 'permission',
+                        //     }],
+                        //     where: {
+                        //         role_id: user.role_id,
+                        //     }
+                        // }).then(function (permissions) {
+                        //     _this.getPermissionsValues(permissions).then(data_perm => {
+                        const token = jwt.sign({
+                                user_id: user.user_id,
+                                username: user.username
+                            },
+                            appSecret, {
+                                expiresIn: '8600m'
+                            });
+
+                        res.send({
+                            message: 'Success',
+                            user: user.toJSON(),
+                            // permissions: data_perm || [],
+                            token: token,
+                            result: 1,
+                            success: true,
+                        });
+                        //     })
+                        // })
+
+                    }
+                }).catch((error) => {
+                    return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', error], 1, 403);
+                });
+            }
+        }
+    }
+
+    signIn(req, res, next) {
+        let _this = this;
+        if ((!req.body.username || !req.body.password)) {
+            return _this.sendResponseError(res, ['Error.RequestDataInvalid'], 0, 403);
+        } else {
+            const {username, password} = req.body;
+            if (username && password) {
+                this.db['users'].findOne({
+                    where: {
+                        username: username,
+                        active: 'Y'
+                    }
+                }).then((user) => {
+                    if (!user) {
+                        _this.sendResponseError(res, ['Error.UserNotFound'], 0, 403);
+                    } else {
+                        let password_hashed = user.password_hash;
+                        bcrypt.compare(password, password_hashed)
+                            .then(validPassword => {
+                                if (validPassword) {
+                                    // this.db['has_permissions'].findAll({
+                                    //     include: [{
+                                    //         model: db.permissions,
+                                    //         as: 'permission',
+                                    //     }],
+                                    //     where: {
+                                    //         role_id: user.role_id,
+                                    //     }
+                                    // }).then(function (permissions) {
+                                    //     _this.getPermissionsValues(permissions).then(data_perm => {
+                                    const token = jwt.sign({
+                                            user_id: user.user_id,
+                                            username: user.username
+                                        },
+                                        appSecret, {
+                                            expiresIn: '8600m'
+                                        });
+
+                                    res.send({
+                                        message: 'Success',
+                                        user: user.toJSON(),
+                                        // permissions: data_perm || [],
+                                        token: token,
+                                        result: 1,
+                                        success: true,
+                                    });
+                                    //     })
+                                    // })
+
+                                } else {
+                                    _this.sendResponseError(res, ['Error.InvalidPassword'], 2, 403);
+                                }
+                            })
+                            .catch((error) => {
+                                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', error], 1, 403);
+                            });
+                    }
+                }).catch((error) => {
+                    return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', error], 1, 403);
+                });
+            }
+        }
+    }
+
+    getPermissionsValues = (permissions) => {
+        return new Promise((resolve, reject) => {
+            if (permissions && permissions.length !== 0) {
+                let permissions_values = [];
+                let index = 0;
+                permissions.forEach(item_perm => {
+                    permissions_values.push(item_perm.permission.value);
+                    if (index < permissions.length - 1) {
+                        index++
+                    } else {
+                        resolve(permissions_values);
+                    }
+                })
+            } else {
+                resolve([]);
+            }
+        })
+    }
+
+    async saveUser(req, res, next) {
+        let newAccount = req.body;
+        let _this = this;
+        if (newAccount.password_hash) {
+            const hashed_password = await bcrypt.hash(newAccount.password_hash, salt)
+            newAccount.password_hash = hashed_password;
+        }
+        if (newAccount.user_id) {
+            db['users'].update(newAccount, {where: {user_id: newAccount.user_id}})
+                .then((user) => {
+                    res.send({
+                        message: 'success',
+                        data: user
+                    })
+                })
+                .catch(err => {
+                    return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                })
+        } else {
+            let modalObj = this.db['users'].build(newAccount);
+            modalObj.save()
+                .then((user) => {
+                    res.send({
+                        message: 'success',
+                        data: user
+                    })
+                })
+                .catch(err => {
+                    return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                })
+        }
+    }
+
+    validPassword(req, res, next) {
+        let _this = this;
+        let {password_hashed, password_to_validate} = req.body;
+        bcrypt.compare(password_to_validate, password_hashed)
+            .then(validPassword => {
+                res.send({
+                    message: 'success',
+                    data: validPassword
+                })
+            })
+            .catch((error) => {
+                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', error], 1, 403);
+            });
+    }
+
 
     signUp(req, res, next) {
         const formData = req.body;
@@ -74,61 +263,6 @@ class users extends baseModelbo {
         });
     }
 
-    signIn(req, res, next) {
-
-        if ((!req.body.username || !req.body.password)) {
-            return this.sendResponseError(res, ['Error.RequestDataInvalid'], 0, 403);
-        } else {
-            const {username, password} = req.body;
-            if (username && password) {
-                this.db['users'].findOne({
-                    // include: [{
-                    //     model: db.roles,
-                    //     as: 'role',
-                    // },
-                    //     {
-                    //         model: db.accounts,
-                    //         as: 'account',
-                    //     }],
-                    where: {
-                        username: username,
-                        active: 'Y'
-                    }
-                }).then((user) => {
-                    if (!user) {
-
-                        //this.sendResponseError(res, ['Error.UserNotFound'], 0, 403);
-                        res.send({
-                            message: 'Success',
-
-                        });
-                    } else {
-                        if (user.password_hash && password) {
-                            //if (user.password_hash && user.verifyPassword(password)) {
-                            const token = jwt.sign({
-                                user_id: user.user_id,
-                                username: user.username,
-                            }, config.secret, {
-                                expiresIn: '8600m'
-                            });
-                            res.send({
-                                message: 'Success',
-                                user: user.toJSON(),
-                                success: true,
-                                token: token,
-                                result: 1,
-                            });
-
-                        } else {
-                            this.sendResponseError(res, ['Error.InvalidPassword'], 2, 403);
-                        }
-                    }
-                }).catch((error) => {
-                    return this.sendResponseError(res, ['Error.AnErrorHasOccuredUser'], 1, 403);
-                });
-            }
-        }
-    }
 
     getUserByToken(req, res, next) {
 

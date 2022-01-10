@@ -29,4 +29,13 @@ module.exports = {
     verifyToken: function (req, res, next) {
         _itembo.verifyToken(req, res, next)
     },
+    saveUser: function (req, res, next) {
+        _itembo.saveUser(req, res, next)
+    },
+    validPassword: function (req, res, next) {
+        _itembo.validPassword(req, res, next)
+    },
+    switchToNewAccount: function (req, res, next) {
+        _itembo.switchToNewAccount(req, res, next)
+    },
 }
