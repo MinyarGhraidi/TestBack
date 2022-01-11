@@ -46,7 +46,7 @@ meetingsController = require('../controllers/meeting.controller')
 
 
 let apiRouters = function (passport) {
-<<<<<<< HEAD
+
     // Generic routers
     router.get(
         "/api/generateTokenForUser",
