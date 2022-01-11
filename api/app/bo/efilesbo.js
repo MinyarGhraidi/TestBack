@@ -1,12 +1,12 @@
 const {baseModelbo} = require('./basebo');
 let sequelize = require('sequelize');
 let db = require('../models');
-const { appDir } = require("../helpers/app");
+const {appDir} = require("../helpers/app");
 const EFile = db.efiles;
 const mime = require('mime');
 const path = require('path');
 const fs = require('fs')
-const csv=require('csvtojson')
+const csv = require('csvtojson')
 
 class efiles extends baseModelbo {
     constructor() {
@@ -14,11 +14,11 @@ class efiles extends baseModelbo {
         this.baseModal = "efiles";
         this.primaryKey = 'file_id';
     }
+
     upload(req, res, next) {
-        console.log('upload',req.file)
         if (!req.file) {
-            return res.json({msg:'File not exists' });
-            
+            return res.json({msg: 'File not exists'});
+
         } else {
             EFile.create({
                 file_title: req.query.category,
@@ -34,9 +34,9 @@ class efiles extends baseModelbo {
                 if (row.file_id) {
                     let extension = req.file.originalname.split('.').pop()
                     const new_file_name = 'efile-' + row.file_id + '.' + extension;
-                    let dirType ="callfiles"
-                    if(extension =="mp3" || extension =="wav") {
-                       dirType ="audios"
+                    let dirType = "callfiles"
+                    if (extension === "mp3" || extension === "wav") {
+                        dirType = "audios"
                     }
                     const file_uri = '/public/upload/' + dirType + "/" + new_file_name;
 
@@ -92,31 +92,37 @@ class efiles extends baseModelbo {
     getListCallFiles(req, res, next) {
         let result = [];
         if (parseInt(req.params.file_id)) {
-           
+
             EFile.findById(req.params.file_id).then(efile => {
-               
+
                 if (efile) {
                     let path = appDir + '/app/resources/efiles' + efile.uri
-                    
-                    if(efile.file_extension=='csv')
-                    {
-                        console.log(efile);
+
+                    if (efile.file_extension === 'csv' || efile.file_extension === 'xls') {
                         if (fs.existsSync(path)) {
                             csv({
-                                noheader:true,
-                                delimiter:[',',';']
+                                noheader: true,
+                                delimiter: [',', ';']
                             })
-                            .fromFile(path)
-                            .then((jsonObj)=>{
-                                result = jsonObj;
-                                res.send(result);
-                            })
+                                .fromFile(path)
+                                .then((jsonObj) => {
+                                    result = jsonObj;
+                                    res.send(result);
+                                })
                         }
                     }
-                } 
+                } else {
+                    res.send({
+                        status: 200,
+                        success: true,
+                        messages: ({
+                            internal_message: 'file not exist'
+                        })
+                    })
+                }
             });
         }
-        
+
     }
 }
 

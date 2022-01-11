@@ -1,4 +1,4 @@
-const { baseModelbo } = require("./basebo");
+const {baseModelbo} = require("./basebo");
 let sequelize = require("sequelize");
 let db = require("../models");
 let moment = require("moment");
@@ -58,7 +58,6 @@ class meetings extends baseModelbo {
 
     getAvailableSales(req, res, next) {
         let { day } = req.body;
-
         const { Op } = db.sequelize;
         this.db["users"]
             .findAll({

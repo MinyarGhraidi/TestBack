@@ -46,6 +46,7 @@ meetingsController = require('../controllers/meeting.controller')
 
 
 let apiRouters = function (passport) {
+<<<<<<< HEAD
     // Generic routers
     router.get(
         "/api/generateTokenForUser",
@@ -155,7 +156,6 @@ let apiRouters = function (passport) {
     router.delete("/api/pausestatus/delete/:params", passport.authenticate('jwt', {session: false}), pausestatusController.delete);
     router.post("/api/pausestatus/save", passport.authenticate('jwt', {session: false}), pausestatusController.save);
     router.post("/api/pausestatus/findByCampaignId", passport.authenticate('jwt', {session: false}), pausestatusController.findByCampaignId);
-
 
     // callfiles routers
     router.post("/api/callfile/find", passport.authenticate('jwt', {session: false}), callfileController.find);

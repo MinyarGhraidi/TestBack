@@ -363,11 +363,8 @@ class baseModelbo {
     find(req, res, next) {
         this.setRequest(req);
         this.setResponse(res);
-
         let modalObj = this.db[this.baseModal].build();
-
         let params = req.body;
-      
         this.setRequestParams(params);
 
         const defaultParams = {
