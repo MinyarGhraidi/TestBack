@@ -48,4 +48,14 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2MjQ3OTU2M
 {
  "day" : "2021-09-27 11:30:17.067"
 }
+###
+
+POST http://localhost:3001/api/meeting/saveMeetings
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2MjQ3OTU2MTQsImV4cCI6MTYyNTMxMTYxNH0.jVgiO2CA-vVXlT3fkGZyFUtRPytSoqm7YU03IduLB8g
+
+{
+     "sales_id" : 112,
+     "started_at" : "2021-09-27T10:30:17.067"
+}
 
