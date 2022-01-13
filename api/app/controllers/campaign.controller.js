@@ -19,4 +19,13 @@ module.exports = {
     delete: function (req, res, next) {
         _itembo.delete(req, res, next);
     },
+    saveInbound: function (req, res, next) {
+        _itembo.saveInbound(req, res, next);
+    },
+    updateInbound: function (req, res, next) {
+        _itembo.updateInbound(req, res, next);
+    },
+    cloneCampaign: function (req, res, next) {
+        _itembo.cloneCampaign(req, res, next);
+    },
 };

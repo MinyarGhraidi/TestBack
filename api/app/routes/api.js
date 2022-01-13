@@ -73,6 +73,9 @@ let apiRouters = function (passport) {
     router.put("/api/campaign/update", passport.authenticate('jwt', {session: false}), campaignController.update);
     router.delete("/api/campaign/delete/:params", passport.authenticate('jwt', {session: false}), campaignController.delete);
     router.post("/api/campaign/save", passport.authenticate('jwt', {session: false}), campaignController.save);
+    router.post("/api/campaign/saveInbound", passport.authenticate('jwt', {session: false}), campaignController.saveInbound);
+    router.post("/api/campaign/updateInbound", passport.authenticate('jwt', {session: false}), campaignController.updateInbound);
+    router.post("/api/campaign/cloneCampaign", passport.authenticate('jwt', {session: false}), campaignController.cloneCampaign);
 
     //role routers
     router.post("/api/role/find/:params?", passport.authenticate('jwt', {session: false}), rolesController.find);
