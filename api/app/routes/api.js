@@ -107,6 +107,8 @@ let apiRouters = function (passport) {
     router.put("/api/agent/update", passport.authenticate('jwt', {session: false}), agentsController.update);
     router.delete("/api/agent/delete/:params", passport.authenticate('jwt', {session: false}), agentsController.delete);
     router.post("/api/agent/save", passport.authenticate('jwt', {session: false}), agentsController.save);
+    router.post("/api/agent/saveAgent", passport.authenticate('jwt', {session: false}), agentsController.saveAgent);
+    router.post("/api/agent/updateAgent", passport.authenticate('jwt', {session: false}), agentsController.updateAgent);
 
     router.post("/api/signup", agentsController.signUp);
     router.post("/api/signin", agentsController.signIn);
@@ -150,7 +152,6 @@ let apiRouters = function (passport) {
     router.put("/api/callstatus/update", passport.authenticate('jwt', {session: false}), callstatusController.update);
     router.delete("/api/callstatus/delete/:params", passport.authenticate('jwt', {session: false}), callstatusController.delete);
     router.post("/api/callstatus/save", passport.authenticate('jwt', {session: false}), callstatusController.save);
-    router.post("/api/callstatus/findByCampaignId", passport.authenticate('jwt', {session: false}), callstatusController.findByCampaignId);
 
     //pausestatus routers
     router.post("/api/pausestatus/find/:params?", passport.authenticate('jwt', {session: false}), pausestatusController.find);

@@ -152,37 +152,47 @@ class users extends baseModelbo {
         })
     }
 
-    async saveUser(req, res, next) {
+    saveUser(req, res, next) {
+        let _this = this;
         let newAccount = req.body;
+        this.saveUserFunction(newAccount)
+            .then((user) => {
+                res.send({
+                    message: 'success',
+                    data: user
+                })
+            })
+            .catch( err => {
+                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+            })
+    }
+
+    async saveUserFunction(newAccount) {
         let _this = this;
         if (newAccount.password_hash) {
             const hashed_password = await bcrypt.hash(newAccount.password_hash, salt)
             newAccount.password_hash = hashed_password;
         }
-        if (newAccount.user_id) {
-            db['users'].update(newAccount, {where: {user_id: newAccount.user_id}})
-                .then((user) => {
-                    res.send({
-                        message: 'success',
-                        data: user
+        return new Promise((resolve, reject) => {
+            if (newAccount.user_id) {
+                db['users'].update(newAccount, {where: {user_id: newAccount.user_id}})
+                    .then(user => {
+                        resolve(user)
                     })
-                })
-                .catch(err => {
-                    return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
-                })
-        } else {
-            let modalObj = this.db['users'].build(newAccount);
-            modalObj.save()
-                .then((user) => {
-                    res.send({
-                        message: 'success',
-                        data: user
+                    .catch(err => {
+                        reject(err)
                     })
-                })
-                .catch(err => {
-                    return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
-                })
-        }
+            } else {
+                let modalObj = this.db['users'].build(newAccount);
+                modalObj.save()
+                    .then(user => {
+                        resolve(user)
+                    })
+                    .catch(err => {
+                        reject(err)
+                    })
+            }
+        })
     }
 
     validPassword(req, res, next) {
