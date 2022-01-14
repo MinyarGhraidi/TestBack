@@ -29,4 +29,7 @@ module.exports = {
     updateAgent: function (req, res, next) {
         agentsDaoInst.updateAgent(req, res, next)
     },
+    deleteAgent: function (req, res, next) {
+        agentsDaoInst.deleteAgent(req, res, next)
+    },
 }

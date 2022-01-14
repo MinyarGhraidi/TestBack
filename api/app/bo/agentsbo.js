@@ -221,6 +221,29 @@ class agents extends baseModelbo {
         })
     }
 
+    deleteAgent(req, res, next) {
+        let _this = this;
+        let uuid = req.body.user_uuid;
+        let agent_id = req.body.user_id;
+        axios
+            .delete(`${base_url_cc_kam}api/v1/agents/${uuid}`, call_center_authorization)
+            .then(resp => {
+                this.db['users'].update({active : 'N'}, {where : {user_id : agent_id}})
+                    .then(result => {
+                        res.send({
+                            succes : 200,
+                            message : "Agent has been deleted with success"
+                        })
+                    })
+                    .catch((err) => {
+                        return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                    });
+            })
+            .catch((err) => {
+                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+            });
+    }
+
 
 }
 
