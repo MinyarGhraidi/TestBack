@@ -28,4 +28,7 @@ module.exports = {
     cloneCampaign: function (req, res, next) {
         _itembo.cloneCampaign(req, res, next);
     },
+    addDefaultPauseCallStatus: function (req, res, next) {
+        _itembo.addDefaultPauseCallStatus(req, res, next);
+    },
 };

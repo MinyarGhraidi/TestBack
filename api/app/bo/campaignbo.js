@@ -17,7 +17,6 @@ class campaigns extends baseModelbo {
         this.primaryKey = 'campaign_id';
     }
 
-
     saveInbound(req, res, next) {
         let values = req.body;
         let {queue} = values.params;
@@ -38,73 +37,7 @@ class campaigns extends baseModelbo {
                 let modalObj = this.db['campaigns'].build(values);
                 modalObj.save()
                     .then((response) => {
-
-                        let promise_callStatus = new Promise((resolve, reject) => {
-                            let index_callstatus = 0;
-                            this.getLookupsByType("DEFAULTCALLSTATUS")
-                                .then((data) => {
-                                    if(data && data.length !== 0) {
-                                        data.forEach((el) => {
-                                            let obj = {};
-                                            obj.code = el.key;
-                                            obj.label = el.value.name;
-                                            obj.isDefault = "Y";
-                                            obj.campaign_id = campaign_id;
-                                            let modalObj = this.db['callstatuses'].build(obj)
-                                            modalObj
-                                                .save()
-                                                .then(response => {
-                                                    if (index_callstatus < data.length - 1) {
-                                                        index_callstatus++;
-                                                    } else {
-                                                        resolve(true);
-                                                    }
-                                                })
-                                                .catch((err) => {
-                                                    reject(false)
-                                                });
-                                        });
-                                    } else {
-                                        resolve(true)
-                                    }
-                                })
-                                .catch((err) => {
-                                    reject(false)
-                                });
-                        });
-
-                        let promise_pauseStatus = new Promise((resolve, reject) => {
-                            let index_pausestatus = 0;
-                            this.getLookupsByType("DEFAULTPAUSESTATUS")
-                                .then((data) => {
-                                    if(data && data.length !== 0) {
-                                        data.forEach((el) => {
-                                            let obj = {};
-                                            obj.code = el.key;
-                                            obj.label = el.value.name;
-                                            obj.isDefault = "Y";
-                                            obj.campaign_id = campaign_id;
-                                            let modalObj = this.db['pausestatuses'].build(obj)
-                                            modalObj
-                                                .save()
-                                                .then(result => {
-                                                    if (index_pausestatus < data.length - 1) {
-                                                        index_pausestatus++;
-                                                    } else {
-                                                        resolve(true);
-                                                    }
-                                                })
-                                                .catch((err) => {
-                                                    reject(false);
-                                                });
-                                        });
-                                    } else {
-                                        resolve(true)
-                                    }
-                                });
-                        });
-
-                        Promise.all([promise_callStatus, promise_pauseStatus])
+                        this.addDefaultStatus(campaign_id)
                             .then(response => {
                                 res.send({
                                     status: 200,
@@ -112,16 +45,115 @@ class campaigns extends baseModelbo {
                                 })
                             })
                             .catch(err => {
-                                res.status(500).json(err);
+                                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
                             })
                     })
                     .catch((err) => {
-                        res.status(500).json(err);
+                        return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
                     });
             })
             .catch((err) => {
-                res.status(500).json(err);
+                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
             });
+    }
+
+    addDefaultPauseCallStatus(req, res, next) {
+        let _this = this;
+        let campaign_id = req.body;
+        this.addDefaultStatus(campaign_id)
+            .then(resp => {
+                res.send({
+                    status : 200,
+                    message : "success"
+                })
+            })
+            .catch((err) => {
+                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+            });
+    }
+
+    addDefaultStatus(campaign_id) {
+        return new Promise((resolve, reject) => {
+            this.addDefaultCallStatus(campaign_id)
+                .then(resp => {
+                    this.addDefaultPauseStatus(campaign_id)
+                        .then(result => {
+                            resolve(result);
+                        })
+                })
+                .catch(err => {
+                    reject(err)
+                })
+        })
+    }
+
+    addDefaultCallStatus(campaign_id) {
+        return new Promise((resolve, reject) => {
+            let index_callstatus = 0;
+            this.getLookupsByType("DEFAULTCALLSTATUS")
+                .then((data) => {
+                    if(data && data.length !== 0) {
+                        data.forEach((el) => {
+                            let obj = {};
+                            obj.code = el.key;
+                            obj.label = el.value.name;
+                            obj.isDefault = "Y";
+                            obj.campaign_id = campaign_id;
+                            let modalObj = this.db['callstatuses'].build(obj)
+                            modalObj
+                                .save()
+                                .then(response => {
+                                    if (index_callstatus < data.length - 1) {
+                                        index_callstatus++;
+                                    } else {
+                                        resolve(true);
+                                    }
+                                })
+                                .catch((err) => {
+                                    reject(false)
+                                });
+                        });
+                    } else {
+                        resolve(true)
+                    }
+                })
+                .catch((err) => {
+                    reject(false)
+                });
+        });
+    }
+
+    addDefaultPauseStatus(campaign_id) {
+        return new Promise((resolve, reject) => {
+            let index_pausestatus = 0;
+            this.getLookupsByType("DEFAULTPAUSESTATUS")
+                .then((data) => {
+                    if(data && data.length !== 0) {
+                        data.forEach((el) => {
+                            let obj = {};
+                            obj.code = el.key;
+                            obj.label = el.value.name;
+                            obj.isDefault = "Y";
+                            obj.campaign_id = campaign_id;
+                            let modalObj = this.db['pausestatuses'].build(obj)
+                            modalObj
+                                .save()
+                                .then(result => {
+                                    if (index_pausestatus < data.length - 1) {
+                                        index_pausestatus++;
+                                    } else {
+                                        resolve(true);
+                                    }
+                                })
+                                .catch((err) => {
+                                    reject(false);
+                                });
+                        });
+                    } else {
+                        resolve(true)
+                    }
+                });
+        });
     }
 
     getLookupsByType(type) {
@@ -167,13 +199,13 @@ class campaigns extends baseModelbo {
                             message: "succes"
                         })
                     })
-                    .catch(err => {
-                        res.status(500).json(err);
-                    })
+                    .catch((err) => {
+                        return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                    });
             })
-            .catch(err => {
-                res.status(500).json(err);
-            })
+            .catch((err) => {
+                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+            });
     }
 
     saveCallStatus(list_callstatus, cloned_campaign_id) {
@@ -300,28 +332,28 @@ class campaigns extends baseModelbo {
                                                             })
                                                         })
                                                         .catch((err) => {
-                                                            res.status(500).json(err);
+                                                            return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
                                                         });
                                                 })
                                                 .catch((err) => {
-                                                    res.status(500).json(err);
+                                                    return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
                                                 });
                                         })
                                         .catch((err) => {
-                                            res.status(500).json(err);
+                                            return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
                                         });
                                 })
                                 .catch((err) => {
-                                    res.status(500).json(err);
+                                    return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
                                 });
                         })
                         .catch((err) => {
-                            res.status(500).json(err);
+                            return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
                         });
                 }
             )
             .catch((err) => {
-                res.status(500).json(err);
+                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
             });
     }
 
