@@ -59,7 +59,7 @@ class campaigns extends baseModelbo {
 
     addDefaultPauseCallStatus(req, res, next) {
         let _this = this;
-        let campaign_id = req.body;
+        let campaign_id = req.body.campaign_id;
         this.addDefaultStatus(campaign_id)
             .then(resp => {
                 res.send({
@@ -79,6 +79,9 @@ class campaigns extends baseModelbo {
                     this.addDefaultPauseStatus(campaign_id)
                         .then(result => {
                             resolve(result);
+                        })
+                        .catch(err => {
+                            reject(err)
                         })
                 })
                 .catch(err => {
@@ -110,7 +113,7 @@ class campaigns extends baseModelbo {
                                     }
                                 })
                                 .catch((err) => {
-                                    reject(false)
+                                    reject(err)
                                 });
                         });
                     } else {
@@ -118,7 +121,7 @@ class campaigns extends baseModelbo {
                     }
                 })
                 .catch((err) => {
-                    reject(false)
+                    reject(err)
                 });
         });
     }
@@ -146,12 +149,15 @@ class campaigns extends baseModelbo {
                                     }
                                 })
                                 .catch((err) => {
-                                    reject(false);
+                                    reject(err);
                                 });
                         });
                     } else {
                         resolve(true)
                     }
+                })
+                .catch((err) => {
+                    reject(err);
                 });
         });
     }
@@ -170,7 +176,7 @@ class campaigns extends baseModelbo {
         }];
         params.filter = _filter;
         return new Promise((resolve, reject) => {
-            this.db['lookups'].find(params)
+            this.db['lookups'].findAll(params)
                 .then(response => {
                     resolve(response)
                 })
