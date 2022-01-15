@@ -103,7 +103,6 @@ class users extends baseModelbo {
                             this.db['has_permissions'].findAll({
                                 include: [{
                                     model: db.permissions_crms,
-                                    as: 'permission',
                                 }],
                                 where: {
                                     roles_crm_id: user.role_crm_id,
@@ -175,7 +174,7 @@ class users extends baseModelbo {
                 let permissions_values = [];
                 let index = 0;
                 permissions.forEach(item_perm => {
-                    permissions_values.push(item_perm.permission.value);
+                    permissions_values.push(item_perm.permissions_crm.value);
                     if (index < permissions.length - 1) {
                         index++
                     } else {

@@ -154,7 +154,7 @@ let apiRouters = function (passport) {
   );
   router.get(
     "/api/efile/getListCallFiles/:file_id",
-    efilesController.getListCallFiles
+      passport.authenticate('jwt', {session: false}), efilesController.getListCallFiles
   );
 
   //listcallfiles routers

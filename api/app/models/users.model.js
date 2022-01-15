@@ -95,7 +95,6 @@ module.exports = (sequelize, Sequelize) => {
 
     ],
         user.prototype.fieldsSearchMetas = [
-            'user_id',
             'username',
             'first_name',
             'last_name',
