@@ -82,14 +82,9 @@ class users extends baseModelbo {
             const {username, password} = req.body;
             if (username && password) {
                 this.db['users'].findOne({
-                    // include: [{
-                    //     model: db.roles,
-                    //     as: 'role',
-                    // },
-                    //     {
-                    //         model: db.accounts,
-                    //         as: 'account',
-                    //     }],
+                    include: [{
+                        model: db.roles_crms,
+                    }],
                     where: {
                         username: username,
                         active: 'Y'
@@ -105,19 +100,33 @@ class users extends baseModelbo {
                     } else {
                         if (user.password_hash && password) {
                             //if (user.password_hash && user.verifyPassword(password)) {
-                            const token = jwt.sign({
-                                user_id: user.user_id,
-                                username: user.username,
-                            }, config.secret, {
-                                expiresIn: '8600m'
-                            });
-                            res.send({
-                                message: 'Success',
-                                user: user.toJSON(),
-                                success: true,
-                                token: token,
-                                result: 1,
-                            });
+                            this.db['has_permissions'].findAll({
+                                include: [{
+                                    model: db.permissions_crms,
+                                    as: 'permission',
+                                }],
+                                where: {
+                                    roles_crm_id: user.role_crm_id,
+                                }
+                            }).then(permissions =>{
+                                this.getPermissionsValues(permissions).then(data_perm =>{
+                                    const token = jwt.sign({
+                                        user_id: user.user_id,
+                                        username: user.username,
+                                    }, config.secret, {
+                                        expiresIn: '8600m'
+                                    });
+                                    res.send({
+                                        message: 'Success',
+                                        user: user.toJSON(),
+                                        permissions: data_perm || [],
+                                        success: true,
+                                        token: token,
+                                        result: 1,
+                                    });
+                                })
+                            })
+
 
                         } else {
                             this.sendResponseError(res, ['Error.InvalidPassword'], 2, 403);
@@ -158,6 +167,25 @@ class users extends baseModelbo {
                 message: (err) ? 'Invalid token' : 'Tokan valid',
             });
         });
+    }
+
+    getPermissionsValues = (permissions) => {
+        return new Promise((resolve, reject) => {
+            if (permissions && permissions.length !== 0) {
+                let permissions_values = [];
+                let index = 0;
+                permissions.forEach(item_perm => {
+                    permissions_values.push(item_perm.permission.value);
+                    if (index < permissions.length - 1) {
+                        index++
+                    } else {
+                        resolve(permissions_values);
+                    }
+                })
+            } else {
+                resolve([]);
+            }
+        })
     }
 
 }
