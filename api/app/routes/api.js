@@ -43,6 +43,7 @@ didsController = require('../controllers/did.controller')
 audiosController = require('../controllers/audio.controller')
 agent_log_eventsController = require('../controllers/agent_log_events.controller')
 meetingsController = require('../controllers/meeting.controller')
+emailsController = require('../controllers/email.controller')
 
 
 let apiRouters = function (passport) {
@@ -199,6 +200,13 @@ let apiRouters = function (passport) {
     router.post("/api/meeting/save", passport.authenticate('jwt', {session: false}), meetingsController.save);
     router.post("/api/meeting/getAvailableSales", meetingsController.getAvailableSales);
     router.post("/api/meeting/saveMeetings", meetingsController.saveMeetings);
+
+    // emails routes
+    router.post("/api/email/find", passport.authenticate('jwt', {session: false}), emailsController.find);
+    router.get("/api/email/findById/:entity_id", passport.authenticate('jwt', {session: false}), emailsController.findById);
+    router.put("/api/email/update", passport.authenticate('jwt', {session: false}), emailsController.update);
+    router.delete("/api/email/delete/:params", passport.authenticate('jwt', {session: false}), emailsController.delete);
+    router.post("/api/email/save", passport.authenticate('jwt', {session: false}), emailsController.save);
 
     return router;
 };
