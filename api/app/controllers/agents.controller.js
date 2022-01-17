@@ -22,5 +22,14 @@ module.exports = {
     },
     signIn: function (req, res, next) {
         agentsDaoInst.signIn(req, res, next)
-    }
+    },
+    saveAgent: function (req, res, next) {
+        agentsDaoInst.saveAgent(req, res, next)
+    },
+    updateAgent: function (req, res, next) {
+        agentsDaoInst.updateAgent(req, res, next)
+    },
+    deleteAgent: function (req, res, next) {
+        agentsDaoInst.deleteAgent(req, res, next)
+    },
 }

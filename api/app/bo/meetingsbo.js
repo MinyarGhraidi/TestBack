@@ -57,9 +57,8 @@ class meetings extends baseModelbo {
     }
 
     getAvailableSales(req, res, next) {
-        let {day} = req.body;
-
-        const {Op} = db.sequelize;
+        let { day } = req.body;
+        const { Op } = db.sequelize;
         this.db["users"]
             .findAll({
                 where: {
