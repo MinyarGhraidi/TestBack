@@ -26,6 +26,9 @@ module.exports = {
     getAccountByToken: function (req, res, next) {
         _itembo.getAccountByToken(req, res, next);
     },
+    AddEditAccount : function (req, res, next) {
+        _itembo.AddEditAccount(req, res, next)
+    }
    
 
 };
