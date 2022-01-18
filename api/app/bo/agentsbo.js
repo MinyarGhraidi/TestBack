@@ -149,13 +149,13 @@ class agents extends baseModelbo {
         _usersbo.isUniqueUsername(values.username)
             .then(isUnique => {
                 if (isUnique) {
-                    axios
-                        .post(`${base_url_cc_kam}api/v1/agents`,
-                            {username, password, domain, options, accountcode, status, enabled, subscriber_id},
-                            call_center_authorization)
-                        .then((resp) => {
-                            let uuid = resp.data.result.uuid || null;
-                            values.sip_device.uuid = uuid;
+                    // axios
+                    //     .post(`${base_url_cc_kam}api/v1/agents`,
+                    //         {username, password, domain, options, accountcode, status, enabled, subscriber_id},
+                    //         call_center_authorization)
+                    //     .then((resp) => {
+                    //         let uuid = resp.data.result.uuid || null;
+                            values.sip_device.uuid = 0;
                             this.saveAgentInDB(values)
                                 .then(agent => {
                                     res.send({
@@ -167,10 +167,10 @@ class agents extends baseModelbo {
                                 .catch(err => {
                                     return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
                                 })
-                        })
-                        .catch((err) => {
-                            return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
-                        });
+                        // })
+                        // .catch((err) => {
+                        //     return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                        // });
                 } else {
                     res.send({
                         status: 200,

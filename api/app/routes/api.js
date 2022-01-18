@@ -100,6 +100,7 @@ let apiRouters = function (passport) {
     router.post("/api/user/saveUser", usersController.saveUser);
     router.post("/api/user/validPassword", usersController.validPassword);
     router.post("/api/user/switchToNewAccount", usersController.switchToNewAccount);
+    router.post("/api/user/generatedUniqueUsername", usersController.generatedUniqueUsername);
 
     router.post("/api/signup", usersController.signUp);
     router.post("/api/signin", usersController.signIn);

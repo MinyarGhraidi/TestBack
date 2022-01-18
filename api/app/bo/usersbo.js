@@ -125,7 +125,7 @@ class users extends baseModelbo {
     isUniqueUsername(username) {
         let _this = this;
         return new Promise((resolve, reject) => {
-        this.db['users'].findAll({where : {username : username}})
+        this.db['users'].findAll({where : {username : username, active: 'Y'}})
             .then(data => {
                 if(data && data.length !== 0) {
                     resolve(false);
@@ -137,6 +137,55 @@ class users extends baseModelbo {
                 reject(err);
             })
         })
+    }
+
+    generateUsername() {
+        return new Promise((resolve, reject) => {
+            var result = '';
+            var characters = '0123456789';
+            var charactersLength = characters.length;
+            for (var i = 0; i < 12; i++) {
+                result += characters.charAt(Math.floor(Math.random() * charactersLength));
+            }
+            resolve(result)
+        })
+    }
+
+    generateUniqueUsernameFunction() {
+        let condition = false;
+        return new Promise((resolve, reject) => {
+            do {
+                this.generateUsername()
+                    .then(generatedUsername => {
+                        this.isUniqueUsername(generatedUsername)
+                            .then(isUnique => {
+                                condition = isUnique;
+                                if(condition) {
+                                    resolve(generatedUsername)
+                                }
+                            })
+                            .catch(err => {
+                                reject(err)
+                            })
+                    })
+                    .catch(err => {
+                        reject(err)
+                    })
+            } while(condition)
+        })
+    }
+
+    generatedUniqueUsername(req, res, next) {
+        let _this = this;
+        this.generateUniqueUsernameFunction()
+            .then(username => {
+                res.send({
+                    username : username
+                })
+            })
+            .catch(err => {
+                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+            })
     }
 
     getPermissionsValues = (permissions) => {

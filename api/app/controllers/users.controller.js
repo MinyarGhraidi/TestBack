@@ -38,4 +38,7 @@ module.exports = {
     switchToNewAccount: function (req, res, next) {
         _itembo.switchToNewAccount(req, res, next)
     },
+    generatedUniqueUsername: function (req, res, next) {
+        _itembo.generatedUniqueUsername(req, res, next)
+    },
 }
