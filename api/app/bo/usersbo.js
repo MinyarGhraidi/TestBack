@@ -152,6 +152,121 @@ class users extends baseModelbo {
         })
     }
 
+    generateHash(password, salt) {
+        return new Promise((resolve, reject) => {
+            bcrypt.hash(password, salt, function (err, hash) {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve({
+                        salt: salt,
+                        password: password,
+                        hash: hash
+                    });
+                }
+            });
+        });
+    }
+
+    saveCredentials(newAccount) {
+        return new Promise((resolve, reject) => {
+            this.generateHash(newAccount.password_hash, salt)
+                .then(hashedObj => {
+                    newAccount.password_hash = hashedObj.hash;
+                    let template = {
+                        to: newAccount.email,
+                        subject: `CRM OXILOG - Login Credentials`,
+                        body: `Hello, Mr/Mrs ${newAccount.first_name} ${newAccount.last_name}, \n Here are your login credentials : 
+                \n Username : ${newAccount.username} 
+                \n Password : ${hashedObj.password}`
+                    }
+                    let email = {
+                        user_id: newAccount.user_id,
+                        category: 'credentials',
+                        last_password: hashedObj.password,
+                        template
+                    }
+                    let modalObj = this.db['emails'].build(email)
+                    modalObj.save()
+                        .then((email_item) => {
+                            resolve({newAccount: newAccount, email_item: email_item})
+                        })
+                        .catch(err => {
+                            reject(err)
+                        })
+                })
+                .catch(err => {
+                    reject(err)
+                })
+        })
+    }
+
+    updateCredentials(newAccount) {
+        return new Promise((resolve, reject) => {
+            if (newAccount.password_hash) {
+                this.generateHash(newAccount.password_hash, salt)
+                    .then(hashedObj => {
+                        newAccount.password_hash = hashedObj.hash;
+                        let template = {
+                            to: newAccount.email,
+                            subject: `CRM OXILOG - Login Credentials`,
+                            body: `Hello, Mr/Mrs ${newAccount.first_name} ${newAccount.last_name}, 
+                            \n Here are your login credentials : 
+                            \n Username : ${newAccount.username} 
+                            \n Password : ${hashedObj.password}`
+                        }
+
+                        let email = {
+                            user_id: newAccount.user_id,
+                            category: 'credentials',
+                            last_password: hashedObj.password,
+                            template
+                        }
+                        this.db['emails'].update(email, {where: {user_id: newAccount.user_id}})
+                            .then(() => {
+                                resolve(newAccount)
+                            })
+                            .catch(err => {
+                                reject(err)
+                            })
+                    })
+                    .catch(err => {
+                        reject(err)
+                    })
+            } else {
+                this.db['emails'].findOne({where: {user_id: newAccount.user_id}})
+                    .then(email_item => {
+                        let template = {
+                            to: newAccount.email,
+                            subject: `CRM OXILOG - Login Credentials`,
+                            body: `Hello, Mr/Mrs ${newAccount.first_name} ${newAccount.last_name}, 
+                            \n Here are your login credentials : 
+                            \n Username : ${newAccount.username} 
+                            \n Password : ${email_item.last_password}`
+                        }
+
+                        let email = {
+                            user_id: newAccount.user_id,
+                            category: 'credentials',
+                            last_password: email_item.last_password,
+                            template
+                        }
+                        this.db['emails'].update(email, {where: {user_id: newAccount.user_id}})
+                            .then(() => {
+                                resolve(newAccount)
+                            })
+                            .catch(err => {
+                                reject(err)
+                            })
+                    })
+                    .catch(err => {
+                        reject(err)
+                    })
+            }
+
+        })
+    }
+
     saveUser(req, res, next) {
         let _this = this;
         let newAccount = req.body;
@@ -162,31 +277,46 @@ class users extends baseModelbo {
                     data: user
                 })
             })
-            .catch( err => {
+            .catch(err => {
                 return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
             })
     }
 
-    async saveUserFunction(newAccount) {
+    saveUserFunction(user) {
         let _this = this;
-        if (newAccount.password_hash) {
-            const hashed_password = await bcrypt.hash(newAccount.password_hash, salt)
-            newAccount.password_hash = hashed_password;
-        }
         return new Promise((resolve, reject) => {
-            if (newAccount.user_id) {
-                db['users'].update(newAccount, {where: {user_id: newAccount.user_id}})
-                    .then(user => {
-                        resolve(user)
+            if (user.user_id) {
+                this.updateCredentials(user)
+                    .then(newAccount => {
+                        db['users'].update(newAccount, {where: {user_id: newAccount.user_id}})
+                            .then(user => {
+                                resolve(user)
+                            })
+                            .catch(err => {
+                                reject(err)
+                            })
                     })
                     .catch(err => {
                         reject(err)
                     })
             } else {
-                let modalObj = this.db['users'].build(newAccount);
-                modalObj.save()
-                    .then(user => {
-                        resolve(user)
+                this.saveCredentials(user)
+                    .then(data => {
+                        let {newAccount, email_item} = data;
+                        let modalObj = this.db['users'].build(newAccount);
+                        modalObj.save()
+                            .then(user => {
+                                this.db['emails'].update({user_id: user.user_id}, {where: {email_id: email_item.email_id}})
+                                    .then(() => {
+                                        resolve(user)
+                                    })
+                                    .catch(err => {
+                                        reject(err)
+                                    })
+                            })
+                            .catch(err => {
+                                reject(err)
+                            })
                     })
                     .catch(err => {
                         reject(err)

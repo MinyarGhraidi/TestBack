@@ -27,7 +27,6 @@ class pausestatus extends baseModelbo {
         this.setRequest(req);
         this.setResponse(res);
         const entity_id = req.body.campaign_id;
-        console.log(entity_id)
                 this.db[this.baseModal].findAll({
                     where: {
                         campaign_id: entity_id

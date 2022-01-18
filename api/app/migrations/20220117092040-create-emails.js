@@ -7,14 +7,19 @@ module.exports = {
         autoIncrement: true,
         type: Sequelize.INTEGER
       },
-      account_id: {
+      user_id: {
         type: Sequelize.INTEGER,
       },
       is_sended: {
         type: Sequelize.STRING,
+        defaultValue: 'N'
+      },
+      last_password: {
+        type: Sequelize.STRING,
       },
       active: {
         type: Sequelize.STRING,
+        defaultValue: 'Y'
       },
       category: {
         type: Sequelize.STRING,

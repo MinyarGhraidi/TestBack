@@ -46,7 +46,6 @@ class meetings extends baseModelbo {
                 },
             })
             .then((meetings) => {
-                console.log("meetings", meetings);
                 return meetings;
             })
             .catch((err) => {
@@ -113,7 +112,6 @@ class meetings extends baseModelbo {
     }
 
     saveMeetings(req, res, next) {
-        console.log(req.body.sales_id)
         let sales_id = req.body.sales_id
         let started_at = req.body.started_at
         this.db["users"]

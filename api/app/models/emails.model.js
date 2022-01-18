@@ -6,16 +6,21 @@ module.exports = (sequelize, Sequelize) => {
             autoIncrement: true,
             type: Sequelize.INTEGER
         },
-        account_id: {
+        user_id: {
             type: Sequelize.INTEGER,
         },
         is_sended: {
             type: Sequelize.STRING,
+            defaultValue: 'N'
         },
         active: {
             type: Sequelize.STRING,
+            defaultValue: 'Y'
         },
         category: {
+            type: Sequelize.STRING,
+        },
+        last_password: {
             type: Sequelize.STRING,
         },
         template: {
@@ -35,11 +40,12 @@ module.exports = (sequelize, Sequelize) => {
 
     email.prototype.fields = [
         'email_id',
-        'account_id',
+        'user_id',
         'is_sended',
         'active',
         "category",
         'template',
+        'last_password'
     ],
         email.prototype.fieldsSearchMetas = [
             'template',

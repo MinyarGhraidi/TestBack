@@ -49,7 +49,6 @@ class efiles extends baseModelbo {
 
                     fs.rename(req.file.path, appDir + '/app/resources/efiles' + file_uri, (err) => {
                         if (err) throw err;
-                        console.log('Successfully move file');
                     });
 
                     res.json({

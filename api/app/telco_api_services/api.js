@@ -15,7 +15,7 @@ const dialer_authorization = {
 };
 
 // to fix SSL certifcate Problem
-process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0;
+process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 1;
 
 let apiServices = function () {
 
