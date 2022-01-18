@@ -86,6 +86,7 @@ let apiRouters = function (passport) {
     router.put("/api/role/update", rolesController.update);
     router.delete("/api/role/delete/:params", rolesController.delete);
     router.post("/api/role/save", rolesController.save);
+    router.post("/api/role/saveRole", rolesController.saveRole);
 
     //user routers
     router.post("/api/user/find/:params?", passport.authenticate('jwt', {session: false}), usersController.find);
