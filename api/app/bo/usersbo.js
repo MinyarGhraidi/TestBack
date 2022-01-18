@@ -129,7 +129,7 @@ class users extends baseModelbo {
                 let permissions_values = [];
                 let index = 0;
                 permissions.forEach(item_perm => {
-                    permissions_values.push(item_perm.permission.value);
+                    permissions_values.push(item_perm.permissions_crm.value);
                     if (index < permissions.length - 1) {
                         index++
                     } else {

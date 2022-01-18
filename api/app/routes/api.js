@@ -58,9 +58,9 @@ let apiRouters = function (passport) {
     // account routers
     router.post("/api/account/find", passport.authenticate('jwt', {session: false}), accountController.find);
     router.get("/api/account/findById/:entity_id", passport.authenticate('jwt', {session: false}), accountController.findById);
-    router.put("/api/account/update", passport.authenticate('jwt', {session: false}), accountController.update);
+    router.put("/api/account/update", passport.authenticate('jwt', {session: false}), accountController.AddEditAccount);
     router.delete("/api/account/delete/:params", passport.authenticate('jwt', {session: false}), accountController.delete);
-    router.post("/api/account/save", passport.authenticate('jwt', {session: false}), accountController.save);
+    router.post("/api/account/save", passport.authenticate('jwt', {session: false}), accountController.AddEditAccount);
 
     router.post("/api/account/signin", passport.authenticate('jwt', {session: false}), accountController.signIn);
     router.post(
