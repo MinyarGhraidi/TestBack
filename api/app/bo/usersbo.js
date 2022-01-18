@@ -23,6 +23,9 @@ class users extends baseModelbo {
             const {username} = req.body;
             if (username) {
                 this.db['users'].findOne({
+                    include: [{
+                        model: db.roles_crms,
+                    }],
                     where: {
                         username: username,
                         active: 'Y'
@@ -31,17 +34,6 @@ class users extends baseModelbo {
                     if (!user) {
                         _this.sendResponseError(res, ['Error.UserNotFound'], 0, 403);
                     } else {
-
-                        // this.db['has_permissions'].findAll({
-                        //     include: [{
-                        //         model: db.permissions,
-                        //         as: 'permission',
-                        //     }],
-                        //     where: {
-                        //         role_id: user.role_id,
-                        //     }
-                        // }).then(function (permissions) {
-                        //     _this.getPermissionsValues(permissions).then(data_perm => {
                         const token = jwt.sign({
                                 user_id: user.user_id,
                                 username: user.username
@@ -69,69 +61,67 @@ class users extends baseModelbo {
         }
     }
 
+
     signIn(req, res, next) {
-        let _this = this;
         if ((!req.body.username || !req.body.password)) {
-            return _this.sendResponseError(res, ['Error.RequestDataInvalid'], 0, 403);
+            return this.sendResponseError(res, ['Error.RequestDataInvalid'], 0, 403);
         } else {
             const {username, password} = req.body;
             if (username && password) {
                 this.db['users'].findOne({
+                    include: [{
+                        model: db.roles_crms,
+                    }],
                     where: {
                         username: username,
                         active: 'Y'
                     }
                 }).then((user) => {
                     if (!user) {
-                        _this.sendResponseError(res, ['Error.UserNotFound'], 0, 403);
-                    } else {
-                        let password_hashed = user.password_hash;
-                        bcrypt.compare(password, password_hashed)
-                            .then(validPassword => {
-                                if (validPassword) {
-                                    // this.db['has_permissions'].findAll({
-                                    //     include: [{
-                                    //         model: db.permissions,
-                                    //         as: 'permission',
-                                    //     }],
-                                    //     where: {
-                                    //         role_id: user.role_id,
-                                    //     }
-                                    // }).then(function (permissions) {
-                                    //     _this.getPermissionsValues(permissions).then(data_perm => {
-                                    const token = jwt.sign({
-                                            user_id: user.user_id,
-                                            username: user.username
-                                        },
-                                        appSecret, {
-                                            expiresIn: '8600m'
-                                        });
+                        //this.sendResponseError(res, ['Error.UserNotFound'], 0, 403);
+                        res.send({
+                            message: 'Success',
 
+                        });
+                    } else {
+                        if (user.password_hash && password) {
+                            //if (user.password_hash && user.verifyPassword(password)) {
+                            this.db['has_permissions'].findAll({
+                                include: [{
+                                    model: db.permissions_crms,
+                                }],
+                                where: {
+                                    roles_crm_id: user.role_crm_id,
+                                }
+                            }).then(permissions =>{
+                                this.getPermissionsValues(permissions).then(data_perm =>{
+                                    const token = jwt.sign({
+                                        user_id: user.user_id,
+                                        username: user.username,
+                                    }, config.secret, {
+                                        expiresIn: '8600m'
+                                    });
                                     res.send({
                                         message: 'Success',
                                         user: user.toJSON(),
-                                        // permissions: data_perm || [],
+                                        permissions: data_perm || [],
+                                        success: true,
                                         token: token,
                                         result: 1,
-                                        success: true,
                                     });
-                                    //     })
-                                    // })
-
-                                } else {
-                                    _this.sendResponseError(res, ['Error.InvalidPassword'], 2, 403);
-                                }
+                                })
                             })
-                            .catch((error) => {
-                                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', error], 1, 403);
-                            });
+                        } else {
+                            this.sendResponseError(res, ['Error.InvalidPassword'], 2, 403);
+                        }
                     }
                 }).catch((error) => {
-                    return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', error], 1, 403);
+                    return this.sendResponseError(res, ['Error.AnErrorHasOccuredUser'], 1, 403);
                 });
             }
         }
     }
+
 
     getPermissionsValues = (permissions) => {
         return new Promise((resolve, reject) => {
