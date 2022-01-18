@@ -17,4 +17,7 @@ module.exports = {
     delete: function (req, res, next) {
         rolesDaoInst.delete(req, res, next);
     },
+    saveRole: function (req, res, next) {
+        rolesDaoInst.saveRole(req, res, next);
+    },
 }

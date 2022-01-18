@@ -74,14 +74,14 @@ class users extends baseModelbo {
                     }],
                     where: {
                         username: username,
-                        active: 'Y'
+                        active: 'Y',
+                        status: 'Y'
                     }
                 }).then((user) => {
                     if (!user) {
                         //this.sendResponseError(res, ['Error.UserNotFound'], 0, 403);
                         res.send({
                             message: 'Success',
-
                         });
                     } else {
                         if (user.password_hash && password) {
@@ -122,6 +122,71 @@ class users extends baseModelbo {
         }
     }
 
+    isUniqueUsername(username) {
+        let _this = this;
+        return new Promise((resolve, reject) => {
+        this.db['users'].findAll({where : {username : username, active: 'Y'}})
+            .then(data => {
+                if(data && data.length !== 0) {
+                    resolve(false);
+                } else {
+                    resolve(true);
+                }
+            })
+            .catch(err => {
+                reject(err);
+            })
+        })
+    }
+
+    generateUsername() {
+        return new Promise((resolve, reject) => {
+            var result = '';
+            var characters = '0123456789';
+            var charactersLength = characters.length;
+            for (var i = 0; i < 12; i++) {
+                result += characters.charAt(Math.floor(Math.random() * charactersLength));
+            }
+            resolve(result)
+        })
+    }
+
+    generateUniqueUsernameFunction() {
+        let condition = false;
+        return new Promise((resolve, reject) => {
+            do {
+                this.generateUsername()
+                    .then(generatedUsername => {
+                        this.isUniqueUsername(generatedUsername)
+                            .then(isUnique => {
+                                condition = isUnique;
+                                if(condition) {
+                                    resolve(generatedUsername)
+                                }
+                            })
+                            .catch(err => {
+                                reject(err)
+                            })
+                    })
+                    .catch(err => {
+                        reject(err)
+                    })
+            } while(condition)
+        })
+    }
+
+    generatedUniqueUsername(req, res, next) {
+        let _this = this;
+        this.generateUniqueUsernameFunction()
+            .then(username => {
+                res.send({
+                    username : username
+                })
+            })
+            .catch(err => {
+                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+            })
+    }
 
     getPermissionsValues = (permissions) => {
         return new Promise((resolve, reject) => {
@@ -260,12 +325,27 @@ class users extends baseModelbo {
     saveUser(req, res, next) {
         let _this = this;
         let newAccount = req.body;
-        this.saveUserFunction(newAccount)
-            .then((user) => {
-                res.send({
-                    message: 'success',
-                    data: user
-                })
+        this.isUniqueUsername(newAccount.username)
+            .then(isUnique => {
+                if(isUnique) {
+                    this.saveUserFunction(newAccount)
+                        .then((user) => {
+                            res.send({
+                                message: 'success',
+                                data: user,
+                                success : true
+                            })
+                        })
+                        .catch(err => {
+                            return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                        })
+                } else {
+                    res.send({
+                        status : 200,
+                        success : false,
+                        message : 'This username is already exist'
+                    })
+                }
             })
             .catch(err => {
                 return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
