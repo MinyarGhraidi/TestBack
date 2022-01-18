@@ -74,14 +74,14 @@ class users extends baseModelbo {
                     }],
                     where: {
                         username: username,
-                        active: 'Y'
+                        active: 'Y',
+                        status: 'Y'
                     }
                 }).then((user) => {
                     if (!user) {
                         //this.sendResponseError(res, ['Error.UserNotFound'], 0, 403);
                         res.send({
                             message: 'Success',
-
                         });
                     } else {
                         if (user.password_hash && password) {
