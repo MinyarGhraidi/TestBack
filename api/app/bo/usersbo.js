@@ -122,6 +122,22 @@ class users extends baseModelbo {
         }
     }
 
+    isUniqueUsername(username) {
+        let _this = this;
+        return new Promise((resolve, reject) => {
+        this.db['users'].findAll({where : {username : username}})
+            .then(data => {
+                if(data && data.length !== 0) {
+                    resolve(false);
+                } else {
+                    resolve(true);
+                }
+            })
+            .catch(err => {
+                reject(err);
+            })
+        })
+    }
 
     getPermissionsValues = (permissions) => {
         return new Promise((resolve, reject) => {
@@ -260,12 +276,27 @@ class users extends baseModelbo {
     saveUser(req, res, next) {
         let _this = this;
         let newAccount = req.body;
-        this.saveUserFunction(newAccount)
-            .then((user) => {
-                res.send({
-                    message: 'success',
-                    data: user
-                })
+        this.isUniqueUsername(newAccount.username)
+            .then(isUnique => {
+                if(isUnique) {
+                    this.saveUserFunction(newAccount)
+                        .then((user) => {
+                            res.send({
+                                message: 'success',
+                                data: user,
+                                success : true
+                            })
+                        })
+                        .catch(err => {
+                            return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                        })
+                } else {
+                    res.send({
+                        status : 200,
+                        success : false,
+                        message : 'This username is already exist'
+                    })
+                }
             })
             .catch(err => {
                 return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
