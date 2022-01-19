@@ -122,13 +122,17 @@ class users extends baseModelbo {
         }
     }
 
-    isUniqueUsername(username) {
+    isUniqueUsername(username, user_id) {
         let _this = this;
         return new Promise((resolve, reject) => {
         this.db['users'].findAll({where : {username : username, active: 'Y'}})
             .then(data => {
                 if(data && data.length !== 0) {
-                    resolve(false);
+                    if(username === data[0].username && user_id === data[0].user_id) {
+                        resolve(true)
+                    } else {
+                        resolve(false);
+                    }
                 } else {
                     resolve(true);
                 }
@@ -157,7 +161,7 @@ class users extends baseModelbo {
             do {
                 this.generateUsername()
                     .then(generatedUsername => {
-                        this.isUniqueUsername(generatedUsername)
+                        this.isUniqueUsername(generatedUsername, 0)
                             .then(isUnique => {
                                 condition = isUnique;
                                 if(condition) {
@@ -325,7 +329,8 @@ class users extends baseModelbo {
     saveUser(req, res, next) {
         let _this = this;
         let newAccount = req.body;
-        this.isUniqueUsername(newAccount.username)
+        let user_id = newAccount.user_id ? newAccount.user_id : 0;
+        this.isUniqueUsername(newAccount.username, user_id)
             .then(isUnique => {
                 if(isUnique) {
                     this.saveUserFunction(newAccount)
