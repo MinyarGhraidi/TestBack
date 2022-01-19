@@ -97,7 +97,7 @@ class accounts extends baseModelbo {
                 }).then(account => {
                 _itembo.updateCredentials(account[1])
                     .then(Account => {
-                        db['users'].update(Account, {where: {user_id: Account.user_id}})
+                        db['users'].update(newAccount.user, {where: {user_id: Account.user_id}})
                             .then(user => {
                                 res.send({
                                     message: 'success',
@@ -117,7 +117,8 @@ class accounts extends baseModelbo {
         } else {
             let modalObj = this.db['accounts'].build(newAccount);
             modalObj.save().then(new_account =>{
-                let modalObjUser = this.db['users'].build(new_account);
+                newAccount.user.account_id = new_account.account_id;
+                let modalObjUser = this.db['users'].build(newAccount.user);
                 modalObjUser.save().then(new_user =>{
                     this.db['accounts'].update({
                         user_id: new_user.user_id

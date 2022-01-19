@@ -65,6 +65,9 @@ module.exports = {
         type: Sequelize.DATE,
         defaultValue: new Date()
 
+      },
+      role_crm_id :{
+        type: Sequelize.INTEGER
       }
     });
   },
