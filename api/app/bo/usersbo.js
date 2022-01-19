@@ -7,6 +7,7 @@ const jwt = require('jsonwebtoken');
 const salt = require("../config/config.json")["salt"]
 const bcrypt = require("bcrypt");
 const {appSecret} = require("../helpers/app");
+const {Sequelize} = require("sequelize");
 
 class users extends baseModelbo {
     constructor() {
@@ -125,7 +126,11 @@ class users extends baseModelbo {
     isUniqueUsername(username, user_id) {
         let _this = this;
         return new Promise((resolve, reject) => {
-        this.db['users'].findAll({where : {username : username, active: 'Y'}})
+        this.db['users'].findAll({where : {
+                username: {
+                    [Sequelize.Op.iLike]: username
+                },
+                active: 'Y'}})
             .then(data => {
                 if(data && data.length !== 0) {
                     if(username === data[0].username && user_id === data[0].user_id) {
