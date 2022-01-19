@@ -146,31 +146,32 @@ class agents extends baseModelbo {
         let accountcode = req.body.accountcode;
         let {sip_device} = values;
         let {username, password, domain, options, status, enabled, subscriber_id} = sip_device;
-        _usersbo.isUniqueUsername(values.username)
+        _usersbo.isUniqueUsername(values.username,0)
             .then(isUnique => {
                 if (isUnique) {
-                    // axios
-                    //     .post(`${base_url_cc_kam}api/v1/agents`,
-                    //         {username, password, domain, options, accountcode, status, enabled, subscriber_id},
-                    //         call_center_authorization)
-                    //     .then((resp) => {
-                    //         let uuid = resp.data.result.uuid || null;
-                            values.sip_device.uuid = 0;
+                    axios
+                        .post(`${base_url_cc_kam}api/v1/agents`,
+                            {username, password, domain, options, accountcode, status, enabled, subscriber_id},
+                            call_center_authorization)
+                        .then((resp) => {
+                            let uuid = resp.data.result.uuid || null;
+                            values.sip_device.uuid = uuid;
                             this.saveAgentInDB(values)
                                 .then(agent => {
                                     res.send({
                                         status: 200,
                                         message: "success",
-                                        data: agent
+                                        data: agent,
+                                        success : true
                                     })
                                 })
                                 .catch(err => {
                                     return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
                                 })
-                        // })
-                        // .catch((err) => {
-                        //     return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
-                        // });
+                        })
+                        .catch((err) => {
+                            return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                        });
                 } else {
                     res.send({
                         status: 200,
@@ -190,7 +191,8 @@ class agents extends baseModelbo {
         let accountcode = req.body.accountcode;
         let {sip_device} = values;
         let {username, password, domain, options, status, enabled, subscriber_id} = sip_device;
-        _usersbo.isUniqueUsername(values.username)
+        let user_id = req.body.values.user_id;
+        _usersbo.isUniqueUsername(values.username, user_id)
             .then(isUnique => {
                 if (isUnique) {
                     axios
@@ -203,7 +205,8 @@ class agents extends baseModelbo {
                                     res.send({
                                         status: 200,
                                         message: "success",
-                                        data: agent
+                                        data: agent,
+                                        success : true
                                     })
                                 })
                                 .catch(err => {
