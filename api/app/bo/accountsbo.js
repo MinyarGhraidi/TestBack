@@ -5,8 +5,9 @@ let db = require('../models');
 const {appSecret} = require("../helpers/app");
 const jwt = require('jsonwebtoken');
 const config = require('../config/config.json');
-const itembo  = require('../bo/usersbo');
-let _itembo = new itembo();
+const itembo = require('../bo/usersbo');
+let _usersbo = new itembo();
+
 class accounts extends baseModelbo {
     constructor() {
         super('accounts', 'account_id');
@@ -95,9 +96,9 @@ class accounts extends baseModelbo {
                     returning: true,
                     plain: true
                 }).then(account => {
-                _itembo.updateCredentials(account[1])
+                _usersbo.updateCredentials(account[1])
                     .then(Account => {
-                        db['users'].update(newAccount.user, {where: {user_id: Account.user_id}})
+                        _usersbo.saveUserFunction(newAccount.user, {where: {user_id: Account.user_id}})
                             .then(user => {
                                 res.send({
                                     message: 'success',
@@ -116,31 +117,30 @@ class accounts extends baseModelbo {
             })
         } else {
             let modalObj = this.db['accounts'].build(newAccount);
-            modalObj.save().then(new_account =>{
+            modalObj.save().then(new_account => {
                 newAccount.user.account_id = new_account.account_id;
-                let modalObjUser = this.db['users'].build(newAccount.user);
-                modalObjUser.save().then(new_user =>{
+                _usersbo.saveUserFunction(newAccount.user).then(new_user => {
                     this.db['accounts'].update({
                         user_id: new_user.user_id
-                    },{
-                        where:{
-                            account_id:new_account.account_id
+                    }, {
+                        where: {
+                            account_id: new_account.account_id
                         },
                         returning: true,
                         plain: true
-                    }).then(update_account =>{
-                        _itembo.saveCredentials(new_user)
+                    }).then(update_account => {
+                        _usersbo.saveCredentials(new_user)
                             .then(data => {
                                 this.db['emails'].update({user_id: new_user.user_id}, {where: {email_id: data.email_id}})
-                                            .then(() => {
-                                                res.send({
-                                                    message: 'success',
-                                                    data: new_user
-                                                })
-                                            })
-                                            .catch(err => {
-                                                res.send(err)
-                                            })
+                                    .then(() => {
+                                        res.send({
+                                            message: 'success',
+                                            data: new_user
+                                        })
+                                    })
+                                    .catch(err => {
+                                        res.send(err)
+                                    })
                             })
                             .catch(err => {
                                 res.send(err)
