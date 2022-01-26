@@ -146,11 +146,13 @@ let apiRouters = function (passport) {
     router.post("/api/listcallfile/save", listcallfilesController.save);
 
     //truncks routers
-    router.post("/api/trunck/find/:params?", passport.authenticate('jwt', {session: false}), truncksController.find);
-    router.get("/api/trunck/findById/:entity_id", passport.authenticate('jwt', {session: false}), truncksController.findById);
-    router.put("/api/trunck/update", passport.authenticate('jwt', {session: false}), truncksController.update);
-    router.delete("/api/trunck/delete/:params", passport.authenticate('jwt', {session: false}), truncksController.delete);
-    router.post("/api/trunck/save", passport.authenticate('jwt', {session: false}), truncksController.save);
+    router.post("/api/trunk/find/:params?", passport.authenticate('jwt', {session: false}), truncksController.find);
+    router.get("/api/trunk/findById/:entity_id", passport.authenticate('jwt', {session: false}), truncksController.findById);
+    router.put("/api/trunk/update", passport.authenticate('jwt', {session: false}), truncksController.update);
+    router.delete("/api/trunk/delete/:params", passport.authenticate('jwt', {session: false}), truncksController.delete);
+    router.post("/api/trunk/save", passport.authenticate('jwt', {session: false}), truncksController.save);
+    router.post("/api/trunk/saveTrunk", passport.authenticate('jwt', {session: false}), truncksController.saveTrunk);
+    router.post("/api/trunk/updateTrunk", passport.authenticate('jwt', {session: false}), truncksController.updateTrunk);
 
     //callstatus routers
     router.post("/api/callstatus/find/:params?", passport.authenticate('jwt', {session: false}), callstatusController.find);
