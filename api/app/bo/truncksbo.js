@@ -19,7 +19,6 @@ class truncks extends baseModelbo {
     saveTrunk(req, res, next) {
         let _this = this;
         let trunk_kam = req.body;
-        console.log(req.body)
         axios
             .post(`${base_url_cc_kam}api/v1/gateways`, trunk_kam, call_center_authorization)
             .then((resp) => {
@@ -73,7 +72,6 @@ class truncks extends baseModelbo {
         let _this = this;
         let uuid = req.body.uuid;
         let trunk_id = req.body.trunk_id;
-        console.log(req.body)
         axios
             .delete(`${base_url_cc_kam}api/v1/gateways/${uuid}`, call_center_authorization)
             .then(resp => {
