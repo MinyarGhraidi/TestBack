@@ -50,7 +50,7 @@ app.use((req, res, next) => {
 app.use('/', require('./app/routes/api')(passport));
 
 app.get('/', (req, res) => {
-  res.render('default');
+  res.send('backend connected');
 });
 
 app.get('/.well-known/pki-validation/EBF28B389C9111A79CD6AB26AAA57B62.txt', (req, res) => {
