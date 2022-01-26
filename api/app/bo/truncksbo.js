@@ -19,6 +19,7 @@ class truncks extends baseModelbo {
     saveTrunk(req, res, next) {
         let _this = this;
         let trunk_kam = req.body;
+        console.log(req.body)
         axios
             .post(`${base_url_cc_kam}api/v1/gateways`, trunk_kam, call_center_authorization)
             .then((resp) => {
@@ -62,6 +63,30 @@ class truncks extends baseModelbo {
                     .catch(err => {
                         return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
                     })
+            })
+            .catch((err) => {
+                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+            });
+    }
+
+    deleteTrunk(req, res, next) {
+        let _this = this;
+        let uuid = req.body.uuid;
+        let trunk_id = req.body.trunk_id;
+        console.log(req.body)
+        axios
+            .delete(`${base_url_cc_kam}api/v1/gateways/${uuid}`, call_center_authorization)
+            .then(resp => {
+                this.db['trunks'].update({active: 'N'}, {where: {trunk_id: trunk_id}})
+                    .then(result => {
+                        res.send({
+                            succes: 200,
+                            message: "Trunk has been deleted with success"
+                        })
+                    })
+                    .catch((err) => {
+                        return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                    });
             })
             .catch((err) => {
                 return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
