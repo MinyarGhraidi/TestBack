@@ -66,7 +66,7 @@ let apiServices = function () {
       //find all
       router.get("/apicallcenter/truncks", (req, res, next) => {
         axios
-         .get(`${base_url_truncks}api/v1/dialer/gateways`, dialer_authorization)
+         .get(`${base_url_cc_kam}api/v1/gateways`, call_center_authorization)
          .then(resp => res.json(resp.data.result))
          .catch(err => res.json(err))
  })
@@ -74,14 +74,15 @@ let apiServices = function () {
  router.get("/apicallcenter/truncks/:id", (req, res, next) => {
      let id = req.params.id;
         axios
-         .get(`${base_url_truncks}api/v1/dialer/gateways/${id}`, dialer_authorization)
+         .get(`${base_url_cc_kam}api/v1/gateways/${id}`, call_center_authorization)
          .then(resp => res.json(resp.data.result))
          .catch(err => res.json(err))
  })
        //create new item
  router.post("/apicallcenter/truncks", (req, res, next) => {
+     let trunk_kam = req.body;
         axios
-         .post(`${base_url_truncks}api/v1/dialer/gateways`, req.body, dialer_authorization)
+         .post(`${base_url_cc_kam}api/v1/gateways`, trunk_kam, call_center_authorization)
          .then(resp => {
              res.json(resp.data.result);
          })
@@ -91,7 +92,7 @@ let apiServices = function () {
  router.put("/apicallcenter/truncks/:id", (req, res, next) => {
      let id = req.params.id;
         axios
-         .put(`${base_url_truncks}api/v1/dialer/gateways/${id}`, req.body, dialer_authorization)
+         .put(`${base_url_cc_kam}api/v1/gateways/${id}`, req.body, call_center_authorization)
          .then(resp => res.json(resp.data))
          .catch(err => res.json(err))
  })
@@ -99,7 +100,7 @@ let apiServices = function () {
  router.delete("/apicallcenter/truncks/:id", (req, res, next) => {
      let id = req.params.id;
         axios
-         .delete(`${base_url_truncks}api/v1/dialer/gateways/${id}`, dialer_authorization)
+         .delete(`${base_url_cc_kam}api/v1/gateways/${id}`, call_center_authorization)
          .then(resp => res.json(resp.data))
          .catch(err => res.json(err))
         })
