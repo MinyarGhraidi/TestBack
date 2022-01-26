@@ -14,7 +14,7 @@ class meetings extends baseModelbo {
 
     isAvailableDay(day, first_day, last_day, availableDays) {
         let dayName = moment(day).format("dddd");
-        if (moment(day).isBetween(first_day[0], last_day[0])) {
+        if (moment(day).isBetween(first_day, last_day)) {
             return availableDays.includes(dayName);
         } else return false;
     }
@@ -22,18 +22,28 @@ class meetings extends baseModelbo {
     getData(sales, day) {
         return new Promise((resolve, reject) => {
             let sales_json = sales.toJSON();
-            let first_day = sales_json.params.availability.first_day;
-            let last_day = sales_json.params.availability.last_day;
-            if (
-                this.isAvailableDay(
-                    day,
-                    first_day,
-                    last_day,
-                    sales_json.params.availability.days
-                )
-            )
-                resolve(sales_json);
-            else resolve(null);
+            let first_day;
+            let last_day;
+            let days;
+            if (sales_json.params.availability !== undefined) {
+                first_day = sales_json.params.availability.first_day;
+                last_day = sales_json.params.availability.last_day;
+                days = sales_json.params.availability.days
+                if (
+                    this.isAvailableDay(
+                        day,
+                        first_day[0],
+                        last_day[0],
+                        days
+                    )
+                ) {
+                    resolve(sales_json);
+                } else {
+                    resolve(null);
+                }
+            }
+
+
         });
     }
 
@@ -56,8 +66,8 @@ class meetings extends baseModelbo {
     }
 
     getAvailableSales(req, res, next) {
-        let { day } = req.body;
-        const { Op } = db.sequelize;
+        let day = req.body.date;
+        const {Op} = db.sequelize;
         this.db["users"]
             .findAll({
                 where: {
@@ -68,28 +78,28 @@ class meetings extends baseModelbo {
             .then((result) => {
                 let _this = this;
                 let availableSales = [];
+                let promise = [];
                 // let meetings = []
                 if (result) {
-                    let promise = new Promise(function (resolve, reject) {
+                    promise.push(new Promise(function (resolve, reject) {
                         let index = 0;
-                        result.forEach((sales) => {
-                            _this.getData(sales, day).then((availableSale) => {
+                        result.forEach(sales => {
+                            _this.getData(sales, day).then(availableSale => {
                                 if (availableSale) {
-                                    let meetings = _this.getMeetings(availableSale.user_id) || [];
                                     //let meetings = [];
-                                    availableSale.meetings = meetings;
-                                    availableSales = [...availableSales, availableSale];
+                                    availableSale.meetings = _this.getMeetings(availableSale.user_id) || [];
+                                    availableSales.push(availableSale);
                                 }
-                                if (index < result.length - 1) {
-                                    index++;
-                                } else {
-                                    resolve(availableSales);
-                                }
-                            });
-                        });
-                    });
 
-                    Promise.all([promise]).then((availableSales) => {
+                            });
+                            if (index < result.length - 1) {
+                                index++;
+                            } else {
+                                resolve(availableSales);
+                            }
+                        });
+                    }));
+                    Promise.all(promise).then((availableSales) => {
                         res.send({
                             message: "Success",
                             success: true,
@@ -121,10 +131,9 @@ class meetings extends baseModelbo {
                     user_id: sales_id,
                 },
             })
-            .then(result =>
-            {
+            .then(result => {
                 let updated_event = result;
-                let duration = result.params.availability.duration ;
+                let duration = result.params.availability.duration;
                 let interval = result.params.availability.interval;
                 let totalTime = +duration + +interval;
                 let finished_at = moment.tz(started_at, tz).add(totalTime, 'minutes')
@@ -136,9 +145,9 @@ class meetings extends baseModelbo {
                     message: "Success",
                     success: true,
                     result: {
-                        started_at:started_at,
-                        finished_at : finished_at,
-                        totalTime : totalTime
+                        started_at: started_at,
+                        finished_at: finished_at,
+                        totalTime: totalTime
                     },
                 }))
             })
