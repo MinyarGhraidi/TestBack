@@ -26,8 +26,8 @@ module.exports = (sequelize, Sequelize) => {
                 type: Sequelize.STRING
             },
             register: {
-                type: Sequelize.STRING,
-                defaultValue: 'Y'
+                type: Sequelize.BOOLEAN,
+                defaultValue: true
             },
             codec_prefs: {
                 type: Sequelize.STRING
