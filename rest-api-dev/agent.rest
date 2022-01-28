@@ -49,40 +49,19 @@ POST https://occ.oxilog.net:2443/api/v1/agents
 Content-Type: application/json
 Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9cIi2IY5
 
-{
-  "username": "agent1",
-  "domain": "occ.oxilog.net",
-  "password": "pwdpwd",
-  "accountcode": "1",
-  "options": {
-    "call_timeout": 60,
-    "max_no_answer": 0,
-    "wrap_up_time": 10,
-    "reject_delay_time": 90,
-    "busy_delay_time": 90,
-    "no_answer_delay_time": 20
-  },
-  "status": "available",
-  "queues": [
-    {
-      "queue_uuid": "519093fa-b0d9-4048-8c09-5aa5b6fdb4a9",
-      "tier_level": 1,
-      "tier_position": 1
-    }
-  ]
-}
+{"username":"688","password":"OpllM4tvcMdy","domain":"occ.oxilog.net","options":{"call_timeout":30,"max_no_answer":0,"wrap_up_time":20,"reject_delay_time":50,"busy_delay_time":20,"no_answer_delay_time":20},"accountcode":"599027795684","status":"logged-out","enabled":true,"subscriber_id":1}
 
 ###
 #UPDATE AGENT
-PUT https://occ.oxilog.net:2443/api/v1/agents/9d801d50-ea4b-41c8-a8a5-b1932a7d5b29
+PUT https://occ.oxilog.net:2443/api/v1/agents/370f9b39-98cb-40e7-b171-5b0cff9b7768
 Content-Type: application/json
 Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9cIi2IY5
 
 {
-  "username": "agent1",
+  "username": "agent101",
   "domain": "occ.oxilog.net",
-  "password": "pwdpwd2021",
-  "accountcode": "1",
+  "password": "pwdpwd20",
+  "accountcode": "5",
   "options": {
     "call_timeout": 30,
     "max_no_answer": 0,

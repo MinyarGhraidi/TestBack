@@ -153,7 +153,7 @@ class agents extends baseModelbo {
                     axios
                         .post(`${base_url_cc_kam}api/v1/agents`, agent, call_center_authorization)
                         .then((resp) => {
-                            let uuid = resp.data.result.uuid || null;
+                            let uuid = resp.data.result.agent.uuid || null;
                             values.sip_device.uuid = uuid;
                             this.saveAgentInDB(values)
                                 .then(agent => {
