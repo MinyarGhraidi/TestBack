@@ -96,18 +96,12 @@ class accounts extends baseModelbo {
                     returning: true,
                     plain: true
                 }).then(account => {
-                _usersbo.updateCredentials(account[1])
-                    .then(Account => {
-                        _usersbo.saveUserFunction(newAccount.user, {where: {user_id: Account.user_id}})
-                            .then(user => {
-                                res.send({
-                                    message: 'success',
-                                    data: user
-                                })
-                            })
-                            .catch(err => {
-                                res.send(err)
-                            })
+                _usersbo.saveUserFunction(newAccount.user, {where: {user_id: account.user_id}})
+                    .then(user => {
+                        res.send({
+                            message: 'success',
+                            data: user
+                        })
                     })
                     .catch(err => {
                         res.send(err)
@@ -129,31 +123,14 @@ class accounts extends baseModelbo {
                         returning: true,
                         plain: true
                     }).then(update_account => {
-                        _usersbo.saveCredentials(new_user)
-                            .then(data => {
-                                this.db['emails'].update({user_id: new_user.user_id}, {where: {email_id: data.email_id}})
-                                    .then(() => {
-                                        res.send({
-                                            message: 'success',
-                                            data: new_user
-                                        })
-                                    })
-                                    .catch(err => {
-                                        res.send(err)
-                                    })
-                            })
-                            .catch(err => {
-                                res.send(err)
-                            })
+                        res.send({
+                            message: 'success',
+                            data: new_user
+                        })
                     })
-
                 })
-
             })
-
         }
-
-
     }
 
 }

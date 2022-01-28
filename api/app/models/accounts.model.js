@@ -140,9 +140,9 @@ module.exports = (sequelize, Sequelize) => {
         account.belongsTo(models.roles_crms, {
             foreignKey: 'role_crm_id'
         });
-        // account.belongsTo(models.users), {
-        //     foreignKey: 'user_id'
-        // }
+        account.belongsTo(models.users, {
+            foreignKey: 'user_id'
+        });
     }
 
     return account;

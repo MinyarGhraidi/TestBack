@@ -149,12 +149,11 @@ class agents extends baseModelbo {
         _usersbo.isUniqueUsername(values.username,0)
             .then(isUnique => {
                 if (isUnique) {
+                    let agent = {username, password, domain, options, accountcode, status, enabled, subscriber_id}
                     axios
-                        .post(`${base_url_cc_kam}api/v1/agents`,
-                            {username, password, domain, options, accountcode, status, enabled, subscriber_id},
-                            call_center_authorization)
+                        .post(`${base_url_cc_kam}api/v1/agents`, agent, call_center_authorization)
                         .then((resp) => {
-                            let uuid = resp.data.result.uuid || null;
+                            let uuid = resp.data.result.agent.uuid || null;
                             values.sip_device.uuid = uuid;
                             this.saveAgentInDB(values)
                                 .then(agent => {

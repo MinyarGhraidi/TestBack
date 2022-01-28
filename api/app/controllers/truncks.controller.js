@@ -17,4 +17,13 @@ module.exports = {
     delete: function (req, res, next) {
         truncksDaoInst.delete(req, res, next);
     },
+    saveTrunk: function (req, res, next) {
+        truncksDaoInst.saveTrunk(req, res, next);
+    },
+    updateTrunk: function (req, res, next) {
+        truncksDaoInst.updateTrunk(req, res, next);
+    },
+    deleteTrunk: function (req, res, next) {
+        truncksDaoInst.deleteTrunk(req, res, next);
+    },
 }
