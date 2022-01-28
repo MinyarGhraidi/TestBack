@@ -18,6 +18,7 @@ class campaigns extends baseModelbo {
     }
 
     saveInbound(req, res, next) {
+        let _this = this;
         let values = req.body;
         let {queue} = values.params;
         let params = values.params;
