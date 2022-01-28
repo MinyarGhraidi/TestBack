@@ -37,8 +37,8 @@ class campaigns extends baseModelbo {
                 values.params = params;
                 let modalObj = this.db['campaigns'].build(values);
                 modalObj.save()
-                    .then((response) => {
-                        this.addDefaultStatus(campaign_id)
+                    .then((campaign) => {
+                        this.addDefaultStatus(campaign.campaign_id)
                             .then(response => {
                                 res.send({
                                     status: 200,
