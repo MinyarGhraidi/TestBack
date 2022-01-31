@@ -16,53 +16,6 @@ class users extends baseModelbo {
         this.primaryKey = 'user_id'
     }
 
-    switchToNewAccount(req, res, next) {
-        let _this = this;
-        if ((!req.body.username)) {
-            return _this.sendResponseError(res, ['Error.RequestDataInvalid'], 0, 403);
-        } else {
-            const {username} = req.body;
-            if (username) {
-                this.db['users'].findOne({
-                    include: [{
-                        model: db.roles_crms,
-                    }],
-                    where: {
-                        username: username,
-                        active: 'Y'
-                    }
-                }).then((user) => {
-                    if (!user) {
-                        _this.sendResponseError(res, ['Error.UserNotFound'], 0, 403);
-                    } else {
-                        const token = jwt.sign({
-                                user_id: user.user_id,
-                                username: user.username
-                            },
-                            appSecret, {
-                                expiresIn: '8600m'
-                            });
-
-                        res.send({
-                            message: 'Success',
-                            user: user.toJSON(),
-                            // permissions: data_perm || [],
-                            token: token,
-                            result: 1,
-                            success: true,
-                        });
-                        //     })
-                        // })
-
-                    }
-                }).catch((error) => {
-                    return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', error], 1, 403);
-                });
-            }
-        }
-    }
-
-
     signIn(req, res, next) {
         if ((!req.body.username || !req.body.password)) {
             return this.sendResponseError(res, ['Error.RequestDataInvalid'], 0, 403);
@@ -94,8 +47,8 @@ class users extends baseModelbo {
                                 where: {
                                     roles_crm_id: user.role_crm_id,
                                 }
-                            }).then(permissions =>{
-                                this.getPermissionsValues(permissions).then(data_perm =>{
+                            }).then(permissions => {
+                                this.getPermissionsValues(permissions).then(data_perm => {
                                     const token = jwt.sign({
                                         user_id: user.user_id,
                                         username: user.username,
@@ -123,28 +76,83 @@ class users extends baseModelbo {
         }
     }
 
+    switchToNewAccount(req, res, next) {
+        let _this = this;
+        let user_id = req.body.user_id;
+        if ((!user_id)) {
+            return _this.sendResponseError(res, ['Error.RequestDataInvalid'], 0, 403);
+        } else {
+            if (user_id) {
+                this.db['users'].findOne({
+                    include: [{
+                        model: db.roles_crms,
+                    }],
+                    where: {
+                        user_id: user_id,
+                        active: 'Y'
+                    }
+                }).then((user) => {
+                    if (!user) {
+                        _this.sendResponseError(res, ['Error.UserNotFound'], 0, 403);
+                    } else {
+                        this.db['has_permissions'].findAll({
+                            include: [{
+                                model: db.permissions_crms,
+                            }],
+                            where: {
+                                roles_crm_id: user.role_crm_id,
+                            }
+                        }).then(permissions => {
+                            this.getPermissionsValues(permissions).then(data_perm => {
+                                const token = jwt.sign({
+                                    user_id: user.user_id,
+                                    username: user.username,
+                                }, config.secret, {
+                                    expiresIn: '8600m'
+                                });
+                                res.send({
+                                    message: 'Success',
+                                    user: user.toJSON(),
+                                    permissions: data_perm || [],
+                                    success: true,
+                                    token: token,
+                                    result: 1,
+                                });
+                            })
+                        })
+                    }
+                }).catch((error) => {
+                    return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', error], 1, 403);
+                });
+            }
+        }
+    }
+
     isUniqueUsername(username, user_id) {
         let _this = this;
         return new Promise((resolve, reject) => {
-        this.db['users'].findAll({where : {
-                username: {
-                    [Sequelize.Op.iLike]: username
-                },
-                active: 'Y'}})
-            .then(data => {
-                if(data && data.length !== 0) {
-                    if(username === data[0].username && user_id === data[0].user_id) {
-                        resolve(true)
-                    } else {
-                        resolve(false);
-                    }
-                } else {
-                    resolve(true);
+            this.db['users'].findAll({
+                where: {
+                    username: {
+                        [Sequelize.Op.iLike]: username
+                    },
+                    active: 'Y'
                 }
             })
-            .catch(err => {
-                reject(err);
-            })
+                .then(data => {
+                    if (data && data.length !== 0) {
+                        if (username === data[0].username && user_id === data[0].user_id) {
+                            resolve(true)
+                        } else {
+                            resolve(false);
+                        }
+                    } else {
+                        resolve(true);
+                    }
+                })
+                .catch(err => {
+                    reject(err);
+                })
         })
     }
 
@@ -169,7 +177,7 @@ class users extends baseModelbo {
                         this.isUniqueUsername(generatedUsername, 0)
                             .then(isUnique => {
                                 condition = isUnique;
-                                if(condition) {
+                                if (condition) {
                                     resolve(generatedUsername)
                                 }
                             })
@@ -180,7 +188,7 @@ class users extends baseModelbo {
                     .catch(err => {
                         reject(err)
                     })
-            } while(condition)
+            } while (condition)
         })
     }
 
@@ -189,7 +197,7 @@ class users extends baseModelbo {
         this.generateUniqueUsernameFunction()
             .then(username => {
                 res.send({
-                    username : username
+                    username: username
                 })
             })
             .catch(err => {
@@ -337,13 +345,13 @@ class users extends baseModelbo {
         let user_id = newAccount.user_id ? newAccount.user_id : 0;
         this.isUniqueUsername(newAccount.username, user_id)
             .then(isUnique => {
-                if(isUnique) {
+                if (isUnique) {
                     this.saveUserFunction(newAccount)
                         .then((user) => {
                             res.send({
                                 message: 'success',
                                 data: user,
-                                success : true
+                                success: true
                             })
                         })
                         .catch(err => {
@@ -351,9 +359,9 @@ class users extends baseModelbo {
                         })
                 } else {
                     res.send({
-                        status : 200,
-                        success : false,
-                        message : 'This username is already exist'
+                        status: 200,
+                        success: false,
+                        message: 'This username is already exist'
                     })
                 }
             })
