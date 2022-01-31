@@ -22,7 +22,7 @@ class campaigns extends baseModelbo {
         let values = req.body;
         let {queue} = values.params;
         let params = values.params;
-        let {greetings, hold_music} = queue;
+        let {greetings, hold_music} = queue.options;
         queue.greetings = ["http://myTestServer/IVRS/" + greetings];
         queue.hold_music = ["http://myTestServer/IVRS/" + hold_music];
         axios
@@ -189,15 +189,15 @@ class campaigns extends baseModelbo {
     }
 
     updateInbound(req, res, next) {
+        let _this = this;
         let values = req.body;
         let uuid = values.params.queue.uuid;
-        let {queue} = values.params;
-        delete queue.uuid
-        let {greetings, hold_music} = queue
-        queue.greetings = ["http://myTestServer/IVRS/" + greetings];
-        queue.hold_music = ["http://myTestServer/IVRS/" + hold_music];
+        let {hold_music, greetings, accountcode, name, record, strategy, options, extension} = values.params.queue;
+        let queue_ = {hold_music, greetings, accountcode, name, record, strategy, options, extension}
+        queue_.greetings = ["http://myTestServer/IVRS/" + greetings];
+        queue_.hold_music = ["http://myTestServer/IVRS/" + hold_music];
         axios
-            .put(`${base_url_cc_kam}api/v1/queues/${uuid}`, queue, call_center_authorization)
+            .put(`${base_url_cc_kam}api/v1/queues/${uuid}`, queue_, call_center_authorization)
             .then(response => {
                 this.db['campaigns'].update(values, {where: {campaign_id: values.campaign_id}})
                     .then(response => {
