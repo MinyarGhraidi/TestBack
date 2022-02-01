@@ -8,9 +8,11 @@ const config = require('../config/config.json');
 const usersbo = require('../bo/usersbo');
 const agentsbo = require('../bo/agentsbo');
 const campaignsbo = require('../bo/campaignbo');
+const trunksbo = require('../bo/truncksbo');
 let _usersbo = new usersbo();
 let _agentsbo = new agentsbo();
 let _campaignsbo = new campaignsbo();
+let _trunksbo = new trunksbo();
 
 class accounts extends baseModelbo {
     constructor() {
@@ -88,6 +90,7 @@ class accounts extends baseModelbo {
     }
 
     AddEditAccount(req, res, next) {
+        let _this = this;
         let newAccount = req.body;
         if (newAccount.account_id) {
             this.db['accounts'].update(
@@ -107,10 +110,10 @@ class accounts extends baseModelbo {
                         })
                     })
                     .catch(err => {
-                        this.sendResponseError(res, ['Error.InvalidPassword'], 2, 403);
+                        return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
                     })
             }).catch(err => {
-                this.sendResponseError(res, ['Error.InvalidPassword'], 2, 403);
+                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
             })
         } else {
             let modalObj = this.db['accounts'].build(newAccount);
@@ -132,11 +135,11 @@ class accounts extends baseModelbo {
                         })
                     })
                         .catch(err => {
-                            this.sendResponseError(res, ['Error.InvalidPassword'], 2, 403);
+                            return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
                         })
                 })
                     .catch(err => {
-                        this.sendResponseError(res, ['Error.InvalidPassword'], 2, 403);
+                        return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
                     })
             })
         }
@@ -215,11 +218,60 @@ class accounts extends baseModelbo {
         })
     }
 
+    deleteTrunks(trunks) {
+        let index = 0;
+        return new Promise((resolve, reject) => {
+            if (trunks && trunks.length !== 0) {
+                trunks.forEach(trunk => {
+                    let uuid = trunk.gateways.uuid;
+                    let trunk_id = trunk.campaign_id;
+                    _trunksbo.deleteTrunkFunc(uuid, trunk_id)
+                        .then(() => {
+                            if (index < trunks.length - 1) {
+                                index++;
+                            } else {
+                                resolve(true);
+                            }
+                        })
+                        .catch(err => {
+                            reject(err);
+                        })
+                })
+            } else {
+                resolve(true);
+            }
+        })
+    }
+
+    deleteAllRelativeTrunks(account_id) {
+        return new Promise((resolve, reject) => {
+            this.db['truncks'].findAll({
+                where: {
+                    account_id: account_id,
+                    active: 'Y'
+                }
+            })
+                .then((trunks) => {
+                    this.deleteTrunks(trunks)
+                        .then(resp => {
+                            resolve(true);
+                        })
+                        .catch(err => {
+                            reject(err);
+                        })
+                })
+                .catch(err => {
+                    reject(err);
+                })
+        })
+    }
+
     deleteAllRelativeCampaigns(account_id) {
         return new Promise((resolve, reject) => {
             this.db['campaigns'].findAll({
                 where: {
-                    account_id: account_id
+                    account_id: account_id,
+                    active: 'Y'
                 }
             })
                 .then((campaigns) => {
@@ -242,7 +294,8 @@ class accounts extends baseModelbo {
             this.db['users'].findAll({
                 where: {
                     account_id: account_id,
-                    role_crms_id: 3
+                    role_crm_id: 3,
+                    active: 'Y'
                 }
             })
                 .then(agents => {
@@ -265,7 +318,8 @@ class accounts extends baseModelbo {
             this.db['users'].findAll({
                 where: {
                     account_id: account_id,
-                    [Op.or]: [{role_crms_id: 1}, {role_crms_id: 4}, {role_crms_id: 5}]
+                    active: 'Y',
+                    [Op.or]: [{role_crm_id: 1}, {role_crm_id: 4}, {role_crm_id: 5}],
                 }
             })
                 .then(users => {
@@ -286,34 +340,40 @@ class accounts extends baseModelbo {
     deleteAccount(req, res, next) {
         let _this = this;
         let account_id = req.body.account_id;
-        this.deleteAllRelativeAgents(account_id)
+        this.deleteAllRelativeTrunks(account_id)
             .then(() => {
-                this.deleteAllRelativeUsers(account_id)
+                this.deleteAllRelativeAgents(account_id)
                     .then(() => {
-                        this.deleteAllRelativeCampaigns(account_id)
+                        this.deleteAllRelativeUsers(account_id)
                             .then(() => {
-                                this.db['accounts']
-                                    .update({active: 'N'}, {where: {account_id: account_id}})
+                                this.deleteAllRelativeCampaigns(account_id)
                                     .then(() => {
-                                        res.send({
-                                            status: 200,
-                                            message : 'account deleted with success'
-                                        })
+                                        this.db['accounts']
+                                            .update({active: 'N'}, {where: {account_id: account_id}})
+                                            .then(() => {
+                                                res.send({
+                                                    status: 200,
+                                                    message: 'account deleted with success'
+                                                })
+                                            })
+                                            .catch(err => {
+                                                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                                            })
                                     })
                                     .catch(err => {
-                                        _this.sendResponseError(res, ['Error.InvalidPassword'], 2, 403);
+                                        return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
                                     })
                             })
                             .catch(err => {
-                                _this.sendResponseError(res, ['Error.InvalidPassword'], 2, 403);
+                                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
                             })
                     })
                     .catch(err => {
-                        _this.sendResponseError(res, ['Error.InvalidPassword'], 2, 403);
+                        return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
                     })
             })
             .catch(err => {
-                _this.sendResponseError(res, ['Error.InvalidPassword'], 2, 403);
+                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
             })
     }
 
