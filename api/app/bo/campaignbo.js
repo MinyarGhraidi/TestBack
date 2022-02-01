@@ -9,7 +9,6 @@ const call_center_authorization = {
     headers: {Authorization: call_center_token}
 };
 
-
 class campaigns extends baseModelbo {
     constructor() {
         super('campaigns', 'campaign_id');
@@ -85,23 +84,35 @@ class campaigns extends baseModelbo {
             });
     }
 
+    deleteInboundFunc(uuid, campaign_id) {
+        return new Promise((resolve, reject) => {
+            axios
+                .delete(`${base_url_cc_kam}api/v1/queues/${uuid}`, call_center_authorization)
+                .then(resp => {
+                    this.db['campaigns'].update({active: 'N'}, {where: {campaign_id: campaign_id}})
+                        .then(result => {
+                            resolve(true)
+                        })
+                        .catch((err) => {
+                            reject(err)
+                        });
+                })
+                .catch((err) => {
+                    reject(err)
+                });
+        })
+    }
+
     deleteInbound(req, res, next) {
         let _this = this;
         let uuid = req.body.uuid;
         let campaign_id = req.body.campaign_id;
-        axios
-            .delete(`${base_url_cc_kam}api/v1/queues/${uuid}`, call_center_authorization)
-            .then(resp => {
-                this.db['campaigns'].update({active: 'N'}, {where: {campaign_id: campaign_id}})
-                    .then(result => {
-                        res.send({
-                            succes: 200,
-                            message: "Campaign has been deleted with success"
-                        })
-                    })
-                    .catch((err) => {
-                        return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
-                    });
+        this.deleteInboundFunc(uuid, campaign_id)
+            .then(result => {
+                res.send({
+                    succes: 200,
+                    message: "Campaign has been deleted with success"
+                })
             })
             .catch((err) => {
                 return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);

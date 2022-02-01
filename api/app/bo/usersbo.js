@@ -428,7 +428,6 @@ class users extends baseModelbo {
             });
     }
 
-
     signUp(req, res, next) {
         const formData = req.body;
 
@@ -490,7 +489,6 @@ class users extends baseModelbo {
             return this.sendResponseError(res, ['Error.AnErrorHasOccuredUser'], 1, 403);
         });
     }
-
 
     getUserByToken(req, res, next) {
 
