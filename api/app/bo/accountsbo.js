@@ -376,7 +376,6 @@ class accounts extends baseModelbo {
                 return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
             })
     }
->>>>>>> 48f3a84b243e9f02f13a1fcd2781f36591c67c79
 
 }
 
