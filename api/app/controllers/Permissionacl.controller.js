@@ -1,4 +1,4 @@
-const aclDao = require('../bo/aclsbo');
+const aclDao = require('../bo/Permissionaclsbo');
 let acl_DaoInst = new aclDao;
 
 module.exports = {

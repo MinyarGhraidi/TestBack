@@ -5,15 +5,11 @@ module.exports = (sequelize, Sequelize) => {
                 autoIncrement: true,
                 type: Sequelize.INTEGER
             },
-            label: {
-                type: Sequelize.STRING
+            role_id: {
+                type: Sequelize.INTEGER
             },
-            description: {
-                type: Sequelize.STRING
-            },
-            users: {
-                type: Sequelize.ARRAY
-
+            permission_acl_id: {
+                type: Sequelize.INTEGER
             },
             active: {
                 type: Sequelize.STRING,
@@ -25,20 +21,27 @@ module.exports = (sequelize, Sequelize) => {
 
     acls.prototype.fields = [
         'id',
-        'label',
-        'description',
-        'users',
+        'role_id',
+        'permission_acl_id',
         'active'
 
     ];
 
     acls.prototype.fieldsSearchMetas = [
         'id',
-        'label',
-        'description',
-        'users',
+        'role_id',
+        'permission_acl_id',
         'active'
     ];
+
+    acls.associate = function (models) {
+        acls.belongsTo(models.roles, {
+            foreignKey: 'role_id'
+        });
+        acls.belongsTo(models.permission_acls ,{
+            foreignKey : 'permission_acl_id'
+        })
+    }
 
     return acls;
 

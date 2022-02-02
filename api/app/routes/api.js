@@ -45,7 +45,7 @@ agent_log_eventsController = require('../controllers/agent_log_events.controller
 meetingsController = require('../controllers/meeting.controller')
 emailsController = require('../controllers/email.controller')
 roles_crmController = require('../controllers/roles_crm.controller')
-acl_Controller = require('../controllers/acl.controller')
+acl_Controller = require('../controllers/Permissionacl.controller')
 
 
 let apiRouters = function (passport) {
@@ -88,6 +88,7 @@ let apiRouters = function (passport) {
     router.delete("/api/role/delete/:params", rolesController.delete);
     router.post("/api/role/save", rolesController.save);
     router.post("/api/role/saveRole", rolesController.saveRole);
+    router.delete("/api/role/deleteRole/:params", rolesController.deleteRole)
 
     //user routers
     router.post("/api/user/find/:params?", passport.authenticate('jwt', {session: false}), usersController.find);
