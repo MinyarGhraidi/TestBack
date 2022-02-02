@@ -12,17 +12,32 @@ class roles extends baseModelbo {
     isUniqueRole(rolename, account_id, role_id) {
         let _this = this;
         return new Promise((resolve, reject) => {
-            this.db['roles'].findAll({where: {role_name: rolename, active: 'Y', account_id: account_id , role_id: { $not: role_id}}})
-                .then(data => {
-                    if (data && data.length !== 0) {
-                        resolve(false);
-                    } else {
-                        resolve(true);
-                    }
-                })
-                .catch(err => {
-                    reject(err);
-                })
+            if(role_id !== undefined){
+                this.db['roles'].findAll({where: {role_name: rolename, active: 'Y', account_id: account_id , role_id: { $not: role_id}}})
+                    .then(data => {
+                        if (data && data.length !== 0) {
+                            resolve(false);
+                        } else {
+                            resolve(true);
+                        }
+                    })
+                    .catch(err => {
+                        reject(err);
+                    })
+            }else{
+                this.db['roles'].findAll({where: {role_name: rolename, active: 'Y', account_id: account_id }})
+                    .then(data => {
+                        if (data && data.length !== 0) {
+                            resolve(false);
+                        } else {
+                            resolve(true);
+                        }
+                    })
+                    .catch(err => {
+                        reject(err);
+                    })
+            }
+
         })
     }
 
