@@ -5,8 +5,14 @@ let db = require('../models');
 const {appSecret} = require("../helpers/app");
 const jwt = require('jsonwebtoken');
 const config = require('../config/config.json');
-const itembo = require('../bo/usersbo');
-let _usersbo = new itembo();
+const usersbo = require('../bo/usersbo');
+const agentsbo = require('../bo/agentsbo');
+const campaignsbo = require('../bo/campaignbo');
+const trunksbo = require('../bo/truncksbo');
+let _usersbo = new usersbo();
+let _agentsbo = new agentsbo();
+let _campaignsbo = new campaignsbo();
+let _trunksbo = new trunksbo();
 
 class accounts extends baseModelbo {
     constructor() {
@@ -77,7 +83,6 @@ class accounts extends baseModelbo {
                         }
                     }
                 }).catch((error) => {
-
                     return this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', error], 1, 403);
                 });
             }
@@ -85,6 +90,7 @@ class accounts extends baseModelbo {
     }
 
     AddEditAccount(req, res, next) {
+        let _this = this;
         let newAccount = req.body;
         if (newAccount.account_id) {
             this.db['accounts'].update(
@@ -104,10 +110,10 @@ class accounts extends baseModelbo {
                         })
                     })
                     .catch(err => {
-                        res.send(err)
+                        return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
                     })
             }).catch(err => {
-                res.send(err)
+                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
             })
         } else {
             let modalObj = this.db['accounts'].build(newAccount);
@@ -128,11 +134,249 @@ class accounts extends baseModelbo {
                             data: new_user
                         })
                     })
+                        .catch(err => {
+                            return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                        })
                 })
+                    .catch(err => {
+                        return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                    })
             })
         }
     }
 
+    deleteAgents(agents) {
+        let index = 0;
+        return new Promise((resolve, reject) => {
+            if (agents && agents.length !== 0) {
+                agents.forEach(agent => {
+                    let uuid = agent.sip_device.uuid;
+                    let agent_id = agent.user_id;
+                    _agentsbo.deleteAgentFunc(uuid, agent_id)
+                        .then(() => {
+                            if (index < agents.length - 1) {
+                                index++;
+                            } else {
+                                resolve(true);
+                            }
+                        })
+                        .catch(err => {
+                            reject(err);
+                        })
+                })
+            } else {
+                resolve(true);
+            }
+        })
+    }
+
+    deleteUsers(users) {
+        let index = 0;
+        return new Promise((resolve, reject) => {
+            if (users && users.length !== 0) {
+                users.forEach(user => {
+                    this.db['users'].update({active: 'N'}, {where: {user_id: user.user_id}})
+                        .then(resp => {
+                            if (index < users.length - 1) {
+                                index++;
+                            } else {
+                                resolve(true);
+                            }
+                        })
+                        .catch(err => {
+                            reject(err);
+                        })
+                })
+            } else {
+                resolve(true);
+            }
+        })
+    }
+
+    deleteCampaign(campaigns) {
+        let index = 0;
+        return new Promise((resolve, reject) => {
+            if (campaigns && campaigns.length !== 0) {
+                campaigns.forEach(campaign => {
+                    let uuid = campaign.params.queue.uuid;
+                    let campaign_id = campaign.campaign_id;
+                    _campaignsbo.deleteInboundFunc(uuid, campaign_id)
+                        .then(() => {
+                            if (index < campaigns.length - 1) {
+                                index++;
+                            } else {
+                                resolve(true);
+                            }
+                        })
+                        .catch(err => {
+                            reject(err);
+                        })
+                })
+            } else {
+                resolve(true);
+            }
+        })
+    }
+
+    deleteTrunks(trunks) {
+        let index = 0;
+        return new Promise((resolve, reject) => {
+            if (trunks && trunks.length !== 0) {
+                trunks.forEach(trunk => {
+                    let uuid = trunk.gateways.uuid;
+                    let trunk_id = trunk.campaign_id;
+                    _trunksbo.deleteTrunkFunc(uuid, trunk_id)
+                        .then(() => {
+                            if (index < trunks.length - 1) {
+                                index++;
+                            } else {
+                                resolve(true);
+                            }
+                        })
+                        .catch(err => {
+                            reject(err);
+                        })
+                })
+            } else {
+                resolve(true);
+            }
+        })
+    }
+
+    deleteAllRelativeTrunks(account_id) {
+        return new Promise((resolve, reject) => {
+            this.db['truncks'].findAll({
+                where: {
+                    account_id: account_id,
+                    active: 'Y'
+                }
+            })
+                .then((trunks) => {
+                    this.deleteTrunks(trunks)
+                        .then(resp => {
+                            resolve(true);
+                        })
+                        .catch(err => {
+                            reject(err);
+                        })
+                })
+                .catch(err => {
+                    reject(err);
+                })
+        })
+    }
+
+    deleteAllRelativeCampaigns(account_id) {
+        return new Promise((resolve, reject) => {
+            this.db['campaigns'].findAll({
+                where: {
+                    account_id: account_id,
+                    active: 'Y'
+                }
+            })
+                .then((campaigns) => {
+                    this.deleteCampaign(campaigns)
+                        .then(resp => {
+                            resolve(true);
+                        })
+                        .catch(err => {
+                            reject(err);
+                        })
+                })
+                .catch(err => {
+                    reject(err);
+                })
+        })
+    }
+
+    deleteAllRelativeAgents(account_id) {
+        return new Promise((resolve, reject) => {
+            this.db['users'].findAll({
+                where: {
+                    account_id: account_id,
+                    role_crm_id: 3,
+                    active: 'Y'
+                }
+            })
+                .then(agents => {
+                    this.deleteAgents(agents)
+                        .then(() => {
+                            resolve(true)
+                        })
+                        .catch(err => {
+                            reject(err)
+                        })
+                })
+                .catch(err => {
+                    reject(err)
+                })
+        })
+    }
+
+    deleteAllRelativeUsers(account_id) {
+        return new Promise((resolve, reject) => {
+            this.db['users'].findAll({
+                where: {
+                    account_id: account_id,
+                    active: 'Y',
+                    [Op.or]: [{role_crm_id: 1}, {role_crm_id: 4}, {role_crm_id: 5}],
+                }
+            })
+                .then(users => {
+                    this.deleteUsers(users)
+                        .then(() => {
+                            resolve(true)
+                        })
+                        .catch(err => {
+                            reject(err)
+                        })
+                })
+                .catch(err => {
+                    reject(err)
+                })
+        })
+    }
+
+    deleteAccount(req, res, next) {
+        let _this = this;
+        let account_id = req.body.account_id;
+        this.deleteAllRelativeTrunks(account_id)
+            .then(() => {
+                this.deleteAllRelativeAgents(account_id)
+                    .then(() => {
+                        this.deleteAllRelativeUsers(account_id)
+                            .then(() => {
+                                this.deleteAllRelativeCampaigns(account_id)
+                                    .then(() => {
+                                        this.db['accounts']
+                                            .update({active: 'N'}, {where: {account_id: account_id}})
+                                            .then(() => {
+                                                res.send({
+                                                    status: 200,
+                                                    message: 'account deleted with success'
+                                                })
+                                            })
+                                            .catch(err => {
+                                                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                                            })
+                                    })
+                                    .catch(err => {
+                                        return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                                    })
+                            })
+                            .catch(err => {
+                                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                            })
+                    })
+                    .catch(err => {
+                        return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                    })
+            })
+            .catch(err => {
+                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+            })
+    }
+>>>>>>> 48f3a84b243e9f02f13a1fcd2781f36591c67c79
 
 }
 

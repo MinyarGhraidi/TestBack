@@ -1,0 +1,135 @@
+#GET ALL QUEUES
+GET https://occ.oxilog.net:2443/api/v1/queues
+Content-Type: application/json
+Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9cIi2IY5
+
+###
+#GET QUEUE BY UUID
+GET https://occ.oxilog.net:2443/api/v1/queues/a724ff21-c71f-4bc5-8545-67670a23485f
+Content-Type: application/json
+Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9cIi2IY5
+
+###
+#CREATE NEW QUEUE
+POST https://occ.oxilog.net:2443/api/v1/queues
+Content-Type: application/json
+Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9cIi2IY5
+
+{
+  "name": "Test-Queue",
+  "extension": "2000",
+  "accountcode": "1",
+  "strategy": "ring-all",
+  "greetings": ["http://94.23.104.159/IVRS/confirm_appel.wav"],
+  "hold_music": ["http://94.23.104.159/IVRS/attente-longue.wav"],
+  "record": true,
+  "options": {
+    "time_base_score": "queue",
+    "tier_rules_apply": "false",
+    "tier_rule_wait_second": 300,
+    "tier_rule_wait_multiply_level": "false",
+    "tier_rule_no_agent_no_wait": "true",
+    "discard_abandoned_after": 900,
+    "abandoned_resume_allowed": "true",
+    "max_wait_time": 0,
+    "max_wait_time_with_no_agent": 120,
+    "max_wait_time_with_no_agent_time_reached": 5,
+    "ring_progressively_delay": 10,
+    "skip_agents_with_external_calls": "false",
+    "agent_no_answer_status": "on-break"
+  }
+}
+
+###
+#UPDATE QUEUE
+PUT https://occ.oxilog.net:2443/api/v1/queues/809427d8-5992-438e-8833-a7164416b41b
+Content-Type: application/json
+Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9cIi2IY5
+
+{
+  "name": "Q1",
+  "extension": "1000",
+  "accountcode": "1",
+  "strategy": "ring-all",
+  "greetings": ["http://94.23.104.159/IVRS/confirm_appel.wav"],
+  "hold_music": ["http://94.23.104.159/IVRS/attente-longue.wav"],
+  "record": 0,
+  "options": {
+    "time_base_score": "queue",
+    "tier_rules_apply": "false",
+    "tier_rule_wait_second": 300,
+    "tier_rule_wait_multiply_level": "false",
+    "tier_rule_no_agent_no_wait": "true",
+    "discard_abandoned_after": 900,
+    "abandoned_resume_allowed": "true",
+    "max_wait_time": 0,
+    "max_wait_time_with_no_agent": 120,
+    "max_wait_time_with_no_agent_time_reached": 5,
+    "ring_progressively_delay": 10,
+    "skip_agents_with_external_calls": "true",
+    "agent_no_answer_status": "on-break"
+  }
+}
+
+
+###
+#DELETE QUEUE
+DELETE https://occ.oxilog.net:2443/api/v1/queues/fdc60fb3-1c8e-46d9-9aa0-9960dac0caa6
+Content-Type: application/json
+Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9cIi2IY5
+
+
+###
+#GET QUEUE TIERS
+GET https://occ.oxilog.net:2443/api/v1/queues/06a1e299-ab59-4777-9b92-1218c71a48d3/tiers
+Content-Type: application/json
+Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9cIi2IY5
+
+
+###
+#ADD/UPDATE QUEUE TIERS
+POST https://occ.oxilog.net:2443/api/v1/queues/06a1e299-ab59-4777-9b92-1218c71a48d3/tiers
+Content-Type: application/json
+Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9cIi2IY5
+
+{
+  "tiers": [
+    {
+      "agent_uuid": "2066dab4-279f-4c6e-88a8-cf82b9ffd1ce",
+      "tier_level": 1,
+      "tier_position": 1
+    }
+  ]
+}
+
+###
+#DELETE QUEUE TIERS
+POST https://occ.oxilog.net:2443/api/v1/queues/519093fa-b0d9-4048-8c09-5aa5b6fdb4a9/tiers/delete
+Content-Type: application/json
+Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9cIi2IY5
+
+{
+  "agents": ["26929a84-7505-4cc7-aff0-0e1400c79d29", "e4c5cb0f-5060-498f-a739-ce7c17af3372"]
+}
+
+
+###
+#DELETE ALL QUEUE TIERS AT ONCE
+POST https://occ.oxilog.net:2443/api/v1/queues/519093fa-b0d9-4048-8c09-5aa5b6fdb4a9/tiers/delete
+Content-Type: application/json
+Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9cIi2IY5
+
+{
+  "agents": ["*"]
+}
+
+
+###
+#DELETE ALL QUEUE TIERS AT ONCE
+POST http://94.23.104.159:2443/api/events/agent
+Content-Type: application/json
+Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9cIi2IY5
+
+{
+  "agents": ["*"]
+}

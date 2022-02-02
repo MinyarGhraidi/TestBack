@@ -32,4 +32,7 @@ module.exports = {
     deleteAgent: function (req, res, next) {
         agentsDaoInst.deleteAgent(req, res, next)
     },
+    onConnect: function (req, res, next) {
+        agentsDaoInst.onConnect(req, res, next)
+    },
 }

@@ -68,23 +68,35 @@ class truncks extends baseModelbo {
             });
     }
 
+    deleteTrunkFunc(uuid, trunk_id) {
+        return new Promise((resolve, reject) => {
+            axios
+                .delete(`${base_url_cc_kam}api/v1/gateways/${uuid}`, call_center_authorization)
+                .then(resp => {
+                    this.db['trunks'].update({active: 'N'}, {where: {trunk_id: trunk_id}})
+                        .then(result => {
+                            resolve(true)
+                        })
+                        .catch((err) => {
+                            reject(err)
+                        });
+                })
+                .catch((err) => {
+                    reject(err)
+                });
+        })
+    }
+
     deleteTrunk(req, res, next) {
         let _this = this;
         let uuid = req.body.uuid;
         let trunk_id = req.body.trunk_id;
-        axios
-            .delete(`${base_url_cc_kam}api/v1/gateways/${uuid}`, call_center_authorization)
-            .then(resp => {
-                this.db['trunks'].update({active: 'N'}, {where: {trunk_id: trunk_id}})
-                    .then(result => {
-                        res.send({
-                            succes: 200,
-                            message: "Trunk has been deleted with success"
-                        })
-                    })
-                    .catch((err) => {
-                        return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
-                    });
+        this.deleteTrunkFunc(uuid, trunk_id)
+            .then(result => {
+                res.send({
+                    succes: 200,
+                    message: "Trunk has been deleted with success"
+                })
             })
             .catch((err) => {
                 return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);

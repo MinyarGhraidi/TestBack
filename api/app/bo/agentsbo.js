@@ -146,7 +146,7 @@ class agents extends baseModelbo {
         let accountcode = req.body.accountcode;
         let {sip_device} = values;
         let {username, password, domain, options, status, enabled, subscriber_id} = sip_device;
-        _usersbo.isUniqueUsername(values.username,0)
+        _usersbo.isUniqueUsername(values.username, 0)
             .then(isUnique => {
                 if (isUnique) {
                     let agent = {username, password, domain, options, accountcode, status, enabled, subscriber_id}
@@ -161,7 +161,7 @@ class agents extends baseModelbo {
                                         status: 200,
                                         message: "success",
                                         data: agent,
-                                        success : true
+                                        success: true
                                     })
                                 })
                                 .catch(err => {
@@ -205,7 +205,7 @@ class agents extends baseModelbo {
                                         status: 200,
                                         message: "success",
                                         data: agent,
-                                        success : true
+                                        success: true
                                     })
                                 })
                                 .catch(err => {
@@ -251,19 +251,62 @@ class agents extends baseModelbo {
         })
     }
 
+    deleteAgentFunc(uuid, agent_id) {
+        return new Promise((resolve, reject) => {
+            axios
+                .delete(`${base_url_cc_kam}api/v1/agents/${uuid}`, call_center_authorization)
+                .then(resp => {
+                    this.db['users'].update({active: 'N'}, {where: {user_id: agent_id}})
+                        .then(result => {
+                            resolve(true)
+                        })
+                        .catch((err) => {
+                            reject(err)
+                        });
+                })
+                .catch((err) => {
+                    reject(err)
+                });
+        })
+    }
+
     deleteAgent(req, res, next) {
         let _this = this;
         let uuid = req.body.user_uuid;
         let agent_id = req.body.user_id;
+        this.deleteAgentFunc(uuid, agent_id)
+            .then(result => {
+                res.send({
+                    succes: 200,
+                    message: "Agent has been deleted with success"
+                })
+            })
+            .catch((err) => {
+                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+            });
+    }
+
+    onConnect(req, res, next) {
+        let _this = this;
+        let {user_id, uuid, crmStatus, telcoStatus} = req.body;
         axios
-            .delete(`${base_url_cc_kam}api/v1/agents/${uuid}`, call_center_authorization)
+            .get(`${base_url_cc_kam}api/v1/agents/${uuid}`, call_center_authorization)
             .then(resp => {
-                this.db['users'].update({active: 'N'}, {where: {user_id: agent_id}})
-                    .then(result => {
-                        res.send({
-                            succes: 200,
-                            message: "Agent has been deleted with success"
-                        })
+                let agent = resp.data.result;
+                agent.status = telcoStatus;
+                axios
+                    .put(`${base_url_cc_kam}api/v1/agents/${uuid}`, agent, call_center_authorization)
+                    .then(() => {
+                        this.updateAgentStatus(user_id, agent, crmStatus)
+                            .then(() => {
+                                res.send({
+                                    status: 200,
+                                    message: 'success'
+                                })
+                            })
+                            .catch((err) => {
+                                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                            });
                     })
                     .catch((err) => {
                         return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
@@ -274,6 +317,27 @@ class agents extends baseModelbo {
             });
     }
 
+    updateAgentStatus(user_id, agent_, crmStatus) {
+        return new Promise((resolve, reject) => {
+            let agent = {user_id: user_id, sip_device: agent_, params: {}};
+            agent.params.status = crmStatus;
+            this.db['users'].update(agent, {where: {user_id: user_id}})
+                .then(result => {
+                    let agentLog = {user_id: user_id, action_name: agent.params.status};
+                    let modalObj = this.db['agent_log_events'].build(agentLog);
+                    modalObj.save()
+                        .then(resp => {
+                            resolve(true);
+                        })
+                        .catch(err => {
+                            reject(err)
+                        })
+                })
+                .catch(err => {
+                    reject(err)
+                })
+        })
+    }
 
 }
 

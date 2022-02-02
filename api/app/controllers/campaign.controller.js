@@ -31,4 +31,7 @@ module.exports = {
     addDefaultPauseCallStatus: function (req, res, next) {
         _itembo.addDefaultPauseCallStatus(req, res, next);
     },
+    deleteInbound: function (req, res, next) {
+        _itembo.deleteInbound(req, res, next);
+    },
 };

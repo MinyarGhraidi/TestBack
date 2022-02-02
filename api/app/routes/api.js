@@ -62,6 +62,7 @@ let apiRouters = function (passport) {
     router.put("/api/account/update", passport.authenticate('jwt', {session: false}), accountController.AddEditAccount);
     router.delete("/api/account/delete/:params", passport.authenticate('jwt', {session: false}), accountController.delete);
     router.post("/api/account/save", passport.authenticate('jwt', {session: false}), accountController.AddEditAccount);
+    router.post("/api/account/deleteAccount", passport.authenticate('jwt', {session: false}), accountController.deleteAccount);
 
     router.post("/api/account/signin", passport.authenticate('jwt', {session: false}), accountController.signIn);
     router.post(
@@ -80,6 +81,7 @@ let apiRouters = function (passport) {
     router.post("/api/campaign/updateInbound", passport.authenticate('jwt', {session: false}), campaignController.updateInbound);
     router.post("/api/campaign/cloneCampaign", passport.authenticate('jwt', {session: false}), campaignController.cloneCampaign);
     router.post("/api/campaign/addDefaultPauseCallStatus", passport.authenticate('jwt', {session: false}), campaignController.addDefaultPauseCallStatus);
+    router.post("/api/campaign/deleteInbound", passport.authenticate('jwt', {session: false}), campaignController.deleteInbound);
 
     //role routers
     router.post("/api/role/find/:params?", passport.authenticate('jwt', {session: false}), rolesController.find);
@@ -117,6 +119,7 @@ let apiRouters = function (passport) {
     router.post("/api/agent/saveAgent", passport.authenticate('jwt', {session: false}), agentsController.saveAgent);
     router.post("/api/agent/updateAgent", passport.authenticate('jwt', {session: false}), agentsController.updateAgent);
     router.post("/api/agent/deleteAgent", passport.authenticate('jwt', {session: false}), agentsController.deleteAgent);
+    router.post("/api/agent/onConnect", passport.authenticate('jwt', {session: false}), agentsController.onConnect);
 
     router.post("/api/signup", agentsController.signUp);
     router.post("/api/signin", agentsController.signIn);

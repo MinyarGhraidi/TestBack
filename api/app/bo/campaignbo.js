@@ -9,7 +9,6 @@ const call_center_authorization = {
     headers: {Authorization: call_center_token}
 };
 
-
 class campaigns extends baseModelbo {
     constructor() {
         super('campaigns', 'campaign_id');
@@ -18,10 +17,11 @@ class campaigns extends baseModelbo {
     }
 
     saveInbound(req, res, next) {
+        let _this = this;
         let values = req.body;
         let {queue} = values.params;
         let params = values.params;
-        let {greetings, hold_music} = queue;
+        let {greetings, hold_music} = queue.options;
         queue.greetings = ["http://myTestServer/IVRS/" + greetings];
         queue.hold_music = ["http://myTestServer/IVRS/" + hold_music];
         axios
@@ -36,8 +36,8 @@ class campaigns extends baseModelbo {
                 values.params = params;
                 let modalObj = this.db['campaigns'].build(values);
                 modalObj.save()
-                    .then((response) => {
-                        this.addDefaultStatus(campaign_id)
+                    .then((campaign) => {
+                        this.addDefaultStatus(campaign.campaign_id)
                             .then(response => {
                                 res.send({
                                     status: 200,
@@ -51,6 +51,68 @@ class campaigns extends baseModelbo {
                     .catch((err) => {
                         return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
                     });
+            })
+            .catch((err) => {
+                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+            });
+    }
+
+    updateInbound(req, res, next) {
+        let _this = this;
+        let values = req.body;
+        let uuid = values.params.queue.uuid;
+        let {hold_music, greetings, accountcode, name, record, strategy, options, extension} = values.params.queue;
+        let queue_ = {hold_music, greetings, accountcode, name, record, strategy, options, extension}
+        queue_.greetings = ["http://myTestServer/IVRS/" + greetings];
+        queue_.hold_music = ["http://myTestServer/IVRS/" + hold_music];
+        axios
+            .put(`${base_url_cc_kam}api/v1/queues/${uuid}`, queue_, call_center_authorization)
+            .then(response => {
+                this.db['campaigns'].update(values, {where: {campaign_id: values.campaign_id}})
+                    .then(response => {
+                        res.send({
+                            status: 200,
+                            message: "succes"
+                        })
+                    })
+                    .catch((err) => {
+                        return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                    });
+            })
+            .catch((err) => {
+                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+            });
+    }
+
+    deleteInboundFunc(uuid, campaign_id) {
+        return new Promise((resolve, reject) => {
+            axios
+                .delete(`${base_url_cc_kam}api/v1/queues/${uuid}`, call_center_authorization)
+                .then(resp => {
+                    this.db['campaigns'].update({active: 'N'}, {where: {campaign_id: campaign_id}})
+                        .then(result => {
+                            resolve(true)
+                        })
+                        .catch((err) => {
+                            reject(err)
+                        });
+                })
+                .catch((err) => {
+                    reject(err)
+                });
+        })
+    }
+
+    deleteInbound(req, res, next) {
+        let _this = this;
+        let uuid = req.body.uuid;
+        let campaign_id = req.body.campaign_id;
+        this.deleteInboundFunc(uuid, campaign_id)
+            .then(result => {
+                res.send({
+                    succes: 200,
+                    message: "Campaign has been deleted with success"
+                })
             })
             .catch((err) => {
                 return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
@@ -185,33 +247,6 @@ class campaigns extends baseModelbo {
                 })
         })
 
-    }
-
-    updateInbound(req, res, next) {
-        let values = req.body;
-        let uuid = values.params.queue.uuid;
-        let {queue} = values.params;
-        delete queue.uuid
-        let {greetings, hold_music} = queue
-        queue.greetings = ["http://myTestServer/IVRS/" + greetings];
-        queue.hold_music = ["http://myTestServer/IVRS/" + hold_music];
-        axios
-            .put(`${base_url_cc_kam}api/v1/queues/${uuid}`, queue, call_center_authorization)
-            .then(response => {
-                this.db['campaigns'].update(values, {where: {campaign_id: values.campaign_id}})
-                    .then(response => {
-                        res.send({
-                            status: 200,
-                            message: "succes"
-                        })
-                    })
-                    .catch((err) => {
-                        return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
-                    });
-            })
-            .catch((err) => {
-                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
-            });
     }
 
     saveCallStatus(list_callstatus, cloned_campaign_id) {
