@@ -42,15 +42,27 @@ class roles extends baseModelbo {
                                         role_id: role[1].role_id,
                                     }
                                 }).then(acl => {
-                                    this.saveOrUpdatePermission(req.body.data_permissions, role[1]).then(result => {
+                                    if(req.body.data_permissions.length !==0){
+                                        this.saveOrUpdatePermission(req.body.data_permissions, role[1]).then(result => {
+                                            res.send({
+                                                status: 200,
+                                                success: true,
+                                                message: 'Success',
+                                                data: role
+                                            })
+                                        }).catch(err =>{
+                                            return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                                        })
+                                    }else{
                                         res.send({
                                             status: 200,
                                             success: true,
                                             message: 'Success',
                                             data: role
                                         })
-                                    })
+                                    }
                                 }).catch(err=>{
+                                    return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
                                 })
                             })
                             .catch(err => {
@@ -60,14 +72,26 @@ class roles extends baseModelbo {
                         let modalObj = this.db['roles'].build(req.body)
                         modalObj.save()
                             .then(role => {
-                                this.saveOrUpdatePermission(req.body.data_permissions , role).then(result =>{
+                                if(req.body.data_permissions.length !==0){
+                                    this.saveOrUpdatePermission(req.body.data_permissions , role).then(result =>{
+                                        res.send({
+                                            status: 200,
+                                            success: true,
+                                            message: 'Success',
+                                            data: role
+                                        })
+                                    }).catch(err =>{
+                                        return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                                    })
+                                }else{
                                     res.send({
                                         status: 200,
                                         success: true,
                                         message: 'Success',
                                         data: role
                                     })
-                                })
+                                }
+
 
                             })
                             .catch(err => {
