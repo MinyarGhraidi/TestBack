@@ -200,7 +200,7 @@ class accounts extends baseModelbo {
                 campaigns.forEach(campaign => {
                     let uuid = campaign.params.queue.uuid;
                     let campaign_id = campaign.campaign_id;
-                    _campaignsbo.deleteInboundFunc(uuid, campaign_id)
+                    _campaignsbo.deleteCampaignFunc(uuid, campaign_id)
                         .then(() => {
                             if (index < campaigns.length - 1) {
                                 index++;

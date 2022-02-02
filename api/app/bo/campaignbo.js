@@ -16,7 +16,7 @@ class campaigns extends baseModelbo {
         this.primaryKey = 'campaign_id';
     }
 
-    saveInbound(req, res, next) {
+    saveCampaign(req, res, next) {
         let _this = this;
         let values = req.body;
         let {queue} = values.params;
@@ -57,7 +57,7 @@ class campaigns extends baseModelbo {
             });
     }
 
-    updateInbound(req, res, next) {
+    updateCampaign(req, res, next) {
         let _this = this;
         let values = req.body;
         let uuid = values.params.queue.uuid;
@@ -84,7 +84,7 @@ class campaigns extends baseModelbo {
             });
     }
 
-    deleteInboundFunc(uuid, campaign_id) {
+    deleteCampaignFunc(uuid, campaign_id) {
         return new Promise((resolve, reject) => {
             axios
                 .delete(`${base_url_cc_kam}api/v1/queues/${uuid}`, call_center_authorization)
@@ -103,11 +103,11 @@ class campaigns extends baseModelbo {
         })
     }
 
-    deleteInbound(req, res, next) {
+    deleteCampaign(req, res, next) {
         let _this = this;
         let uuid = req.body.uuid;
         let campaign_id = req.body.campaign_id;
-        this.deleteInboundFunc(uuid, campaign_id)
+        this.deleteCampaignFunc(uuid, campaign_id)
             .then(result => {
                 res.send({
                     succes: 200,

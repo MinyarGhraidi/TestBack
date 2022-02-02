@@ -19,11 +19,11 @@ module.exports = {
     delete: function (req, res, next) {
         _itembo.delete(req, res, next);
     },
-    saveInbound: function (req, res, next) {
-        _itembo.saveInbound(req, res, next);
+    saveCampaign: function (req, res, next) {
+        _itembo.saveCampaign(req, res, next);
     },
-    updateInbound: function (req, res, next) {
-        _itembo.updateInbound(req, res, next);
+    updateCampaign: function (req, res, next) {
+        _itembo.updateCampaign(req, res, next);
     },
     cloneCampaign: function (req, res, next) {
         _itembo.cloneCampaign(req, res, next);
@@ -31,7 +31,7 @@ module.exports = {
     addDefaultPauseCallStatus: function (req, res, next) {
         _itembo.addDefaultPauseCallStatus(req, res, next);
     },
-    deleteInbound: function (req, res, next) {
-        _itembo.deleteInbound(req, res, next);
+    deleteCampaign: function (req, res, next) {
+        _itembo.deleteCampaign(req, res, next);
     },
 };
