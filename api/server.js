@@ -6,9 +6,7 @@ const hookJWTStrategy = require('./app/services/passportStrategy');
 const useragent = require('express-useragent');
 const bodyParser = require('body-parser');
 const { appConfig } = require("./app/helpers/app");
-
 const passport = require('passport');
-const { start } = require('repl');
 
 app.use(useragent.express());
 app.use(cors());
@@ -51,10 +49,6 @@ app.use('/', require('./app/routes/api')(passport));
 
 app.get('/', (req, res) => {
   res.send('backend connected');
-});
-
-app.get('/.well-known/pki-validation/EBF28B389C9111A79CD6AB26AAA57B62.txt', (req, res) => {
-  res.send('F57B918D03C49042BE5A1250141658F806625F05F548F04076F5747757D159BE\ncomodoca.com\n264fffab69596e3');
 });
 
 app.use('/', require('./app/telco_api_services/api')()) 
