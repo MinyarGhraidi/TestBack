@@ -1,5 +1,6 @@
 const {baseModelbo} = require('./basebo');
 let sequelize = require('sequelize');
+const Op = sequelize.Op;
 let db = require('../models');
 const {default: axios} = require("axios");
 
@@ -57,27 +58,39 @@ class campaigns extends baseModelbo {
             });
     }
 
+    updateCampaignFunc(values, uuid) {
+        return new Promise((resolve, reject) => {
+            let {hold_music, greetings, accountcode, name, record, strategy, options, extension} = values.params.queue;
+            let queue_ = {hold_music, greetings, accountcode, name, record, strategy, options, extension}
+            queue_.greetings = ["http://myTestServer/IVRS/" + greetings];
+            queue_.hold_music = ["http://myTestServer/IVRS/" + hold_music];
+            axios
+                .put(`${base_url_cc_kam}api/v1/queues/${uuid}`, queue_, call_center_authorization)
+                .then(response => {
+                    this.db['campaigns'].update(values, {where: {campaign_id: values.campaign_id}})
+                        .then(response => {
+                            resolve(true);
+                        })
+                        .catch((err) => {
+                            reject(err);
+                        });
+                })
+                .catch((err) => {
+                    reject(err);
+                });
+        })
+    }
+
     updateCampaign(req, res, next) {
         let _this = this;
         let values = req.body;
         let uuid = values.params.queue.uuid;
-        let {hold_music, greetings, accountcode, name, record, strategy, options, extension} = values.params.queue;
-        let queue_ = {hold_music, greetings, accountcode, name, record, strategy, options, extension}
-        queue_.greetings = ["http://myTestServer/IVRS/" + greetings];
-        queue_.hold_music = ["http://myTestServer/IVRS/" + hold_music];
-        axios
-            .put(`${base_url_cc_kam}api/v1/queues/${uuid}`, queue_, call_center_authorization)
-            .then(response => {
-                this.db['campaigns'].update(values, {where: {campaign_id: values.campaign_id}})
-                    .then(response => {
-                        res.send({
-                            status: 200,
-                            message: "succes"
-                        })
-                    })
-                    .catch((err) => {
-                        return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
-                    });
+        this.updateCampaignFunc(values, uuid)
+            .then(resp => {
+                res.send({
+                    status: 200,
+                    message: "succes"
+                })
             })
             .catch((err) => {
                 return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
@@ -364,7 +377,6 @@ class campaigns extends baseModelbo {
                                                 where: {campaign_id: campaign.campaign_id}
                                             })
                                                 .then((list_pausestatus) => {
-                                                    // let list_pausestatus = res.data.data;
                                                     this.savePauseStatus(list_pausestatus, cloned_campaign_id)
                                                         .then(result => {
                                                             res.send({
@@ -398,6 +410,137 @@ class campaigns extends baseModelbo {
             });
     }
 
+    getAssignedAgents(req, res, next) {
+        let _this = this;
+        let {campaign_id, account_id} = req.body;
+        this.db['campaigns'].findOne({where : {campaign_id : campaign_id}})
+            .then(campaign => {
+                this.db['users'].findAll({where : {
+                        role_crm_id: 3,
+                        active: 'Y',
+                        account_id : account_id,
+                    }})
+                    .then(agents => {
+                        let campAgents = campaign.agents ? campaign.agents : [];
+                        let assignedAgents = [];
+                        let notAssignedAgents = [];
+                        if(campAgents && campAgents.length !== 0) {
+                            assignedAgents = agents.filter((agent) => campAgents.includes(agent.user_id));
+                            notAssignedAgents = agents.filter((agent) => !campAgents.includes(agent.user_id));
+                        } else {
+                            assignedAgents = [];
+                            notAssignedAgents = agents;
+                        }
+                        let data = {
+                            assignedAgents,
+                            notAssignedAgents,
+                            campaign
+                        }
+                        res.send({
+                            status : 200,
+                            message : 'success',
+                            data : data
+                        })
+                    })
+                    .catch((err) => {
+                        return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                    });
+            })
+            .catch((err) => {
+                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+            });
+    }
+
+    updateIsAssignedStatus(agents, campaign_id, isAssigned) {
+        let index = 0;
+        return new Promise((resolve, reject) => {
+            if(agents && agents.length !== 0) {
+                agents.forEach(agent => {
+                    this.db['users'].update({isAssigned: isAssigned, campaign_id: campaign_id,},{where : {user_id : agent.user_id, active : 'Y'}})
+                        .then(resp => {
+                            if(index < agents.length - 1) {
+                                index++;
+                            } else {
+                                resolve(true);
+                            }
+                        })
+                        .catch(err => {
+                            reject(err);
+                        })
+                })
+            } else {
+                resolve(true);
+            }
+        })
+    }
+
+    addToQueue(tiers, queue_uuid) {
+        return new Promise((resolve, reject) => {
+            if(tiers.tiers && tiers.tiers.length !== 0) {
+                axios
+                    .post(`${base_url_cc_kam}api/v1/queues/${queue_uuid}/tiers`, tiers, call_center_authorization)
+                    .then(resp => {
+                        resolve(true)
+                    })
+                    .catch(err => {
+                        reject(err);
+                    })
+            } else {
+                resolve(true)
+            }
+        })
+    }
+
+    assignAgents(req, res, next) {
+        let _this = this;
+        let {campaign_id, agents, queue_uuid, assignedAgents, notAssignedAgents} = req.body;
+        let updates = {campaign_id, agents};
+        this.updateIsAssignedStatus(assignedAgents, campaign_id, true)
+            .then(resp => {
+                this.updateIsAssignedStatus(notAssignedAgents, campaign_id, false)
+                    .then(resp => {
+                        let agents_arr = (assignedAgents && assignedAgents.length !== 0 ) ?
+                            assignedAgents.map(el => el.sip_device.uuid) : ['*'];
+                        let agents = {agents: agents_arr}
+                        axios
+                            .post(`${base_url_cc_kam}api/v1/queues/${queue_uuid}/tiers/delete`, agents, call_center_authorization)
+                            .then(resp => {
+                                let tiers_array = (assignedAgents && assignedAgents.length !== 0 ) ?
+                                    assignedAgents.map(el => ({
+                                    agent_uuid: el.sip_device.uuid,
+                                    tier_level: 1,
+                                    tier_position: 1
+                                })) : [];
+                                let tiers = {tiers: tiers_array};
+                                this.addToQueue(tiers, queue_uuid)
+                                    .then(resp => {
+                                        this.db['campaigns'].update(updates, {where : {active: 'Y', campaign_id: campaign_id}})
+                                            .then(resp => {
+                                                res.send({
+                                                    status : 200,
+                                                    message : 'success'
+                                                })
+                                            })
+                                            .catch((err) => {
+                                                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                                            });
+                                    })
+                                    .catch((err) => {
+                                        return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                                    });
+                            })
+                            .catch((err) => {
+                                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                            });
+                    })
+                    .catch((err) => {
+                        return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                    });
+            })
+            .catch((err) => {
+                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+            });
+    }
 }
 
 module.exports = campaigns;

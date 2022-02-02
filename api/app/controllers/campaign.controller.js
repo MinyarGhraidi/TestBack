@@ -34,4 +34,10 @@ module.exports = {
     deleteCampaign: function (req, res, next) {
         _itembo.deleteCampaign(req, res, next);
     },
+    getAssignedAgents: function (req, res, next) {
+        _itembo.getAssignedAgents(req, res, next);
+    },
+    assignAgents: function (req, res, next) {
+        _itembo.assignAgents(req, res, next);
+    },
 };
