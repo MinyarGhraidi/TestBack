@@ -97,18 +97,55 @@ class campaigns extends baseModelbo {
             });
     }
 
+    dissociateAgent(agents){
+        let index = 0;
+        return new Promise((resolve, reject) => {
+            if(agents && agents.length !== 0) {
+                agents.forEach(agent_id => {
+                    this.db['users'].update({campaign_id : 0}, {where : {user_id : agent_id}})
+                        .then(resp =>  {
+                            if(index < agents.length - 1) {
+                                index++;
+                            } else {
+                                resolve(true);
+                            }
+                        })
+                        .catch(err => {
+                            reject(err);
+                        })
+
+                })
+            } else {
+                resolve(true)
+            }
+        })
+    }
+
     deleteCampaignFunc(uuid, campaign_id) {
         return new Promise((resolve, reject) => {
             axios
                 .delete(`${base_url_cc_kam}api/v1/queues/${uuid}`, call_center_authorization)
                 .then(resp => {
-                    this.db['campaigns'].update({active: 'N'}, {where: {campaign_id: campaign_id}})
-                        .then(result => {
-                            resolve(true)
+                    this.db['campaigns'].findOne({where : {campaign_id : campaign_id}})
+                        .then(campaign => {
+                            let agents = campaign.agents;
+                            this.dissociateAgent(agents)
+                                .then(resp => {
+                                    this.db['campaigns'].update({active: 'N'}, {where: {campaign_id: campaign_id}})
+                                        .then(result => {
+                                            resolve(true)
+                                        })
+                                        .catch((err) => {
+                                            reject(err)
+                                        });
+                                })
+                                .catch(err => {
+                                    reject(err);
+                                })
                         })
-                        .catch((err) => {
-                            reject(err)
-                        });
+                        .catch(err => {
+                            reject(err);
+                        })
                 })
                 .catch((err) => {
                     reject(err)
@@ -419,6 +456,7 @@ class campaigns extends baseModelbo {
                         role_crm_id: 3,
                         active: 'Y',
                         account_id : account_id,
+                        $or: [{campaign_id: {$eq : campaign_id}}, {campaign_id: {$eq : 0}}],
                     }})
                     .then(agents => {
                         let campAgents = campaign.agents ? campaign.agents : [];
@@ -499,8 +537,7 @@ class campaigns extends baseModelbo {
             .then(resp => {
                 this.updateIsAssignedStatus(notAssignedAgents, campaign_id, false)
                     .then(resp => {
-                        let agents_arr = (assignedAgents && assignedAgents.length !== 0 ) ?
-                            assignedAgents.map(el => el.sip_device.uuid) : ['*'];
+                        let agents_arr = ['*'];
                         let agents = {agents: agents_arr}
                         axios
                             .post(`${base_url_cc_kam}api/v1/queues/${queue_uuid}/tiers/delete`, agents, call_center_authorization)

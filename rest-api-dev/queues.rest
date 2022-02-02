@@ -115,7 +115,7 @@ Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9c
 
 ###
 #DELETE ALL QUEUE TIERS AT ONCE
-POST https://occ.oxilog.net:2443/api/v1/queues/519093fa-b0d9-4048-8c09-5aa5b6fdb4a9/tiers/delete
+POST https://occ.oxilog.net:2443/api/v1/queues/ae77c27b-7fd7-4dea-841e-28788d36a203/tiers/delete
 Content-Type: application/json
 Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9cIi2IY5
 
