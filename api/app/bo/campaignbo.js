@@ -3,7 +3,9 @@ let sequelize = require('sequelize');
 const Op = sequelize.Op;
 let db = require('../models');
 const {default: axios} = require("axios");
-
+const {Sequelize} = require("sequelize");
+const usersbo = require('./usersbo');
+let _usersbo = new usersbo;
 const call_center_token = require(__dirname + '/../config/config.json')["call_center_token"];
 const base_url_cc_kam = require(__dirname + '/../config/config.json')["base_url_cc_kam"];
 const call_center_authorization = {
@@ -25,29 +27,37 @@ class campaigns extends baseModelbo {
         let {greetings, hold_music} = queue.options;
         queue.greetings = ["http://myTestServer/IVRS/" + greetings];
         queue.hold_music = ["http://myTestServer/IVRS/" + hold_music];
-        axios
-            .post(`${base_url_cc_kam}api/v1/queues`, queue, call_center_authorization)
-            .then((result) => {
-                let {uuid} = result.data.queue;
-                queue.uuid = uuid;
-                queue.greetings = greetings;
-                queue.hold_music = hold_music;
-                params.queue = queue;
-                delete values.params;
-                values.params = params;
-                let modalObj = this.db['campaigns'].build(values);
-                modalObj.save()
-                    .then((campaign) => {
-                        this.addDefaultStatus(campaign.campaign_id)
-                            .then(response => {
-                                res.send({
-                                    status: 200,
-                                    message: "succes"
-                                })
+
+        this.generateUniqueUsernameFunction()
+            .then(queueName => {
+                queue.name = queueName;
+                axios
+                    .post(`${base_url_cc_kam}api/v1/queues`, queue, call_center_authorization)
+                    .then((result) => {
+                        let {uuid} = result.data.queue;
+                        queue.uuid = uuid;
+                        queue.greetings = greetings;
+                        queue.hold_music = hold_music;
+                        params.queue = queue;
+                        delete values.params;
+                        values.params = params;
+                        let modalObj = this.db['campaigns'].build(values);
+                        modalObj.save()
+                            .then((campaign) => {
+                                this.addDefaultStatus(campaign.campaign_id)
+                                    .then(response => {
+                                        res.send({
+                                            status: 200,
+                                            message: "succes"
+                                        })
+                                    })
+                                    .catch(err => {
+                                        return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                                    })
                             })
-                            .catch(err => {
+                            .catch((err) => {
                                 return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
-                            })
+                            });
                     })
                     .catch((err) => {
                         return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
@@ -123,33 +133,42 @@ class campaigns extends baseModelbo {
 
     deleteCampaignFunc(uuid, campaign_id) {
         return new Promise((resolve, reject) => {
+            let agents_arr = ['*'];
+            let agents = {agents: agents_arr};
             axios
-                .delete(`${base_url_cc_kam}api/v1/queues/${uuid}`, call_center_authorization)
+                .post(`${base_url_cc_kam}api/v1/queues/${uuid}/tiers/delete`, agents, call_center_authorization)
                 .then(resp => {
-                    this.db['campaigns'].findOne({where : {campaign_id : campaign_id}})
-                        .then(campaign => {
-                            let agents = campaign.agents;
-                            this.dissociateAgent(agents)
-                                .then(resp => {
-                                    this.db['campaigns'].update({active: 'N'}, {where: {campaign_id: campaign_id}})
-                                        .then(result => {
-                                            resolve(true)
+                    axios
+                        .delete(`${base_url_cc_kam}api/v1/queues/${uuid}`, call_center_authorization)
+                        .then(resp => {
+                            this.db['campaigns'].findOne({where : {campaign_id : campaign_id}})
+                                .then(campaign => {
+                                    let agents = campaign.agents;
+                                    this.dissociateAgent(agents)
+                                        .then(resp => {
+                                            this.db['campaigns'].update({active: 'N'}, {where: {campaign_id: campaign_id}})
+                                                .then(result => {
+                                                    resolve(true);
+                                                })
+                                                .catch((err) => {
+                                                    reject(err);
+                                                });
                                         })
-                                        .catch((err) => {
-                                            reject(err)
-                                        });
+                                        .catch(err => {
+                                            reject(err);
+                                        })
                                 })
                                 .catch(err => {
                                     reject(err);
                                 })
                         })
-                        .catch(err => {
-                            reject(err);
-                        })
+                        .catch((err) => {
+                            reject(err)
+                        });
                 })
-                .catch((err) => {
-                    reject(err)
-                });
+                .catch(err => {
+                    reject(err);
+                })
         })
     }
 
@@ -577,6 +596,52 @@ class campaigns extends baseModelbo {
             .catch((err) => {
                 return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
             });
+    }
+
+    isUniqueQueueName(queue_name) {
+        let _this = this;
+        return new Promise((resolve, reject) => {
+            this.db['campaigns'].findAll({where: {active: 'Y'}})
+                .then(campaigns => {
+                    if (campaigns && campaigns.length !== 0) {
+                        let result = campaigns.filter(campaign => campaign.params.queue === queue_name);
+                        if (result && result.length !== 0) {
+                            resolve(false)
+                        } else {
+                            resolve(true);
+                        }
+                    } else {
+                        resolve(true);
+                    }
+                })
+                .catch(err => {
+                    reject(err);
+                })
+        })
+    }
+
+    generateUniqueUsernameFunction() {
+        let condition = false;
+        return new Promise((resolve, reject) => {
+            do {
+                _usersbo.generateUsername()
+                    .then(generatedQueueName => {
+                        this.isUniqueQueueName(generatedQueueName)
+                            .then(isUnique => {
+                                condition = isUnique;
+                                if (condition) {
+                                    resolve(generatedQueueName)
+                                }
+                            })
+                            .catch(err => {
+                                reject(err)
+                            })
+                    })
+                    .catch(err => {
+                        reject(err)
+                    })
+            } while (condition)
+        })
     }
 }
 
