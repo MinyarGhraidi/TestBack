@@ -51,7 +51,7 @@ app.get('/', (req, res) => {
   res.send('backend connected');
 });
 
-app.use('/', require('./app/telco_api_services/api')()) 
+app.use('/', require('./app/telco_api_services/api')(passport))
 
 app.listen(3001, () => {
 });
