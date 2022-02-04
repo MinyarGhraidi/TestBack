@@ -28,20 +28,7 @@ POST https://occ.oxilog.net:2443/api/v1/agents
 Content-Type: application/json
 Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9cIi2IY5
 
-{
-  "username": "agent1",
-  "domain": "occ.oxilog.net",
-  "password": "pwdpwd2021",
-  "accountcode": "1",
-  "options": {
-    "call_timeout": 60,
-    "max_no_answer": 0,
-    "wrap_up_time": 10,
-    "reject_delay_time": 90,
-    "busy_delay_time": 90,
-    "no_answer_delay_time": 20
-  }
-}
+{"username":"863941162800","password":"LRDgVjej1ULy","domain":"occ.oxilog.net","options":{"call_timeout":30,"max_no_answer":0,"wrap_up_time":20,"reject_delay_time":50,"busy_delay_time":20,"no_answer_delay_time":20},"status":"logged-out","enabled":true,"subscriber_id":1}
 
 ###
 #CREATE AGENT

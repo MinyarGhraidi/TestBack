@@ -157,6 +157,7 @@ class agents extends baseModelbo {
                             values.sip_device.uuid = uuid;
                             this.saveAgentInDB(values)
                                 .then(agent => {
+                                    console.log('********************')
                                     res.send({
                                         status: 200,
                                         message: "success",
@@ -165,18 +166,25 @@ class agents extends baseModelbo {
                                     })
                                 })
                                 .catch(err => {
+                                    console.log(err)
                                     return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
                                 })
                         })
                         .catch((err) => {
-                            return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                            res.send({
+                                status : 403,
+                                message : 'failed',
+                                error_type : 'telco',
+                                errors : err.response.data.errors
+                            });
                         });
                 } else {
                     res.send({
-                        status: 200,
+                        status: 403,
                         success: false,
+                        error_type : 'check_username',
                         message: 'This username is already exist'
-                    })
+                    });
                 }
             })
             .catch(err => {
@@ -213,14 +221,20 @@ class agents extends baseModelbo {
                                 })
                         })
                         .catch((err) => {
-                            return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                            res.send({
+                                status : 403,
+                                message : 'failed',
+                                error_type : 'telco',
+                                errors : err.response.data.errors
+                            });
                         });
                 } else {
                     res.send({
-                        status: 200,
+                        status: 403,
                         success: false,
+                        error_type : 'check_username',
                         message: 'This username is already exist'
-                    })
+                    });
                 }
             })
             .catch(err => {
