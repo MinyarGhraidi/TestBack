@@ -294,20 +294,8 @@ class campaigns extends baseModelbo {
     }
 
     getLookupsByType(type) {
-        let params = {};
-        let _filter = [{
-            operator: 'and',
-            conditions: [
-                {
-                    field: 'type',
-                    operator: 'eq',
-                    value: type
-                }
-            ]
-        }];
-        params.filter = _filter;
         return new Promise((resolve, reject) => {
-            this.db['lookups'].findAll(params)
+            this.db['lookups'].findAll({where : {type : type}})
                 .then(response => {
                     resolve(response)
                 })

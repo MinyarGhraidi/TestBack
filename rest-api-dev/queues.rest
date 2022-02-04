@@ -15,30 +15,7 @@ POST https://occ.oxilog.net:2443/api/v1/queues
 Content-Type: application/json
 Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9cIi2IY5
 
-{
-  "name": "Test-Queue",
-  "extension": "2000",
-  "accountcode": "1",
-  "strategy": "ring-all",
-  "greetings": ["http://94.23.104.159/IVRS/confirm_appel.wav"],
-  "hold_music": ["http://94.23.104.159/IVRS/attente-longue.wav"],
-  "record": true,
-  "options": {
-    "time_base_score": "queue",
-    "tier_rules_apply": "false",
-    "tier_rule_wait_second": 300,
-    "tier_rule_wait_multiply_level": "false",
-    "tier_rule_no_agent_no_wait": "true",
-    "discard_abandoned_after": 900,
-    "abandoned_resume_allowed": "true",
-    "max_wait_time": 0,
-    "max_wait_time_with_no_agent": 120,
-    "max_wait_time_with_no_agent_time_reached": 5,
-    "ring_progressively_delay": 10,
-    "skip_agents_with_external_calls": "false",
-    "agent_no_answer_status": "on-break"
-  }
-}
+{"extension":"495507611574","options":{"max_wait_time":"1","tier_rule_wait_second":"1","discard_abandoned_after":"1","ring_progressively_delay":"1","max_wait_time_with_no_agent":"1","max_wait_time_with_no_agent_time_reached":"1","time_base_score":"queue","tier_rules_apply":true,"agent_no_answer_status":"available","abandoned_resume_allowed":true,"tier_rule_no_agent_no_wait":true,"tier_rule_wait_multiply_level":true,"greetings":10,"hold_music":11,"skip_agents_with_external_calls":true},"strategy":"ring-all","record":true,"accountcode":"599027795684","greetings":["http://myTestServer/IVRS/10"],"hold_music":["http://myTestServer/IVRS/11"],"name":"522557217894"}
 
 ###
 #UPDATE QUEUE
