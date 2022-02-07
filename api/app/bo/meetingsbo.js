@@ -13,8 +13,10 @@ class meetings extends baseModelbo {
     }
 
     isAvailableDay(day, first_day, last_day, availableDays) {
-        let dayName = moment(day).format("dddd");
-        if (moment(day).isBetween(first_day, last_day)) {
+        let meeting_day = day.day ? day.day : day;
+        // console.log(meeting_day)
+        let dayName = moment(meeting_day).format("dddd");
+        if (moment(meeting_day).isBetween(first_day, last_day)) {
             return availableDays.includes(dayName);
         } else return false;
     }
