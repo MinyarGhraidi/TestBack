@@ -59,7 +59,6 @@ class users extends baseModelbo {
                                     }, config.secret, {
                                         expiresIn: '8600m'
                                     });
-                                    console.log(user.toJSON())
                                     res.send({
                                         message: 'Success',
                                         user: user.toJSON(),
