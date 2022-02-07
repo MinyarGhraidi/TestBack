@@ -91,7 +91,10 @@ class users extends baseModelbo {
                 this.db['users'].findOne({
                     include: [{
                         model: db.roles_crms,
-                    }],
+                    },
+                        {
+                            model: db.accounts,
+                        }],
                     where: {
                         user_id: user_id,
                         active: 'Y'
