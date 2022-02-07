@@ -25,7 +25,11 @@ class users extends baseModelbo {
                 this.db['users'].findOne({
                     include: [{
                         model: db.roles_crms,
-                    }],
+                    },
+                        {
+                            model: db.accounts,
+                        }
+                    ],
                     where: {
                         username: username,
                         active: 'Y',
@@ -55,6 +59,7 @@ class users extends baseModelbo {
                                     }, config.secret, {
                                         expiresIn: '8600m'
                                     });
+                                    console.log(user.toJSON())
                                     res.send({
                                         message: 'Success',
                                         user: user.toJSON(),
