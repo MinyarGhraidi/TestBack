@@ -14,38 +14,36 @@ class meetings extends baseModelbo {
 
     isAvailableDay(day, first_day, last_day, availableDays) {
         let meeting_day = day.day ? day.day : day;
-        // console.log(meeting_day)
         let dayName = moment(meeting_day).format("dddd");
         if (moment(meeting_day).isBetween(first_day, last_day)) {
             return availableDays.includes(dayName);
         } else return false;
     }
 
-    getData(sales, day) {
+    isAvailableTime(day, first_day, last_day, availableDays) {
+        let meeting_day = day.day ? day.day : day;
+        let started_meeting_time = moment(meeting_day).format("HH:mm");
+        if (moment(meeting_day).isBetween(first_day, last_day)) {
+            return availableDays.includes(dayName);
+        } else return false;
+    }
+
+    getAvailability(sales, day) {
         return new Promise((resolve, reject) => {
-            let sales_json = sales.toJSON();
+            let sales_man = sales.toJSON();
             let first_day;
             let last_day;
             let days;
-            if (sales_json.params.availability !== undefined) {
-                first_day = sales_json.params.availability.first_day;
-                last_day = sales_json.params.availability.last_day;
-                days = sales_json.params.availability.days
-                if (
-                    this.isAvailableDay(
-                        day,
-                        first_day[0],
-                        last_day[0],
-                        days
-                    )
-                ) {
-                    resolve(sales_json);
+            if (sales_man.params.availability !== undefined) {
+                first_day = sales_man.params.availability.first_day;
+                last_day = sales_man.params.availability.last_day;
+                days = sales_man.params.availability.days;
+                if (this.isAvailableDay(day, first_day[0], last_day[0], days)) {
+                    resolve(sales_man);
                 } else {
                     resolve(null);
                 }
             }
-
-
         });
     }
 
@@ -68,33 +66,31 @@ class meetings extends baseModelbo {
     }
 
     getAvailableSales(req, res, next) {
-        let day = req.body.date;
-        const {Op} = db.sequelize;
+        let _this = this;
+        let {day, agent_id} = req.body.date;
         this.db["users"]
             .findAll({
                 where: {
                     active: "Y",
-                    user_type: "sales",
+                    role_crm_id: 5,
                 },
             })
-            .then((result) => {
-                let _this = this;
+            .then((list) => {
+                let list_of_sales_men = list.filter(sales => sales.params.agents.includes(agent_id))
                 let availableSales = [];
                 let promise = [];
-                // let meetings = []
-                if (result) {
+                if (list_of_sales_men && list_of_sales_men.length !== 0) {
                     promise.push(new Promise(function (resolve, reject) {
                         let index = 0;
-                        result.forEach(sales => {
-                            _this.getData(sales, day).then(availableSale => {
+                        list_of_sales_men.forEach(sales => {
+                            _this.getAvailability(sales, day).then(availableSale => {
                                 if (availableSale) {
-                                    //let meetings = [];
                                     availableSale.meetings = _this.getMeetings(availableSale.user_id) || [];
                                     availableSales.push(availableSale);
                                 }
 
                             });
-                            if (index < result.length - 1) {
+                            if (index < list_of_sales_men.length - 1) {
                                 index++;
                             } else {
                                 resolve(availableSales);
