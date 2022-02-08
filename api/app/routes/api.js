@@ -88,11 +88,11 @@ let apiRouters = function (passport) {
     //role routers
     router.post("/api/role/find/:params?", passport.authenticate('jwt', {session: false}), rolesController.find);
     router.get("/api/role/findById/:entity_id", passport.authenticate('jwt', {session: false}), rolesController.findById);
-    router.put("/api/role/update", rolesController.update);
-    router.delete("/api/role/delete/:params", rolesController.delete);
-    router.post("/api/role/save", rolesController.save);
-    router.post("/api/role/saveRole", rolesController.saveRole);
-    router.delete("/api/role/deleteRole/:params", rolesController.deleteRole)
+    router.put("/api/role/update", passport.authenticate('jwt', {session: false}),  rolesController.update);
+    router.delete("/api/role/delete/:params", passport.authenticate('jwt', {session: false}),  rolesController.delete);
+    router.post("/api/role/save", passport.authenticate('jwt', {session: false}),  rolesController.save);
+    router.post("/api/role/saveRole",  passport.authenticate('jwt', {session: false}), rolesController.saveRole);
+    router.delete("/api/role/deleteRole/:params",  passport.authenticate('jwt', {session: false}), rolesController.deleteRole)
 
     //user routers
     router.post("/api/user/find/:params?", passport.authenticate('jwt', {session: false}), usersController.find);
