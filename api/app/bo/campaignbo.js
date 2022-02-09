@@ -542,7 +542,7 @@ class campaigns extends baseModelbo {
         let updates = {campaign_id, agents};
         this.updateIsAssignedStatus(assignedAgents, campaign_id, true)
             .then(resp => {
-                this.updateIsAssignedStatus(notAssignedAgents, campaign_id, false)
+                this.updateIsAssignedStatus(notAssignedAgents, 0, false)
                     .then(resp => {
                         let agents_arr = ['*'];
                         let agents = {agents: agents_arr}
