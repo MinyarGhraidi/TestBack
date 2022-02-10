@@ -24,8 +24,8 @@ class meetings extends baseModelbo {
 
     isAvailableTime(meeting_start, meeting_end, first_day, last_day,) {
         let format = 'HH:mm:ss'
-        let start_work_hour = moment(first_day).format("HH:mm:ss");
-        let end_work_hour = moment(last_day).format("HH:mm:ss");
+        let start_work_hour = moment(moment(first_day)).subtract(1, 'minutes').format("HH:mm:ss");
+        let end_work_hour = moment(moment(last_day)).add(1, 'minutes').format("HH:mm:ss");
         let first_condition = moment(meeting_start, format).isBetween(moment(start_work_hour, format), moment(end_work_hour, format));
         let second_condition = moment(meeting_end, format).isBetween(moment(start_work_hour, format), moment(end_work_hour, format));
         return first_condition && second_condition
