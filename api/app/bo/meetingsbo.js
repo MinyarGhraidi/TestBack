@@ -13,39 +13,44 @@ class meetings extends baseModelbo {
     }
 
     isAvailableDay(day, first_day, last_day, availableDays) {
-        let meeting_day = day.day ? day.day : day;
-        // console.log(meeting_day)
+        let f_day = moment(moment(first_day).format("YYYY-MM-DD")).subtract(1, 'days');
+        let l_day = moment(moment(last_day).format("YYYY-MM-DD")).add(1, 'days');
+        let meeting_day = moment(day).format("YYYY-MM-DD");
         let dayName = moment(meeting_day).format("dddd");
-        if (moment(meeting_day).isBetween(first_day, last_day)) {
+        if (moment(meeting_day).isBetween(f_day, l_day)) {
             return availableDays.includes(dayName);
         } else return false;
     }
 
-    getData(sales, day) {
+    isAvailableTime(meeting_start, meeting_end, first_day, last_day,) {
+        let format = 'HH:mm:ss'
+        let start_work_hour = moment(moment(first_day)).subtract(1, 'minutes').format("HH:mm:ss");
+        let end_work_hour = moment(moment(last_day)).add(1, 'minutes').format("HH:mm:ss");
+        let first_condition = moment(meeting_start, format).isBetween(moment(start_work_hour, format), moment(end_work_hour, format));
+        let second_condition = moment(meeting_end, format).isBetween(moment(start_work_hour, format), moment(end_work_hour, format));
+        return first_condition && second_condition
+    }
+
+    getAvailability(sales, day, meeting_start, meeting_end) {
         return new Promise((resolve, reject) => {
-            let sales_json = sales.toJSON();
+            let sales_man = sales.toJSON();
             let first_day;
             let last_day;
             let days;
-            if (sales_json.params.availability !== undefined) {
-                first_day = sales_json.params.availability.first_day;
-                last_day = sales_json.params.availability.last_day;
-                days = sales_json.params.availability.days
-                if (
-                    this.isAvailableDay(
-                        day,
-                        first_day[0],
-                        last_day[0],
-                        days
-                    )
-                ) {
-                    resolve(sales_json);
+            if (sales_man.params.availability !== undefined) {
+                first_day = sales_man.params.availability.first_day;
+                last_day = sales_man.params.availability.last_day;
+                days = sales_man.params.availability.days;
+                if (this.isAvailableDay(day, first_day[0], last_day[0], days)) {
+                    if (this.isAvailableTime(meeting_start, meeting_end, first_day[0], last_day[0])) {
+                        resolve(sales_man);
+                    } else {
+                        resolve(null);
+                    }
                 } else {
                     resolve(null);
                 }
             }
-
-
         });
     }
 
@@ -68,33 +73,34 @@ class meetings extends baseModelbo {
     }
 
     getAvailableSales(req, res, next) {
-        let day = req.body.date;
-        const {Op} = db.sequelize;
+        let _this = this;
+        let agent_id = req.body.agent_id;
+        let {day, started_at, finished_at} = req.body.date;
+        let meeting_start = moment(started_at).format("HH:mm:ss");
+        let meeting_end = moment(finished_at).format("HH:mm:ss");
         this.db["users"]
             .findAll({
                 where: {
                     active: "Y",
-                    user_type: "sales",
+                    role_crm_id: 5,
                 },
             })
-            .then((result) => {
-                let _this = this;
+            .then((list) => {
+                let list_of_sales_men = list.filter(sales => sales.params.agents.includes(agent_id));
                 let availableSales = [];
                 let promise = [];
-                // let meetings = []
-                if (result) {
+                if (list_of_sales_men && list_of_sales_men.length !== 0) {
                     promise.push(new Promise(function (resolve, reject) {
                         let index = 0;
-                        result.forEach(sales => {
-                            _this.getData(sales, day).then(availableSale => {
+                        list_of_sales_men.forEach(sales => {
+                            _this.getAvailability(sales, day, meeting_start, meeting_end).then(availableSale => {
                                 if (availableSale) {
-                                    //let meetings = [];
                                     availableSale.meetings = _this.getMeetings(availableSale.user_id) || [];
                                     availableSales.push(availableSale);
                                 }
 
                             });
-                            if (index < result.length - 1) {
+                            if (index < list_of_sales_men.length - 1) {
                                 index++;
                             } else {
                                 resolve(availableSales);
@@ -117,13 +123,13 @@ class meetings extends baseModelbo {
                 }
             })
             .catch((err) => {
-                let res = [];
-                let messages = "Cannot fetch data from database";
-                this.sendResponseError(res, messages, err, (status = 500));
+                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
             });
     }
 
+    // to be cleaned
     saveMeetings(req, res, next) {
+        let _this = this;
         let sales_id = req.body.sales_id
         let started_at = req.body.started_at
         this.db["users"]
@@ -134,25 +140,11 @@ class meetings extends baseModelbo {
                 },
             })
             .then(result => {
-                let updated_event = result;
-                let duration = result.params.availability.duration;
-                let interval = result.params.availability.interval;
-                let totalTime = +duration + +interval;
-                let finished_at = moment.tz(started_at, tz).add(totalTime, 'minutes')
-
-                updated_event.finished_at = finished_at
-                this.save(updated_event)
-
-                return (res.send({
-                    message: "Success",
-                    success: true,
-                    result: {
-                        started_at: started_at,
-                        finished_at: finished_at,
-                        totalTime: totalTime
-                    },
-                }))
+                res.send(result)
             })
+            .catch((err) => {
+                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+            });
     }
 
 }
