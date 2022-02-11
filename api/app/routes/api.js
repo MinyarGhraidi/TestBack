@@ -46,6 +46,7 @@ meetingsController = require('../controllers/meeting.controller')
 emailsController = require('../controllers/email.controller')
 roles_crmController = require('../controllers/roles_crm.controller')
 acl_Controller = require('../controllers/Permissionacl.controller')
+sales_Controller =require('../controllers/sales.controller')
 
 
 let apiRouters = function (passport) {
@@ -231,6 +232,8 @@ let apiRouters = function (passport) {
     router.put("/api/acl/update", passport.authenticate('jwt', {session: false}), acl_Controller.update);
     router.delete("/api/acl/delete/:params", passport.authenticate('jwt', {session: false}), acl_Controller.delete);
     router.post("/api/acl/save", passport.authenticate('jwt', {session: false}), acl_Controller.save);
+
+    router.post("/api/sales/all_meetings",passport.authenticate('jwt', {session: false}), sales_Controller.getAllMeetings)
 
 
     return router;
