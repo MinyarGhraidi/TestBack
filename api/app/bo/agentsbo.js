@@ -157,7 +157,6 @@ class agents extends baseModelbo {
                             values.sip_device.uuid = uuid;
                             this.saveAgentInDB(values)
                                 .then(agent => {
-                                    console.log('********************')
                                     res.send({
                                         status: 200,
                                         message: "success",
@@ -166,23 +165,22 @@ class agents extends baseModelbo {
                                     })
                                 })
                                 .catch(err => {
-                                    console.log(err)
                                     return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
                                 })
                         })
                         .catch((err) => {
                             res.send({
-                                status : 403,
-                                message : 'failed',
-                                error_type : 'telco',
-                                errors : err.response.data.errors
+                                status: 403,
+                                message: 'failed',
+                                error_type: 'telco',
+                                errors: err.response.data.errors
                             });
                         });
                 } else {
                     res.send({
                         status: 403,
                         success: false,
-                        error_type : 'check_username',
+                        error_type: 'check_username',
                         message: 'This username is already exist'
                     });
                 }
@@ -222,17 +220,17 @@ class agents extends baseModelbo {
                         })
                         .catch((err) => {
                             res.send({
-                                status : 403,
-                                message : 'failed',
-                                error_type : 'telco',
-                                errors : err.response.data.errors
+                                status: 403,
+                                message: 'failed',
+                                error_type: 'telco',
+                                errors: err.response.data.errors
                             });
                         });
                 } else {
                     res.send({
                         status: 403,
                         success: false,
-                        error_type : 'check_username',
+                        error_type: 'check_username',
                         message: 'This username is already exist'
                     });
                 }
@@ -302,7 +300,7 @@ class agents extends baseModelbo {
 
     onConnect(req, res, next) {
         let _this = this;
-        let {user_id, uuid, crmStatus, telcoStatus} = req.body;
+        let {user_id, uuid, crmStatus, telcoStatus, updated_at, created_at} = req.body;
         axios
             .get(`${base_url_cc_kam}api/v1/agents/${uuid}`, call_center_authorization)
             .then(resp => {
@@ -311,7 +309,7 @@ class agents extends baseModelbo {
                 axios
                     .put(`${base_url_cc_kam}api/v1/agents/${uuid}`, agent, call_center_authorization)
                     .then(() => {
-                        this.updateAgentStatus(user_id, agent, crmStatus)
+                        this.updateAgentStatus(user_id, agent, crmStatus, created_at, updated_at)
                             .then(() => {
                                 res.send({
                                     status: 200,
@@ -331,13 +329,13 @@ class agents extends baseModelbo {
             });
     }
 
-    updateAgentStatus(user_id, agent_, crmStatus) {
+    updateAgentStatus(user_id, agent_, crmStatus, created_at, updated_at) {
         return new Promise((resolve, reject) => {
             let agent = {user_id: user_id, sip_device: agent_, params: {}};
             agent.params.status = crmStatus;
             this.db['users'].update(agent, {where: {user_id: user_id}})
                 .then(result => {
-                    let agentLog = {user_id: user_id, action_name: agent.params.status};
+                    let agentLog = {user_id: user_id, action_name: agent.params.status, created_at, updated_at};
                     let modalObj = this.db['agent_log_events'].build(agentLog);
                     modalObj.save()
                         .then(resp => {
