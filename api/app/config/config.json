@@ -19,7 +19,7 @@
   "base_url_truncks": "http://92.222.227.222:8091/",
   "base_url_cc_fs": "https://occ.oxilog.net:1443/",
   "base_url_cc_kam": "https://occ.oxilog.net:2443/",
-  "tz" : "UTC+1",
+  "tz" : "Europe/Paris",
   "salt" : "$2b$10$TOzGnzuUQjfTzmecOw7NKe"
 
 }

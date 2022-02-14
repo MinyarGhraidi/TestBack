@@ -15,7 +15,7 @@ class meetings extends baseModelbo {
     isAvailableDay(day, first_day, last_day, availableDays) {
         let f_day = moment(moment(new Date(first_day)).format("YYYY-MM-DD")).subtract(1, 'days');
         let l_day = moment(moment(new Date(last_day)).format("YYYY-MM-DD")).add(1, 'days');
-        let meeting_day = moment(new Date(day)).format("YYYY-MM-DD");
+        let meeting_day = moment(new Date(day)).tz(tz).format("YYYY-MM-DD");
         let dayName = moment(new Date(meeting_day)).format("dddd");
         if (moment(meeting_day).isBetween(f_day, l_day)) {
             return availableDays.includes(dayName);
@@ -55,6 +55,7 @@ class meetings extends baseModelbo {
     }
 
     getMeetings(sales_id) {
+        let _this = this;
         this.db["meetings"]
             .findAll({
                 where: {
@@ -66,9 +67,7 @@ class meetings extends baseModelbo {
                 return meetings;
             })
             .catch((err) => {
-                let res = [];
-                let messages = "Cannot fetch data from database Meetings";
-                this.sendResponseError(res, messages, err, (status = 500));
+                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
             });
     }
 
@@ -76,8 +75,8 @@ class meetings extends baseModelbo {
         let _this = this;
         let agent_id = req.body.agent_id;
         let {day, started_at, finished_at} = req.body.date;
-        let meeting_start = moment(new Date(started_at)).format("HH:mm:ss");
-        let meeting_end = moment(new Date(finished_at)).format("HH:mm:ss");
+        let meeting_start = moment(new Date(started_at)).tz(tz).format("HH:mm:ss");
+        let meeting_end = moment(new Date(finished_at)).tz(tz).format("HH:mm:ss");
         this.db["users"]
             .findAll({
                 where: {

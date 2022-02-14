@@ -235,14 +235,7 @@
     },
     "mocha": "^9.0.1",
     "moment": "^2.29.1",
-    "moment-timezone": {
-      "integrity": "sha512-PTc2vcT8K9J5/9rDEPe5czSIKgLoGsH8UNpA4qZTVw0Vd/Uz19geE9abbIOQKaAQFcnQ3v5YEXrbSc5BpshH+w==",
-      "requires": {
-        "moment": ">= 2.9.0"
-      },
-      "resolved": "https://registry.npmjs.org/moment-timezone/-/moment-timezone-0.5.33.tgz",
-      "version": "0.5.33"
-    },
+    "moment-timezone": "^0.5.34",
     "ms": {
       "integrity": "sha1-VgiurfwAvmwpAd9fmGF4jeDVl8g=",
       "resolved": "https://registry.npmjs.org/ms/-/ms-2.0.0.tgz",
