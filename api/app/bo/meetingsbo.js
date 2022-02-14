@@ -13,10 +13,10 @@ class meetings extends baseModelbo {
     }
 
     isAvailableDay(day, first_day, last_day, availableDays) {
-        let f_day = moment(moment(first_day).format("YYYY-MM-DD")).subtract(1, 'days');
-        let l_day = moment(moment(last_day).format("YYYY-MM-DD")).add(1, 'days');
-        let meeting_day = moment(day).format("YYYY-MM-DD");
-        let dayName = moment(meeting_day).format("dddd");
+        let f_day = moment(moment(new Date(first_day)).format("YYYY-MM-DD")).subtract(1, 'days');
+        let l_day = moment(moment(new Date(last_day)).format("YYYY-MM-DD")).add(1, 'days');
+        let meeting_day = moment(new Date(day)).format("YYYY-MM-DD");
+        let dayName = moment(new Date(meeting_day)).format("dddd");
         if (moment(meeting_day).isBetween(f_day, l_day)) {
             return availableDays.includes(dayName);
         } else return false;
@@ -24,8 +24,8 @@ class meetings extends baseModelbo {
 
     isAvailableTime(meeting_start, meeting_end, first_day, last_day,) {
         let format = 'HH:mm:ss'
-        let start_work_hour = moment(moment(first_day)).subtract(1, 'minutes').format("HH:mm:ss");
-        let end_work_hour = moment(moment(last_day)).add(1, 'minutes').format("HH:mm:ss");
+        let start_work_hour = moment(moment(new Date(first_day))).subtract(1, 'minutes').format("HH:mm:ss");
+        let end_work_hour = moment(moment(new Date(last_day))).add(1, 'minutes').format("HH:mm:ss");
         let first_condition = moment(meeting_start, format).isBetween(moment(start_work_hour, format), moment(end_work_hour, format));
         let second_condition = moment(meeting_end, format).isBetween(moment(start_work_hour, format), moment(end_work_hour, format));
         return first_condition && second_condition
@@ -76,8 +76,8 @@ class meetings extends baseModelbo {
         let _this = this;
         let agent_id = req.body.agent_id;
         let {day, started_at, finished_at} = req.body.date;
-        let meeting_start = moment(started_at).format("HH:mm:ss");
-        let meeting_end = moment(finished_at).format("HH:mm:ss");
+        let meeting_start = moment(new Date(started_at)).format("HH:mm:ss");
+        let meeting_end = moment(new Date(finished_at)).format("HH:mm:ss");
         this.db["users"]
             .findAll({
                 where: {
