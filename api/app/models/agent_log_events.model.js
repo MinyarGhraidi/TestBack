@@ -1,5 +1,4 @@
 const {} = require("http-errors")
-let bcrypt = require('bcryptjs');
 
 module.exports = (sequelize, Sequelize) => {
     const agent_log_event = sequelize.define("agent_log_events", {
