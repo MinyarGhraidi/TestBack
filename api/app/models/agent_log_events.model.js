@@ -21,11 +21,11 @@ module.exports = (sequelize, Sequelize) => {
             },
             created_at: {
                 allowNull: true,
-                type: Sequelize.STRING,
+                type: Sequelize.DATE,
             },
             updated_at: {
                 allowNull: true,
-                type: Sequelize.STRING,
+                type: Sequelize.DATE,
             }
         },
         {timestamps: false})
@@ -42,9 +42,7 @@ module.exports = (sequelize, Sequelize) => {
         'agent_log_event_id',
         'action_name',
         'active',
-        'user_id',
-        'created_at',
-        'updated_at',
+        'user_id'
         ]
 
     return agent_log_event
