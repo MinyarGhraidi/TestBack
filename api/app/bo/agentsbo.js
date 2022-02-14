@@ -5,8 +5,9 @@ const {validateEmail} = require("../helpers/helpers");
 const config = require('../config/config.json');
 const jwt = require('jsonwebtoken');
 const {default: axios} = require("axios");
+let moment = require("moment");
+const tz = require(__dirname + '/../config/config.json')["tz"];
 const call_center_token = require(__dirname + '/../config/config.json')["call_center_token"];
-
 const base_url_cc_kam = require(__dirname + '/../config/config.json')["base_url_cc_kam"];
 const call_center_authorization = {
     headers: {Authorization: call_center_token}
@@ -330,12 +331,19 @@ class agents extends baseModelbo {
     }
 
     updateAgentStatus(user_id, agent_, crmStatus, created_at, updated_at) {
+        let createdAt_tz = moment(created_at).tz(tz).format("YYYY-MM-DD HH:mm:ss");
+        let updatedAt_tz = moment(created_at).tz(tz).format("YYYY-MM-DD HH:mm:ss");
         return new Promise((resolve, reject) => {
             let agent = {user_id: user_id, sip_device: agent_, params: {}};
             agent.params.status = crmStatus;
             this.db['users'].update(agent, {where: {user_id: user_id}})
                 .then(result => {
-                    let agentLog = {user_id: user_id, action_name: agent.params.status, created_at, updated_at};
+                    let agentLog = {
+                        user_id: user_id,
+                        action_name: agent.params.status,
+                        created_at : createdAt_tz,
+                        updated_at : updatedAt_tz
+                    };
                     let modalObj = this.db['agent_log_events'].build(agentLog);
                     modalObj.save()
                         .then(resp => {
