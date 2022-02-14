@@ -1,6 +1,6 @@
 
 module.exports = (sequelize, Sequelize) => {
-    const meeting = sequelize.define("meetings", {
+    const meetings = sequelize.define("meetings", {
             meeting_id: {
                 primaryKey: true,
                 autoIncrement: true,
@@ -15,7 +15,7 @@ module.exports = (sequelize, Sequelize) => {
             agent_id: {
                 type: Sequelize.INTEGER
             },
-            user_id: {
+            sales_id: {
                 type: Sequelize.INTEGER
             },
             account_id: {
@@ -51,12 +51,12 @@ module.exports = (sequelize, Sequelize) => {
         {timestamps: false,}
     )
 
-    meeting.prototype.fields = [
+    meetings.prototype.fields = [
         'did_id',
         'name',
         'description',
         'agent_id',
-        'user_id',
+        'sales_id',
         'account_id',
         "active",
         "started_at",
@@ -65,12 +65,12 @@ module.exports = (sequelize, Sequelize) => {
         'created_at',
         'updated_at'
     ],
-    meeting.prototype.fieldsSearchMetas = [
+    meetings.prototype.fieldsSearchMetas = [
         'did_id',
         'name',
         'description',
         'agent_id',
-        'user_id',
+        'sales_id',
         'account_id',
         "active",
         'address',
@@ -80,11 +80,11 @@ module.exports = (sequelize, Sequelize) => {
         "finished_at"
         ]
         ,
-        meeting.associate = function (models) {
-            meeting.belongsTo(models.users, {
-                foreignKey: 'user_id'
+        meetings.associate = function (models) {
+            meetings.belongsTo(models.users, {
+                foreignKey: 'sales_id'
             });
         };
 
-    return meeting
+    return meetings
 }

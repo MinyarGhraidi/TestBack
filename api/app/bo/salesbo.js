@@ -12,13 +12,14 @@ class Sales extends baseModelbo {
 
     getAllMeetings = (req, res, next) =>{
         let id = req.body.user_id;
+        let account_id = req.body.account_id;
         const {Op}= db.sequelize;
-        console.log('reqqqq', req.body.filter[0].conditions)
-        let agent_id = req.body.filter[0].conditions[0].value[0] ? req.body.filter[0].conditions[0].value : null;
+        let agent_id = req.body.agents;
         let where
-        if(agent_id){
+        if(agent_id && agent_id.length !== 0){
              where = {
                 sales_id: id,
+                 account_id:account_id,
                 agent_id:{
                     [Op.in]: agent_id
                 }
@@ -26,14 +27,13 @@ class Sales extends baseModelbo {
         }else{
              where = {
                 sales_id: id,
+                 account_id:account_id
             }
         }
-
-
-
         this.db['users'].findOne({
             where:{
                 user_id: id,
+                account_id:account_id
 
             }
         }).then(sales=>{
