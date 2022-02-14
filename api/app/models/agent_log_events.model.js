@@ -40,7 +40,7 @@ module.exports = (sequelize, Sequelize) => {
         'created_at',
         'updated_at',
         'user_id'
-    ],
+    ]
     agent_log_event.prototype.fieldsSearchMetas = [
         'agent_log_event_id',
         'action_name',
