@@ -331,8 +331,8 @@ class agents extends baseModelbo {
     }
 
     updateAgentStatus(user_id, agent_, crmStatus, created_at, updated_at) {
-        let createdAt_tz = moment(created_at).tz(tz).format("YYYY-MM-DD HH:mm:ss");
-        let updatedAt_tz = moment(created_at).tz(tz).format("YYYY-MM-DD HH:mm:ss");
+        let createdAt_tz = moment(created_at).format("YYYY-MM-DD HH:mm:ss");
+        let updatedAt_tz = moment(created_at).format("YYYY-MM-DD HH:mm:ss");
         return new Promise((resolve, reject) => {
             let agent = {user_id: user_id, sip_device: agent_, params: {}};
             agent.params.status = crmStatus;
