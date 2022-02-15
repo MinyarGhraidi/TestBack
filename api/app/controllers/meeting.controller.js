@@ -22,5 +22,8 @@ module.exports = {
     },
     saveMeetings: function (req, res, next) {
         meetingsDaoInst.saveMeetings(req, res, next);
-    },   
+    },
+    authorize: function (req, res, next) {
+        meetingsDaoInst.authorize(req, res, next)
+    }
 }

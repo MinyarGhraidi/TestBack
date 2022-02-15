@@ -233,7 +233,9 @@ let apiRouters = function (passport) {
     router.delete("/api/acl/delete/:params", passport.authenticate('jwt', {session: false}), acl_Controller.delete);
     router.post("/api/acl/save", passport.authenticate('jwt', {session: false}), acl_Controller.save);
 
-    router.post("/api/sales/all_meetings",passport.authenticate('jwt', {session: false}), sales_Controller.getAllMeetings)
+    router.post("/api/sales/all_meetings",passport.authenticate('jwt', {session: false}), sales_Controller.getAllMeetings);
+
+    router.post("/api/callcenter/authorize", meetingsController.authorize)
 
 
     return router;
