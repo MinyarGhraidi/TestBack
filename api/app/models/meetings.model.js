@@ -47,6 +47,10 @@ module.exports = (sequelize, Sequelize) => {
                 type: Sequelize.DATE,
                 defaultValue: new Date()
             },
+            day: {
+                allowNull: true,
+                type: Sequelize.STRING,
+            },
         },
         {timestamps: false,}
     )
@@ -63,7 +67,8 @@ module.exports = (sequelize, Sequelize) => {
         "finished_at",
         'address',
         'created_at',
-        'updated_at'
+        'updated_at',
+        "day"
     ],
     meetings.prototype.fieldsSearchMetas = [
         'did_id',
@@ -77,7 +82,8 @@ module.exports = (sequelize, Sequelize) => {
         'created_at',
         'updated_at',
         "started_at",
-        "finished_at"
+        "finished_at",
+        "day"
         ]
         ,
         meetings.associate = function (models) {
