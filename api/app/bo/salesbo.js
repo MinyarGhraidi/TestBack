@@ -45,13 +45,12 @@ class Sales extends baseModelbo {
                     }]
                 }).then(meetings=>{
                     if(meetings && meetings.length !== 0){
-                        this.agents_for_sales(sales.params.agents).then(result =>{
                             res.send({
                                 success: true,
                                 meetings: meetings,
-                                agents: result.data
+                                sales: sales.params.agents
                             })
-                        })
+
 
                     }else{
                         res.send({
@@ -65,11 +64,19 @@ class Sales extends baseModelbo {
         })
     }
 
-    agents_for_sales = (agents) =>{
-        return new Promise((resolve, reject)=>{
+    agents_for_sales = (req, res, next) =>{
             let index =0;
             let data =[];
-            agents.forEach(item =>{
+            let user_id = req.body.user_id;
+        let account_id = req.body.account_id
+        this.db['users'].findOne({
+            where:{
+                user_id: user_id,
+                account_id:account_id
+
+            }
+        }).then(sales=>{
+            sales.params.agents.forEach(item =>{
                 this.db['users'].findOne({
                     where:{
                         user_id: item
@@ -78,18 +85,20 @@ class Sales extends baseModelbo {
                     if (agent){
                         data.push(agent)
                     }
-                    if(index< agents.length -1){
+                    if(index< sales.params.agents.length -1){
                         index++;
                     }else{
-                        resolve({
+                        res.send({
                             success: true,
-                            data: data
+                            agents: data
                         })
                     }
                 })
             })
-
         })
+
+
+
     }
 }
 

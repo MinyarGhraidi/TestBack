@@ -88,7 +88,7 @@ module.exports = (sequelize, Sequelize) => {
         ,
         meetings.associate = function (models) {
             meetings.belongsTo(models.users, {
-                foreignKey: 'sales_id'
+                foreignKey: 'agent_id'
             });
         };
 
