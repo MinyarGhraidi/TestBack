@@ -23,7 +23,7 @@ module.exports = {
     saveMeetings: function (req, res, next) {
         meetingsDaoInst.saveMeetings(req, res, next);
     },
-    getMeetingById: function (req, res, next) {
-        meetingsDaoInst.getMeetingById(req, res, next);
-    },
+    authorize: function (req, res, next) {
+        meetingsDaoInst.authorize(req, res, next)
+    }
 }
