@@ -234,6 +234,7 @@ let apiRouters = function (passport) {
     router.post("/api/acl/save", passport.authenticate('jwt', {session: false}), acl_Controller.save);
 
     router.post("/api/sales/all_meetings",passport.authenticate('jwt', {session: false}), sales_Controller.getAllMeetings);
+    router.post("/api/sales/agents_sales",passport.authenticate('jwt', {session: false}), sales_Controller.agents_for_sales)
 
     router.post("/api/callcenter/authorize", meetingsController.authorize)
 
