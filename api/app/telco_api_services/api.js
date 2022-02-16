@@ -4,7 +4,7 @@ const router = express.Router();
 const call_center_token = require(__dirname + '/../config/config.json')["call_center_token"];
 const dialer_token = require(__dirname + '/../config/config.json')["dialer_token"];
 const base_url_cc_kam = require(__dirname + '/../config/config.json')["base_url_cc_kam"];
-const base_url_truncks = require(__dirname + '/../config/config.json')["base_url_truncks"];
+const base_url_dailer = require(__dirname + '/../config/config.json')["base_url_dailer"];
 const base_url_cc_fs = require(__dirname + '/../config/config.json')["base_url_cc_fs"];
 
 const call_center_authorization = {

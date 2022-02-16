@@ -8,7 +8,7 @@ const base_url_cc_kam = require(__dirname + '/../config/config.json')["base_url_
 const call_center_authorization = {
     headers: {Authorization: call_center_token}
 };
-const base_url_truncks = require(__dirname + '/../config/config.json')["base_url_truncks"];
+const base_url_dailer = require(__dirname + '/../config/config.json')["base_url_dailer"];
 const dialer_authorization = {
     headers: {Authorization: dialer_token}
 };
@@ -28,7 +28,7 @@ class truncks extends baseModelbo {
             .then((kamailio_obj) => {
                 let kamailio_uuid = kamailio_obj.data.result.uuid || null;
                 axios
-                    .post(`${base_url_truncks}api/v1/dialer/gateways`, trunk_kam, dialer_authorization)
+                    .post(`${base_url_dailer}api/v1/dialer/gateways`, trunk_kam, dialer_authorization)
                     .then(dialer_obj => {
                         let dialer_uuid = dialer_obj.data.result.uuid || null;
                         trunk_kam.gateways = {
@@ -67,7 +67,7 @@ class truncks extends baseModelbo {
             .put(`${base_url_cc_kam}api/v1/gateways/${uuid}`, trunk_kam, call_center_authorization)
             .then((resp) => {
                 axios
-                    .put(`${base_url_truncks}api/v1/dialer/gateways/${dialer_uuid}`, trunk_kam, dialer_authorization)
+                    .put(`${base_url_dailer}api/v1/dialer/gateways/${dialer_uuid}`, trunk_kam, dialer_authorization)
                     .then(dialer_obj => {
                         this.db['truncks'].update(trunk_kam, {where: {trunck_id: trunk_kam.trunck_id}})
                             .then(trunk => {
@@ -97,7 +97,7 @@ class truncks extends baseModelbo {
                 .delete(`${base_url_cc_kam}api/v1/gateways/${uuid}`, call_center_authorization)
                 .then(resp => {
                     axios
-                        .delete(`${base_url_truncks}api/v1/dialer/gateways/${dialer_uuid}`, dialer_authorization)
+                        .delete(`${base_url_dailer}api/v1/dialer/gateways/${dialer_uuid}`, dialer_authorization)
                         .then(resp => {
                             this.db['trunks'].update({active: 'N'}, {where: {trunk_id: trunk_id}})
                                 .then(result => {
