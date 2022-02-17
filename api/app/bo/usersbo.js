@@ -527,6 +527,23 @@ class users extends baseModelbo {
         });
     }
 
+    getSales(req, res, next) {
+        let _this = this;
+        let {account_id, user_id} = req.body;
+        this.db['users'].findAll({where : {account_id : account_id, role_crm_id : 5}})
+            .then(users => {
+                let sales = users.filter(el => el.params.agents.includes(user_id));
+                res.send({
+                    status : 200,
+                    message : 'success',
+                    data : sales
+                })
+            })
+            .catch(err => {
+                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+            })
+    }
+
 }
 
 module.exports = users;

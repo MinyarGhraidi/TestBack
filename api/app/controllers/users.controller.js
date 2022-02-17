@@ -41,4 +41,7 @@ module.exports = {
     generatedUniqueUsername: function (req, res, next) {
         _itembo.generatedUniqueUsername(req, res, next)
     },
+    getSales: function (req, res, next) {
+        _itembo.getSales(req, res, next)
+    },
 }
