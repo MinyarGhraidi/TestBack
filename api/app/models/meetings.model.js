@@ -40,12 +40,10 @@ module.exports = (sequelize, Sequelize) => {
             created_at: {
                 allowNull: true,
                 type: Sequelize.DATE,
-                defaultValue: new Date()
             },
             updated_at: {
                 allowNull: true,
                 type: Sequelize.DATE,
-                defaultValue: new Date()
             },
             day: {
                 allowNull: true,
