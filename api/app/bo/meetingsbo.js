@@ -26,19 +26,19 @@ class meetings extends baseModelbo {
         } else return false;
     }
 
-    isAvailableTime(meeting_start, meeting_end, first_day, last_day) {
+    isAvailableTime(meeting_start, meeting_end, first_day, last_day, interval) {
         let format = 'HH:mm:ss';
         let start_work_hour = moment(moment(new Date(first_day))).subtract(1, 'minutes').format("HH:mm:ss");
-        let end_work_hour = moment(moment(new Date(last_day))).add(1, 'minutes').format("HH:mm:ss");
+        let end_work_hour = moment(moment(new Date(last_day))).add(interval + 1, 'minutes').format("HH:mm:ss");
         let first_condition = moment(meeting_start, format).isBetween(moment(start_work_hour, format), moment(end_work_hour, format));
         let second_condition = moment(meeting_end, format).isBetween(moment(start_work_hour, format), moment(end_work_hour, format));
         return first_condition && second_condition
     }
 
-    checkMeetings(meeting_start, meeting_end, start_exist_meeting, end_exist_meeting) {
+    checkMeetings(meeting_start, meeting_end, start_exist_meeting, end_exist_meeting, interval) {
         let format = 'HH:mm:ss';
-        let start_of_existing_meeting = moment(moment(new Date(start_exist_meeting))).subtract(1, 'minutes').format("HH:mm:ss");
-        let end_of_existing_meeting = moment(moment(new Date(end_exist_meeting))).add(1, 'minutes').format("HH:mm:ss");
+        let start_of_existing_meeting = moment(moment(new Date(start_exist_meeting))).subtract(interval + 1, 'minutes').format("HH:mm:ss");
+        let end_of_existing_meeting = moment(moment(new Date(end_exist_meeting))).add(interval + 1, 'minutes').format("HH:mm:ss");
         let first_condition = moment(meeting_start, format).isBetween(moment(start_of_existing_meeting, format), moment(end_of_existing_meeting, format));
         let second_condition = moment(meeting_end, format).isBetween(moment(start_of_existing_meeting, format), moment(end_of_existing_meeting, format));
         let third_condition = moment(start_of_existing_meeting, format).isBetween(moment(meeting_start, format), moment(meeting_end, format));
@@ -59,10 +59,11 @@ class meetings extends baseModelbo {
                 days = sales_man.params.availability.days;
                 let sale_id = sales_man.user_id;
                 let availability_duration = parseInt(sales_man.params.availability.duration);
+                let interval = parseInt(sales_man.params.availability.interval);
                 if (this.isValidDuration(duration, availability_duration)) {
                     if (this.isAvailableDay(day, first_day[0], last_day[0], days)) {
-                        if (this.isAvailableTime(meeting_start, meeting_end, first_day[0], last_day[0])) {
-                            _this.isAvailable(sale_id, day, meeting_start, meeting_end)
+                        if (this.isAvailableTime(meeting_start, meeting_end, first_day[0], last_day[0], interval)) {
+                            _this.isAvailable(sale_id, day, meeting_start, meeting_end, interval)
                                 .then(isAvailableMeeting => {
                                     if (isAvailableMeeting) {
                                         resolve(sales_man);
@@ -148,7 +149,7 @@ class meetings extends baseModelbo {
             });
     }
 
-    isAvailable(sales_id, day, meeting_start, meeting_end) {
+    isAvailable(sales_id, day, meeting_start, meeting_end, interval) {
         let _this = this;
         let index = 0;
         return new Promise((resolve, reject) => {
@@ -158,7 +159,7 @@ class meetings extends baseModelbo {
                         meetings.forEach(meeting => {
                             let start_of_existed_meeting = meeting.started_at;
                             let end_of_existed_meeting = meeting.finished_at;
-                            let isAvailable = _this.checkMeetings(meeting_start, meeting_end, start_of_existed_meeting, end_of_existed_meeting);
+                            let isAvailable = _this.checkMeetings(meeting_start, meeting_end, start_of_existed_meeting, end_of_existed_meeting, interval);
                             if (!isAvailable) {
                                 resolve(false)
                             } else if (index < meetings.length - 1) {
