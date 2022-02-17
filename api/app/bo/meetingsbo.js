@@ -13,7 +13,7 @@ class meetings extends baseModelbo {
     }
 
     isValidDuration(duration_of_meeting, availability_duration) {
-        return duration_of_meeting <= availability_duration && duration_of_meeting > 0;
+        return duration_of_meeting === availability_duration && duration_of_meeting > 0;
     }
 
     isAvailableDay(day, first_day, last_day, availableDays) {
