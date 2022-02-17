@@ -25,5 +25,8 @@ module.exports = {
     },
     authorize: function (req, res, next) {
         meetingsDaoInst.authorize(req, res, next)
-    }
+    },
+    deleteMeetingNotAssigned: function (req, res, next) {
+        meetingsDaoInst.deleteMeetingNotAssigned(req, res, next)
+    },
 }

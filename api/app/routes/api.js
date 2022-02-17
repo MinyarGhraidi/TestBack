@@ -46,7 +46,7 @@ meetingsController = require('../controllers/meeting.controller')
 emailsController = require('../controllers/email.controller')
 roles_crmController = require('../controllers/roles_crm.controller')
 acl_Controller = require('../controllers/Permissionacl.controller')
-sales_Controller =require('../controllers/sales.controller')
+sales_Controller = require('../controllers/sales.controller')
 
 
 let apiRouters = function (passport) {
@@ -89,11 +89,11 @@ let apiRouters = function (passport) {
     //role routers
     router.post("/api/role/find/:params?", passport.authenticate('jwt', {session: false}), rolesController.find);
     router.get("/api/role/findById/:entity_id", passport.authenticate('jwt', {session: false}), rolesController.findById);
-    router.put("/api/role/update", passport.authenticate('jwt', {session: false}),  rolesController.update);
-    router.delete("/api/role/delete/:params", passport.authenticate('jwt', {session: false}),  rolesController.delete);
-    router.post("/api/role/save", passport.authenticate('jwt', {session: false}),  rolesController.save);
-    router.post("/api/role/saveRole",  passport.authenticate('jwt', {session: false}), rolesController.saveRole);
-    router.delete("/api/role/deleteRole/:params",  passport.authenticate('jwt', {session: false}), rolesController.deleteRole)
+    router.put("/api/role/update", passport.authenticate('jwt', {session: false}), rolesController.update);
+    router.delete("/api/role/delete/:params", passport.authenticate('jwt', {session: false}), rolesController.delete);
+    router.post("/api/role/save", passport.authenticate('jwt', {session: false}), rolesController.save);
+    router.post("/api/role/saveRole", passport.authenticate('jwt', {session: false}), rolesController.saveRole);
+    router.delete("/api/role/deleteRole/:params", passport.authenticate('jwt', {session: false}), rolesController.deleteRole)
 
     //user routers
     router.post("/api/user/find/:params?", passport.authenticate('jwt', {session: false}), usersController.find);
@@ -215,11 +215,14 @@ let apiRouters = function (passport) {
     router.post("/api/meeting/save", passport.authenticate('jwt', {session: false}), meetingsController.save);
     router.post("/api/meeting/getAvailableSales", meetingsController.getAvailableSales);
     router.post("/api/meeting/saveMeetings", meetingsController.saveMeetings);
-  router.post("/api/roles_crm/find",passport.authenticate('jwt', {session: false}), roles_crmController.find);
-  router.get("/api/roles_crm/findById/:entity_id",passport.authenticate('jwt', {session: false}), roles_crmController.findById);
-  router.put("/api/roles_crm/update",passport.authenticate('jwt', {session: false}), roles_crmController.update);
-  router.delete("/api/roles_crm/delete/:params",passport.authenticate('jwt', {session: false}), roles_crmController.delete);
-  router.post("/api/roles_crm/save",passport.authenticate('jwt', {session: false}), roles_crmController.save);
+    router.post("/api/meeting/deleteMeetingNotAssigned", meetingsController.deleteMeetingNotAssigned);
+
+    //roles_crm
+    router.post("/api/roles_crm/find", passport.authenticate('jwt', {session: false}), roles_crmController.find);
+    router.get("/api/roles_crm/findById/:entity_id", passport.authenticate('jwt', {session: false}), roles_crmController.findById);
+    router.put("/api/roles_crm/update", passport.authenticate('jwt', {session: false}), roles_crmController.update);
+    router.delete("/api/roles_crm/delete/:params", passport.authenticate('jwt', {session: false}), roles_crmController.delete);
+    router.post("/api/roles_crm/save", passport.authenticate('jwt', {session: false}), roles_crmController.save);
 
     // emails routes
     router.post("/api/email/find", passport.authenticate('jwt', {session: false}), emailsController.find);
@@ -234,8 +237,8 @@ let apiRouters = function (passport) {
     router.delete("/api/acl/delete/:params", passport.authenticate('jwt', {session: false}), acl_Controller.delete);
     router.post("/api/acl/save", passport.authenticate('jwt', {session: false}), acl_Controller.save);
 
-    router.post("/api/sales/all_meetings",passport.authenticate('jwt', {session: false}), sales_Controller.getAllMeetings);
-    router.post("/api/sales/agents_sales",passport.authenticate('jwt', {session: false}), sales_Controller.agents_for_sales)
+    router.post("/api/sales/all_meetings", passport.authenticate('jwt', {session: false}), sales_Controller.getAllMeetings);
+    router.post("/api/sales/agents_sales", passport.authenticate('jwt', {session: false}), sales_Controller.agents_for_sales)
 
     router.post("/api/callcenter/authorize", meetingsController.authorize)
 
