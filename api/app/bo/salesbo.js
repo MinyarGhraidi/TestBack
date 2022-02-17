@@ -15,21 +15,7 @@ class Sales extends baseModelbo {
         let account_id = req.body.account_id;
         const {Op}= db.sequelize;
         let agent_id = req.body.agents;
-        let where
-        if(agent_id && agent_id.length !== 0){
-             where = {
-                sales_id: id,
-                 account_id:account_id,
-                agent_id:{
-                    [Op.in]: agent_id
-                }
-            }
-        }else{
-             where = {
-                sales_id: id,
-                 account_id:account_id
-            }
-        }
+
         this.db['users'].findOne({
             where:{
                 user_id: id,
@@ -39,7 +25,13 @@ class Sales extends baseModelbo {
         }).then(sales=>{
             if (sales){
                 this.db['meetings'].findAll({
-                    where:where,
+                    where:{
+                        sales_id: id,
+                        account_id:account_id,
+                        agent_id:{
+                            [Op.in]: agent_id && agent_id.length !== 0 ? agent_id :sales.params.agents
+                        }
+                    },
                     include:[{
                         model: db.users
                     }]
