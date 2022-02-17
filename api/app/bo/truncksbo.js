@@ -99,20 +99,20 @@ class truncks extends baseModelbo {
                     axios
                         .delete(`${base_url_dailer}api/v1/dialer/gateways/${dialer_uuid}`, dialer_authorization)
                         .then(resp => {
-                            this.db['trunks'].update({active: 'N'}, {where: {trunk_id: trunk_id}})
+                            this.db['truncks'].update({active: 'N'}, {where: {trunck_id: trunk_id}})
                                 .then(result => {
-                                    resolve(true)
+                                    resolve(true);
                                 })
                                 .catch((err) => {
-                                    reject(err)
+                                    reject(err);
                                 });
                         })
                         .catch((err) => {
-                            reject(err)
+                            reject(err);
                         });
                 })
                 .catch((err) => {
-                    reject(err)
+                    reject(err);
                 });
         })
     }
@@ -120,6 +120,7 @@ class truncks extends baseModelbo {
     deleteTrunk(req, res, next) {
         let _this = this;
         let {uuid, trunk_id, dialer_uuid} = req.body;
+        console.log(dialer_uuid, uuid, trunk_id);
         this.deleteTrunkFunc(dialer_uuid, uuid, trunk_id)
             .then(result => {
                 res.send({
