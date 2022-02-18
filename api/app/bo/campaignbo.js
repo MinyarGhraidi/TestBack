@@ -108,23 +108,15 @@ class campaigns extends baseModelbo {
     }
 
     dissociateAgent(agents) {
-        let index = 0;
         return new Promise((resolve, reject) => {
             if (agents && agents.length !== 0) {
-                agents.forEach(agent_id => {
-                    this.db['users'].update({campaign_id: 0}, {where: {user_id: agent_id}})
-                        .then(resp => {
-                            if (index < agents.length - 1) {
-                                index++;
-                            } else {
-                                resolve(true);
-                            }
-                        })
-                        .catch(err => {
-                            reject(err);
-                        })
-
-                })
+                this.db['users'].update({campaign_id: 0}, {where: {user_id: agents}})
+                    .then(() => {
+                        resolve(true);
+                    })
+                    .catch(err => {
+                        reject(err);
+                    })
             } else {
                 resolve(true)
             }
