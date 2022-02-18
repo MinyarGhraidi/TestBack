@@ -499,25 +499,19 @@ class campaigns extends baseModelbo {
     }
 
     updateIsAssignedStatus(agents, campaign_id, isAssigned) {
-        let index = 0;
+        let agents_ids = agents.map(el => el.user_id);
         return new Promise((resolve, reject) => {
             if (agents && agents.length !== 0) {
-                agents.forEach(agent => {
-                    this.db['users'].update({
-                        isAssigned: isAssigned,
-                        campaign_id: campaign_id,
-                    }, {where: {user_id: agent.user_id, active: 'Y'}})
-                        .then(resp => {
-                            if (index < agents.length - 1) {
-                                index++;
-                            } else {
-                                resolve(true);
-                            }
-                        })
-                        .catch(err => {
-                            reject(err);
-                        })
-                })
+                this.db['users'].update({
+                    isAssigned: isAssigned,
+                    campaign_id: campaign_id,
+                }, {where: {user_id: agents_ids, active: 'Y'}})
+                    .then(resp => {
+                        resolve(true);
+                    })
+                    .catch(err => {
+                        reject(err);
+                    })
             } else {
                 resolve(true);
             }
