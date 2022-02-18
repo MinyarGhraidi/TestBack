@@ -544,7 +544,7 @@ class campaigns extends baseModelbo {
                         resolve(true);
                     })
                     .catch(err => {
-                        resolve(err);
+                        reject(err);
                     })
             } else {
                 resolve(true)
