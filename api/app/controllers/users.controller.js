@@ -44,4 +44,7 @@ module.exports = {
     getSales: function (req, res, next) {
         _itembo.getSales(req, res, next)
     },
+    deleteSalesRepresentative: function (req, res, next) {
+        _itembo.deleteSalesRepresentative(req, res, next)
+    },
 }

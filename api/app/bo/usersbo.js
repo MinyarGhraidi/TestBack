@@ -544,6 +544,27 @@ class users extends baseModelbo {
             })
     }
 
+    deleteSalesRepresentative(req, res, next) {
+        let _this = this;
+        let {user_id} = req.body;
+        this.db['users'].update({active : 'N'}, {where : {user_id : user_id}})
+            .then(() => {
+                this.db['meetings'].update({active: 'N'}, {where: {sales_id: user_id}})
+                    .then(() => {
+                        res.send({
+                            status : 200,
+                            message : 'deleted with success',
+                        })
+                    })
+                    .catch(err => {
+                        return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                    })
+            })
+            .catch(err => {
+                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+            })
+    }
+
 }
 
 module.exports = users;
