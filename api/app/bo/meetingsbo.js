@@ -265,21 +265,6 @@ class meetings extends baseModelbo {
             });
     }
 
-    deleteMeetingNotAssigned(req, res, next) {
-        let _this = this;
-        let {agent_id, sales_id} = req.body;
-        this.db['meetings'].update({active : 'N'}, {where: {agent_id: agent_id, sales_id: sales_id}})
-            .then(meetings => {
-                res.send({
-                    status : 200,
-                    message : "success, meetings deleted"
-                })
-            })
-            .catch(err => {
-                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
-            })
-    }
-
     // to be cleaned
     saveMeetings(req, res, next) {
         let _this = this;

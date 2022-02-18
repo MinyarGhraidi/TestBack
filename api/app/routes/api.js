@@ -111,6 +111,7 @@ let apiRouters = function (passport) {
     router.post("/api/user/generatedUniqueUsername", usersController.generatedUniqueUsername);
     router.post("/api/user/getSales", usersController.getSales);
     router.post("/api/user/deleteSalesRepresentative", usersController.deleteSalesRepresentative);
+    router.post("/api/user/assignAgentsToSales", usersController.assignAgentsToSales);
 
     router.post("/api/signup", usersController.signUp);
     router.post("/api/signin", usersController.signIn);
@@ -216,7 +217,6 @@ let apiRouters = function (passport) {
     router.post("/api/meeting/save", passport.authenticate('jwt', {session: false}), meetingsController.save);
     router.post("/api/meeting/getAvailableSales", meetingsController.getAvailableSales);
     router.post("/api/meeting/saveMeetings", meetingsController.saveMeetings);
-    router.post("/api/meeting/deleteMeetingNotAssigned", meetingsController.deleteMeetingNotAssigned);
 
     //roles_crm
     router.post("/api/roles_crm/find", passport.authenticate('jwt', {session: false}), roles_crmController.find);

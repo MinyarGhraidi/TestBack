@@ -8,6 +8,7 @@ const salt = require("../config/config.json")["salt"]
 const bcrypt = require("bcrypt");
 const {appSecret} = require("../helpers/app");
 const {Sequelize} = require("sequelize");
+const moment = require("moment");
 
 class users extends baseModelbo {
     constructor() {
@@ -555,6 +556,52 @@ class users extends baseModelbo {
                             status : 200,
                             message : 'deleted with success',
                         })
+                    })
+                    .catch(err => {
+                        return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                    })
+            })
+            .catch(err => {
+                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+            })
+    }
+
+    updateAgentsForAssign(users_ids, campaign_id) {
+        return new Promise((resolve, reject) => {
+            let updated_at = moment(new Date());
+            this.db['users'].update({campaign_id : campaign_id, updated_at : updated_at}, {where : {user_id: users_ids}})
+                .then(() => {
+                    resolve(true);
+                })
+                .catch(err => {
+                    reject(err);
+                })
+        })
+    }
+
+    assignAgentsToSales(req, res, next) {
+        let _this = this;
+        let {user_id, assignedAgents, notAssignedAgents, params, campaign_id} = req.body;
+        this.db['users'].update({params : params}, {where : {user_id : user_id}})
+            .then(() => {
+                this.updateAgentsForAssign(assignedAgents, campaign_id)
+                    .then(() => {
+                        this.updateAgentsForAssign(notAssignedAgents, 0)
+                            .then(() => {
+                                this.db['meetings'].update({active : 'N'}, {where : {agent_id : notAssignedAgents}})
+                                    .then(() => {
+                                        res.send({
+                                            status : 200,
+                                            message : 'success'
+                                        })
+                                    })
+                                    .catch(err => {
+                                        return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                                    })
+                            })
+                            .catch(err => {
+                                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                            })
                     })
                     .catch(err => {
                         return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
