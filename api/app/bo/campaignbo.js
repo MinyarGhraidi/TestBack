@@ -536,22 +536,16 @@ class campaigns extends baseModelbo {
     }
 
     deleteAgentsMeetings(agents) {
-        let index = 0;
+        let agents_ids = agents.map(el => el.user_id)
         return new Promise((resolve, reject) => {
             if (agents && agents.length !== 0) {
-                agents.forEach(agent => {
-                    this.db['meetings'].update({active: 'N'}, {where: {agent_id: agent.user_id}})
-                        .then(result => {
-                            if (index < agents.length - 1) {
-                                index++;
-                            } else {
-                                resolve(true);
-                            }
-                        })
-                        .catch(err => {
-                            resolve(err);
-                        })
-                })
+                this.db['meetings'].update({active: 'N'}, {where: {agent_id: agents_ids}})
+                    .then(() => {
+                        resolve(true);
+                    })
+                    .catch(err => {
+                        resolve(err);
+                    })
             } else {
                 resolve(true)
             }
