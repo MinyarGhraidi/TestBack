@@ -530,7 +530,7 @@ class users extends baseModelbo {
     getSales(req, res, next) {
         let _this = this;
         let {account_id, user_id} = req.body;
-        this.db['users'].findAll({where : {account_id : account_id, role_crm_id : 5}})
+        this.db['users'].findAll({where : {account_id : account_id, role_crm_id : 5, active: 'Y'}})
             .then(users => {
                 let sales = users.filter(el => el.params.agents.includes(user_id));
                 res.send({
