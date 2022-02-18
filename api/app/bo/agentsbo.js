@@ -268,17 +268,23 @@ class agents extends baseModelbo {
         return new Promise((resolve, reject) => {
             axios
                 .delete(`${base_url_cc_kam}api/v1/agents/${uuid}`, call_center_authorization)
-                .then(resp => {
+                .then(() => {
                     this.db['users'].update({active: 'N'}, {where: {user_id: agent_id}})
-                        .then(result => {
-                            resolve(true)
+                        .then(() => {
+                            this.db['meetings'].update({active: 'N'}, {where: {agent_id: agent_id}})
+                                .then(() => {
+                                    resolve(true);
+                                })
+                                .catch((err) => {
+                                    reject(err);
+                                });
                         })
                         .catch((err) => {
-                            reject(err)
+                            reject(err);
                         });
                 })
                 .catch((err) => {
-                    reject(err)
+                    reject(err);
                 });
         })
     }
@@ -341,8 +347,8 @@ class agents extends baseModelbo {
                     let agentLog = {
                         user_id: user_id,
                         action_name: agent.params.status,
-                        created_at : createdAt_tz,
-                        updated_at : updatedAt_tz
+                        created_at: createdAt_tz,
+                        updated_at: updatedAt_tz
                     };
                     let modalObj = this.db['agent_log_events'].build(agentLog);
                     modalObj.save()
