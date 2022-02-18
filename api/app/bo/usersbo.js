@@ -624,7 +624,7 @@ class users extends baseModelbo {
                                     .then(() => {
                                         this.updateAgentsForAssign(notAssignedAgents, 0)
                                             .then(() => {
-                                                this.db['meetings'].update({active: 'N'}, {where: {agent_id: notAssignedAgents.map(el => el.user_id)}})
+                                                this.db['meetings'].update({active: 'N'}, {where: {agent_id: notAssignedAgents.map(el => el.user_id), sales_id: user_id}})
                                                     .then(() => {
                                                         res.send({
                                                             status: 200,
