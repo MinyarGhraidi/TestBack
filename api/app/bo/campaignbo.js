@@ -490,15 +490,15 @@ class campaigns extends baseModelbo {
             });
     }
 
-    updateIsAssignedStatus(agents, campaign_id, isAssigned) {
-        let agents_ids = agents.map(el => el.user_id);
+    updateIsAssignedStatus(agents, campaign_id, isAssigned, campaign_agents) {
         return new Promise((resolve, reject) => {
             if (agents && agents.length !== 0) {
+                let agents_ids = agents.map(el => el.user_id);
                 this.db['users'].update({
                     isAssigned: isAssigned,
                     campaign_id: campaign_id,
                 }, {where: {user_id: agents_ids, active: 'Y'}})
-                    .then(resp => {
+                    .then(() => {
                         resolve(true);
                     })
                     .catch(err => {
@@ -544,41 +544,69 @@ class campaigns extends baseModelbo {
         })
     }
 
+    deleteAgentsFromQueue(campaign_agents, queue_uuid, agents) {
+        return new Promise((resolve, reject) => {
+            if (campaign_agents && campaign_agents.length !== 0) {
+                axios
+                    .post(`${base_url_cc_kam}api/v1/queues/${queue_uuid}/tiers/delete`, agents, call_center_authorization)
+                    .then(resp => {
+                        resolve(true);
+                    })
+                    .catch((err) => {
+                        reject(err);
+                    });
+            } else {
+                resolve(true);
+            }
+        })
+    }
+
     assignAgents(req, res, next) {
         let _this = this;
-        let {campaign_id, agents, queue_uuid, assignedAgents, notAssignedAgents} = req.body;
+        let {campaign_id, agents, queue_uuid, assignedAgents, notAssignedAgents, campaign_agents} = req.body;
         let updates = {campaign_id, agents};
-        this.updateIsAssignedStatus(assignedAgents, campaign_id, true)
+        this.updateIsAssignedStatus(assignedAgents, campaign_id, true, campaign_agents)
             .then(resp => {
-                this.updateIsAssignedStatus(notAssignedAgents, 0, false)
+                this.updateIsAssignedStatus(notAssignedAgents, 0, false, campaign_agents)
                     .then(resp => {
                         this.deleteAgentsMeetings(notAssignedAgents)
                             .then(result => {
-                                let agents_arr = ['*'];
-                                let agents = {agents: agents_arr}
-                                axios
-                                    .post(`${base_url_cc_kam}api/v1/queues/${queue_uuid}/tiers/delete`, agents, call_center_authorization)
-                                    .then(resp => {
-                                        let tiers_array = (assignedAgents && assignedAgents.length !== 0) ?
-                                            assignedAgents.map(el => ({
-                                                agent_uuid: el.sip_device.uuid,
-                                                tier_level: 1,
-                                                tier_position: 1
-                                            })) : [];
-                                        let tiers = {tiers: tiers_array};
-                                        this.addToQueue(tiers, queue_uuid)
+                                let _agents = (assignedAgents && assignedAgents.length !== 0) ? assignedAgents.map(el => el.user_id) : [];
+                                this.db['campaigns'].update({agents: _agents}, {
+                                    where: {
+                                        campaign_id: campaign_id,
+                                        active: 'Y'
+                                    }
+                                })
+                                    .then(() => {
+                                        let agents_arr = ['*'];
+                                        let agents = {agents: agents_arr};
+                                        this.deleteAgentsFromQueue(campaign_agents, queue_uuid, agents)
                                             .then(resp => {
-                                                this.db['campaigns'].update(updates, {
-                                                    where: {
-                                                        active: 'Y',
-                                                        campaign_id: campaign_id
-                                                    }
-                                                })
+                                                let tiers_array = (assignedAgents && assignedAgents.length !== 0) ?
+                                                    assignedAgents.map(el => ({
+                                                        agent_uuid: el.sip_device.uuid,
+                                                        tier_level: 1,
+                                                        tier_position: 1
+                                                    })) : [];
+                                                let tiers = {tiers: tiers_array};
+                                                this.addToQueue(tiers, queue_uuid)
                                                     .then(resp => {
-                                                        res.send({
-                                                            status: 200,
-                                                            message: 'success'
+                                                        this.db['campaigns'].update(updates, {
+                                                            where: {
+                                                                active: 'Y',
+                                                                campaign_id: campaign_id
+                                                            }
                                                         })
+                                                            .then(resp => {
+                                                                res.send({
+                                                                    status: 200,
+                                                                    message: 'success'
+                                                                })
+                                                            })
+                                                            .catch((err) => {
+                                                                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                                                            });
                                                     })
                                                     .catch((err) => {
                                                         return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);

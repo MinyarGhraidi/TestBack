@@ -145,7 +145,8 @@ class agents extends baseModelbo {
         let _this = this;
         let values = req.body.values;
         let accountcode = req.body.accountcode;
-        let {sip_device} = values;
+        // let {sip_device} = values;
+        let sip_device = JSON.parse(JSON.stringify(values.sip_device));
         let {username, password, domain, options, status, enabled, subscriber_id} = sip_device;
         _usersbo.isUniqueUsername(values.username, 0)
             .then(isUnique => {

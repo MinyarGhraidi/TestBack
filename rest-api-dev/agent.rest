@@ -28,7 +28,7 @@ POST https://occ.oxilog.net:2443/api/v1/agents
 Content-Type: application/json
 Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9cIi2IY5
 
-{"username":"863941162800","password":"LRDgVjej1ULy","domain":"occ.oxilog.net","options":{"call_timeout":30,"max_no_answer":0,"wrap_up_time":20,"reject_delay_time":50,"busy_delay_time":20,"no_answer_delay_time":20},"status":"logged-out","enabled":true,"subscriber_id":1}
+{"username":"863p00","password":"LRDgVjej1ULy","domain":"occ.oxilog.net","options":{"call_timeout":30,"max_no_answer":0,"wrap_up_time":20,"reject_delay_time":50,"busy_delay_time":20,"no_answer_delay_time":20},"status":"logged-out","enabled":true,"subscriber_id":1}
 
 ###
 #CREATE AGENT
@@ -36,19 +36,24 @@ POST https://occ.oxilog.net:2443/api/v1/agents
 Content-Type: application/json
 Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9cIi2IY5
 
-{"username":"688","password":"OpllM4tvcMdy","domain":"occ.oxilog.net","options":{"call_timeout":30,"max_no_answer":0,"wrap_up_time":20,"reject_delay_time":50,"busy_delay_time":20,"no_answer_delay_time":20},"accountcode":"599027795684","status":"logged-out","enabled":true,"subscriber_id":1}
+{
+  "username": "agent1xcc",
+  "domain": "occ.oxilog.net",
+  "password": "pwdpwd2021",
+  "accountcode": "1"
+}
 
 ###
 #UPDATE AGENT
-PUT https://occ.oxilog.net:2443/api/v1/agents/370f9b39-98cb-40e7-b171-5b0cff9b7768
+PUT https://occ.oxilog.net:2443/api/v1/agents/d4f20882-cff9-4c8c-9cd7-3cee10c54d30
 Content-Type: application/json
 Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9cIi2IY5
 
 {
-  "username": "agent101",
+  "username": "agendsio",
   "domain": "occ.oxilog.net",
-  "password": "pwdpwd20",
-  "accountcode": "5",
+  "password": "pwdpwd2021",
+  "accountcode": "1",
   "options": {
     "call_timeout": 30,
     "max_no_answer": 0,

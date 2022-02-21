@@ -5,7 +5,7 @@ Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9c
 
 ###
 #GET QUEUE BY UUID
-GET https://occ.oxilog.net:2443/api/v1/queues/a724ff21-c71f-4bc5-8545-67670a23485f
+GET https://occ.oxilog.net:2443/api/v1/queues/b72f1802-57e6-445d-8811-f7c657b554d5
 Content-Type: application/json
 Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9cIi2IY5
 

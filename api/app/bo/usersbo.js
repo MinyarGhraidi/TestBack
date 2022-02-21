@@ -586,8 +586,8 @@ class users extends baseModelbo {
             if (agents && agents.length !== 0) {
                 agents.forEach(agent => {
                     let updated_at = moment(new Date());
-                    let sales_params = agent.params.sales || [];
-                    let params = agent.params || {};
+                    let sales_params = agent.params.sales ? JSON.parse(JSON.stringify(agent.params.sales)) : [];
+                    let params = JSON.parse(JSON.stringify(agent.params));
                     if(isAssigned) {
                         params.sales = [...sales_params, sales_id];
                     } else{
