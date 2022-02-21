@@ -639,6 +639,7 @@ class users extends baseModelbo {
             })
     }
 
+
 }
 
 module.exports = users;
