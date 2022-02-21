@@ -566,21 +566,7 @@ class users extends baseModelbo {
             })
     }
 
-    updateAgentsForAssign(agents, campaign_id) {
-        let users_ids = agents.map(el => el.user_id);
-        return new Promise((resolve, reject) => {
-            let updated_at = moment(new Date());
-            this.db['users'].update({campaign_id: campaign_id, updated_at: updated_at}, {where: {user_id: users_ids}})
-                .then(() => {
-                    resolve(true);
-                })
-                .catch(err => {
-                    reject(err);
-                })
-        })
-    }
-
-    updateParamsAgent(agents, sales_id, isAssigned) {
+    updateParamsAgent(campaign_id, agents, sales_id, isAssigned) {
         let index = 0;
         return new Promise((resolve, reject) => {
             if (agents && agents.length !== 0) {
@@ -588,12 +574,16 @@ class users extends baseModelbo {
                     let updated_at = moment(new Date());
                     let sales_params = agent.params.sales ? JSON.parse(JSON.stringify(agent.params.sales)) : [];
                     let params = JSON.parse(JSON.stringify(agent.params));
-                    if(isAssigned) {
+                    if (isAssigned) {
                         params.sales = [...sales_params, sales_id];
-                    } else{
+                    } else {
                         params.sales = (sales_params && sales_params.length !== 0) ? sales_params.filter(el => el !== sales_id) : [];
                     }
-                    this.db['users'].update({params: params, updated_at: updated_at}, {where: {user_id: agent.user_id}})
+                    this.db['users'].update({
+                        campaign_id: campaign_id,
+                        params: params,
+                        updated_at: updated_at
+                    }, {where: {user_id: agent.user_id}})
                         .then(() => {
                             if (index < agents.length - 1) {
                                 index++;
@@ -616,28 +606,21 @@ class users extends baseModelbo {
         let {user_id, assignedAgents, notAssignedAgents, params, campaign_id} = req.body;
         this.db['users'].update({params: params}, {where: {user_id: user_id}})
             .then(() => {
-                this.updateParamsAgent(assignedAgents, user_id, true)
+                this.updateParamsAgent(campaign_id, assignedAgents, user_id, true)
                     .then(() => {
-                        this.updateParamsAgent(notAssignedAgents, user_id, false)
+                        this.updateParamsAgent(0, notAssignedAgents, user_id, false)
                             .then(() => {
-                                this.updateAgentsForAssign(assignedAgents, campaign_id)
+                                this.db['meetings'].update({active: 'N'}, {
+                                    where: {
+                                        agent_id: notAssignedAgents.map(el => el.user_id),
+                                        sales_id: user_id
+                                    }
+                                })
                                     .then(() => {
-                                        this.updateAgentsForAssign(notAssignedAgents, 0)
-                                            .then(() => {
-                                                this.db['meetings'].update({active: 'N'}, {where: {agent_id: notAssignedAgents.map(el => el.user_id), sales_id: user_id}})
-                                                    .then(() => {
-                                                        res.send({
-                                                            status: 200,
-                                                            message: 'success'
-                                                        })
-                                                    })
-                                                    .catch(err => {
-                                                        return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
-                                                    })
-                                            })
-                                            .catch(err => {
-                                                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
-                                            })
+                                        res.send({
+                                            status: 200,
+                                            message: 'success'
+                                        })
                                     })
                                     .catch(err => {
                                         return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
