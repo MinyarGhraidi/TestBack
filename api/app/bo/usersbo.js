@@ -566,7 +566,7 @@ class users extends baseModelbo {
             })
     }
 
-    updateParamsAgent(campaign_id, agents, sales_id, isAssigned) {
+    updateParamsAgent(agents, sales_id, isAssigned) {
         let index = 0;
         return new Promise((resolve, reject) => {
             if (agents && agents.length !== 0) {
@@ -580,7 +580,7 @@ class users extends baseModelbo {
                         params.sales = (sales_params && sales_params.length !== 0) ? sales_params.filter(el => el !== sales_id) : [];
                     }
                     this.db['users'].update({
-                        campaign_id: campaign_id,
+                        // campaign_id: campaign_id,
                         params: params,
                         updated_at: updated_at
                     }, {where: {user_id: agent.user_id}})
@@ -604,12 +604,12 @@ class users extends baseModelbo {
     assignAgentsToSales(req, res, next) {
         let _this = this;
         //user_id here is the id of the salesman
-        let {user_id, assignedAgents, notAssignedAgents, params, campaign_id} = req.body;
+        let {user_id, assignedAgents, notAssignedAgents, params} = req.body;
         this.db['users'].update({params: params}, {where: {user_id: user_id}})
             .then(() => {
-                this.updateParamsAgent(campaign_id, assignedAgents, user_id, true)
+                this.updateParamsAgent(assignedAgents, user_id, true)
                     .then(() => {
-                        this.updateParamsAgent(0, notAssignedAgents, user_id, false)
+                        this.updateParamsAgent(notAssignedAgents, user_id, false)
                             .then(() => {
                                 this.db['meetings'].update({active: 'N'}, {
                                     where: {
