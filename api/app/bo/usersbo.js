@@ -603,6 +603,7 @@ class users extends baseModelbo {
 
     assignAgentsToSales(req, res, next) {
         let _this = this;
+        //user_id here is the id of the salesman
         let {user_id, assignedAgents, notAssignedAgents, params, campaign_id} = req.body;
         this.db['users'].update({params: params}, {where: {user_id: user_id}})
             .then(() => {
