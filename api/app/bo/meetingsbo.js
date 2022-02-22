@@ -18,7 +18,7 @@ class meetings extends baseModelbo {
 
     isTimeInFuture(started_at) {
         let current_time = moment(new Date()).format("YYYY-MM-DD HH:mm:ss");
-        let difference = moment(started_at, "YYYY-MM-DD HH:mm:ss").diff(moment(current_time, "YYYY-MM-DD HH:mm:ss"), 'minutes');
+        let difference = moment(current_time, "YYYY-MM-DD HH:mm:ss").diff(moment(started_at, "YYYY-MM-DD HH:mm:ss"), 'minutes');
         return parseInt(difference) > 0
     }
 
@@ -251,7 +251,10 @@ class meetings extends baseModelbo {
                             success: true,
                             result: availableSales[0],
                         });
-                    });
+                    })
+                        .catch((err) => {
+                            return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                        });
                 } else {
                     res.send({
                         message: "No sales found",
