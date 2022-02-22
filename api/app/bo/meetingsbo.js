@@ -18,7 +18,7 @@ class meetings extends baseModelbo {
 
     isTimeInFuture(started_at) {
         let current_time = moment(new Date()).format("YYYY-MM-DD HH:mm:ss");
-        let difference = moment(current_time, "YYYY-MM-DD HH:mm:ss").diff(moment(started_at, "YYYY-MM-DD HH:mm:ss"), 'minutes');
+        let difference = moment(started_at, "YYYY-MM-DD HH:mm:ss").diff(moment(current_time, "YYYY-MM-DD HH:mm:ss"), 'minutes');
         return parseInt(difference) > 0
     }
 
@@ -52,7 +52,7 @@ class meetings extends baseModelbo {
         return !(first_condition || second_condition || third_condition || forth_condition)
     }
 
-    getAvailability(sales, day, meeting_start, meeting_end, duration, started_at) {
+    getAvailability(sales, day, meeting_start, meeting_end, duration) {
         let _this = this;
         return new Promise((resolve, reject) => {
             let sales_man = sales.toJSON();
@@ -66,7 +66,7 @@ class meetings extends baseModelbo {
                 let sale_id = sales_man.user_id;
                 let availability_duration = parseInt(sales_man.params.availability.duration);
                 let interval = parseInt(sales_man.params.availability.interval);
-                if (this.isTimeInFuture(started_at)) {
+                if (this.isTimeInFuture(day)) {
                     if (this.isValidDuration(duration, availability_duration)) {
                         if (this.isAvailableDay(day, first_day[0], last_day[0], days)) {
                             if (this.isAvailableTime(meeting_start, meeting_end, first_day[0], last_day[0], interval)) {
@@ -214,6 +214,7 @@ class meetings extends baseModelbo {
         let {day, started_at, finished_at} = req.body.date;
         let meeting_start = moment(new Date(started_at)).format("HH:mm:ss");
         let meeting_end = moment(new Date(finished_at)).format("HH:mm:ss");
+        let start = moment(new Date(day)).format("YYYY-MM-DD ") + meeting_start
         let duration_moment = moment(finished_at).diff(moment(started_at), 'minutes');
         let duration = parseInt(duration_moment);
         this.db["users"]
@@ -231,7 +232,7 @@ class meetings extends baseModelbo {
                     promise.push(new Promise(function (resolve, reject) {
                         let index = 0;
                         list_of_sales_men.forEach(sales => {
-                            _this.getAvailability(sales, day, meeting_start, meeting_end, duration, started_at)
+                            _this.getAvailability(sales, start, meeting_start, meeting_end, duration)
                                 .then(availableSale => {
                                     if (availableSale) {
                                         availableSale.meetings = _this.getMeetings(availableSale.user_id, res) || [];
