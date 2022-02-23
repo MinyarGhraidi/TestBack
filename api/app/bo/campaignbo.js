@@ -563,50 +563,34 @@ class campaigns extends baseModelbo {
 
     assignAgents(req, res, next) {
         let _this = this;
-        let {campaign_id, agents, queue_uuid, assignedAgents, notAssignedAgents, campaign_agents} = req.body;
-        let updates = {campaign_id, agents};
-        this.updateIsAssignedStatus(assignedAgents, campaign_id, true, campaign_agents)
-            .then(resp => {
-                this.updateIsAssignedStatus(notAssignedAgents, 0, false, campaign_agents)
-                    .then(resp => {
-                        this.deleteAgentsMeetings(notAssignedAgents)
-                            .then(result => {
-                                let _agents = (assignedAgents && assignedAgents.length !== 0) ? assignedAgents.map(el => el.user_id) : [];
-                                this.db['campaigns'].update({agents: _agents}, {
-                                    where: {
-                                        campaign_id: campaign_id,
-                                        active: 'Y'
-                                    }
-                                })
+        let {campaign_id, queue_uuid, assignedAgents, notAssignedAgents, campaign_agents} = req.body;
+        let _agents = (assignedAgents && assignedAgents.length !== 0) ? assignedAgents.map(el => el.user_id) : [];
+        let updates = {campaign_id, agents: _agents};
+        let agents_arr = ['*'];
+        let agents_kam = {agents: agents_arr};
+        this.deleteAgentsFromQueue(campaign_agents, queue_uuid, agents_kam)
+            .then(() => {
+                let tiers_array = (assignedAgents && assignedAgents.length !== 0) ?
+                    assignedAgents.map(el => ({
+                        agent_uuid: el.sip_device.uuid,
+                        tier_level: 1,
+                        tier_position: 1
+                    })) : [];
+                let tiers = {tiers: tiers_array};
+                this.addToQueue(tiers, queue_uuid)
+                    .then(() => {
+                        this.db['campaigns'].update(updates, {where: {active: 'Y', campaign_id: campaign_id}})
+                            .then(() => {
+                                this.updateIsAssignedStatus(assignedAgents, campaign_id, true, campaign_agents)
                                     .then(() => {
-                                        let agents_arr = ['*'];
-                                        let agents = {agents: agents_arr};
-                                        this.deleteAgentsFromQueue(campaign_agents, queue_uuid, agents)
-                                            .then(resp => {
-                                                let tiers_array = (assignedAgents && assignedAgents.length !== 0) ?
-                                                    assignedAgents.map(el => ({
-                                                        agent_uuid: el.sip_device.uuid,
-                                                        tier_level: 1,
-                                                        tier_position: 1
-                                                    })) : [];
-                                                let tiers = {tiers: tiers_array};
-                                                this.addToQueue(tiers, queue_uuid)
-                                                    .then(resp => {
-                                                        this.db['campaigns'].update(updates, {
-                                                            where: {
-                                                                active: 'Y',
-                                                                campaign_id: campaign_id
-                                                            }
+                                        this.updateIsAssignedStatus(notAssignedAgents, 0, false, campaign_agents)
+                                            .then(() => {
+                                                this.deleteAgentsMeetings(notAssignedAgents)
+                                                    .then(() => {
+                                                        res.send({
+                                                            status: 200,
+                                                            message: 'success'
                                                         })
-                                                            .then(resp => {
-                                                                res.send({
-                                                                    status: 200,
-                                                                    message: 'success'
-                                                                })
-                                                            })
-                                                            .catch((err) => {
-                                                                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
-                                                            });
                                                     })
                                                     .catch((err) => {
                                                         return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
@@ -619,6 +603,7 @@ class campaigns extends baseModelbo {
                                     .catch((err) => {
                                         return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
                                     });
+
                             })
                             .catch((err) => {
                                 return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
