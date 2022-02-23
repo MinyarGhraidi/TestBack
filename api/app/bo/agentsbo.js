@@ -207,7 +207,8 @@ class agents extends baseModelbo {
                             {username, password, domain, options, accountcode, status, enabled, subscriber_id},
                             call_center_authorization)
                         .then((resp) => {
-                            this.saveAgentInDB(values)
+                            _usersbo
+                                .saveUserFunction(values)
                                 .then(agent => {
                                     res.send({
                                         status: 200,
