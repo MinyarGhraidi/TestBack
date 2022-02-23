@@ -446,9 +446,62 @@ class campaigns extends baseModelbo {
             });
     }
 
+    areEqualArrays(first, second) {
+        if (first.length !== second.length) {
+            return false;
+        }
+        ;
+        for (let i = 0; i < first.length; i++) {
+            if (!second.includes(first[i])) {
+                return false;
+            }
+            ;
+        }
+        ;
+        return true;
+    }
+
+    fixConsistency(queue_uuid, allAgents, queue_agents, db_agents, campaign_id, campaign) {
+        return new Promise((resolve, reject) => {
+            let areEqual = this.areEqualArrays(queue_agents, db_agents);
+            if (areEqual) {
+                resolve(campaign);
+            } else {
+                if (queue_agents.length > db_agents.length) {
+                    let agents_not_assigned = queue_agents.filter(el => !db_agents.includes(el));
+                    axios
+                        .post(`${base_url_cc_kam}api/v1/queues/${queue_uuid}/tiers/delete`, {agents: agents_not_assigned}, call_center_authorization)
+                        .then(resp => {
+                            resolve(campaign);
+                        })
+                        .catch(err => {
+                            reject(err)
+                        })
+
+                } else {
+                    let not_assigned = allAgents.filter(el => !queue_agents.includes(el.sip_device.uuid));
+                    let agents_list = not_assigned.map(el => el.user_id);
+                    this.db['users'].update({campaign_id: 0}, {where: {user_id: agents_list}})
+                        .then(resp => {
+                            this.db['campaigns'].update({agents: allAgents.filter(el => queue_agents.includes(el.sip_device.uuid))}, {where: {campaign_id: campaign_id}})
+                                .then(result => {
+                                    resolve(result);
+                                })
+                                .catch(err => {
+                                    reject(err)
+                                })
+                        })
+                        .catch(err => {
+                            reject(err)
+                        })
+                }
+            }
+        })
+    }
+
     getAssignedAgents(req, res, next) {
         let _this = this;
-        let {campaign_id, account_id} = req.body;
+        let {campaign_id, account_id, queue_uuid, camp_agents} = req.body;
         this.db['campaigns'].findOne({where: {campaign_id: campaign_id}})
             .then(campaign => {
                 this.db['users'].findAll({
@@ -460,26 +513,47 @@ class campaigns extends baseModelbo {
                     }
                 })
                     .then(agents => {
-                        let campAgents = campaign.agents ? campaign.agents : [];
-                        let assignedAgents = [];
-                        let notAssignedAgents = [];
-                        if (campAgents && campAgents.length !== 0) {
-                            assignedAgents = agents.filter((agent) => campAgents.includes(agent.user_id));
-                            notAssignedAgents = agents.filter((agent) => !campAgents.includes(agent.user_id));
-                        } else {
-                            assignedAgents = [];
-                            notAssignedAgents = agents;
-                        }
-                        let data = {
-                            assignedAgents,
-                            notAssignedAgents,
-                            campaign
-                        }
-                        res.send({
-                            status: 200,
-                            message: 'success',
-                            data: data
-                        })
+                        axios
+                            .get(`${base_url_cc_kam}api/v1/queues/${queue_uuid}/tiers`, call_center_authorization)
+                            .then(data => {
+                                this.db['users'].findAll({where: {user_id: camp_agents, active: 'Y'}})
+                                    .then(allAgents => {
+                                        let queue_agents = data.data.result.map(el => el.agent_uuid);
+                                        let db_agents = (allAgents && allAgents.length !== 0) ? allAgents.map(el => el.sip_device.uuid) : [];
+                                        this.fixConsistency(queue_uuid, allAgents, queue_agents, db_agents, campaign_id, campaign)
+                                            .then(camp => {
+                                                let campAgents = camp.agents ? camp.agents : [];
+                                                let assignedAgents = [];
+                                                let notAssignedAgents = [];
+                                                if (campAgents && campAgents.length !== 0) {
+                                                    assignedAgents = agents.filter((agent) => campAgents.includes(agent.user_id));
+                                                    notAssignedAgents = agents.filter((agent) => !campAgents.includes(agent.user_id));
+                                                } else {
+                                                    assignedAgents = [];
+                                                    notAssignedAgents = agents;
+                                                }
+                                                let data = {
+                                                    assignedAgents,
+                                                    notAssignedAgents,
+                                                    campaign: camp
+                                                }
+                                                res.send({
+                                                    status: 200,
+                                                    message: 'success',
+                                                    data: data
+                                                })
+                                            })
+                                            .catch(err => {
+                                                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                                            })
+                                    })
+                                    .catch(err => {
+                                        return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                                    })
+                            })
+                            .catch(err => {
+                                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                            })
                     })
                     .catch((err) => {
                         return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
@@ -603,7 +677,6 @@ class campaigns extends baseModelbo {
                                     .catch((err) => {
                                         return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
                                     });
-
                             })
                             .catch((err) => {
                                 return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
@@ -663,6 +736,7 @@ class campaigns extends baseModelbo {
             } while (condition)
         })
     }
+
 }
 
 module.exports = campaigns;
