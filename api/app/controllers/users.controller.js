@@ -41,8 +41,8 @@ module.exports = {
     generatedUniqueUsername: function (req, res, next) {
         _itembo.generatedUniqueUsername(req, res, next)
     },
-    getSales: function (req, res, next) {
-        _itembo.getSales(req, res, next)
+    getSalesByAgent: function (req, res, next) {
+        _itembo.getSalesByAgent(req, res, next)
     },
     deleteSalesRepresentative: function (req, res, next) {
         _itembo.deleteSalesRepresentative(req, res, next)

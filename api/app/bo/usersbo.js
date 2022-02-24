@@ -528,17 +528,31 @@ class users extends baseModelbo {
         });
     }
 
-    getSales(req, res, next) {
+    getSalesByAgent(req, res, next) {
         let _this = this;
-        let {account_id, user_id} = req.body;
-        this.db['users'].findAll({where: {account_id: account_id, role_crm_id: 5, active: 'Y'}})
-            .then(users => {
-                let sales = users.filter(el => el.params.agents.includes(user_id));
-                res.send({
-                    status: 200,
-                    message: 'success',
-                    data: sales
-                })
+        let {user_id} = req.body;
+        this.db['users'].findOne({where: {user_id: user_id}})
+            .then(agent => {
+                let sales_params = agent.params.sales;
+                if (sales_params && sales_params.length !== 0) {
+                    this.db['users'].findAll({where: {active: 'Y', user_id: sales_params}})
+                        .then(sales => {
+                            res.send({
+                                status: 200,
+                                message: 'success',
+                                data: sales
+                            })
+                        })
+                        .catch(err => {
+                            return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                        })
+                } else {
+                    res.send({
+                        status: 200,
+                        message: 'success',
+                        data: []
+                    })
+                }
             })
             .catch(err => {
                 return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
@@ -576,7 +590,7 @@ class users extends baseModelbo {
                         JSON.parse(JSON.stringify(agent.params.sales)) : [];
                     let params = JSON.parse(JSON.stringify(agent.params));
                     if (isAssigned) {
-                        if(!params.sales.includes(sales_id)) {
+                        if (!params.sales.includes(sales_id)) {
                             params.sales = [...sales_params, sales_id];
                         }
                     } else {
