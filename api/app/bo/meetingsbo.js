@@ -43,8 +43,8 @@ class meetings extends baseModelbo {
 
     checkMeetings(meeting_start, meeting_end, start_exist_meeting, end_exist_meeting, interval) {
         let format = 'HH:mm:ss';
-        let start_of_existing_meeting = moment(moment(new Date(start_exist_meeting))).subtract(interval + 1, 'minutes').format("HH:mm:ss");
-        let end_of_existing_meeting = moment(moment(new Date(end_exist_meeting))).add(interval + 1, 'minutes').format("HH:mm:ss");
+        let start_of_existing_meeting = moment(moment(new Date(start_exist_meeting))).subtract(interval, 'minutes').format("HH:mm:ss");
+        let end_of_existing_meeting = moment(moment(new Date(end_exist_meeting))).add(interval, 'minutes').format("HH:mm:ss");
         let first_condition = moment(meeting_start, format).isBetween(moment(start_of_existing_meeting, format), moment(end_of_existing_meeting, format));
         let second_condition = moment(meeting_end, format).isBetween(moment(start_of_existing_meeting, format), moment(end_of_existing_meeting, format));
         let third_condition = moment(start_of_existing_meeting, format).isBetween(moment(meeting_start, format), moment(meeting_end, format));

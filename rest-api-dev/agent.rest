@@ -5,13 +5,13 @@ Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9c
 
 ###
 #GET AGENT BY UUID
-GET https://occ.oxilog.net:2443/api/v1/agents/cb3c25d0-49dd-4a7f-8fdb-6385334adfe4
+GET https://occ.oxilog.net:2443/api/v1/agents/e4030377-f862-45d9-a6be-3b72493e1fef
 Content-Type: application/json
 Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9cIi2IY5
 
 ###
 #GET AGENT SIPINFO BY UUID
-GET https://occ.oxilog.net:2443/api/v1/agents/9e534532-992a-460d-b6c0-de6e2310951b/sipinfo
+GET https://occ.oxilog.net:2443/api/v1/agents/5319c2ce-7ac3-4396-975a-a7259c803051/sipinfo
 Content-Type: application/json
 Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9cIi2IY5
 
@@ -28,7 +28,12 @@ POST https://occ.oxilog.net:2443/api/v1/agents
 Content-Type: application/json
 Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9cIi2IY5
 
-{"username":"863p00","password":"LRDgVjej1ULy","domain":"occ.oxilog.net","options":{"call_timeout":30,"max_no_answer":0,"wrap_up_time":20,"reject_delay_time":50,"busy_delay_time":20,"no_answer_delay_time":20},"status":"logged-out","enabled":true,"subscriber_id":1}
+{
+  "username": "user1",
+  "domain": "occ.oxilog.net",
+  "password": "pwdpwd2021",
+  "accountcode": "599027795684"
+}
 
 ###
 #CREATE AGENT
@@ -36,34 +41,34 @@ POST https://occ.oxilog.net:2443/api/v1/agents
 Content-Type: application/json
 Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9cIi2IY5
 
-{
-  "username": "agent1xcc",
-  "domain": "occ.oxilog.net",
-  "password": "pwdpwd2021",
-  "accountcode": "1"
-}
+{"username":"username01","password":"OpllM4tvcMdy","domain":"occ.oxilog.net","options":{"call_timeout":40,"max_no_answer":0,"wrap_up_time":20,"reject_delay_time":50,"busy_delay_time":20,"no_answer_delay_time":20},"accountcode":"599027795684","status":"logged-out","enabled":true,"subscriber_id":1}
+
+
 
 ###
 #UPDATE AGENT
-PUT https://occ.oxilog.net:2443/api/v1/agents/d4f20882-cff9-4c8c-9cd7-3cee10c54d30
+PUT https://occ.oxilog.net:2443/api/v1/agents/071b73a1-b371-4535-8bb9-a49b7895e678
 Content-Type: application/json
 Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9cIi2IY5
 
 {
-  "username": "agendsio",
+  "username": "test1919",
   "domain": "occ.oxilog.net",
   "password": "pwdpwd2021",
   "accountcode": "1",
+  "subscriber_id": 149,
+  "enabled": true,
+  "status": "available",
   "options": {
     "call_timeout": 30,
-    "max_no_answer": 0,
     "wrap_up_time": 20,
-    "reject_delay_time": 50,
+    "max_no_answer": 0,
     "busy_delay_time": 20,
+    "reject_delay_time": 50,
     "no_answer_delay_time": 20
   },
-  "status": "available",
-  "enabled": 1
+  "created_at": "2022-02-22 10:57:08",
+  "updated_at": "2022-02-22 10:57:08"
 }
 
 ###
@@ -90,6 +95,6 @@ Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9c
 
 ###
 #DELETE AGENT
-DELETE https://occ.oxilog.net:2443/api/v1/agents/2066dab4-279f-4c6e-88a8-cf82b9ffd1ce
+DELETE https://occ.oxilog.net:2443/api/v1/agents/63f16765-3739-433b-ab81-eb159b92e1eb
 Content-Type: application/json
 Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9cIi2IY5
