@@ -138,9 +138,15 @@ class campaigns extends baseModelbo {
                                     let agents = campaign.agents;
                                     this.dissociateAgent(agents)
                                         .then(resp => {
-                                            this.db['campaigns'].update({active: 'N'}, {where: {campaign_id: campaign_id}})
-                                                .then(result => {
-                                                    resolve(true);
+                                            this.deleteAgentsMeetings(agents)
+                                                .then(() => {
+                                                    this.db['campaigns'].update({active: 'N'}, {where: {campaign_id: campaign_id}})
+                                                        .then(result => {
+                                                            resolve(true);
+                                                        })
+                                                        .catch((err) => {
+                                                            reject(err);
+                                                        });
                                                 })
                                                 .catch((err) => {
                                                     reject(err);
