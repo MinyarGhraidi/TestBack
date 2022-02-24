@@ -639,7 +639,6 @@ class campaigns extends baseModelbo {
         let _this = this;
         let {campaign_id, queue_uuid, assignedAgents, notAssignedAgents, campaign_agents} = req.body;
         let _agents = (assignedAgents && assignedAgents.length !== 0) ? assignedAgents.map(el => el.user_id) : [];
-        let updates = {campaign_id, agents: _agents};
         let agents_arr = ['*'];
         let agents_kam = {agents: agents_arr};
         this.deleteAgentsFromQueue(campaign_agents, queue_uuid, agents_kam)
@@ -653,7 +652,7 @@ class campaigns extends baseModelbo {
                 let tiers = {tiers: tiers_array};
                 this.addToQueue(tiers, queue_uuid)
                     .then(() => {
-                        this.db['campaigns'].update(updates, {where: {active: 'Y', campaign_id: campaign_id}})
+                        this.db['campaigns'].update({agents: _agents}, {where: {active: 'Y', campaign_id: campaign_id}})
                             .then(() => {
                                 this.updateIsAssignedStatus(assignedAgents, campaign_id, true, campaign_agents)
                                     .then(() => {
