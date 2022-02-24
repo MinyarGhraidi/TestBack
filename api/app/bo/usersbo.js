@@ -572,15 +572,18 @@ class users extends baseModelbo {
             if (agents && agents.length !== 0) {
                 agents.forEach(agent => {
                     let updated_at = moment(new Date());
-                    let sales_params = agent.params.sales ? JSON.parse(JSON.stringify(agent.params.sales)) : [];
+                    let sales_params = agent.params.sales ?
+                        JSON.parse(JSON.stringify(agent.params.sales)) : [];
                     let params = JSON.parse(JSON.stringify(agent.params));
                     if (isAssigned) {
-                        params.sales = [...sales_params, sales_id];
+                        if(!params.sales.includes(sales_id)) {
+                            params.sales = [...sales_params, sales_id];
+                        }
                     } else {
-                        params.sales = (sales_params && sales_params.length !== 0) ? sales_params.filter(el => el !== sales_id) : [];
+                        params.sales = (sales_params && sales_params.length !== 0) ?
+                            sales_params.filter(el => el !== sales_id) : [];
                     }
                     this.db['users'].update({
-                        // campaign_id: campaign_id,
                         params: params,
                         updated_at: updated_at
                     }, {where: {user_id: agent.user_id}})
