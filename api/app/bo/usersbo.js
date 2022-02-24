@@ -618,6 +618,27 @@ class users extends baseModelbo {
         })
     }
 
+    deleteMeetingsBySalesAgents(user_id, notAssignedAgents) {
+        return new Promise((resolve, reject) => {
+            if(notAssignedAgents && notAssignedAgents.length !== 0) {
+                this.db['meetings'].update({active: 'N'}, {
+                    where: {
+                        agent_id: notAssignedAgents.map(el => el.user_id),
+                        sales_id: user_id
+                    }
+                })
+                    .then(() => {
+                        resolve(true);
+                    })
+                    .catch(err => {
+                        reject(err);
+                    })
+            } else {
+                resolve(true);
+            }
+        })
+    }
+
     assignAgentsToSales(req, res, next) {
         let _this = this;
         //user_id here is the id of the salesman
@@ -628,12 +649,7 @@ class users extends baseModelbo {
                     .then(() => {
                         this.updateParamsAgent(notAssignedAgents, user_id, false)
                             .then(() => {
-                                this.db['meetings'].update({active: 'N'}, {
-                                    where: {
-                                        agent_id: notAssignedAgents.map(el => el.user_id),
-                                        sales_id: user_id
-                                    }
-                                })
+                                this.deleteMeetingsBySalesAgents(user_id, notAssignedAgents)
                                     .then(() => {
                                         res.send({
                                             status: 200,
