@@ -590,7 +590,7 @@ class users extends baseModelbo {
                         JSON.parse(JSON.stringify(agent.params.sales)) : [];
                     let params = JSON.parse(JSON.stringify(agent.params));
                     if (isAssigned) {
-                        if (!params.sales.includes(sales_id)) {
+                        if (!sales_params.includes(sales_id)) {
                             params.sales = [...sales_params, sales_id];
                         }
                     } else {
@@ -657,18 +657,22 @@ class users extends baseModelbo {
                                         })
                                     })
                                     .catch(err => {
+                                        console.log("*** error 1 ****", err)
                                         return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
                                     })
                             })
                             .catch(err => {
+                                console.log("*** error 2 ****", err)
                                 return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
                             })
                     })
                     .catch(err => {
+                        console.log("*** error 3 ****", err)
                         return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
                     })
             })
             .catch(err => {
+                console.log("*** error 4 ****", err)
                 return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
             })
     }

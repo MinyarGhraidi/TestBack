@@ -29,7 +29,7 @@ Content-Type: application/json
 Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9cIi2IY5
 
 {
-  "username": "user1",
+  "username": "user3",
   "domain": "occ.oxilog.net",
   "password": "pwdpwd2021",
   "accountcode": "599027795684"
@@ -95,6 +95,6 @@ Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9c
 
 ###
 #DELETE AGENT
-DELETE https://occ.oxilog.net:2443/api/v1/agents/63f16765-3739-433b-ab81-eb159b92e1eb
+DELETE https://occ.oxilog.net:2443/api/v1/agents/ce2ff00b-7f17-40f5-b12f-01614132e90a
 Content-Type: application/json
 Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9cIi2IY5
