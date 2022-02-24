@@ -216,7 +216,6 @@ let apiRouters = function (passport) {
     router.delete("/api/meeting/delete/:params", passport.authenticate('jwt', {session: false}), meetingsController.delete);
     router.post("/api/meeting/save", passport.authenticate('jwt', {session: false}), meetingsController.save);
     router.post("/api/meeting/getAvailableSales", meetingsController.getAvailableSales);
-    router.post("/api/meeting/saveMeetings", meetingsController.saveMeetings);
 
     //roles_crm
     router.post("/api/roles_crm/find", passport.authenticate('jwt', {session: false}), roles_crmController.find);

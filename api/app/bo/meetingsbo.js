@@ -269,26 +269,6 @@ class meetings extends baseModelbo {
             });
     }
 
-    // to be cleaned
-    saveMeetings(req, res, next) {
-        let _this = this;
-        let sales_id = req.body.sales_id
-        let started_at = req.body.started_at
-        this.db["users"]
-            .find({
-                where: {
-                    active: "Y",
-                    user_id: sales_id,
-                },
-            })
-            .then(result => {
-                res.send(result)
-            })
-            .catch((err) => {
-                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
-            });
-    }
-
 }
 
 module.exports = meetings;
