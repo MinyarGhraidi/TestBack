@@ -309,7 +309,7 @@ class agents extends baseModelbo {
 
     onConnect(req, res, next) {
         let _this = this;
-        let {user_id, uuid, crmStatus, telcoStatus, updated_at, created_at} = req.body;
+        let {user_id, uuid, crmStatus, telcoStatus, created_at} = req.body;
         axios
             .get(`${base_url_cc_kam}api/v1/agents/${uuid}`, call_center_authorization)
             .then(resp => {
@@ -318,12 +318,19 @@ class agents extends baseModelbo {
                 axios
                     .put(`${base_url_cc_kam}api/v1/agents/${uuid}`, agent, call_center_authorization)
                     .then(() => {
-                        this.updateAgentStatus(user_id, agent, crmStatus, created_at, updated_at)
-                            .then(() => {
-                                res.send({
-                                    status: 200,
-                                    message: 'success'
-                                })
+                        this.db["users"].findOne({where: {user_id : user_id}})
+                            .then(user => {
+                                let params = user.params
+                                this.updateAgentStatus(user_id, agent, crmStatus, created_at, params)
+                                    .then(() => {
+                                        res.send({
+                                            status: 200,
+                                            message: 'success'
+                                        })
+                                    })
+                                    .catch((err) => {
+                                        return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                                    });
                             })
                             .catch((err) => {
                                 return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
@@ -338,11 +345,11 @@ class agents extends baseModelbo {
             });
     }
 
-    updateAgentStatus(user_id, agent_, crmStatus, created_at, updated_at) {
+    updateAgentStatus(user_id, agent_, crmStatus, created_at, params) {
         let createdAt_tz = moment(created_at).format("YYYY-MM-DD HH:mm:ss");
         let updatedAt_tz = moment(created_at).format("YYYY-MM-DD HH:mm:ss");
         return new Promise((resolve, reject) => {
-            let agent = {user_id: user_id, sip_device: agent_, params: {}};
+            let agent = {user_id: user_id, sip_device: agent_, params: params};
             agent.params.status = crmStatus;
             this.db['users'].update(agent, {where: {user_id: user_id}})
                 .then(result => {
