@@ -657,22 +657,18 @@ class users extends baseModelbo {
                                         })
                                     })
                                     .catch(err => {
-                                        console.log("*** error 1 ****", err)
                                         return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
                                     })
                             })
                             .catch(err => {
-                                console.log("*** error 2 ****", err)
                                 return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
                             })
                     })
                     .catch(err => {
-                        console.log("*** error 3 ****", err)
                         return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
                     })
             })
             .catch(err => {
-                console.log("*** error 4 ****", err)
                 return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
             })
     }

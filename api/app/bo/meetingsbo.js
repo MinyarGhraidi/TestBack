@@ -243,6 +243,9 @@ class meetings extends baseModelbo {
                                     } else {
                                         resolve(availableSales);
                                     }
+                                })
+                                .catch((err) => {
+                                    reject(err)
                                 });
                         });
                     }));
