@@ -13,6 +13,7 @@ let _usersbo = new usersbo();
 let _agentsbo = new agentsbo();
 let _campaignsbo = new campaignsbo();
 let _trunksbo = new trunksbo();
+const appSocket = new (require('../providers/AppSocket'))();
 
 class accounts extends baseModelbo {
     constructor() {
