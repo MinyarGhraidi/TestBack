@@ -12,6 +12,16 @@ class meetings extends baseModelbo {
         this.primaryKey = "meeting_id";
     }
 
+    isValidDuration(duration_of_meeting, availability_duration) {
+        return duration_of_meeting === availability_duration && duration_of_meeting > 0;
+    }
+
+    isTimeInFuture(started_at) {
+        let current_time = moment(new Date()).format("YYYY-MM-DD HH:mm:ss");
+        let difference = moment(started_at, "YYYY-MM-DD HH:mm:ss").diff(moment(current_time, "YYYY-MM-DD HH:mm:ss"), 'minutes');
+        return parseInt(difference) > 0
+    }
+
     isAvailableDay(day, first_day, last_day, availableDays) {
         let f_day = moment(moment(new Date(first_day)).format("YYYY-MM-DD")).subtract(1, 'days');
         let l_day = moment(moment(new Date(last_day)).format("YYYY-MM-DD")).add(1, 'days');
@@ -22,19 +32,19 @@ class meetings extends baseModelbo {
         } else return false;
     }
 
-    isAvailableTime(meeting_start, meeting_end, first_day, last_day) {
+    isAvailableTime(meeting_start, meeting_end, first_day, last_day, interval) {
         let format = 'HH:mm:ss';
         let start_work_hour = moment(moment(new Date(first_day))).subtract(1, 'minutes').format("HH:mm:ss");
-        let end_work_hour = moment(moment(new Date(last_day))).add(1, 'minutes').format("HH:mm:ss");
+        let end_work_hour = moment(moment(new Date(last_day))).add(interval + 1, 'minutes').format("HH:mm:ss");
         let first_condition = moment(meeting_start, format).isBetween(moment(start_work_hour, format), moment(end_work_hour, format));
         let second_condition = moment(meeting_end, format).isBetween(moment(start_work_hour, format), moment(end_work_hour, format));
         return first_condition && second_condition
     }
 
-    checkMeetings(meeting_start, meeting_end, start_exist_meeting, end_exist_meeting) {
+    checkMeetings(meeting_start, meeting_end, start_exist_meeting, end_exist_meeting, interval) {
         let format = 'HH:mm:ss';
-        let start_of_existing_meeting = moment(moment(new Date(start_exist_meeting))).subtract(1, 'minutes').format("HH:mm:ss");
-        let end_of_existing_meeting = moment(moment(new Date(end_exist_meeting))).add(1, 'minutes').format("HH:mm:ss");
+        let start_of_existing_meeting = moment(moment(new Date(start_exist_meeting))).subtract(interval + 1, 'minutes').format("HH:mm:ss");
+        let end_of_existing_meeting = moment(moment(new Date(end_exist_meeting))).add(interval + 1, 'minutes').format("HH:mm:ss");
         let first_condition = moment(meeting_start, format).isBetween(moment(start_of_existing_meeting, format), moment(end_of_existing_meeting, format));
         let second_condition = moment(meeting_end, format).isBetween(moment(start_of_existing_meeting, format), moment(end_of_existing_meeting, format));
         let third_condition = moment(start_of_existing_meeting, format).isBetween(moment(meeting_start, format), moment(meeting_end, format));
@@ -42,7 +52,7 @@ class meetings extends baseModelbo {
         return !(first_condition || second_condition || third_condition || forth_condition)
     }
 
-    getAvailability(sales, day, meeting_start, meeting_end, res) {
+    getAvailability(sales, day, meeting_start, meeting_end, duration) {
         let _this = this;
         return new Promise((resolve, reject) => {
             let sales_man = sales.toJSON();
@@ -53,20 +63,30 @@ class meetings extends baseModelbo {
                 first_day = sales_man.params.availability.first_day;
                 last_day = sales_man.params.availability.last_day;
                 days = sales_man.params.availability.days;
-                let sale_id = sales_man.user_id
-                if (this.isAvailableDay(day, first_day[0], last_day[0], days)) {
-                    if (this.isAvailableTime(meeting_start, meeting_end, first_day[0], last_day[0])) {
-                        _this.isAvailable(sale_id, day, meeting_start, meeting_end)
-                            .then(isAvailableMeeting => {
-                                if (isAvailableMeeting) {
-                                    resolve(sales_man);
-                                } else {
-                                    resolve(null);
-                                }
-                            })
-                            .catch(err => {
-                                reject(err)
-                            })
+                let sale_id = sales_man.user_id;
+                let availability_duration = parseInt(sales_man.params.availability.duration);
+                let interval = parseInt(sales_man.params.availability.interval);
+                if (this.isTimeInFuture(day)) {
+                    if (this.isValidDuration(duration, availability_duration)) {
+                        if (this.isAvailableDay(day, first_day[0], last_day[0], days)) {
+                            if (this.isAvailableTime(meeting_start, meeting_end, first_day[0], last_day[0], interval)) {
+                                _this.isAvailable(sale_id, day, meeting_start, meeting_end, interval)
+                                    .then(isAvailableMeeting => {
+                                        if (isAvailableMeeting) {
+                                            resolve(sales_man);
+                                        } else {
+                                            resolve(null);
+                                        }
+                                    })
+                                    .catch(err => {
+                                        reject(err)
+                                    })
+                            } else {
+                                resolve(null);
+                            }
+                        } else {
+                            resolve(null);
+                        }
                     } else {
                         resolve(null);
                     }
@@ -93,6 +113,7 @@ class meetings extends baseModelbo {
                 return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
             });
     }
+
     authorize(req, res, next) {
         let _this = this;
         let to_number = req.body.to_number;
@@ -137,7 +158,8 @@ class meetings extends baseModelbo {
                 res.send(data_resp);
             });
     }
-    isAvailable(sales_id, day, meeting_start, meeting_end) {
+
+    isAvailable(sales_id, day, meeting_start, meeting_end, interval) {
         let _this = this;
         let index = 0;
         return new Promise((resolve, reject) => {
@@ -147,7 +169,7 @@ class meetings extends baseModelbo {
                         meetings.forEach(meeting => {
                             let start_of_existed_meeting = meeting.started_at;
                             let end_of_existed_meeting = meeting.finished_at;
-                            let isAvailable = _this.checkMeetings(meeting_start, meeting_end, start_of_existed_meeting, end_of_existed_meeting);
+                            let isAvailable = _this.checkMeetings(meeting_start, meeting_end, start_of_existed_meeting, end_of_existed_meeting, interval);
                             if (!isAvailable) {
                                 resolve(false)
                             } else if (index < meetings.length - 1) {
@@ -192,6 +214,9 @@ class meetings extends baseModelbo {
         let {day, started_at, finished_at} = req.body.date;
         let meeting_start = moment(new Date(started_at)).format("HH:mm:ss");
         let meeting_end = moment(new Date(finished_at)).format("HH:mm:ss");
+        let start = moment(new Date(day)).format("YYYY-MM-DD ") + meeting_start
+        let duration_moment = moment(finished_at).diff(moment(started_at), 'minutes');
+        let duration = parseInt(duration_moment);
         this.db["users"]
             .findAll({
                 where: {
@@ -207,7 +232,7 @@ class meetings extends baseModelbo {
                     promise.push(new Promise(function (resolve, reject) {
                         let index = 0;
                         list_of_sales_men.forEach(sales => {
-                            _this.getAvailability(sales, day, meeting_start, meeting_end, res)
+                            _this.getAvailability(sales, start, meeting_start, meeting_end, duration)
                                 .then(availableSale => {
                                     if (availableSale) {
                                         availableSale.meetings = _this.getMeetings(availableSale.user_id, res) || [];
@@ -227,7 +252,10 @@ class meetings extends baseModelbo {
                             success: true,
                             result: availableSales[0],
                         });
-                    });
+                    })
+                        .catch((err) => {
+                            return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                        });
                 } else {
                     res.send({
                         message: "No sales found",

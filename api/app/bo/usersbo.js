@@ -8,6 +8,7 @@ const salt = require("../config/config.json")["salt"]
 const bcrypt = require("bcrypt");
 const {appSecret} = require("../helpers/app");
 const {Sequelize} = require("sequelize");
+const moment = require("moment");
 
 class users extends baseModelbo {
     constructor() {
@@ -525,6 +526,118 @@ class users extends baseModelbo {
                 message: (err) ? 'Invalid token' : 'Tokan valid',
             });
         });
+    }
+
+    getSales(req, res, next) {
+        let _this = this;
+        let {account_id, user_id} = req.body;
+        this.db['users'].findAll({where: {account_id: account_id, role_crm_id: 5, active: 'Y'}})
+            .then(users => {
+                let sales = users.filter(el => el.params.agents.includes(user_id));
+                res.send({
+                    status: 200,
+                    message: 'success',
+                    data: sales
+                })
+            })
+            .catch(err => {
+                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+            })
+    }
+
+    deleteSalesRepresentative(req, res, next) {
+        let _this = this;
+        let {user_id} = req.body;
+        this.db['users'].update({active: 'N'}, {where: {user_id: user_id}})
+            .then(() => {
+                this.db['meetings'].update({active: 'N'}, {where: {sales_id: user_id}})
+                    .then(() => {
+                        res.send({
+                            status: 200,
+                            message: 'deleted with success',
+                        })
+                    })
+                    .catch(err => {
+                        return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                    })
+            })
+            .catch(err => {
+                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+            })
+    }
+
+    updateParamsAgent(agents, sales_id, isAssigned) {
+        let index = 0;
+        return new Promise((resolve, reject) => {
+            if (agents && agents.length !== 0) {
+                agents.forEach(agent => {
+                    let updated_at = moment(new Date());
+                    let sales_params = agent.params.sales ? JSON.parse(JSON.stringify(agent.params.sales)) : [];
+                    let params = JSON.parse(JSON.stringify(agent.params));
+                    if (isAssigned) {
+                        params.sales = [...sales_params, sales_id];
+                    } else {
+                        params.sales = (sales_params && sales_params.length !== 0) ? sales_params.filter(el => el !== sales_id) : [];
+                    }
+                    this.db['users'].update({
+                        // campaign_id: campaign_id,
+                        params: params,
+                        updated_at: updated_at
+                    }, {where: {user_id: agent.user_id}})
+                        .then(() => {
+                            if (index < agents.length - 1) {
+                                index++;
+                            } else {
+                                resolve(true);
+                            }
+                        })
+                        .catch(err => {
+                            reject(err);
+                        })
+                })
+            } else {
+                resolve(true);
+            }
+        })
+    }
+
+    assignAgentsToSales(req, res, next) {
+        let _this = this;
+        //user_id here is the id of the salesman
+        let {user_id, assignedAgents, notAssignedAgents, params} = req.body;
+        this.db['users'].update({params: params}, {where: {user_id: user_id}})
+            .then(() => {
+                this.updateParamsAgent(assignedAgents, user_id, true)
+                    .then(() => {
+                        this.updateParamsAgent(notAssignedAgents, user_id, false)
+                            .then(() => {
+                                this.db['meetings'].update({active: 'N'}, {
+                                    where: {
+                                        agent_id: notAssignedAgents.map(el => el.user_id),
+                                        sales_id: user_id
+                                    }
+                                })
+                                    .then(() => {
+                                        res.send({
+                                            status: 200,
+                                            message: 'success'
+                                        })
+                                    })
+                                    .catch(err => {
+                                        return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                                    })
+                            })
+                            .catch(err => {
+                                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                            })
+                    })
+                    .catch(err => {
+                        return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                    })
+            })
+            .catch(err => {
+                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+            })
     }
 
 }

@@ -20,7 +20,7 @@ Content-Type: application/json
 Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9cIi2IY5
 
 {
-  "accountcode": "095841779107",
+  "accountcode": "010",
   "channels": 10,
   "codec_prefs": "PM",
   "name": "Trunk-017",
@@ -148,6 +148,6 @@ Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9c
 ###
 
 # DELETE GATEWAY BY UUID
-DELETE https://occ.oxilog.net:2443/api/v1/gateways/08239d6b-5fe3-4ccd-8185-d759e2387e9c
+DELETE https://occ.oxilog.net:2443/api/v1/gateways/8027fe7d-bfce-4576-9b21-9620f621fd83
 Content-Type: application/json
 Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9cIi2IY5
