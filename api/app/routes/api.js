@@ -150,11 +150,11 @@ let apiRouters = function (passport) {
     router.get("/api/efile/getListCallFiles/:file_id", efilesController.getListCallFiles);
 
     //listcallfiles routers
-    router.post("/api/listcallfile/find/:params?", listcallfilesController.find);
-    router.get("/api/listcallfile/findById/:entity_id", listcallfilesController.findById);
-    router.put("/api/listcallfile/update", listcallfilesController.update);
-    router.delete("/api/listcallfile/delete/:params", listcallfilesController.delete);
-    router.post("/api/listcallfile/save", listcallfilesController.save);
+    router.post("/api/listcallfile/find/:params?",passport.authenticate('jwt', {session: false}) ,listcallfilesController.find);
+    router.get("/api/listcallfile/findById/:entity_id",passport.authenticate('jwt', {session: false}), listcallfilesController.findById);
+    router.put("/api/listcallfile/update",passport.authenticate('jwt', {session: false}), listcallfilesController.update);
+    router.delete("/api/listcallfile/delete/:params",passport.authenticate('jwt', {session: false}), listcallfilesController.delete);
+    router.post("/api/listcallfile/save",passport.authenticate('jwt', {session: false}), listcallfilesController.save);
 
     //trunks routers
     router.post("/api/trunk/find/:params?", passport.authenticate('jwt', {session: false}), truncksController.find);
@@ -240,7 +240,10 @@ let apiRouters = function (passport) {
     router.post("/api/sales/all_meetings", passport.authenticate('jwt', {session: false}), sales_Controller.getAllMeetings);
     router.post("/api/sales/agents_sales", passport.authenticate('jwt', {session: false}), sales_Controller.agents_for_sales)
 
-    router.post("/api/callcenter/authorize", meetingsController.authorize)
+    router.post("/api/callcenter/authorize", meetingsController.authorize);
+
+    router.post("/api/saveCallFile",callfileController.CallFilesMapping);
+    router.post("/api/listCallFile/saveListCallFile",passport.authenticate('jwt', {session: false}),callfileController.saveListCallFile)
 
 
     return router;
