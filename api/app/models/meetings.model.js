@@ -22,7 +22,6 @@ module.exports = (sequelize, Sequelize) => {
                 type: Sequelize.INTEGER
             },
             active: {
-                allowNull: true,
                 type: Sequelize.STRING,
                 defaultValue: 'Y'
             },
@@ -30,11 +29,9 @@ module.exports = (sequelize, Sequelize) => {
                 type: Sequelize.STRING
             },
             started_at: {
-                allowNull: true,
                 type: Sequelize.DATE
             },
             finished_at: {
-                allowNull: true,
                 type: Sequelize.DATE
             },
             created_at: {
@@ -46,8 +43,15 @@ module.exports = (sequelize, Sequelize) => {
                 type: Sequelize.DATE,
             },
             day: {
-                allowNull: true,
                 type: Sequelize.STRING,
+            },
+            treated: {
+                type: Sequelize.STRING,
+                defaultValue : 'N'
+            },
+            status: {
+                type: Sequelize.INTEGER,
+                defaultValue : 1
             },
         },
         {timestamps: false,}
@@ -66,7 +70,9 @@ module.exports = (sequelize, Sequelize) => {
         'address',
         'created_at',
         'updated_at',
-        "day"
+        "day",
+        "treated",
+        "status"
     ],
     meetings.prototype.fieldsSearchMetas = [
         'did_id',
@@ -81,7 +87,8 @@ module.exports = (sequelize, Sequelize) => {
         'updated_at',
         "started_at",
         "finished_at",
-        "day"
+        "day",
+        "treated"
         ]
         ,
         meetings.associate = function (models) {
