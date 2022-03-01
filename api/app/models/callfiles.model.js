@@ -60,6 +60,11 @@ module.exports = (sequelize, Sequelize) => {
                 type: Sequelize.STRING,
                 defaultValue: 'Y'
             },
+            to_treat: {
+                allowNull: true,
+                type: Sequelize.STRING,
+                defaultValue: 'N'
+            },
             created_at: {
                 allowNull: true,
                 type: Sequelize.DATE,
@@ -91,9 +96,10 @@ module.exports = (sequelize, Sequelize) => {
         'postal_code',
         'email',
         'country_code',
-        'customfields'
+        'customfields',
+        'to_treat'
        
-    ],
+    ]
     callfile.prototype.fieldsSearchMetas = [
             'callfile_id',
             'listcallfile_id',
@@ -111,7 +117,8 @@ module.exports = (sequelize, Sequelize) => {
             'postal_code',
             'email',
             'country_code',
-            'customfields'
+            'customfields',
+            'to_treat'
         ]
         
     return callfile
