@@ -5,7 +5,7 @@ Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9c
 
 ###
 #GET QUEUE BY UUID
-GET https://occ.oxilog.net:2443/api/v1/queues/898029fe-fa05-47bb-8bd3-4cd7ea1b86ca
+GET https://occ.oxilog.net:2443/api/v1/queues/e6ba7320-6613-4bd5-ac6a-711a710809fe
 Content-Type: application/json
 Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9cIi2IY5
 
@@ -58,7 +58,7 @@ Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9c
 
 ###
 #GET QUEUE TIERS
-GET https://occ.oxilog.net:2443/api/v1/queues/f5d188b4-aac4-48c2-8d2b-66364c7e44f0/tiers
+GET https://occ.oxilog.net:2443/api/v1/queues/e6ba7320-6613-4bd5-ac6a-711a710809fe/tiers
 Content-Type: application/json
 Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9cIi2IY5
 

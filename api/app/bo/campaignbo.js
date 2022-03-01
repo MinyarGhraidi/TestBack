@@ -365,82 +365,108 @@ class campaigns extends baseModelbo {
     }
 
     cloneCampaign(req, res, next) {
+        let _this = this;
         let campaign = req.body;
         this.db['campaigns'].find({
             where: {campaign_id: campaign.campaign_id}
         })
             .then((campaign_to_clone) => {
-                    let {
-                        campaign_description,
-                        campaign_type,
-                        active,
-                        status,
-                        account_id,
-                        params,
-                        list_order,
-                        list_mix,
-                        hopper,
-                        dial_level,
-                        dialtimeout
-                    } = campaign_to_clone
-                    let cloned_campaign = {
-                        campaign_description,
-                        campaign_type,
-                        active,
-                        status,
-                        account_id,
-                        params,
-                        list_order,
-                        list_mix,
-                        hopper,
-                        dial_level,
-                        dialtimeout
-                    }
-                    cloned_campaign.campaign_name = campaign.campaign_name;
-                    cloned_campaign.agents = [];
-                    let modalObj = this.db['campaigns'].build(cloned_campaign)
-                    modalObj
-                        .save()
-                        .then((data) => {
-                            let cloned_campaign_id = data.campaign_id
-                            this.db['callstatuses'].findAll({
-                                where: {campaign_id: campaign.campaign_id}
-                            })
-                                .then((list_callstatus) => {
-                                    this.saveCallStatus(list_callstatus, cloned_campaign_id)
-                                        .then(result => {
-                                            this.db['pausestatuses'].findAll({
-                                                where: {campaign_id: campaign.campaign_id}
-                                            })
-                                                .then((list_pausestatus) => {
-                                                    this.savePauseStatus(list_pausestatus, cloned_campaign_id)
-                                                        .then(result => {
-                                                            res.send({
-                                                                status: 200,
-                                                                message: "succes"
-                                                            })
-                                                        })
-                                                        .catch((err) => {
-                                                            return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
-                                                        });
-                                                })
-                                                .catch((err) => {
-                                                    return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
-                                                });
-                                        })
-                                        .catch((err) => {
-                                            return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
-                                        });
-                                })
-                                .catch((err) => {
-                                    return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
-                                });
-                        })
-                        .catch((err) => {
-                            return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
-                        });
+                let {
+                    campaign_description,
+                    campaign_type,
+                    active,
+                    status,
+                    account_id,
+                    params,
+                    list_order,
+                    list_mix,
+                    hopper,
+                    dial_level,
+                    dialtimeout
+                } = campaign_to_clone
+                let cloned_campaign = {
+                    campaign_description,
+                    campaign_type,
+                    active,
+                    status,
+                    account_id,
+                    params,
+                    list_order,
+                    list_mix,
+                    hopper,
+                    dial_level,
+                    dialtimeout
                 }
-            )
+                let {queue} = params;
+                let {greetings, hold_music} = queue.options;
+                queue.greetings = ["http://myTestServer/IVRS/" + greetings];
+                queue.hold_music = ["http://myTestServer/IVRS/" + hold_music];
+                cloned_campaign.campaign_name = campaign.campaign_name;
+                cloned_campaign.agents = [];
+                this.generateUniqueUsernameFunction()
+                    .then(queueName => {
+                        queue.name = queueName;
+                        queue.extension = queueName;
+                        axios
+                            .post(`${base_url_cc_kam}api/v1/queues`, queue, call_center_authorization)
+                            .then((result) => {
+                                let {uuid} = result.data.queue;
+                                queue.uuid = uuid;
+                                queue.greetings = greetings;
+                                queue.hold_music = hold_music;
+                                params.queue = queue;
+                                delete cloned_campaign.params;
+                                cloned_campaign.params = params;
+                                let modalObj = this.db['campaigns'].build(cloned_campaign)
+                                modalObj
+                                    .save()
+                                    .then((data) => {
+                                        let cloned_campaign_id = data.campaign_id
+                                        this.db['callstatuses'].findAll({
+                                            where: {campaign_id: campaign.campaign_id}
+                                        })
+                                            .then((list_callstatus) => {
+                                                this.saveCallStatus(list_callstatus, cloned_campaign_id)
+                                                    .then(result => {
+                                                        this.db['pausestatuses'].findAll({
+                                                            where: {campaign_id: campaign.campaign_id}
+                                                        })
+                                                            .then((list_pausestatus) => {
+                                                                this.savePauseStatus(list_pausestatus, cloned_campaign_id)
+                                                                    .then(result => {
+                                                                        res.send({
+                                                                            status: 200,
+                                                                            message: "succes"
+                                                                        })
+                                                                    })
+                                                                    .catch((err) => {
+                                                                        return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                                                                    });
+                                                            })
+                                                            .catch((err) => {
+                                                                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                                                            });
+                                                    })
+                                                    .catch((err) => {
+                                                        return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                                                    });
+                                            })
+                                            .catch((err) => {
+                                                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                                            });
+                                    })
+                                    .catch((err) => {
+                                        return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                                    });
+                            })
+                            .catch((err) => {
+                                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                            });
+                    })
+                    .catch((err) => {
+                        return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                    });
+            })
             .catch((err) => {
                 return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
             });
