@@ -59,25 +59,13 @@ class callfiles extends baseModelbo {
                         listcallfile_id: listCallFileItem.listcallfile_id
                     }
                 }).then(result_list => {
-
                     res.send({
                         success: true,
                         data: result,
                     })
-                    // appSocket.emit('refresh_list_callFiles', {
-                    //     data: result
-                    // });
                 }).catch(err => {
                     res.send(err);
                 });
-                // listcallfile_item_to_update.processing = 0
-                // this.db['listcallfiles'].update(listcallfile_item_to_update, {
-                //     where: {
-                //         listcallfile_id: listCallFileItem.listcallfile_id
-                //     }
-                // }).catch(err => {
-                //     res.send(err);
-                // });
             }).catch(err => {
                 res.send(err);
             });
