@@ -6,7 +6,7 @@
     "database": "oxilog-crm-app",
     "port":5432,
     "dialect": "postgres",
-    "socketUrl": "http://localhost:3002",
+    "socketUrl": "https://ip221.ip-92-222-227.eu:3002",
     "pool": {
       "max": 500,
       "min": 0,
