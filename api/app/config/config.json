@@ -6,11 +6,21 @@
     "database": "oxilog-crm-app",
     "port":5432,
     "dialect": "postgres",
+    "socketUrl": "https://ip221.ip-92-222-227.eu:3002",
     "pool": {
       "max": 500,
       "min": 0,
       "acquire": 3000000,
       "idle": 100000
+    },
+    "rabbitmq": {
+      "host": "188.165.157.213",
+      "login": "oxilog",
+      "password": "oxilog2021",
+      "port": "5009",
+      "queues": {
+        "addCallFiles": "oxilog.addCallFiles"
+      }
     }
   },
   "secret": "'BL#,miQFau,amA!?FFW@oKO3<_<E-j-]PVO65d!c%|V2h{(3#~~*$8{X<H}BVm",
