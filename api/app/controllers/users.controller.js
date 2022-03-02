@@ -50,4 +50,7 @@ module.exports = {
     assignAgentsToSales: function (req, res, next) {
         _itembo.assignAgentsToSales(req, res, next)
     },
+    getDataAgent: function (req, res, next) {
+        _itembo.getDataAgent(req, res, next)
+    },
 }

@@ -620,7 +620,7 @@ class users extends baseModelbo {
 
     deleteMeetingsBySalesAgents(user_id, notAssignedAgents) {
         return new Promise((resolve, reject) => {
-            if(notAssignedAgents && notAssignedAgents.length !== 0) {
+            if (notAssignedAgents && notAssignedAgents.length !== 0) {
                 this.db['meetings'].update({active: 'N'}, {
                     where: {
                         agent_id: notAssignedAgents.map(el => el.user_id),
@@ -671,6 +671,40 @@ class users extends baseModelbo {
             .catch(err => {
                 return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
             })
+    }
+
+    getDataAgent(req, res, next) {
+        let _this = this;
+        let {user_id} = req.body;
+        this.db['users'].findOne({where: {user_id: user_id, active: 'Y'}})
+            .then(user => {
+                let campaign_id = user.campaign_id;
+                if (campaign_id) {
+                    this.db['campaigns'].findOne({where: {campaign_id: campaign_id, active: 'Y'}})
+                        .then(campaign => {
+                            let status = campaign.status;
+                            let isActiveCampaign = status === 'Y';
+                            res.send({
+                                status: 200,
+                                message: 'success',
+                                data: {campaign_id, isActiveCampaign}
+                            })
+                        })
+                        .catch(err => {
+                            return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                        })
+                } else {
+                    res.send({
+                        status: 200,
+                        message: 'success',
+                        data: {campaign_id, isActiveCampaign: false}
+                    })
+                }
+            })
+            .catch(err => {
+                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+            })
+
     }
 
 }

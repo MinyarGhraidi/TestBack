@@ -105,13 +105,14 @@ let apiRouters = function (passport) {
 
     router.post("/api/user/signin", usersController.signIn);
     router.post("/api/user/getUserByToken", usersController.getUserByToken);
-    router.post("/api/user/saveUser", usersController.saveUser);
+    router.post("/api/user/saveUser", passport.authenticate('jwt', {session: false}), usersController.saveUser);
     router.post("/api/user/validPassword", usersController.validPassword);
     router.post("/api/user/switchToNewAccount", usersController.switchToNewAccount);
-    router.post("/api/user/generatedUniqueUsername", usersController.generatedUniqueUsername);
-    router.post("/api/user/getSalesByAgent", usersController.getSalesByAgent);
-    router.post("/api/user/deleteSalesRepresentative", usersController.deleteSalesRepresentative);
-    router.post("/api/user/assignAgentsToSales", usersController.assignAgentsToSales);
+    router.post("/api/user/generatedUniqueUsername", passport.authenticate('jwt', {session: false}), usersController.generatedUniqueUsername);
+    router.post("/api/user/getSalesByAgent", passport.authenticate('jwt', {session: false}), usersController.getSalesByAgent);
+    router.post("/api/user/deleteSalesRepresentative", passport.authenticate('jwt', {session: false}), usersController.deleteSalesRepresentative);
+    router.post("/api/user/assignAgentsToSales", passport.authenticate('jwt', {session: false}), usersController.assignAgentsToSales);
+    router.post("/api/user/getDataAgent", passport.authenticate('jwt', {session: false}), usersController.getDataAgent);
 
     router.post("/api/signup", usersController.signUp);
     router.post("/api/signin", usersController.signIn);
