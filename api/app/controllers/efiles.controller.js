@@ -25,5 +25,8 @@ module.exports = {
     },
     getListCallFiles: function (req, res, next) {
         efilesDaoInst.getListCallFiles(req, res, next)
-    }
+    },
+    getHeaderCallFile: function (req, res, next) {
+        efilesDaoInst.getHeaderCallFile(req, res, next)
+    },
 }
