@@ -53,4 +53,7 @@ module.exports = {
     getDataAgent: function (req, res, next) {
         _itembo.getDataAgent(req, res, next)
     },
+    cloneSales: function (req, res, next) {
+        _itembo.cloneSales(req, res, next)
+    },
 }

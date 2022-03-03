@@ -114,6 +114,7 @@ let apiRouters = function (passport) {
     router.post("/api/user/deleteSalesRepresentative", passport.authenticate('jwt', {session: false}), usersController.deleteSalesRepresentative);
     router.post("/api/user/assignAgentsToSales", passport.authenticate('jwt', {session: false}), usersController.assignAgentsToSales);
     router.post("/api/user/getDataAgent", passport.authenticate('jwt', {session: false}), usersController.getDataAgent);
+    router.post("/api/user/cloneSales", passport.authenticate('jwt', {session: false}), usersController.cloneSales);
 
     router.post("/api/signup", usersController.signUp);
     router.post("/api/signin", usersController.signIn);

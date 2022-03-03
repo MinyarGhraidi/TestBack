@@ -707,6 +707,88 @@ class users extends baseModelbo {
 
     }
 
+    cloneSales(req, res, next) {
+        let _this = this;
+        let {user_id, first_name, last_name, password_hash, email, username} = req.body;
+        this.db['users'].findOne({where: {user_id: user_id, active : 'Y'}})
+            .then(salesToClone => {
+                if (salesToClone && salesToClone.user_id) {
+                    this.isUniqueUsername(username, 0)
+                        .then(() => {
+                            let {
+                                params,
+                                user_type,
+                                account_id,
+                                role_id,
+                                status,
+                                isAssigned,
+                                campaign_id,
+                                role_crm_id
+                            } = salesToClone;
+
+                            params.availability.sales_name = `${first_name} ${last_name}`;
+
+                            let clonedSales = {
+                                first_name,
+                                last_name,
+                                username,
+                                password_hash,
+                                params,
+                                user_type,
+                                account_id,
+                                role_id,
+                                status,
+                                isAssigned,
+                                campaign_id,
+                                email,
+                                role_crm_id
+                            }
+                            this.saveUserFunction(clonedSales)
+                                .then(cloned_sales => {
+                                    let sales_id = cloned_sales.user_id;
+                                    let agents_ids = cloned_sales.params.agents;
+                                    if(agents_ids && agents_ids.length !== 0) {
+                                        this.db['users'].findAll({where : {user_id : agents_ids, active : 'Y'}})
+                                            .then(agents => {
+                                                this.updateParamsAgent(agents, sales_id, true)
+                                                    .then(() => {
+                                                        res.send({
+                                                            message: 'success',
+                                                            data: cloned_sales,
+                                                            status: 200
+                                                        });
+                                                    })
+                                                    .catch(err => {
+                                                        return _this.sendResponseError(res, ['Error.cannotFetchListUsers', err], 1, 403);
+                                                    })
+                                            })
+                                            .catch(err => {
+                                                return _this.sendResponseError(res, ['Error.cannotFetchListUsers', err], 1, 403);
+                                            })
+                                    } else {
+                                        res.send({
+                                            message: 'success',
+                                            data: cloned_sales,
+                                            status: 200
+                                        });
+                                    }
+                                })
+                                .catch(err => {
+                                    return _this.sendResponseError(res, ['Error.cannotSaveSalesRepresentative', err], 1, 403);
+                                })
+                        })
+                        .catch(err => {
+                            return _this.sendResponseError(res, ['Error.OccurredInGenerateUniqueUsername', err], 1, 403);
+                        })
+                } else {
+                    return _this.sendResponseError(res, "The Item to clone does not exist", 1, 403);
+                }
+            })
+            .catch(err => {
+                return _this.sendResponseError(res, ['Error.cannotFetchSales', err], 1, 403);
+            })
+    }
+
 }
 
 module.exports = users;
