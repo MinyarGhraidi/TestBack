@@ -40,5 +40,8 @@ module.exports = {
     assignAgents: function (req, res, next) {
         _itembo.assignAgents(req, res, next);
     },
+    changeStatus: function (req, res, next) {
+        _itembo.changeStatus(req, res, next);
+    },
 
 };

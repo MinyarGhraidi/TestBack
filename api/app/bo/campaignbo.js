@@ -5,12 +5,15 @@ let db = require('../models');
 const {default: axios} = require("axios");
 const {Sequelize} = require("sequelize");
 const usersbo = require('./usersbo');
-let _usersbo = new usersbo;
+const agentbo = require('./agentsbo')
 const call_center_token = require(__dirname + '/../config/config.json')["call_center_token"];
 const base_url_cc_kam = require(__dirname + '/../config/config.json')["base_url_cc_kam"];
 const call_center_authorization = {
     headers: {Authorization: call_center_token}
 };
+
+let _usersbo = new usersbo;
+let _agentsbo = new agentbo;
 
 class campaigns extends baseModelbo {
     constructor() {
@@ -760,6 +763,83 @@ class campaigns extends baseModelbo {
                     })
             } while (condition)
         })
+    }
+
+    changeAGentsStatus(agents) {
+        let _this = this;
+        let index = 0;
+        return new Promise((resolve, reject) => {
+            if (agents && agents.length !== 0) {
+                agents.forEach(user_id => {
+                    this.db['users'].findOne({where: {user_id: user_id, active: 'Y'}})
+                        .then(agent => {
+                            if (Object.keys(agents) && Object.keys(agents).length !== 0) {
+                                let uuid = agent.sip_device.uuid;
+                                _agentsbo.onConnectFunc(user_id, uuid, "logged-out", "logged-out")
+                                    .then(() => {
+                                        if (index < agents.length - 1) {
+                                            index++;
+                                        } else {
+                                            resolve(true);
+                                        }
+                                    })
+                                    .catch(err => {
+                                        reject(err);
+                                    })
+                            } else {
+                                resolve(true)
+                            }
+                        })
+                        .catch(err => {
+                            reject(err);
+                        })
+                })
+            } else {
+                resolve(true)
+            }
+        })
+    }
+
+    changeStatus(req, res, next) {
+        let _this = this;
+        let {campaign_id} = req.body;
+        this.db['campaigns'].findOne({where: {campaign_id: campaign_id}})
+            .then(campaign => {
+                let agents = campaign.agents;
+                let isActivate = campaign.status === 'N';
+                if (isActivate) {
+                    this.db['campaigns'].update({status: 'Y'}, {where: {campaign_id: campaign_id}})
+                        .then(() => {
+                            res.send({
+                                status: 200,
+                                message: "success"
+                            })
+                        })
+                        .catch((err) => {
+                            return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                        });
+                } else {
+                    _this.changeAGentsStatus(agents)
+                        .then(() => {
+                            this.db['campaigns'].update({status: 'N'}, {where: {campaign_id: campaign_id}})
+                                .then(() => {
+                                    res.send({
+                                        status: 200,
+                                        message: "success"
+                                    })
+                                })
+                                .catch((err) => {
+                                    return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                                });
+                        })
+                        .catch((err) => {
+                            return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                        });
+                }
+            })
+            .catch((err) => {
+                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+            });
     }
 
 }

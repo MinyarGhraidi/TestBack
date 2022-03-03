@@ -85,6 +85,7 @@ let apiRouters = function (passport) {
     router.post("/api/campaign/deleteCampaign", passport.authenticate('jwt', {session: false}), campaignController.deleteCampaign);
     router.post("/api/campaign/getAssignedAgents", passport.authenticate('jwt', {session: false}), campaignController.getAssignedAgents);
     router.post("/api/campaign/assignAgents", passport.authenticate('jwt', {session: false}), campaignController.assignAgents);
+    router.post("/api/campaign/changeStatus", passport.authenticate('jwt', {session: false}), campaignController.changeStatus);
 
     //role routers
     router.post("/api/role/find/:params?", passport.authenticate('jwt', {session: false}), rolesController.find);

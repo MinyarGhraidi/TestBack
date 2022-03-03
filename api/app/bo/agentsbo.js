@@ -309,40 +309,53 @@ class agents extends baseModelbo {
 
     onConnect(req, res, next) {
         let _this = this;
-        let {user_id, uuid, crmStatus, telcoStatus, created_at} = req.body;
-        axios
-            .get(`${base_url_cc_kam}api/v1/agents/${uuid}`, call_center_authorization)
-            .then(resp => {
-                let agent = resp.data.result;
-                agent.status = telcoStatus;
-                axios
-                    .put(`${base_url_cc_kam}api/v1/agents/${uuid}`, agent, call_center_authorization)
-                    .then(() => {
-                        this.db["users"].findOne({where: {user_id : user_id}})
-                            .then(user => {
-                                let params = user.params
-                                this.updateAgentStatus(user_id, agent, crmStatus, created_at, params)
-                                    .then(() => {
-                                        res.send({
-                                            status: 200,
-                                            message: 'success'
-                                        })
-                                    })
-                                    .catch((err) => {
-                                        return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
-                                    });
-                            })
-                            .catch((err) => {
-                                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
-                            });
-                    })
-                    .catch((err) => {
-                        return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
-                    });
+        let {user_id, uuid, crmStatus, telcoStatus} = req.body;
+        this.onConnectFunc(user_id, uuid, crmStatus, telcoStatus)
+            .then(() => {
+                res.send({
+                    status: 200,
+                    message: 'success'
+                })
             })
             .catch((err) => {
                 return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
             });
+    }
+
+    onConnectFunc(user_id, uuid, crmStatus, telcoStatus) {
+        let created_at = moment().format("YYYY-MM-DD HH:mm:ss")
+        return new Promise((resolve, reject) => {
+            axios
+                .get(`${base_url_cc_kam}api/v1/agents/${uuid}`, call_center_authorization)
+                .then(resp => {
+                    let agent = resp.data.result;
+                    agent.status = telcoStatus;
+                    axios
+                        .put(`${base_url_cc_kam}api/v1/agents/${uuid}`, agent, call_center_authorization)
+                        .then(() => {
+                            this.db["users"].findOne({where: {user_id: user_id}})
+                                .then(user => {
+                                    let params = user.params
+                                    this.updateAgentStatus(user_id, agent, crmStatus, created_at, params)
+                                        .then(() => {
+                                            resolve(true);
+                                        })
+                                        .catch((err) => {
+                                            reject(err);
+                                        });
+                                })
+                                .catch((err) => {
+                                    reject(err);
+                                });
+                        })
+                        .catch((err) => {
+                            reject(err);
+                        });
+                })
+                .catch((err) => {
+                    reject(err);
+                });
+        })
     }
 
     updateAgentStatus(user_id, agent_, crmStatus, created_at, params) {
