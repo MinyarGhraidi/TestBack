@@ -803,38 +803,42 @@ class campaigns extends baseModelbo {
     changeStatus(req, res, next) {
         let _this = this;
         let {campaign_id} = req.body;
-        this.db['campaigns'].findOne({where: {campaign_id: campaign_id}})
+        this.db['campaigns'].findOne({where: {campaign_id: campaign_id, active : 'Y'}})
             .then(campaign => {
-                let agents = campaign.agents;
-                let isActivate = campaign.status === 'N';
-                if (isActivate) {
-                    this.db['campaigns'].update({status: 'Y'}, {where: {campaign_id: campaign_id}})
-                        .then(() => {
-                            res.send({
-                                status: 200,
-                                message: "success"
-                            })
-                        })
-                        .catch((err) => {
-                            return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
-                        });
-                } else {
-                    _this.changeAGentsStatus(agents)
-                        .then(() => {
-                            this.db['campaigns'].update({status: 'N'}, {where: {campaign_id: campaign_id}})
-                                .then(() => {
-                                    res.send({
-                                        status: 200,
-                                        message: "success"
-                                    })
+                if (Object.keys(campaign) && Object.keys(campaign).length !== 0) {
+                    let agents = campaign.agents;
+                    let isActivate = campaign.status === 'N';
+                    if (isActivate) {
+                        this.db['campaigns'].update({status: 'Y'}, {where: {campaign_id: campaign_id}})
+                            .then(() => {
+                                res.send({
+                                    status: 200,
+                                    message: "success"
                                 })
-                                .catch((err) => {
-                                    return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
-                                });
-                        })
-                        .catch((err) => {
-                            return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
-                        });
+                            })
+                            .catch((err) => {
+                                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                            });
+                    } else {
+                        _this.changeAGentsStatus(agents)
+                            .then(() => {
+                                this.db['campaigns'].update({status: 'N'}, {where: {campaign_id: campaign_id}})
+                                    .then(() => {
+                                        res.send({
+                                            status: 200,
+                                            message: "success"
+                                        })
+                                    })
+                                    .catch((err) => {
+                                        return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                                    });
+                            })
+                            .catch((err) => {
+                                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                            });
+                    }
+                } else {
+                    return _this.sendResponseError(res, ['Campaign not found'], 1, 403);
                 }
             })
             .catch((err) => {
