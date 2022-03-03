@@ -66,7 +66,7 @@ class roles extends baseModelbo {
                                                 data: role
                                             })
                                         }).catch(err =>{
-                                            return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                                            return _this.sendResponseError(res, ['cannot save/update permission', err], 1, 403);
                                         })
                                     }else{
                                         res.send({
@@ -77,11 +77,11 @@ class roles extends baseModelbo {
                                         })
                                     }
                                 }).catch(err=>{
-                                    return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                                    return _this.sendResponseError(res, ['Error', err], 1, 403);
                                 })
                             })
                             .catch(err => {
-                                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                                return _this.sendResponseError(res, ['cannot update role', err], 1, 403);
                             })
                     } else {
                         let modalObj = this.db['roles'].build(req.body)
@@ -96,7 +96,7 @@ class roles extends baseModelbo {
                                             data: role
                                         })
                                     }).catch(err =>{
-                                        return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                                        return _this.sendResponseError(res, ['cannot save/update permission', err], 1, 403);
                                     })
                                 }else{
                                     res.send({
@@ -106,11 +106,9 @@ class roles extends baseModelbo {
                                         data: role
                                     })
                                 }
-
-
                             })
                             .catch(err => {
-                                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                                return _this.sendResponseError(res, ['cannot save role in db', err], 1, 403);
                             })
                     }
                 } else {
@@ -122,7 +120,7 @@ class roles extends baseModelbo {
                 }
             })
             .catch(err => {
-                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                return _this.sendResponseError(res, ['Error', err], 1, 403);
             })
     }
 
@@ -175,7 +173,7 @@ class roles extends baseModelbo {
                         messages: 'deleted'
                     })
                 }).catch(err =>{
-                    return this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                    return this.sendResponseError(res, ['Error', err], 1, 403);
                 })
 
             } else {

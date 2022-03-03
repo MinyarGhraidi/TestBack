@@ -46,15 +46,15 @@ class truncks extends baseModelbo {
                                 })
                             })
                             .catch(err => {
-                                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                                return _this.sendResponseError(res, ['cannot save trunk in DB', err], 1, 403);
                             })
                     })
                     .catch(err => {
-                        return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                        return _this.sendResponseError(res, ['error dialer', err], 1, 403);
                     })
             })
             .catch((err) => {
-                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                return _this.sendResponseError(res, ['Error kamailio', err], 1, 403);
             });
     }
 
@@ -80,14 +80,14 @@ class truncks extends baseModelbo {
                             })
                     })
                     .catch(err => {
-                        return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                        return _this.sendResponseError(res, ['Error update trunk', err], 1, 403);
                     })
                     .catch(err => {
-                        return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                        return _this.sendResponseError(res, ['Error dialer', err], 1, 403);
                     })
             })
             .catch((err) => {
-                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                return _this.sendResponseError(res, ['Error kamilio', err], 1, 403);
             });
     }
 
@@ -129,7 +129,7 @@ class truncks extends baseModelbo {
                 })
             })
             .catch((err) => {
-                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                return _this.sendResponseError(res, ['Error, cannot delete trunk', err], 1, 403);
             });
     }
 

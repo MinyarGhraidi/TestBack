@@ -55,15 +55,15 @@ class campaigns extends baseModelbo {
                                         })
                                     })
                                     .catch(err => {
-                                        return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                                        return _this.sendResponseError(res, ['cannot save default status', err], 1, 403);
                                     })
                             })
                             .catch((err) => {
-                                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                                return _this.sendResponseError(res, ['Cannot save campaigns in DB', err], 1, 403);
                             });
                     })
                     .catch((err) => {
-                        return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                        return _this.sendResponseError(res, ['Cannot save campaign in Kamailio', err], 1, 403);
                     });
             })
             .catch((err) => {
@@ -106,7 +106,7 @@ class campaigns extends baseModelbo {
                 })
             })
             .catch((err) => {
-                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                return _this.sendResponseError(res, ['Cannot update Campaign', err], 1, 403);
             });
     }
 
@@ -179,7 +179,7 @@ class campaigns extends baseModelbo {
                 })
             })
             .catch((err) => {
-                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                return _this.sendResponseError(res, ['Cannot delete Campaign', err], 1, 403);
             });
     }
 
@@ -194,7 +194,7 @@ class campaigns extends baseModelbo {
                 })
             })
             .catch((err) => {
-                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                return _this.sendResponseError(res, ['Cannot save default call/pause status', err], 1, 403);
             });
     }
 
@@ -443,35 +443,35 @@ class campaigns extends baseModelbo {
                                                                         })
                                                                     })
                                                                     .catch((err) => {
-                                                                        return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                                                                        return _this.sendResponseError(res, ['cannot save pause status', err], 1, 403);
                                                                     });
                                                             })
                                                             .catch((err) => {
-                                                                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                                                                return _this.sendResponseError(res, ['cannot save pause status', err], 1, 403);
                                                             });
                                                     })
                                                     .catch((err) => {
-                                                        return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                                                        return _this.sendResponseError(res, ['cannot fetch list call status', err], 1, 403);
                                                     });
                                             })
                                             .catch((err) => {
-                                                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                                                return _this.sendResponseError(res, ['cannot save campaign', err], 1, 403);
                                             });
                                     })
                                     .catch((err) => {
-                                        return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                                        return _this.sendResponseError(res, ['cannot save campaign', err], 1, 403);
                                     });
                             })
                             .catch((err) => {
-                                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                                return _this.sendResponseError(res, ['cannot save campaign in kamailio', err], 1, 403);
                             });
                     })
                     .catch((err) => {
-                        return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                        return _this.sendResponseError(res, ['error in generate unique name', err], 1, 403);
                     });
             })
             .catch((err) => {
-                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                return _this.sendResponseError(res, ['cannot fetch campaign', err], 1, 403);
             });
     }
 
@@ -573,23 +573,23 @@ class campaigns extends baseModelbo {
                                                 })
                                             })
                                             .catch(err => {
-                                                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                                                return _this.sendResponseError(res, ['Error fix consistency', err], 1, 403);
                                             })
                                     })
                                     .catch(err => {
-                                        return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                                        return _this.sendResponseError(res, ['cannot get list of users', err], 1, 403);
                                     })
                             })
                             .catch(err => {
-                                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                                return _this.sendResponseError(res, ['Kamailio error', err], 1, 403);
                             })
                     })
                     .catch((err) => {
-                        return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                        return _this.sendResponseError(res, ['cannot get list agents', err], 1, 403);
                     });
             })
             .catch((err) => {
-                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                return _this.sendResponseError(res, ['cannot fetch campaign', err], 1, 403);
             });
     }
 
@@ -695,27 +695,27 @@ class campaigns extends baseModelbo {
                                                         })
                                                     })
                                                     .catch((err) => {
-                                                        return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                                                        return _this.sendResponseError(res, ['cannot delete agent meetings', err], 1, 403);
                                                     });
                                             })
                                             .catch((err) => {
-                                                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                                                return _this.sendResponseError(res, ['cannot update status of unassigned agents', err], 1, 403);
                                             });
                                     })
                                     .catch((err) => {
-                                        return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                                        return _this.sendResponseError(res, ['cannot update status of assigned agents', err], 1, 403);
                                     });
                             })
                             .catch((err) => {
-                                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                                return _this.sendResponseError(res, ['cannot update campaign', err], 1, 403);
                             });
                     })
                     .catch((err) => {
-                        return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                        return _this.sendResponseError(res, ['cannot add to queue in kamailio', err], 1, 403);
                     });
             })
             .catch((err) => {
-                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                return _this.sendResponseError(res, ['cannot delete from queue in kamailio', err], 1, 403);
             });
     }
 
@@ -834,7 +834,7 @@ class campaigns extends baseModelbo {
                                     });
                             })
                             .catch((err) => {
-                                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                                return _this.sendResponseError(res, ['cannot change agent status', err], 1, 403);
                             });
                     }
                 } else {
@@ -842,7 +842,7 @@ class campaigns extends baseModelbo {
                 }
             })
             .catch((err) => {
-                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                return _this.sendResponseError(res, ['cannot fetch campaign', err], 1, 403);
             });
     }
 

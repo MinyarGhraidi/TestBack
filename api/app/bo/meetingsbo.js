@@ -257,7 +257,7 @@ class meetings extends baseModelbo {
                         });
                     })
                         .catch((err) => {
-                            return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                            return _this.sendResponseError(res, ['Error cannot get availability', err], 1, 403);
                         });
                 } else {
                     res.send({
@@ -268,7 +268,7 @@ class meetings extends baseModelbo {
                 }
             })
             .catch((err) => {
-                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                return _this.sendResponseError(res, ['cannot fetch from DB', err], 1, 403);
             });
     }
 
