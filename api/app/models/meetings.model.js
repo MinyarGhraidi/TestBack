@@ -53,6 +53,9 @@ module.exports = (sequelize, Sequelize) => {
                 type: Sequelize.INTEGER,
                 defaultValue : 1
             },
+            campaign_id: {
+                type: Sequelize.INTEGER,
+            },
         },
         {timestamps: false,}
     )
@@ -72,7 +75,8 @@ module.exports = (sequelize, Sequelize) => {
         'updated_at',
         "day",
         "treated",
-        "status"
+        "status",
+        "campaign_id"
     ],
     meetings.prototype.fieldsSearchMetas = [
         'did_id',

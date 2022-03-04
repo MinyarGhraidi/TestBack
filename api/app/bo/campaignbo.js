@@ -143,7 +143,13 @@ class campaigns extends baseModelbo {
                                         .then(resp => {
                                             this.db['campaigns'].update({active: 'N'}, {where: {campaign_id: campaign_id}})
                                                 .then(() => {
-                                                    resolve(true);
+                                                    this.db['meetings'].update({status: 0}, {where: {campaign_id: campaign_id}})
+                                                        .then(() => {
+                                                            resolve(true);
+                                                        })
+                                                        .catch((err) => {
+                                                            reject(err);
+                                                        });
                                                 })
                                                 .catch((err) => {
                                                     reject(err);
