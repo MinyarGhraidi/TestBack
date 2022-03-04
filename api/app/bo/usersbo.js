@@ -38,38 +38,38 @@ class users extends baseModelbo {
                     }
                 }).then((user) => {
                     if (!user) {
-                        //this.sendResponseError(res, ['Error.UserNotFound'], 0, 403);
-                        res.send({
-                            message: 'Success',
-                        });
+                        this.sendResponseError(res, ['Error.UserNotFound'], 0, 403);
                     } else {
                         if (user.password_hash && password) {
-                            //if (user.password_hash && user.verifyPassword(password)) {
-                            this.db['has_permissions'].findAll({
-                                include: [{
-                                    model: db.permissions_crms,
-                                }],
-                                where: {
-                                    roles_crm_id: user.role_crm_id,
-                                }
-                            }).then(permissions => {
-                                this.getPermissionsValues(permissions).then(data_perm => {
-                                    const token = jwt.sign({
-                                        user_id: user.user_id,
-                                        username: user.username,
-                                    }, config.secret, {
-                                        expiresIn: '8600m'
-                                    });
-                                    res.send({
-                                        message: 'Success',
-                                        user: user.toJSON(),
-                                        permissions: data_perm || [],
-                                        success: true,
-                                        token: token,
-                                        result: 1,
-                                    });
+                            if (user.password_hash && user.verifyPassword(password)) {
+                                this.db['has_permissions'].findAll({
+                                    include: [{
+                                        model: db.permissions_crms,
+                                    }],
+                                    where: {
+                                        roles_crm_id: user.role_crm_id,
+                                    }
+                                }).then(permissions => {
+                                    this.getPermissionsValues(permissions).then(data_perm => {
+                                        const token = jwt.sign({
+                                            user_id: user.user_id,
+                                            username: user.username,
+                                        }, config.secret, {
+                                            expiresIn: '8600m'
+                                        });
+                                        res.send({
+                                            message: 'Success',
+                                            user: user.toJSON(),
+                                            permissions: data_perm || [],
+                                            success: true,
+                                            token: token,
+                                            result: 1,
+                                        });
+                                    })
                                 })
-                            })
+                            } else {
+                                this.sendResponseError(res, ['Error.UserNotFound'], 0, 403);
+                            }
                         } else {
                             this.sendResponseError(res, ['Error.InvalidPassword'], 2, 403);
                         }
