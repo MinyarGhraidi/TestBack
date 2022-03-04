@@ -803,7 +803,7 @@ class campaigns extends baseModelbo {
     changeStatus(req, res, next) {
         let _this = this;
         let {campaign_id} = req.body;
-        this.db['campaigns'].findOne({where: {campaign_id: campaign_id, active : 'Y'}})
+        this.db['campaigns'].findOne({where: {campaign_id: campaign_id, active: 'Y'}})
             .then(campaign => {
                 if (Object.keys(campaign) && Object.keys(campaign).length !== 0) {
                     let agents = campaign.agents;
@@ -811,26 +811,49 @@ class campaigns extends baseModelbo {
                     if (isActivate) {
                         this.db['campaigns'].update({status: 'Y'}, {where: {campaign_id: campaign_id}})
                             .then(() => {
-                                res.send({
-                                    status: 200,
-                                    message: "success"
-                                })
+                                this.db['listcallfiles'].update({status: 'Y'}, {where: {campaign_id: campaign_id, active: 'Y'}})
+                                    .then(() => {
+                                        this.db['callstatuses'].update({status: 'Y'}, {where: {campaign_id: campaign_id, active: 'Y'}})
+                                            .then(() => {
+                                                res.send({
+                                                    status: 200,
+                                                    message: "success"
+                                                })
+                                            })
+                                            .catch((err) => {
+                                                return _this.sendResponseError(res, ['Cannot change the callstatus status', err], 1, 403);
+                                            });
+                                    })
+                                    .catch((err) => {
+                                        return _this.sendResponseError(res, ['Cannot change the listcallfile status', err], 1, 403);
+                                    });
                             })
                             .catch((err) => {
-                                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                                return _this.sendResponseError(res, ['cannot change the campaign status', err], 1, 403);
                             });
                     } else {
                         _this.changeAGentsStatus(agents)
                             .then(() => {
                                 this.db['campaigns'].update({status: 'N'}, {where: {campaign_id: campaign_id}})
-                                    .then(() => {
-                                        res.send({
-                                            status: 200,
-                                            message: "success"
-                                        })
+                                    .then(() => {this.db['listcallfiles'].update({status: 'N'}, {where: {campaign_id: campaign_id, active: 'Y'}})
+                                            .then(() => {
+                                                this.db['callstatuses'].update({status: 'N'}, {where: {campaign_id: campaign_id, active: 'Y'}})
+                                                    .then(() => {
+                                                        res.send({
+                                                            status: 200,
+                                                            message: "success"
+                                                        })
+                                                    })
+                                                    .catch((err) => {
+                                                        return _this.sendResponseError(res, ['Cannot change the callstatus status', err], 1, 403);
+                                                    });
+                                            })
+                                            .catch((err) => {
+                                                return _this.sendResponseError(res, ['Cannot change the listcallfile status', err], 1, 403);
+                                            });
                                     })
                                     .catch((err) => {
-                                        return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                                        return _this.sendResponseError(res, ['cannot change the campaign status', err], 1, 403);
                                     });
                             })
                             .catch((err) => {
