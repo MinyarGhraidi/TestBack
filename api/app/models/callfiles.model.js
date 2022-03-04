@@ -60,6 +60,9 @@ module.exports = (sequelize, Sequelize) => {
                 type: Sequelize.STRING,
                 defaultValue: 'Y'
             },
+            status: {
+                type: Sequelize.STRING
+            },
             to_treat: {
                 allowNull: true,
                 type: Sequelize.STRING,

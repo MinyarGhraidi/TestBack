@@ -127,6 +127,7 @@ class campaigns extends baseModelbo {
     }
 
     deleteCampaignFunc(uuid, campaign_id) {
+        let _this = this;
         return new Promise((resolve, reject) => {
             let agents_arr = ['*'];
             let agents = {agents: agents_arr};
@@ -145,7 +146,13 @@ class campaigns extends baseModelbo {
                                                 .then(() => {
                                                     this.db['meetings'].update({status: 0}, {where: {campaign_id: campaign_id}})
                                                         .then(() => {
-                                                            resolve(true);
+                                                            _this.deleteCampaignFiles(campaign_id)
+                                                                .then(() => {
+                                                                    resolve(true);
+                                                                })
+                                                                .catch((err) => {
+                                                                    reject(err);
+                                                                });
                                                         })
                                                         .catch((err) => {
                                                             reject(err);
@@ -164,7 +171,7 @@ class campaigns extends baseModelbo {
                                 })
                         })
                         .catch((err) => {
-                            reject(err)
+                            reject(err);
                         });
                 })
                 .catch(err => {
@@ -806,6 +813,62 @@ class campaigns extends baseModelbo {
         })
     }
 
+    deleteCampaignFiles(campaign_id) {
+        return new Promise((resolve, reject) => {
+            this.db['listcallfiles']
+                .findAll({where:{campaign_id: campaign_id, active: 'Y'}})
+                .then(listcallfiles => {
+                    let listcallfiles_id = listcallfiles.map(el => el.listcallfile_id);
+                    this.db['listcallfiles']
+                        .update({active: 'N'}, {where: {campaign_id: campaign_id, active: 'Y'}})
+                        .then(() => {
+                            this.db['callfiles']
+                                .update({active: 'N'}, {where: {listcallfile_id: listcallfiles_id, active: 'Y'}})
+                                .then(() => {
+                                    resolve(true);
+                                })
+                                .catch((err) => {
+                                    reject(err);
+                                });
+                        })
+                        .catch((err) => {
+                            reject(err);
+                        });
+                })
+                .catch((err) => {
+                    reject(err);
+                });
+        })
+    }
+
+    changeStatusCampaignFiles(campaign_id, status) {
+        return new Promise((resolve, reject) => {
+            this.db['listcallfiles']
+                .findAll({where:{campaign_id: campaign_id, active: 'Y'}})
+                .then(listcallfiles => {
+                    let listcallfiles_id = listcallfiles.map(el => el.listcallfile_id);
+                    this.db['listcallfiles']
+                        .update({status: status}, {where: {campaign_id: campaign_id, active: 'Y'}})
+                        .then(() => {
+                            this.db['callfiles']
+                                .update({status: status}, {where: {listcallfile_id: listcallfiles_id, active: 'Y'}})
+                                .then(() => {
+                                    resolve(true);
+                                })
+                                .catch((err) => {
+                                    reject(err);
+                                });
+                        })
+                        .catch((err) => {
+                            reject(err);
+                        });
+                })
+                .catch((err) => {
+                    reject(err);
+                });
+        })
+    }
+
     changeStatus(req, res, next) {
         let _this = this;
         let {campaign_id} = req.body;
@@ -817,21 +880,15 @@ class campaigns extends baseModelbo {
                     if (isActivate) {
                         this.db['campaigns'].update({status: 'Y'}, {where: {campaign_id: campaign_id}})
                             .then(() => {
-                                this.db['listcallfiles'].update({status: 'Y'}, {where: {campaign_id: campaign_id, active: 'Y'}})
+                                this.changeStatusCampaignFiles(campaign_id, 'Y')
                                     .then(() => {
-                                        this.db['callstatuses'].update({status: 'Y'}, {where: {campaign_id: campaign_id, active: 'Y'}})
-                                            .then(() => {
-                                                res.send({
-                                                    status: 200,
-                                                    message: "success"
-                                                })
-                                            })
-                                            .catch((err) => {
-                                                return _this.sendResponseError(res, ['Cannot change the callstatus status', err], 1, 403);
-                                            });
+                                        res.send({
+                                            status: 200,
+                                            message: "success"
+                                        })
                                     })
                                     .catch((err) => {
-                                        return _this.sendResponseError(res, ['Cannot change the listcallfile status', err], 1, 403);
+                                        return _this.sendResponseError(res, ['cannot change the campaign status', err], 1, 403);
                                     });
                             })
                             .catch((err) => {
@@ -841,21 +898,16 @@ class campaigns extends baseModelbo {
                         _this.changeAGentsStatus(agents)
                             .then(() => {
                                 this.db['campaigns'].update({status: 'N'}, {where: {campaign_id: campaign_id}})
-                                    .then(() => {this.db['listcallfiles'].update({status: 'N'}, {where: {campaign_id: campaign_id, active: 'Y'}})
+                                    .then(() => {
+                                        this.changeStatusCampaignFiles(campaign_id, 'N')
                                             .then(() => {
-                                                this.db['callstatuses'].update({status: 'N'}, {where: {campaign_id: campaign_id, active: 'Y'}})
-                                                    .then(() => {
-                                                        res.send({
-                                                            status: 200,
-                                                            message: "success"
-                                                        })
-                                                    })
-                                                    .catch((err) => {
-                                                        return _this.sendResponseError(res, ['Cannot change the callstatus status', err], 1, 403);
-                                                    });
+                                                res.send({
+                                                    status: 200,
+                                                    message: "success"
+                                                })
                                             })
                                             .catch((err) => {
-                                                return _this.sendResponseError(res, ['Cannot change the listcallfile status', err], 1, 403);
+                                                return _this.sendResponseError(res, ['cannot change the campaign status', err], 1, 403);
                                             });
                                     })
                                     .catch((err) => {
