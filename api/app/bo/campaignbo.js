@@ -812,6 +812,40 @@ class campaigns extends baseModelbo {
             }
         })
     }
+    
+    deleteCallFiles(listcallfiles_id) {
+        return new Promise((resolve, reject) => {
+            if(listcallfiles_id && listcallfiles_id.length -1) {
+                this.db['callfiles']
+                    .update({active: 'N'}, {where: {listcallfile_id: listcallfiles_id, active: 'Y'}})
+                    .then(() => {
+                        resolve(true);
+                    })
+                    .catch((err) => {
+                        reject(err);
+                    });
+            } else {
+                reject(true);
+            }
+        })
+    }
+
+    changeStatusCallFiles(listcallfiles_id, status) {
+        return new Promise((resolve, reject) => {
+            if(listcallfiles_id && listcallfiles_id.length -1) {
+                this.db['callfiles']
+                    .update({status: status}, {where: {listcallfile_id: listcallfiles_id, active: 'Y'}})
+                    .then(() => {
+                        resolve(true);
+                    })
+                    .catch((err) => {
+                        reject(err);
+                    });
+            } else {
+                reject(true);
+            }
+        })
+    }
 
     deleteCampaignFiles(campaign_id) {
         return new Promise((resolve, reject) => {
@@ -822,8 +856,7 @@ class campaigns extends baseModelbo {
                     this.db['listcallfiles']
                         .update({active: 'N'}, {where: {campaign_id: campaign_id, active: 'Y'}})
                         .then(() => {
-                            this.db['callfiles']
-                                .update({active: 'N'}, {where: {listcallfile_id: listcallfiles_id, active: 'Y'}})
+                            this.deleteCallFiles(listcallfiles_id)
                                 .then(() => {
                                     resolve(true);
                                 })
@@ -850,8 +883,7 @@ class campaigns extends baseModelbo {
                     this.db['listcallfiles']
                         .update({status: status}, {where: {campaign_id: campaign_id, active: 'Y'}})
                         .then(() => {
-                            this.db['callfiles']
-                                .update({status: status}, {where: {listcallfile_id: listcallfiles_id, active: 'Y'}})
+                            this.changeStatusCallFiles(listcallfiles_id, status)
                                 .then(() => {
                                     resolve(true);
                                 })
