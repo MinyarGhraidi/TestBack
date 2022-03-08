@@ -35,18 +35,19 @@ usersController = require("../controllers/users.controller");
 agentsController = require("../controllers/agents.controller");
 efilesController = require("../controllers/efiles.controller");
 listcallfilesController = require("../controllers/listcallfiles.controller");
-lookupController = require('../controllers/lookups.controller')
-truncksController = require('../controllers/truncks.controller')
-callstatusController = require('../controllers/callstatus.controller')
-pausestatusController = require('../controllers/pausestatus.controller')
-didsController = require('../controllers/did.controller')
-audiosController = require('../controllers/audio.controller')
-agent_log_eventsController = require('../controllers/agent_log_events.controller')
-meetingsController = require('../controllers/meeting.controller')
-emailsController = require('../controllers/email.controller')
-roles_crmController = require('../controllers/roles_crm.controller')
-acl_Controller = require('../controllers/Permissionacl.controller')
-sales_Controller = require('../controllers/sales.controller')
+lookupController = require('../controllers/lookups.controller');
+truncksController = require('../controllers/truncks.controller');
+callstatusController = require('../controllers/callstatus.controller');
+pausestatusController = require('../controllers/pausestatus.controller');
+didsController = require('../controllers/did.controller');
+audiosController = require('../controllers/audio.controller');
+agent_log_eventsController = require('../controllers/agent_log_events.controller');
+meetingsController = require('../controllers/meeting.controller');
+emailsController = require('../controllers/email.controller');
+roles_crmController = require('../controllers/roles_crm.controller');
+acl_Controller = require('../controllers/Permissionacl.controller');
+sales_Controller = require('../controllers/sales.controller');
+liveCallsController = require('../controllers/livecalls.Controller');
 
 
 let apiRouters = function (passport) {
@@ -247,7 +248,16 @@ let apiRouters = function (passport) {
     router.post("/api/callcenter/authorize", meetingsController.authorize);
 
     router.post("/api/saveCallFile",callfileController.CallFilesMapping);
-    router.post("/api/listCallFile/saveListCallFile",passport.authenticate('jwt', {session: false}),callfileController.saveListCallFile)
+    router.post("/api/listCallFile/saveListCallFile",passport.authenticate('jwt', {session: false}),callfileController.saveListCallFile);
+
+    //livecalls
+
+    router.post("/api/livecalls/find", passport.authenticate('jwt', {session: false}), liveCallsController.find);
+    router.get("/api/livecalls/findById/:entity_id", passport.authenticate('jwt', {session: false}), liveCallsController.findById);
+    router.put("/api/livecalls/update", passport.authenticate('jwt', {session: false}), liveCallsController.update);
+    router.delete("/api/livecalls/delete/:params", passport.authenticate('jwt', {session: false}), liveCallsController.delete);
+    router.post("/api/livecalls/save", passport.authenticate('jwt', {session: false}), liveCallsController.save);
+    router.post("/api/livecalls/getLiveCallsByCallId", passport.authenticate('jwt', {session: false}), liveCallsController.getLiveCallsByCallId);
 
 
     return router;
