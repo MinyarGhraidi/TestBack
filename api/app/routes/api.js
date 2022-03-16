@@ -258,6 +258,7 @@ let apiRouters = function (passport) {
     router.delete("/api/livecalls/delete/:params", passport.authenticate('jwt', {session: false}), liveCallsController.delete);
     router.post("/api/livecalls/save", passport.authenticate('jwt', {session: false}), liveCallsController.save);
     router.post("/api/livecalls/getLiveCallsByCallId", passport.authenticate('jwt', {session: false}), liveCallsController.getLiveCallsByCallId);
+    router.post("/api/livecalls/getEvents", passport.authenticate('jwt', {session: false}), liveCallsController.getEvents);
 
 
     return router;
