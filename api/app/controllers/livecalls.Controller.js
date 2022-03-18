@@ -20,7 +20,7 @@ module.exports = {
     getLiveCallsByCallId: function (req, res, next) {
         livecallsDaoInst.getLiveCallsByCallId(req, res, next);
     },
-    getEvents: function (req, res, next) {
-        livecallsDaoInst.getEvents(req, res, next);
+    getLiveCallsByAccount: function (req, res, next) {
+        livecallsDaoInst.getLiveCallsByAccount(req, res, next);
     },
 }
