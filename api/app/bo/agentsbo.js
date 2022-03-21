@@ -387,6 +387,23 @@ class agents extends baseModelbo {
         })
     }
 
+    getConnectedAgents(req, res, next) {
+        let _this = this;
+        let {account_id} = req.body;
+        this.db['users'].findAll({where : {active : 'Y', account_id : account_id, role_crm_id : 3}})
+            .then(agents => {
+                let loggedAgents = agents.filter(el => el.sip_device.status !== "logged-out");
+                res.send({
+                    status : "200",
+                    message : "success",
+                    data : loggedAgents
+                })
+            })
+            .catch(err => {
+                return _this.sendResponseError(res, ['Error.cannot fetch list agents', err], 1, 403);
+            })
+    }
+
 }
 
 module.exports = agents;

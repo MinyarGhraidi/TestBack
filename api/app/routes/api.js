@@ -130,6 +130,7 @@ let apiRouters = function (passport) {
     router.post("/api/agent/updateAgent", passport.authenticate('jwt', {session: false}), agentsController.updateAgent);
     router.post("/api/agent/deleteAgent", passport.authenticate('jwt', {session: false}), agentsController.deleteAgent);
     router.post("/api/agent/onConnect", passport.authenticate('jwt', {session: false}), agentsController.onConnect);
+    router.post("/api/agent/getConnectedAgents", passport.authenticate('jwt', {session: false}), agentsController.getConnectedAgents);
 
     router.post("/api/signup", agentsController.signUp);
     router.post("/api/signin", agentsController.signIn);
@@ -213,6 +214,7 @@ let apiRouters = function (passport) {
     router.put("/api/agent_log_event/update", passport.authenticate('jwt', {session: false}), agent_log_eventsController.update);
     router.delete("/api/agent_log_event/delete/:params", passport.authenticate('jwt', {session: false}), agent_log_eventsController.delete);
     router.post("/api/agent_log_event/save", passport.authenticate('jwt', {session: false}), agent_log_eventsController.save);
+    router.post("/api/agent_log_event/getLastEvent", passport.authenticate('jwt', {session: false}), agent_log_eventsController.getLastEvent);
 
     // meetings routes
     router.post("/api/meeting/find", passport.authenticate('jwt', {session: false}), meetingsController.find);

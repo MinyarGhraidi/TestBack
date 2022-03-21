@@ -8,6 +8,24 @@ class agent_log_events extends baseModelbo {
         this.baseModal = "agent_log_events";
         this.primaryKey = 'agent_log_event_id';
     }
+
+    getLastEvent(req, res, next) {
+        let _this = this;
+        console.log(req.body)
+        let {user_id} = req.body;
+        this.db['agent_log_events'].findAll({where : {active: 'Y', user_id : user_id}})
+            .then(events => {
+                res.send({
+                    status : 200,
+                    message : 'success',
+                    data : events[events.length - 1]
+                });
+            })
+            .catch(err => {
+                console.log(err)
+                return _this.sendResponseError(res, ['Error.cannot Fetch data from DB', err], 1, 403);
+            })
+    }
 }
 
 module.exports = agent_log_events;
