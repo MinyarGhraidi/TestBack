@@ -12,7 +12,6 @@ const base_url_cc_kam = require(__dirname + '/../config/config.json')["base_url_
 const call_center_authorization = {
     headers: {Authorization: call_center_token}
 };
-
 const usersbo = require('./usersbo');
 let _usersbo = new usersbo;
 
@@ -404,6 +403,7 @@ class agents extends baseModelbo {
                 return _this.sendResponseError(res, ['Error.cannot fetch list agents', err], 1, 403);
             })
     }
+
 
 }
 
