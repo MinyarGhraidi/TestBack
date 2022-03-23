@@ -53,7 +53,7 @@ class users extends baseModelbo {
                                 }).then(permissions => {
                                     this.getPermissionsValues(permissions).then(data_perm => {
                                         if(user.user_type === "agent") {
-                                            let {sip_device, first_name, last_name, user_id} = user;
+                                            let {sip_device, first_name, last_name, user_id, campaign_id} = user;
                                             let data_agent = {
                                                 user_id: user_id,
                                                 first_name: first_name,
@@ -61,7 +61,8 @@ class users extends baseModelbo {
                                                 uuid: sip_device.uuid,
                                                 crmStatus: user.params.status,
                                                 telcoStatus: sip_device.status,
-                                                updated_at: sip_device.updated_at
+                                                updated_at: sip_device.updated_at,
+                                                campaign_id : campaign_id
                                             };
                                             appSocket.emit('agent_connection', data_agent);
                                         }

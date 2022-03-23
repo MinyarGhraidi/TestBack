@@ -406,7 +406,7 @@ class agents extends baseModelbo {
             .then(agents => {
                 let loggedAgents = agents.filter(el => el.sip_device.status !== "logged-out");
                 let formattedData = loggedAgents.map(user => {
-                    let {sip_device, first_name, last_name, user_id} = user;
+                    let {sip_device, first_name, last_name, user_id, campaign_id} = user;
                     return {
                         user_id: user_id,
                         first_name: first_name,
@@ -414,7 +414,8 @@ class agents extends baseModelbo {
                         uuid: sip_device.uuid,
                         crmStatus: user.params.status,
                         telcoStatus: sip_device.status,
-                        updated_at: sip_device.updated_at
+                        updated_at: sip_device.updated_at,
+                        campaign_id : campaign_id
                     };
                 })
                 res.send({
