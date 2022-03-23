@@ -5,7 +5,7 @@ Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9c
 
 ###
 #GET QUEUE BY UUID
-GET https://occ.oxilog.net:2443/api/v1/queues/a8ae7036-6667-481d-a5fd-13044978432b
+GET https://occ.oxilog.net:2443/api/v1/queues/6145ba9f-9f23-4e29-9ee1-9e0f69eadf2f
 Content-Type: application/json
 Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9cIi2IY5
 
@@ -15,7 +15,36 @@ POST https://occ.oxilog.net:2443/api/v1/queues
 Content-Type: application/json
 Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9cIi2IY5
 
-{"extension":"495507611574","options":{"max_wait_time":"1","tier_rule_wait_second":"1","discard_abandoned_after":"1","ring_progressively_delay":"1","max_wait_time_with_no_agent":"1","max_wait_time_with_no_agent_time_reached":"1","time_base_score":"queue","tier_rules_apply":true,"agent_no_answer_status":"available","abandoned_resume_allowed":true,"tier_rule_no_agent_no_wait":true,"tier_rule_wait_multiply_level":true,"greetings":10,"hold_music":11,"skip_agents_with_external_calls":true},"strategy":"ring-all","record":true,"accountcode":"599027795684","greetings":["http://myTestServer/IVRS/10"],"hold_music":["http://myTestServer/IVRS/11"],"name":"522557217894"}
+{
+  "extension": "495507611574",
+  "options": {
+    "max_wait_time": "1",
+    "tier_rule_wait_second": "1",
+    "discard_abandoned_after": "1",
+    "ring_progressively_delay": "1",
+    "max_wait_time_with_no_agent": "1",
+    "max_wait_time_with_no_agent_time_reached": "1",
+    "time_base_score": "queue",
+    "tier_rules_apply": true,
+    "agent_no_answer_status": "available",
+    "abandoned_resume_allowed": true,
+    "tier_rule_no_agent_no_wait": true,
+    "tier_rule_wait_multiply_level": true,
+    "greetings": 10,
+    "hold_music": 11,
+    "skip_agents_with_external_calls": true
+  },
+  "strategy": "ring-all",
+  "record": true,
+  "accountcode": "599027795684",
+  "greetings": [
+    "http://myTestServer/IVRS/10"
+  ],
+  "hold_music": [
+    "http://myTestServer/IVRS/11"
+  ],
+  "name": "522557217894"
+}
 
 ###
 #UPDATE QUEUE
@@ -28,8 +57,12 @@ Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9c
   "extension": "1000",
   "accountcode": "1",
   "strategy": "ring-all",
-  "greetings": ["http://94.23.104.159/IVRS/confirm_appel.wav"],
-  "hold_music": ["http://94.23.104.159/IVRS/attente-longue.wav"],
+  "greetings": [
+    "http://94.23.104.159/IVRS/confirm_appel.wav"
+  ],
+  "hold_music": [
+    "http://94.23.104.159/IVRS/attente-longue.wav"
+  ],
   "record": 0,
   "options": {
     "time_base_score": "queue",
@@ -58,21 +91,21 @@ Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9c
 
 ###
 #GET QUEUE TIERS
-GET https://occ.oxilog.net:2443/api/v1/queues/e6ba7320-6613-4bd5-ac6a-711a710809fe/tiers
+GET https://occ.oxilog.net:2443/api/v1/queues/6145ba9f-9f23-4e29-9ee1-9e0f69eadf2f/tiers
 Content-Type: application/json
 Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9cIi2IY5
 
 
 ###
 #ADD/UPDATE QUEUE TIERS
-POST https://occ.oxilog.net:2443/api/v1/queues/06a1e299-ab59-4777-9b92-1218c71a48d3/tiers
+POST https://occ.oxilog.net:2443/api/v1/queues/6145ba9f-9f23-4e29-9ee1-9e0f69eadf2f/tiers
 Content-Type: application/json
 Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9cIi2IY5
 
 {
   "tiers": [
     {
-      "agent_uuid": "2066dab4-279f-4c6e-88a8-cf82b9ffd1ce",
+      "agent_uuid": "fe29c88a-d59f-483d-aecf-e61a9063e31d",
       "tier_level": 1,
       "tier_position": 1
     }
@@ -86,7 +119,9 @@ Content-Type: application/json
 Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9cIi2IY5
 
 {
-  "agents": ["8226a3e6-6dba-41c7-a6ea-d8b75e4989d4"]
+  "agents": [
+    "8226a3e6-6dba-41c7-a6ea-d8b75e4989d4"
+  ]
 }
 
 
@@ -97,7 +132,9 @@ Content-Type: application/json
 Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9cIi2IY5
 
 {
-  "agents": ["*"]
+  "agents": [
+    "*"
+  ]
 }
 
 
@@ -108,5 +145,7 @@ Content-Type: application/json
 Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9cIi2IY5
 
 {
-  "agents": ["*"]
+  "agents": [
+    "*"
+  ]
 }
