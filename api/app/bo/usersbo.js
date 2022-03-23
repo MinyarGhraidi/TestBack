@@ -9,6 +9,7 @@ const bcrypt = require("bcrypt");
 const {appSecret} = require("../helpers/app");
 const {Sequelize} = require("sequelize");
 const moment = require("moment");
+const appSocket = new (require('../providers/AppSocket'))();
 
 class users extends baseModelbo {
     constructor() {
@@ -51,6 +52,20 @@ class users extends baseModelbo {
                                     }
                                 }).then(permissions => {
                                     this.getPermissionsValues(permissions).then(data_perm => {
+                                        if(user.user_type === "agent") {
+                                            let {sip_device, first_name, last_name, user_id} = user;
+                                            let data_agent = {
+                                                user_id: user_id,
+                                                first_name: first_name,
+                                                last_name: last_name,
+                                                uuid: sip_device.uuid,
+                                                crmStatus: user.params.status,
+                                                telcoStatus: sip_device.status,
+                                                updated_at: sip_device.updated_at
+                                            };
+                                            appSocket.emit('agent_connection', data_agent);
+                                        }
+
                                         const token = jwt.sign({
                                             user_id: user.user_id,
                                             username: user.username,

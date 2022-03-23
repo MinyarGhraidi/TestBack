@@ -311,13 +311,17 @@ class agents extends baseModelbo {
         let _this = this;
         let {user_id, uuid, crmStatus, telcoStatus} = req.body;
         this.onConnectFunc(user_id, uuid, crmStatus, telcoStatus)
-            .then(() => {
+            .then((user) => {
+                let {sip_device, first_name, last_name, user_id} = user;
                 let data_agent = {
                     user_id: user_id,
-                    uuid: uuid,
-                    crmStatus: crmStatus,
-                    telcoStatus: telcoStatus
-                }
+                    first_name: first_name,
+                    last_name: last_name,
+                    uuid: sip_device.uuid,
+                    crmStatus: user.params.status,
+                    telcoStatus: sip_device.status,
+                    updated_at: sip_device.updated_at
+                };
                 appSocket.emit('agent_connection', data_agent);
                 res.send({
                     status: 200,
@@ -346,7 +350,7 @@ class agents extends baseModelbo {
                                     agent.updated_at = moment().format("YYYY-MM-DD HH:mm:ss")
                                     this.updateAgentStatus(user_id, agent, crmStatus, created_at, params)
                                         .then(() => {
-                                            resolve(true);
+                                            resolve(user);
                                         })
                                         .catch((err) => {
                                             reject(err);
@@ -401,10 +405,22 @@ class agents extends baseModelbo {
         this.db['users'].findAll({where : {active : 'Y', account_id : account_id, role_crm_id : 3}})
             .then(agents => {
                 let loggedAgents = agents.filter(el => el.sip_device.status !== "logged-out");
+                let formattedData = loggedAgents.map(user => {
+                    let {sip_device, first_name, last_name, user_id} = user;
+                    return {
+                        user_id: user_id,
+                        first_name: first_name,
+                        last_name: last_name,
+                        uuid: sip_device.uuid,
+                        crmStatus: user.params.status,
+                        telcoStatus: sip_device.status,
+                        updated_at: sip_device.updated_at
+                    };
+                })
                 res.send({
                     status : "200",
                     message : "success",
-                    data : loggedAgents
+                    data : formattedData
                 })
             })
             .catch(err => {
