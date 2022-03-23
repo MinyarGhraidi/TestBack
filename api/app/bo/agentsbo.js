@@ -14,6 +14,7 @@ const call_center_authorization = {
 };
 const usersbo = require('./usersbo');
 let _usersbo = new usersbo;
+const appSocket = new (require('../providers/AppSocket'))();
 
 class agents extends baseModelbo {
     constructor() {
