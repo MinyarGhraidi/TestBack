@@ -312,6 +312,13 @@ class agents extends baseModelbo {
         let {user_id, uuid, crmStatus, telcoStatus} = req.body;
         this.onConnectFunc(user_id, uuid, crmStatus, telcoStatus)
             .then(() => {
+                let data_agent = {
+                    user_id: user_id,
+                    uuid: uuid,
+                    crmStatus: crmStatus,
+                    telcoStatus: telcoStatus
+                }
+                appSocket.emit('agent_connection', data_agent);
                 res.send({
                     status: 200,
                     message: 'success'
