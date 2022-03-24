@@ -153,11 +153,13 @@ class agents extends baseModelbo {
                 let username = (parseInt(lastAgentKamailioUsername) + 1).toString();
                 let {password, domain, options, status, enabled, subscriber_id} = sip_device;
                 sip_device.username = username;
+                sip_device.created_at = moment().format("YYYY-MM-DD HH:mm:ss");
+                sip_device.updated_at = moment().format("YYYY-MM-DD HH:mm:ss");
                 values.sip_device = sip_device;
                 _usersbo.isUniqueUsername(values.username, 0)
                     .then(isUnique => {
                         if (isUnique) {
-                            let agent = {username, password, domain, options, accountcode, status, enabled, subscriber_id}
+                            let agent = {username, password, domain, options, accountcode, status, enabled, subscriber_id};
                             axios
                                 .post(`${base_url_cc_kam}api/v1/agents`, agent, call_center_authorization)
                                 .then((resp) => {
@@ -438,7 +440,6 @@ class agents extends baseModelbo {
                 return _this.sendResponseError(res, ['Error.cannot fetch list agents', err], 1, 403);
             })
     }
-
 
 }
 
