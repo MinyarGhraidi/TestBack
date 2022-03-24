@@ -9,6 +9,7 @@ const usersbo = require('../bo/usersbo');
 const agentsbo = require('../bo/agentsbo');
 const campaignsbo = require('../bo/campaignbo');
 const trunksbo = require('../bo/truncksbo');
+const {Sequelize} = require("sequelize");
 let _usersbo = new usersbo();
 let _agentsbo = new agentsbo();
 let _campaignsbo = new campaignsbo();
@@ -93,57 +94,76 @@ class accounts extends baseModelbo {
     AddEditAccount(req, res, next) {
         let _this = this;
         let newAccount = req.body;
-        if (newAccount.account_id) {
-            this.db['accounts'].update(
-                newAccount,
-                {
-                    where: {
-                        account_id: newAccount.account_id
-                    },
-                    returning: true,
-                    plain: true
-                }).then(account => {
-                _usersbo.saveUserFunction(newAccount.user, {where: {user_id: account.user_id}})
-                    .then(user => {
-                        res.send({
-                            message: 'success',
-                            data: user
-                        })
-                    })
-                    .catch(err => {
-                        return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
-                    })
-            }).catch(err => {
-                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
-            })
-        } else {
-            let modalObj = this.db['accounts'].build(newAccount);
-            modalObj.save().then(new_account => {
-                newAccount.user.account_id = new_account.account_id;
-                _usersbo.saveUserFunction(newAccount.user).then(new_user => {
-                    this.db['accounts'].update({
-                        user_id: new_user.user_id
-                    }, {
-                        where: {
-                            account_id: new_account.account_id
-                        },
-                        returning: true,
-                        plain: true
-                    }).then(update_account => {
-                        res.send({
-                            message: 'success',
-                            data: new_user
-                        })
-                    })
-                        .catch(err => {
+        let {domain, account_id} = newAccount;
+        this.isUniqueDomain(domain, account_id)
+            .then(isUniqueDomain => {
+                if(isUniqueDomain) {
+                    if (newAccount.account_id) {
+                        this.db['accounts'].update(
+                            newAccount,
+                            {
+                                where: {
+                                    account_id: newAccount.account_id
+                                },
+                                returning: true,
+                                plain: true
+                            }).then(account => {
+                            _usersbo.saveUserFunction(newAccount.user, {where: {user_id: account.user_id}})
+                                .then(user => {
+                                    res.send({
+                                        status: 200,
+                                        message: 'success',
+                                        success: true,
+                                        data: user
+                                    })
+                                })
+                                .catch(err => {
+                                    return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                                })
+                        }).catch(err => {
                             return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
                         })
-                })
-                    .catch(err => {
-                        return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                    } else {
+                        let modalObj = this.db['accounts'].build(newAccount);
+                        modalObj.save().then(new_account => {
+                            newAccount.user.account_id = new_account.account_id;
+                            _usersbo.saveUserFunction(newAccount.user).then(new_user => {
+                                this.db['accounts'].update({
+                                    user_id: new_user.user_id
+                                }, {
+                                    where: {
+                                        account_id: new_account.account_id
+                                    },
+                                    returning: true,
+                                    plain: true
+                                }).then(update_account => {
+                                    res.send({
+                                        status: 200,
+                                        message: 'success',
+                                        success: true,
+                                        data: new_user
+                                    })
+                                })
+                                    .catch(err => {
+                                        return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                                    })
+                            })
+                                .catch(err => {
+                                    return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                                })
+                        })
+                    }
+                } else {
+                    res.send({
+                        status: 200,
+                        success: false,
+                        message: 'This domain is already taken'
                     })
+                }
             })
-        }
+            .catch(err => {
+                return _this.sendResponseError(res, ['Cannot check the domain unicity', err], 1, 403);
+            })
     }
 
     deleteAgents(agents) {
@@ -376,6 +396,35 @@ class accounts extends baseModelbo {
             .catch(err => {
                 return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
             })
+    }
+
+    isUniqueDomain(domain, account_id) {
+        return new Promise((resolve, reject) => {
+            if(domain) {
+                this.db['accounts'].findAll({where : {
+                        active : 'Y',
+                        domain : {
+                            [Sequelize.Op.iLike]: domain
+                        }
+                    }})
+                    .then(accounts => {
+                        if(accounts && accounts.length !== 0) {
+                            if (domain === accounts[0].domain && parseInt(account_id) === accounts[0].account_id) {
+                                resolve(true);
+                            } else {
+                                resolve(false);
+                            }
+                        } else {
+                            resolve(true);
+                        }
+                    })
+                    .catch(err => {
+                        reject(err);
+                    })
+            } else {
+                resolve(true);
+            }
+        })
     }
 
 }
