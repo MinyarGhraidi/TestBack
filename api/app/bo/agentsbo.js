@@ -145,48 +145,58 @@ class agents extends baseModelbo {
         let _this = this;
         let values = req.body.values;
         let accountcode = req.body.accountcode;
-        // let {sip_device} = values;
         let sip_device = JSON.parse(JSON.stringify(values.sip_device));
-        let {username, password, domain, options, status, enabled, subscriber_id} = sip_device;
-        _usersbo.isUniqueUsername(values.username, 0)
-            .then(isUnique => {
-                if (isUnique) {
-                    let agent = {username, password, domain, options, accountcode, status, enabled, subscriber_id}
-                    axios
-                        .post(`${base_url_cc_kam}api/v1/agents`, agent, call_center_authorization)
-                        .then((resp) => {
-                            let uuid = resp.data.result.agent.uuid || null;
-                            values.sip_device.uuid = uuid;
-                            this.saveAgentInDB(values)
-                                .then(agent => {
+        this.db['users'].findOne({where : {active: 'Y', user_type : 'agent'}, order : [['user_id', 'DESC']]})
+            .then(lastAgent => {
+                let lastAgentSip_device = lastAgent.sip_device;
+                let lastAgentKamailioUsername = lastAgentSip_device.username;
+                let username = (parseInt(lastAgentKamailioUsername) + 1).toString();
+                let {password, domain, options, status, enabled, subscriber_id} = sip_device;
+                sip_device.username = username;
+                values.sip_device = sip_device;
+                _usersbo.isUniqueUsername(values.username, 0)
+                    .then(isUnique => {
+                        if (isUnique) {
+                            let agent = {username, password, domain, options, accountcode, status, enabled, subscriber_id}
+                            axios
+                                .post(`${base_url_cc_kam}api/v1/agents`, agent, call_center_authorization)
+                                .then((resp) => {
+                                    let uuid = resp.data.result.agent.uuid || null;
+                                    values.sip_device.uuid = uuid;
+                                    this.saveAgentInDB(values)
+                                        .then(agent => {
+                                            res.send({
+                                                status: 200,
+                                                message: "success",
+                                                data: agent,
+                                                success: true
+                                            })
+                                        })
+                                        .catch(err => {
+                                            return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                                        })
+                                })
+                                .catch((err) => {
                                     res.send({
-                                        status: 200,
-                                        message: "success",
-                                        data: agent,
-                                        success: true
-                                    })
-                                })
-                                .catch(err => {
-                                    return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
-                                })
-                        })
-                        .catch((err) => {
+                                        status: 403,
+                                        message: 'failed',
+                                        error_type: 'telco',
+                                        errors: err.response.data.errors
+                                    });
+                                });
+                        } else {
                             res.send({
                                 status: 403,
-                                message: 'failed',
-                                error_type: 'telco',
-                                errors: err.response.data.errors
+                                success: false,
+                                error_type: 'check_username',
+                                message: 'This username is already exist'
                             });
-                        });
-                } else {
-                    res.send({
-                        status: 403,
-                        success: false,
-                        error_type: 'check_username',
-                        message: 'This username is already exist'
-                    });
-                }
-            })
+                        }
+                    })
+                    .catch(err => {
+                        return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                    })
+            } )
             .catch(err => {
                 return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
             })
