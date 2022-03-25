@@ -155,6 +155,7 @@ class agents extends baseModelbo {
                 sip_device.username = username;
                 sip_device.created_at = moment().format("YYYY-MM-DD HH:mm:ss");
                 sip_device.updated_at = moment().format("YYYY-MM-DD HH:mm:ss");
+                sip_device.status = "logged-out";
                 values.sip_device = sip_device;
                 _usersbo.isUniqueUsername(values.username, 0)
                     .then(isUnique => {
@@ -165,6 +166,7 @@ class agents extends baseModelbo {
                                 .then((resp) => {
                                     let uuid = resp.data.result.agent.uuid || null;
                                     values.sip_device.uuid = uuid;
+                                    values.params = {sales : [], status : "logged-out"}
                                     this.saveAgentInDB(values)
                                         .then(agent => {
                                             res.send({
