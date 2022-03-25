@@ -13,6 +13,8 @@ const call_center_authorization = {
     headers: {Authorization: call_center_token}
 };
 const usersbo = require('./usersbo');
+const {Sequelize} = require("sequelize");
+const Op = require("sequelize");
 let _usersbo = new usersbo;
 const appSocket = new (require('../providers/AppSocket'))();
 
@@ -413,30 +415,87 @@ class agents extends baseModelbo {
         })
     }
 
+    getCampaigns_ids(campaign_name) {
+        return new Promise((resolve, reject) => {
+            if(campaign_name && campaign_name !== '') {
+                this.db['campaigns'].findAll({where: {active: 'Y',
+                        campaign_name: {
+                            [Sequelize.Op.iLike]: `%${campaign_name}%`
+                        },}
+                })
+                    .then(campaigns => {
+                        let campaigns_ids = campaigns.map(el => el.campaign_id);
+                        resolve(campaigns_ids);
+                    })
+                    .catch(err => {
+                        reject(err);
+                    })
+            } else {
+                resolve([]);
+            }
+        })
+    }
+
     getConnectedAgents(req, res, next) {
         let _this = this;
-        let {account_id} = req.body;
-        this.db['users'].findAll({where : {active : 'Y', account_id : account_id, role_crm_id : 3}})
-            .then(agents => {
-                let loggedAgents = agents.filter(el => el.sip_device.status !== "logged-out");
-                let formattedData = loggedAgents.map(user => {
-                    let {sip_device, first_name, last_name, user_id, campaign_id} = user;
-                    return {
-                        user_id: user_id,
-                        first_name: first_name,
-                        last_name: last_name,
-                        uuid: sip_device.uuid,
-                        crmStatus: user.params.status,
-                        telcoStatus: sip_device.status,
-                        updated_at: sip_device.updated_at,
-                        campaign_id : campaign_id
-                    };
-                })
-                res.send({
-                    status : "200",
-                    message : "success",
-                    data : formattedData
-                })
+        let {account_id, campaign_name, agent_name} = req.body;
+        this.getCampaigns_ids(campaign_name)
+            .then(campaigns_ids => {
+                let where = {active : 'Y', account_id : account_id, user_type : "agent"}
+                if(campaign_name && campaign_name !== '') {
+                    where.campaign_id = campaigns_ids;
+                }
+                if(agent_name && agent_name !== '') {
+                    let where_agent = {
+                        [Sequelize.Op.or] : [
+                            {
+                                first_name: {
+                                    [Sequelize.Op.iLike]: `%${agent_name}%`
+                                }
+                            },
+                            {
+                                last_name: {
+                                    [Sequelize.Op.iLike]: `%${agent_name}%`
+                                }
+                            },
+                            {
+                                username: {
+                                    [Sequelize.Op.iLike]: `%${agent_name}%`
+                                }
+                            }
+                        ]
+                    }
+
+                    where = {...where, ...where_agent};
+                }
+
+                this.db['users'].findAll({where : where})
+                    .then(agents => {
+
+                        let loggedAgents = agents.filter(el => el.sip_device.status !== "logged-out");
+                        let formattedData = loggedAgents.map(user => {
+                            let {sip_device, first_name, last_name, user_id, campaign_id} = user;
+                            return {
+                                user_id: user_id,
+                                first_name: first_name,
+                                last_name: last_name,
+                                uuid: sip_device.uuid,
+                                crmStatus: user.params.status,
+                                telcoStatus: sip_device.status,
+                                updated_at: sip_device.updated_at,
+                                campaign_id : campaign_id
+                            };
+                        })
+                        res.send({
+                            status : "200",
+                            message : "success",
+                            data : formattedData
+                        })
+                    })
+                    .catch(err => {
+                        return _this.sendResponseError(res, ['Error.cannot fetch list agents', err], 1, 403);
+                    })
+
             })
             .catch(err => {
                 return _this.sendResponseError(res, ['Error.cannot fetch list agents', err], 1, 403);
