@@ -143,14 +143,14 @@ class agents extends baseModelbo {
 
     saveAgent(req, res, next) {
         let _this = this;
-        let values = req.body.values;
-        let accountcode = req.body.accountcode;
+        let {values, accountcode, bulkNum} = req.body;
         let sip_device = JSON.parse(JSON.stringify(values.sip_device));
         this.db['users'].findOne({where : {active: 'Y', user_type : 'agent'}, order : [['user_id', 'DESC']]})
             .then(lastAgent => {
+                let increment = bulkNum ? bulkNum : 1;
                 let lastAgentSip_device = lastAgent.sip_device;
                 let lastAgentKamailioUsername = lastAgentSip_device.username;
-                let username = (parseInt(lastAgentKamailioUsername) + 1).toString();
+                let username = (parseInt(lastAgentKamailioUsername) + increment).toString();
                 let {password, domain, options, status, enabled, subscriber_id} = sip_device;
                 sip_device.username = username;
                 sip_device.created_at = moment().format("YYYY-MM-DD HH:mm:ss");
