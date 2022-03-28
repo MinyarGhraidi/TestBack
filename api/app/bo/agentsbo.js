@@ -363,7 +363,7 @@ class agents extends baseModelbo {
                             this.db["users"].findOne({where: {user_id: user_id}})
                                 .then(user => {
                                     let params = user.params;
-                                    agent.updated_at = moment().format("YYYY-MM-DD HH:mm:ss")
+                                    agent.updated_at = moment(new Date());
                                     this.updateAgentStatus(user_id, agent, crmStatus, created_at, params)
                                         .then(() => {
                                             resolve(user);

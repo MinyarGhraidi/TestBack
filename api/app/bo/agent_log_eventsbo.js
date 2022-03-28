@@ -11,7 +11,6 @@ class agent_log_events extends baseModelbo {
 
     getLastEvent(req, res, next) {
         let _this = this;
-        console.log(req.body)
         let {user_id} = req.body;
         this.db['agent_log_events'].findAll({where : {active: 'Y', user_id : user_id}})
             .then(events => {
@@ -22,7 +21,6 @@ class agent_log_events extends baseModelbo {
                 });
             })
             .catch(err => {
-                console.log(err)
                 return _this.sendResponseError(res, ['Error.cannot Fetch data from DB', err], 1, 403);
             })
     }
