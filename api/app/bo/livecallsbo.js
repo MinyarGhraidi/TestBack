@@ -52,7 +52,6 @@ class livecalls extends baseModelbo {
                     })
             })
             .catch(err => {
-                console.log(err)
                 return _this.sendResponseError(res, ['Cannot fetch data from DB', err], 1, 403);
             })
     }
