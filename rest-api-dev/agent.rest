@@ -5,7 +5,7 @@ Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9c
 
 ###
 #GET AGENT BY UUID
-GET https://occ.oxilog.net:2443/api/v1/agents/8226a3e6-6dba-41c7-a6ea-d8b75e4989d4
+GET https://occ.oxilog.net:2443/api/v1/agents/cc51a9c8-5197-44d4-a934-0ea1857a98de
 Content-Type: application/json
 Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9cIi2IY5
 
