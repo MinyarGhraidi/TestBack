@@ -27,39 +27,32 @@ class livecalls extends baseModelbo {
 
     getLiveCallsByAccount(req, res, next) {
         let _this = this;
-        let {role_crm_id, account_id} = req.body;
+        let {account_id} = req.body;
         this.db['live_calls'].findAll({where: {active: 'Y'}})
-            .then(livecalls => {
-                if(role_crm_id !== 2) {
-                    this.db['accounts'].findOne({where : {account_id : account_id}})
-                        .then(account => {
-                            if(Object.keys(account) && Object.keys(account).length !== 0) {
-                                let filteredData = livecalls.filter(call => call.events[0].accountcode === account.accountcode);
-                                res.send({
-                                    status: 200,
-                                    message: "success",
-                                    data: filteredData
-                                });
-                            } else {
-                                res.send({
-                                    status: 200,
-                                    message: "success",
-                                    data: []
-                                });
-                            }
-                        })
-                        .catch(err => {
-                            return _this.sendResponseError(res, ['Cannot fetch accounts from DB', err], 1, 403);
-                        })
-                } else {
-                    res.send({
-                        status: 200,
-                        message: "success",
-                        data: livecalls
-                    });
-                }
+            .then(liveCalls => {
+                this.db['accounts'].findOne({where: {account_id: account_id}})
+                    .then(account => {
+                        if (Object.keys(account) && Object.keys(account).length !== 0) {
+                            let filteredData = liveCalls.filter(call => call.events[0].accountcode === account.accountcode);
+                            res.send({
+                                status: 200,
+                                message: "success",
+                                data: filteredData,
+                            });
+                        } else {
+                            res.send({
+                                status: 200,
+                                message: "success",
+                                data: []
+                            });
+                        }
+                    })
+                    .catch(err => {
+                        return _this.sendResponseError(res, ['Cannot fetch accounts from DB', err], 1, 403);
+                    })
             })
             .catch(err => {
+                console.log(err)
                 return _this.sendResponseError(res, ['Cannot fetch data from DB', err], 1, 403);
             })
     }
