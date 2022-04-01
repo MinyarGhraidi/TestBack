@@ -38,4 +38,7 @@ module.exports = {
     getConnectedAgents: function (req, res, next) {
         agentsDaoInst.getConnectedAgents(req, res, next)
     },
+    filterDashboard: function (req, res, next) {
+        agentsDaoInst.filterDashboard(req, res, next)
+    },
 }
