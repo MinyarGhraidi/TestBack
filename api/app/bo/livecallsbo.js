@@ -33,7 +33,7 @@ class livecalls extends baseModelbo {
                 this.db['accounts'].findOne({where: {account_id: account_id}})
                     .then(account => {
                         if (Object.keys(account) && Object.keys(account).length !== 0) {
-                            let filteredData = liveCalls.filter(call => call.events[0].accountcode === account.accountcode);
+                            let filteredData = liveCalls.filter(call => call.events[0].accountcode === account.account_code);
                             res.send({
                                 status: 200,
                                 message: "success",
