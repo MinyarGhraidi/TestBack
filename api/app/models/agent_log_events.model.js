@@ -26,24 +26,36 @@ module.exports = (sequelize, Sequelize) => {
             updated_at: {
                 allowNull: true,
                 type: Sequelize.DATE,
+            },
+            start_at: {
+                allowNull: true,
+                type: Sequelize.DATE,
+            },
+            finish_at: {
+                allowNull: true,
+                type: Sequelize.DATE,
             }
         },
         {timestamps: false})
 
-        agent_log_event.prototype.fields = [
+    agent_log_event.prototype.fields = [
         'agent_log_event_id',
         'action_name',
         'active',
         'created_at',
         'updated_at',
-        'user_id'
+        'user_id',
+        'start_at',
+        'finish_at'
     ]
     agent_log_event.prototype.fieldsSearchMetas = [
         'agent_log_event_id',
         'action_name',
         'active',
-        'user_id'
-        ]
+        'user_id',
+        'start_at',
+        'finish_at'
+    ]
 
     return agent_log_event
 }

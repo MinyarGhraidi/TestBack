@@ -17,4 +17,7 @@ module.exports = {
     delete: function (req, res, next) {
         callstatusDaoInst.delete(req, res, next);
     },
+    changeStatus:function (req, res, next) {
+        callstatusDaoInst.changeStatus(req, res, next)
+    }
 }

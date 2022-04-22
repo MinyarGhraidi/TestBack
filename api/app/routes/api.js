@@ -247,7 +247,9 @@ let apiRouters = function (passport) {
     router.post("/api/callcenter/authorize", meetingsController.authorize);
 
     router.post("/api/saveCallFile",callfileController.CallFilesMapping);
-    router.post("/api/listCallFile/saveListCallFile",passport.authenticate('jwt', {session: false}),callfileController.saveListCallFile)
+    router.post("/api/listCallFile/saveListCallFile",passport.authenticate('jwt', {session: false}),callfileController.saveListCallFile);
+
+    router.post("/api/callstatus/changeStatus", passport.authenticate('jwt',{session: false}), callstatusController.changeStatus)
 
 
     return router;
