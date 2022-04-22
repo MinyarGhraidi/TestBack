@@ -9,6 +9,7 @@ const bcrypt = require("bcrypt");
 const {appSecret} = require("../helpers/app");
 const {Sequelize} = require("sequelize");
 const moment = require("moment");
+const appSocket = new (require('../providers/AppSocket'))();
 
 class users extends baseModelbo {
     constructor() {
@@ -51,19 +52,49 @@ class users extends baseModelbo {
                                     }
                                 }).then(permissions => {
                                     this.getPermissionsValues(permissions).then(data_perm => {
-                                        const token = jwt.sign({
-                                            user_id: user.user_id,
-                                            username: user.username,
-                                        }, config.secret, {
-                                            expiresIn: '8600m'
-                                        });
-                                        res.send({
-                                            message: 'Success',
-                                            user: user.toJSON(),
-                                            permissions: data_perm || [],
-                                            success: true,
-                                            token: token,
-                                            result: 1,
+                                        this.db['accounts'].findOne({where: {account_id: user.account_id}})
+                                            .then(account => {
+
+                                                let accountcode = account.account_code;
+
+                                                if (user.user_type === "agent") {
+                                                    let {
+                                                        sip_device,
+                                                        first_name,
+                                                        last_name,
+                                                        user_id,
+                                                        campaign_id
+                                                    } = user;
+                                                    let data_agent = {
+                                                        user_id: user_id,
+                                                        first_name: first_name,
+                                                        last_name: last_name,
+                                                        uuid: sip_device.uuid,
+                                                        crmStatus: user.params.status,
+                                                        telcoStatus: sip_device.status,
+                                                        updated_at: sip_device.updated_at,
+                                                        campaign_id: campaign_id
+                                                    };
+                                                    appSocket.emit('agent_connection', data_agent);
+                                                }
+
+                                                const token = jwt.sign({
+                                                    user_id: user.user_id,
+                                                    username: user.username,
+                                                }, config.secret, {
+                                                    expiresIn: '8600m'
+                                                });
+                                                res.send({
+                                                    message: 'Success',
+                                                    user: user.toJSON(),
+                                                    permissions: data_perm || [],
+                                                    success: true,
+                                                    token: token,
+                                                    result: 1,
+                                                    accountcode: accountcode
+                                                });
+                                            }).catch((error) => {
+                                            return this.sendResponseError(res, ['Error.AnErrorHasOccuredUser'], 1, 403);
                                         });
                                     })
                                 })
@@ -112,20 +143,28 @@ class users extends baseModelbo {
                             }
                         }).then(permissions => {
                             this.getPermissionsValues(permissions).then(data_perm => {
-                                const token = jwt.sign({
-                                    user_id: user.user_id,
-                                    username: user.username,
-                                }, config.secret, {
-                                    expiresIn: '8600m'
+                                this.db['accounts'].findOne({where: {account_id: user.account_id}})
+                                    .then(account => {
+                                        let accountcode = account.account_code;
+                                        const token = jwt.sign({
+                                            user_id: user.user_id,
+                                            username: user.username,
+                                        }, config.secret, {
+                                            expiresIn: '8600m'
+                                        });
+                                        res.send({
+                                            message: 'Success',
+                                            user: user.toJSON(),
+                                            permissions: data_perm || [],
+                                            success: true,
+                                            token: token,
+                                            result: 1,
+                                            accountcode: accountcode
+                                        });
+                                    }).catch((error) => {
+                                    return this.sendResponseError(res, ['Error.AnErrorHasOccuredUser'], 1, 403);
                                 });
-                                res.send({
-                                    message: 'Success',
-                                    user: user.toJSON(),
-                                    permissions: data_perm || [],
-                                    success: true,
-                                    token: token,
-                                    result: 1,
-                                });
+
                             })
                         })
                     }
@@ -710,7 +749,7 @@ class users extends baseModelbo {
     cloneSales(req, res, next) {
         let _this = this;
         let {user_id, first_name, last_name, password_hash, email, username} = req.body;
-        this.db['users'].findOne({where: {user_id: user_id, active : 'Y'}})
+        this.db['users'].findOne({where: {user_id: user_id, active: 'Y'}})
             .then(salesToClone => {
                 if (salesToClone && salesToClone.user_id) {
                     this.isUniqueUsername(username, 0)
@@ -747,8 +786,8 @@ class users extends baseModelbo {
                                 .then(cloned_sales => {
                                     let sales_id = cloned_sales.user_id;
                                     let agents_ids = cloned_sales.params.agents;
-                                    if(agents_ids && agents_ids.length !== 0) {
-                                        this.db['users'].findAll({where : {user_id : agents_ids, active : 'Y'}})
+                                    if (agents_ids && agents_ids.length !== 0) {
+                                        this.db['users'].findAll({where: {user_id: agents_ids, active: 'Y'}})
                                             .then(agents => {
                                                 this.updateParamsAgent(agents, sales_id, true)
                                                     .then(() => {

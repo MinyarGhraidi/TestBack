@@ -12,9 +12,11 @@ const base_url_cc_kam = require(__dirname + '/../config/config.json')["base_url_
 const call_center_authorization = {
     headers: {Authorization: call_center_token}
 };
-
 const usersbo = require('./usersbo');
+const {Sequelize} = require("sequelize");
+const Op = require("sequelize");
 let _usersbo = new usersbo;
+const appSocket = new (require('../providers/AppSocket'))();
 
 class agents extends baseModelbo {
     constructor() {
@@ -143,49 +145,72 @@ class agents extends baseModelbo {
 
     saveAgent(req, res, next) {
         let _this = this;
-        let values = req.body.values;
-        let accountcode = req.body.accountcode;
-        // let {sip_device} = values;
+        let {values, accountcode, bulkNum} = req.body;
         let sip_device = JSON.parse(JSON.stringify(values.sip_device));
-        let {username, password, domain, options, status, enabled, subscriber_id} = sip_device;
-        _usersbo.isUniqueUsername(values.username, 0)
-            .then(isUnique => {
-                if (isUnique) {
-                    let agent = {username, password, domain, options, accountcode, status, enabled, subscriber_id}
-                    axios
-                        .post(`${base_url_cc_kam}api/v1/agents`, agent, call_center_authorization)
-                        .then((resp) => {
-                            let uuid = resp.data.result.agent.uuid || null;
-                            values.sip_device.uuid = uuid;
-                            this.saveAgentInDB(values)
-                                .then(agent => {
+        this.db['users'].findOne({where: {active: 'Y', user_type: 'agent'}, order: [['user_id', 'DESC']]})
+            .then(lastAgent => {
+                let increment = bulkNum ? bulkNum : 1;
+                let lastAgentSip_device = lastAgent.sip_device;
+                let lastAgentKamailioUsername = lastAgentSip_device.username;
+                let username = (parseInt(lastAgentKamailioUsername) + increment).toString();
+                let {password, domain, options, status, enabled, subscriber_id} = sip_device;
+                sip_device.username = username;
+                sip_device.created_at = moment().format("YYYY-MM-DD HH:mm:ss");
+                sip_device.updated_at = moment().format("YYYY-MM-DD HH:mm:ss");
+                sip_device.status = "logged-out";
+                values.sip_device = sip_device;
+                _usersbo.isUniqueUsername(values.username, 0)
+                    .then(isUnique => {
+                        if (isUnique) {
+                            let agent = {
+                                username,
+                                password,
+                                domain,
+                                options,
+                                accountcode,
+                                status,
+                                enabled,
+                                subscriber_id
+                            };
+                            axios
+                                .post(`${base_url_cc_kam}api/v1/agents`, agent, call_center_authorization)
+                                .then((resp) => {
+                                    let uuid = resp.data.result.agent.uuid || null;
+                                    values.sip_device.uuid = uuid;
+                                    values.params = {sales: [], status: "logged-out"}
+                                    this.saveAgentInDB(values)
+                                        .then(agent => {
+                                            res.send({
+                                                status: 200,
+                                                message: "success",
+                                                data: agent,
+                                                success: true
+                                            })
+                                        })
+                                        .catch(err => {
+                                            return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                                        })
+                                })
+                                .catch((err) => {
                                     res.send({
-                                        status: 200,
-                                        message: "success",
-                                        data: agent,
-                                        success: true
-                                    })
-                                })
-                                .catch(err => {
-                                    return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
-                                })
-                        })
-                        .catch((err) => {
+                                        status: 403,
+                                        message: 'failed',
+                                        error_type: 'telco',
+                                        errors: err.response.data.errors
+                                    });
+                                });
+                        } else {
                             res.send({
                                 status: 403,
-                                message: 'failed',
-                                error_type: 'telco',
-                                errors: err.response.data.errors
+                                success: false,
+                                error_type: 'check_username',
+                                message: 'This username is already exist'
                             });
-                        });
-                } else {
-                    res.send({
-                        status: 403,
-                        success: false,
-                        error_type: 'check_username',
-                        message: 'This username is already exist'
-                    });
-                }
+                        }
+                    })
+                    .catch(err => {
+                        return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                    })
             })
             .catch(err => {
                 return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
@@ -311,7 +336,18 @@ class agents extends baseModelbo {
         let _this = this;
         let {user_id, uuid, crmStatus, telcoStatus} = req.body;
         this.onConnectFunc(user_id, uuid, crmStatus, telcoStatus)
-            .then(() => {
+            .then((user) => {
+                let {sip_device, first_name, last_name, user_id} = user;
+                let data_agent = {
+                    user_id: user_id,
+                    first_name: first_name,
+                    last_name: last_name,
+                    uuid: sip_device.uuid,
+                    crmStatus: user.params.status,
+                    telcoStatus: sip_device.status,
+                    updated_at: sip_device.updated_at
+                };
+                appSocket.emit('agent_connection', data_agent);
                 res.send({
                     status: 200,
                     message: 'success'
@@ -335,10 +371,11 @@ class agents extends baseModelbo {
                         .then(() => {
                             this.db["users"].findOne({where: {user_id: user_id}})
                                 .then(user => {
-                                    let params = user.params
+                                    let params = user.params;
+                                    agent.updated_at = moment(new Date());
                                     this.updateAgentStatus(user_id, agent, crmStatus, created_at, params)
                                         .then(() => {
-                                            resolve(true);
+                                            resolve(user);
                                         })
                                         .catch((err) => {
                                             reject(err);
@@ -385,6 +422,136 @@ class agents extends baseModelbo {
                     reject(err)
                 })
         })
+    }
+
+    getCampaigns_ids(campaign_name) {
+        return new Promise((resolve, reject) => {
+            if (campaign_name && campaign_name !== '') {
+                this.db['campaigns'].findAll({
+                    where: {
+                        active: 'Y',
+                        campaign_name: {
+                            [Sequelize.Op.iLike]: `%${campaign_name}%`
+                        },
+                    }
+                })
+                    .then(campaigns => {
+                        let campaigns_ids = campaigns.map(el => el.campaign_id);
+                        resolve(campaigns_ids);
+                    })
+                    .catch(err => {
+                        reject(err);
+                    })
+            } else {
+                resolve([]);
+            }
+        })
+    }
+
+    getConnectedAgents(req, res, next) {
+        let _this = this;
+        let {account_id, campaign_name, agent_name} = req.body;
+        this.getCampaigns_ids(campaign_name)
+            .then(campaigns_ids => {
+                let where = {active: 'Y', account_id: account_id, user_type: "agent"}
+                if (campaign_name && campaign_name !== '') {
+                    where.campaign_id = campaigns_ids;
+                }
+                if (agent_name && agent_name !== '') {
+                    let where_agent = {
+                        [Sequelize.Op.or]: [
+                            {
+                                first_name: {
+                                    [Sequelize.Op.iLike]: `%${agent_name}%`
+                                }
+                            },
+                            {
+                                last_name: {
+                                    [Sequelize.Op.iLike]: `%${agent_name}%`
+                                }
+                            },
+                            {
+                                username: {
+                                    [Sequelize.Op.iLike]: `%${agent_name}%`
+                                }
+                            }
+                        ]
+                    }
+
+                    where = {...where, ...where_agent};
+                }
+
+                this.db['users'].findAll({where: where})
+                    .then(agents => {
+
+                        let loggedAgents = agents.filter(el => el.sip_device.status !== "logged-out");
+                        let formattedData = loggedAgents.map(user => {
+                            let {sip_device, first_name, last_name, user_id, campaign_id} = user;
+                            return {
+                                user_id: user_id,
+                                first_name: first_name,
+                                last_name: last_name,
+                                uuid: sip_device.uuid,
+                                crmStatus: user.params.status,
+                                telcoStatus: sip_device.status,
+                                updated_at: sip_device.updated_at,
+                                campaign_id: campaign_id
+                            };
+                        })
+                        res.send({
+                            status: "200",
+                            message: "success",
+                            data: formattedData
+                        })
+                    })
+                    .catch(err => {
+                        return _this.sendResponseError(res, ['Error.cannot fetch list agents', err], 1, 403);
+                    })
+
+            })
+            .catch(err => {
+                return _this.sendResponseError(res, ['Error.cannot fetch list agents', err], 1, 403);
+            })
+    }
+
+    filterDashboard(req, res, next) {
+        let _this = this;
+        let {account_id, campaign_id, agent_id} = req.body;
+        let where = {active: 'Y', account_id: account_id, user_type: "agent"}
+
+        if (campaign_id) {
+            where.campaign_id = campaign_id;
+        }
+
+        if (agent_id) {
+            where.user_id = agent_id;
+        }
+
+        this.db['users'].findAll({where: where})
+            .then(agents => {
+                let loggedAgents = agents.filter(el => el.sip_device.status !== "logged-out");
+                let formattedData = loggedAgents.map(user => {
+                    let {sip_device, first_name, last_name, user_id, campaign_id} = user;
+                    return {
+                        user_id: user_id,
+                        first_name: first_name,
+                        last_name: last_name,
+                        uuid: sip_device.uuid,
+                        crmStatus: user.params.status,
+                        telcoStatus: sip_device.status,
+                        updated_at: sip_device.updated_at,
+                        campaign_id: campaign_id
+                    };
+                })
+                res.send({
+                    status: "200",
+                    message: "success",
+                    data: formattedData
+                })
+            })
+            .catch(err => {
+                return _this.sendResponseError(res, ['Error.cannot fetch list agents', err], 1, 403);
+            })
     }
 
 }

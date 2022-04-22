@@ -5,7 +5,7 @@ Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9c
 
 ###
 #GET AGENT BY UUID
-GET https://occ.oxilog.net:2443/api/v1/agents/8226a3e6-6dba-41c7-a6ea-d8b75e4989d4
+GET https://occ.oxilog.net:2443/api/v1/agents/cc51a9c8-5197-44d4-a934-0ea1857a98de
 Content-Type: application/json
 Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9cIi2IY5
 
@@ -17,7 +17,7 @@ Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9c
 
 ###
 #GET AGENT TIERS BY UUID
-GET https://occ.oxilog.net:2443/api/v1/agents/63c36dcd-480c-42d8-bc96-aa2e662ce94c/tiers
+GET https://occ.oxilog.net:2443/api/v1/agents/fe29c88a-d59f-483d-aecf-e61a9063e31d/tiers
 Content-Type: application/json
 Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9cIi2IY5
 
@@ -47,12 +47,12 @@ Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9c
 
 ###
 #UPDATE AGENT
-PUT https://occ.oxilog.net:2443/api/v1/agents/071b73a1-b371-4535-8bb9-a49b7895e678
+PUT https://occ.oxilog.net:2443/api/v1/agents/fe29c88a-d59f-483d-aecf-e61a9063e31d
 Content-Type: application/json
 Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9cIi2IY5
 
 {
-  "username": "test1919",
+  "username": "mariem",
   "domain": "occ.oxilog.net",
   "password": "pwdpwd2021",
   "accountcode": "1",

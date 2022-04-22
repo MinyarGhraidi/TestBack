@@ -35,18 +35,19 @@ usersController = require("../controllers/users.controller");
 agentsController = require("../controllers/agents.controller");
 efilesController = require("../controllers/efiles.controller");
 listcallfilesController = require("../controllers/listcallfiles.controller");
-lookupController = require('../controllers/lookups.controller')
-truncksController = require('../controllers/truncks.controller')
-callstatusController = require('../controllers/callstatus.controller')
-pausestatusController = require('../controllers/pausestatus.controller')
-didsController = require('../controllers/did.controller')
-audiosController = require('../controllers/audio.controller')
-agent_log_eventsController = require('../controllers/agent_log_events.controller')
-meetingsController = require('../controllers/meeting.controller')
-emailsController = require('../controllers/email.controller')
-roles_crmController = require('../controllers/roles_crm.controller')
-acl_Controller = require('../controllers/Permissionacl.controller')
-sales_Controller = require('../controllers/sales.controller')
+lookupController = require('../controllers/lookups.controller');
+truncksController = require('../controllers/truncks.controller');
+callstatusController = require('../controllers/callstatus.controller');
+pausestatusController = require('../controllers/pausestatus.controller');
+didsController = require('../controllers/did.controller');
+audiosController = require('../controllers/audio.controller');
+agent_log_eventsController = require('../controllers/agent_log_events.controller');
+meetingsController = require('../controllers/meeting.controller');
+emailsController = require('../controllers/email.controller');
+roles_crmController = require('../controllers/roles_crm.controller');
+acl_Controller = require('../controllers/Permissionacl.controller');
+sales_Controller = require('../controllers/sales.controller');
+liveCallsController = require('../controllers/livecalls.Controller');
 
 
 let apiRouters = function (passport) {
@@ -129,6 +130,8 @@ let apiRouters = function (passport) {
     router.post("/api/agent/updateAgent", passport.authenticate('jwt', {session: false}), agentsController.updateAgent);
     router.post("/api/agent/deleteAgent", passport.authenticate('jwt', {session: false}), agentsController.deleteAgent);
     router.post("/api/agent/onConnect", passport.authenticate('jwt', {session: false}), agentsController.onConnect);
+    router.post("/api/agent/getConnectedAgents", passport.authenticate('jwt', {session: false}), agentsController.getConnectedAgents);
+    router.post("/api/agent/filterDashboard", passport.authenticate('jwt', {session: false}), agentsController.filterDashboard);
 
     router.post("/api/signup", agentsController.signUp);
     router.post("/api/signin", agentsController.signIn);
@@ -212,6 +215,7 @@ let apiRouters = function (passport) {
     router.put("/api/agent_log_event/update", passport.authenticate('jwt', {session: false}), agent_log_eventsController.update);
     router.delete("/api/agent_log_event/delete/:params", passport.authenticate('jwt', {session: false}), agent_log_eventsController.delete);
     router.post("/api/agent_log_event/save", passport.authenticate('jwt', {session: false}), agent_log_eventsController.save);
+    router.post("/api/agent_log_event/getLastEvent", passport.authenticate('jwt', {session: false}), agent_log_eventsController.getLastEvent);
 
     // meetings routes
     router.post("/api/meeting/find", passport.authenticate('jwt', {session: false}), meetingsController.find);
@@ -249,8 +253,18 @@ let apiRouters = function (passport) {
     router.post("/api/saveCallFile",callfileController.CallFilesMapping);
     router.post("/api/listCallFile/saveListCallFile",passport.authenticate('jwt', {session: false}),callfileController.saveListCallFile);
 
+
     router.post("/api/callstatus/changeStatus", passport.authenticate('jwt',{session: false}), callstatusController.changeStatus)
 
+    //livecalls
+
+    router.post("/api/livecalls/find", passport.authenticate('jwt', {session: false}), liveCallsController.find);
+    router.get("/api/livecalls/findById/:entity_id", passport.authenticate('jwt', {session: false}), liveCallsController.findById);
+    router.put("/api/livecalls/update", passport.authenticate('jwt', {session: false}), liveCallsController.update);
+    router.delete("/api/livecalls/delete/:params", passport.authenticate('jwt', {session: false}), liveCallsController.delete);
+    router.post("/api/livecalls/save", passport.authenticate('jwt', {session: false}), liveCallsController.save);
+    router.post("/api/livecalls/getLiveCallsByCallId", passport.authenticate('jwt', {session: false}), liveCallsController.getLiveCallsByCallId);
+    router.post("/api/livecalls/getLiveCallsByAccount", passport.authenticate('jwt', {session: false}), liveCallsController.getLiveCallsByAccount);
 
     return router;
 

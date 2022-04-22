@@ -35,4 +35,10 @@ module.exports = {
     onConnect: function (req, res, next) {
         agentsDaoInst.onConnect(req, res, next)
     },
+    getConnectedAgents: function (req, res, next) {
+        agentsDaoInst.getConnectedAgents(req, res, next)
+    },
+    filterDashboard: function (req, res, next) {
+        agentsDaoInst.filterDashboard(req, res, next)
+    },
 }
