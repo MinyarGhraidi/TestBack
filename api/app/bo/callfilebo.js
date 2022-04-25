@@ -351,6 +351,27 @@ class callfiles extends baseModelbo {
             });
         })
     }
+
+    updateCallFileQualification (req, res, next){
+        let callfile_id = req.body.callfile_id
+        let note = req.body.note
+        let callStatus = req.body.callStatus
+
+        this.db['callfiles'].update({
+            note:note,
+            callStatus: callStatus
+        },{
+            where:{
+                callfile_id:callfile_id
+            }
+        }).then(result=>{
+            res.send({
+                success: true
+            })
+        }).catch(err=>{
+            return this.sendResponseError(res, ['Error', err], 1, 403);
+        })
+    }
 }
 
 module.exports = callfiles;

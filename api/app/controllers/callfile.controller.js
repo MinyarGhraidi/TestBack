@@ -24,5 +24,8 @@ module.exports = {
     },
     saveListCallFile: function (req, res, next){
         _itembo.saveListCallFile(req, res, next)
+    },
+    updateCallFileQualification :function (req, res, next){
+        _itembo.updateCallFileQualification(req,res,next)
     }
 };

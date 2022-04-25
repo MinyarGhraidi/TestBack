@@ -78,6 +78,12 @@ module.exports = (sequelize, Sequelize) => {
                 type: Sequelize.DATE,
                 defaultValue: new Date()
             },
+            note:{
+                type: Sequelize.STRING
+            },
+        callStatus:{
+            type: Sequelize.STRING
+        }
         },
         {timestamps: false,}
     )
@@ -101,7 +107,7 @@ module.exports = (sequelize, Sequelize) => {
         'country_code',
         'customfields',
         'to_treat'
-       
+
     ]
     callfile.prototype.fieldsSearchMetas = [
             'callfile_id',
@@ -123,6 +129,6 @@ module.exports = (sequelize, Sequelize) => {
             'customfields',
             'to_treat'
         ]
-        
+
     return callfile
 }

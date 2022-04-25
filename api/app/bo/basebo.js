@@ -136,7 +136,7 @@ class baseModelbo {
     save(req, res, next) {
 
         const preFormData = req.body;
-    
+
 
         this.preSave(preFormData).then(formData => {
             let modalObj = this.db[this.baseModal].build(formData);
@@ -227,33 +227,34 @@ class baseModelbo {
     }
 
     update(req, res, next) {
+
         let _id = req.body[this.primaryKey];
-    
+
         let fields_to_update = {};
         let dataRequest = req.body;
-        
+
         const _this = this;
 
         const where_ = {};
         where_[this.primaryKey] = _id;
 
         let modalObj = this.db[this.baseModal].build();
-        
+
         let user_id = null;
         if (req.body && req.body.user_id) {
             user_id = req.body.user_id
         }
-        
+
         _this.beforeUpdate(req, res).then(() => {
             _this.db[this.baseModal].findOne({
                 where: where_
             }).then(obj => {
-                
+
                 if (obj) {
                     const obj_before = obj.toJSON();
 
                     modalObj.fields.forEach(field => {
-                     
+
                         if ((typeof dataRequest[field]) !== 'undefined' && field !== this.primaryKey) {
                             if (dataRequest[field] === "") {
                                 dataRequest[field] = null;
@@ -262,7 +263,7 @@ class baseModelbo {
                         }
                     });
                     obj.save().then(objSaved => {
-                     
+
                         _this.saveEntityNewRevision(objSaved, obj_before, req, res);
                         _this.alterUpdate(obj, req, res).then(data => {
                             return res.json({
@@ -314,7 +315,7 @@ class baseModelbo {
                         user_id: users.account_id
 
                     };
-               
+
                     _this.db['revisions'].build(entity_revision).save();
 
                     resolve(entity_revision);
@@ -375,7 +376,7 @@ class baseModelbo {
             sortDir: 'ASC'
         };
 
-     
+
 
         let query = {};
 
@@ -402,15 +403,15 @@ class baseModelbo {
         let whereQuery = {};
         let whereQueryFilters = {};
         if (params.filter) {
-           
-            
+
+
             params.filter.forEach(filterItem => {
-             
-                
+
+
                 if (filterItem.operator && filterItem.conditions && filterItem.conditions.length) {
                     let conditionsCollection = [];
                     filterItem.conditions.forEach(conditionItem => {
-                        
+
                         if (conditionItem.field && conditionItem.operator.toUpperCase().replace(' ', '_') === 'IS_NULL') {
                             conditionItem.value = null
                         }
