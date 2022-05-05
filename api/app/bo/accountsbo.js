@@ -43,7 +43,6 @@ class accounts extends baseModelbo {
     }
 
     signIn(req, res, next) {
-
         if ((!req.body.username || !req.body.password)) {
             return this.sendResponseError(res, ['Error.RequestDataInvalid'], 0, 403);
         } else {
@@ -58,6 +57,7 @@ class accounts extends baseModelbo {
                 }).then((user) => {
 
                     if (!user) {
+                        console.log('hererer')
                         this.sendResponseError(res, ['Error.UserNotFound'], 0, 403);
                     } else {
 

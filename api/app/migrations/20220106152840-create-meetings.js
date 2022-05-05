@@ -23,34 +23,39 @@ module.exports = {
         type: Sequelize.INTEGER
       },
       active: {
-        allowNull: true,
         type: Sequelize.STRING,
         defaultValue: 'Y'
       },
       address: {
         type: Sequelize.STRING
       },
-      date: {
-        allowNull: true,
-        type: Sequelize.DATE
-      },
       started_at: {
-        allowNull: true,
         type: Sequelize.DATE
       },
       finished_at: {
-        allowNull: true,
         type: Sequelize.DATE
       },
       created_at: {
         allowNull: true,
         type: Sequelize.DATE,
-        defaultValue: new Date()
       },
       updated_at: {
         allowNull: true,
         type: Sequelize.DATE,
-        defaultValue: new Date()
+      },
+      day: {
+        type: Sequelize.STRING,
+      },
+      treated: {
+        type: Sequelize.STRING,
+        defaultValue : 'N'
+      },
+      status: {
+        type: Sequelize.INTEGER,
+        defaultValue : 1
+      },
+      campaign_id: {
+        type: Sequelize.INTEGER,
       },
     });
   },

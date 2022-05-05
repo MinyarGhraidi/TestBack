@@ -1,23 +1,25 @@
 'use strict';
+
 module.exports = {
   up: (queryInterface, Sequelize) => {
-    return queryInterface.createTable('agent_log_events', {
-      agent_log_event_id: {
+    return queryInterface.createTable('livecalls', {
+      id: {
         primaryKey: true,
         autoIncrement: true,
         type: Sequelize.INTEGER
       },
-      action_name: {
-        type: Sequelize.STRING,
-        defaultValue: 'logged-out'
+      events: {
+        type: Sequelize.JSONB
       },
-      user_id: {
-        type: Sequelize.INTEGER
+      callid: {
+        type: Sequelize.STRING
       },
       active: {
-        allowNull: true,
         type: Sequelize.STRING,
         defaultValue: 'Y'
+      },
+      agent_id: {
+        type: Sequelize.INTEGER
       },
       created_at: {
         allowNull: true,
@@ -26,18 +28,17 @@ module.exports = {
       updated_at: {
         allowNull: true,
         type: Sequelize.DATE,
-      },
-      start_at: {
-        allowNull: true,
-        type: Sequelize.DATE,
-      },
-      finish_at: {
-        allowNull: true,
-        type: Sequelize.DATE,
       }
     });
   },
+
   down: (queryInterface, Sequelize) => {
-    return queryInterface.dropTable('agent_log_events');
+    /*
+      Add reverting commands here.
+      Return a promise to correctly handle asynchronicity.
+
+      Example:
+      return queryInterface.dropTable('users');
+    */
   }
 };

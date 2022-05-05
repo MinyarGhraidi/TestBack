@@ -17,6 +17,9 @@ module.exports = {
         type: Sequelize.STRING,
         defaultValue: "N",
       },
+      pause_type: {
+        type: Sequelize.STRING
+      },
       campaign_id: {
         type: Sequelize.INTEGER
       },

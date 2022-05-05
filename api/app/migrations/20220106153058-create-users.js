@@ -24,7 +24,6 @@ module.exports = {
       },
       user_type: {
         type: Sequelize.STRING,
-        defaultValue: 'admin'
       },
       account_id: {
         type: Sequelize.INTEGER

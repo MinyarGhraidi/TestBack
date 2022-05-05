@@ -251,7 +251,7 @@ class agents extends baseModelbo {
                                 status: 403,
                                 message: 'failed',
                                 error_type: 'telco',
-                                errors: err.response.data.errors
+                               // errors: err.response.data.errors
                             });
                         });
                 } else {

@@ -1,50 +1,53 @@
 'use strict';
+
 module.exports = {
   up: (queryInterface, Sequelize) => {
-    return queryInterface.createTable('callstatuses', {
-      callstatus_id: {
+    return queryInterface.createTable('emails', {
+      email_id: {
         primaryKey: true,
         autoIncrement: true,
-        type: Sequelize.INTEGER,
-      },
-      code: {
-        type: Sequelize.STRING,
-      },
-      label: {
-        type: Sequelize.STRING,
-      },
-      isDefault: {
-        type: Sequelize.STRING,
-        defaultValue: "N",
-      },
-      isSystem: {
-        type: Sequelize.STRING,
-        defaultValue: "N",
-      },
-      call_type: {
-        type: Sequelize.STRING
-      },
-      campaign_id: {
         type: Sequelize.INTEGER
       },
-      active: {
-        allowNull: true,
+      user_id: {
+        type: Sequelize.INTEGER,
+      },
+      is_sended: {
         type: Sequelize.STRING,
-        defaultValue: "Y",
+        defaultValue: 'N'
+      },
+      active: {
+        type: Sequelize.STRING,
+        defaultValue: 'Y'
+      },
+      category: {
+        type: Sequelize.STRING,
+      },
+      last_password: {
+        type: Sequelize.STRING,
+      },
+      template: {
+        type: Sequelize.JSONB,
       },
       created_at: {
         allowNull: true,
         type: Sequelize.DATE,
-        defaultValue: new Date(),
+        defaultValue: new Date()
       },
       updated_at: {
         allowNull: true,
         type: Sequelize.DATE,
-        defaultValue: new Date(),
+        defaultValue: new Date()
       },
     });
   },
+
   down: (queryInterface, Sequelize) => {
-    return queryInterface.dropTable('callstatuses');
+    /*
+      Add reverting commands here.
+      Return a promise to correctly handle asynchronicity.
+
+      Example:
+      return queryInterface.dropTable('users');
+    */
   }
 };
