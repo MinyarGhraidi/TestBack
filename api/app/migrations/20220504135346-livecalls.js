@@ -2,7 +2,7 @@
 
 module.exports = {
   up: (queryInterface, Sequelize) => {
-    return queryInterface.createTable('livecalls', {
+    return queryInterface.createTable('live_calls', {
       id: {
         primaryKey: true,
         autoIncrement: true,
