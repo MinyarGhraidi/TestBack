@@ -23,8 +23,6 @@ class users extends baseModelbo {
             return this.sendResponseError(res, ['Error.RequestDataInvalid'], 0, 403);
         } else {
             const {username, password} = req.body;
-            console.log(req.body)
-
             if (username && password) {
                 this.db['users'].findOne({
                     include: [{
@@ -40,13 +38,11 @@ class users extends baseModelbo {
                         status: 'Y'
                     }
                 }).then((user) => {
-                    console.log(user)
                     if (!user) {
                         this.sendResponseError(res, ['Error.UserNotFound'], 0, 403);
                     } else {
                         if (user.password_hash && password) {
-                            console.log(password)
-                            if (true) {
+                            if (user.password_hash && password) {
                                 this.db['has_permissions'].findAll({
                                     include: [{
                                         model: db.permissions_crms,

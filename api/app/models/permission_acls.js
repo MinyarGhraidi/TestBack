@@ -14,7 +14,7 @@ module.exports = (sequelize, Sequelize) => {
             active: {
                 type: Sequelize.STRING,
                 defaultValue: 'Y'
-            },
+            }
         },
         {timestamps: false}
     );

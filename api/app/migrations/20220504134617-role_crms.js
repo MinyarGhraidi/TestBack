@@ -2,7 +2,7 @@
 
 module.exports = {
   up: (queryInterface, Sequelize) => {
-    return queryInterface.createTable('role_crms', {
+    return queryInterface.createTable('roles_crms', {
       id :{
         primaryKey: true,
         autoIncrement: true,

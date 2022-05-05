@@ -2,7 +2,7 @@
 
 module.exports = {
   up: (queryInterface, Sequelize) => {
-    return queryInterface.createTable('permissions_crm', {
+    return queryInterface.createTable('permissions_crms', {
       id: {
         primaryKey: true,
         autoIncrement: true,
@@ -18,6 +18,20 @@ module.exports = {
         type: Sequelize.STRING,
         defaultValue: 'Y'
       },
+    }).then(() => {
+      queryInterface.bulkInsert("permissions_crms", [{
+        name: "admin",
+        description: "Admins",
+      },
+        {
+          name: "company",
+          description: "Companies",
+        },
+        {
+          name: "user",
+          description: "Users",
+        },
+      ]);
     });
   },
 

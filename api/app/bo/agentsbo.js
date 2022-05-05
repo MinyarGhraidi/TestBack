@@ -145,72 +145,73 @@ class agents extends baseModelbo {
 
     saveAgent(req, res, next) {
         let _this = this;
-        let {values, accountcode, bulkNum} = req.body;
+        let {values, accountcode, bulkNumn} = req.body;
+        console.log(bulkNumn)
         let sip_device = JSON.parse(JSON.stringify(values.sip_device));
-        this.db['users'].findOne({where: {active: 'Y', user_type: 'agent'}, order: [['user_id', 'DESC']]})
+        this.db['users'].findOne({where: {active: 'Y', role_crm_id: values.role_crm_id}, order: [['user_id', 'DESC']]})
             .then(lastAgent => {
-                let increment = bulkNum ? bulkNum : 1;
-                let lastAgentSip_device = lastAgent.sip_device;
-                let lastAgentKamailioUsername = lastAgentSip_device.username;
-                let username = (parseInt(lastAgentKamailioUsername) + increment).toString();
-                let {password, domain, options, status, enabled, subscriber_id} = sip_device;
-                sip_device.username = username;
-                sip_device.created_at = moment().format("YYYY-MM-DD HH:mm:ss");
-                sip_device.updated_at = moment().format("YYYY-MM-DD HH:mm:ss");
-                sip_device.status = "logged-out";
-                values.sip_device = sip_device;
-                _usersbo.isUniqueUsername(values.username, 0)
-                    .then(isUnique => {
-                        if (isUnique) {
-                            let agent = {
-                                username,
-                                password,
-                                domain,
-                                options,
-                                accountcode,
-                                status,
-                                enabled,
-                                subscriber_id
-                            };
-                            axios
-                                .post(`${base_url_cc_kam}api/v1/agents`, agent, call_center_authorization)
-                                .then((resp) => {
-                                    let uuid = resp.data.result.agent.uuid || null;
-                                    values.sip_device.uuid = uuid;
-                                    values.params = {sales: [], status: "logged-out"}
-                                    this.saveAgentInDB(values)
-                                        .then(agent => {
-                                            res.send({
-                                                status: 200,
-                                                message: "success",
-                                                data: agent,
-                                                success: true
+                    let increment = bulkNumn ? bulkNumn : 1;
+                    let lastAgentSip_device = lastAgent ? lastAgent.sip_device : values.sip_device
+                    let lastAgentKamailioUsername = lastAgent ? lastAgentSip_device.username : values.username;
+                    let username = (parseInt(lastAgentKamailioUsername) + increment).toString();
+                    let {password, domain, options, status, enabled, subscriber_id} = sip_device;
+                    sip_device.username = username;
+                    sip_device.created_at = moment().format("YYYY-MM-DD HH:mm:ss");
+                    sip_device.updated_at = moment().format("YYYY-MM-DD HH:mm:ss");
+                    sip_device.status = "logged-out";
+                    values.sip_device = sip_device;
+                    _usersbo.isUniqueUsername(values.username, 0)
+                        .then(isUnique => {
+                            if (isUnique) {
+                                let agent = {
+                                    username,
+                                    password,
+                                    domain,
+                                    options,
+                                    accountcode,
+                                    status,
+                                    enabled,
+                                    subscriber_id
+                                };
+                                axios
+                                    .post(`${base_url_cc_kam}api/v1/agents`, agent, call_center_authorization)
+                                    .then((resp) => {
+                                        let uuid = resp.data.result.agent.uuid || null;
+                                        values.sip_device.uuid = uuid;
+                                        values.params = {sales: [], status: "logged-out"}
+                                        this.saveAgentInDB(values)
+                                            .then(agent => {
+                                                res.send({
+                                                    status: 200,
+                                                    message: "success",
+                                                    data: agent,
+                                                    success: true
+                                                })
                                             })
-                                        })
-                                        .catch(err => {
-                                            return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
-                                        })
-                                })
-                                .catch((err) => {
-                                    res.send({
-                                        status: 403,
-                                        message: 'failed',
-                                        error_type: 'telco',
-                                        errors: err.response.data.errors
+                                            .catch(err => {
+                                                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredSaveAgentdb', err], 1, 403);
+                                            })
+                                    })
+                                    .catch((err) => {
+                                        res.send({
+                                            status: 403,
+                                            message: 'failed',
+                                            error_type: 'telco',
+                                            errors: err.response.data.errors
+                                        });
                                     });
+                            } else {
+                                res.send({
+                                    status: 403,
+                                    success: false,
+                                    error_type: 'check_username',
+                                    message: 'This username is already exist'
                                 });
-                        } else {
-                            res.send({
-                                status: 403,
-                                success: false,
-                                error_type: 'check_username',
-                                message: 'This username is already exist'
-                            });
-                        }
-                    })
-                    .catch(err => {
-                        return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
-                    })
+                            }
+                        })
+                        .catch(err => {
+                            return _this.sendResponseError(res, ['Error.AnErrorHasOccuredgetUniqueUsername', err], 1, 403);
+                        })
             })
             .catch(err => {
                 return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);

@@ -57,7 +57,6 @@ class accounts extends baseModelbo {
                 }).then((user) => {
 
                     if (!user) {
-                        console.log('hererer')
                         this.sendResponseError(res, ['Error.UserNotFound'], 0, 403);
                     } else {
 
@@ -95,9 +94,14 @@ class accounts extends baseModelbo {
         let _this = this;
         let newAccount = req.body;
         let {domain, account_id} = newAccount;
+        if (!!!newAccount
+            || !!!newAccount.user
+            || !!!newAccount.role_crm_id) {
+            return _this.sendResponseError(res, 'Error.InvalidData');
+        }
         this.isUniqueDomain(domain, account_id)
             .then(isUniqueDomain => {
-                if(isUniqueDomain) {
+                if (isUniqueDomain) {
                     if (newAccount.account_id) {
                         this.db['accounts'].update(
                             newAccount,
@@ -126,31 +130,36 @@ class accounts extends baseModelbo {
                     } else {
                         let modalObj = this.db['accounts'].build(newAccount);
                         modalObj.save().then(new_account => {
-                            newAccount.user.account_id = new_account.account_id;
-                            _usersbo.saveUserFunction(newAccount.user).then(new_user => {
-                                this.db['accounts'].update({
-                                    user_id: new_user.user_id
-                                }, {
-                                    where: {
-                                        account_id: new_account.account_id
-                                    },
-                                    returning: true,
-                                    plain: true
-                                }).then(update_account => {
-                                    res.send({
-                                        status: 200,
-                                        message: 'success',
-                                        success: true,
-                                        data: new_user
+                            if (new_account) {
+                                newAccount.user.account_id = new_account.account_id;
+                                _usersbo.saveUserFunction(newAccount.user).then(new_user => {
+                                    this.db['accounts'].update({
+                                        user_id: new_user.user_id
+                                    }, {
+                                        where: {
+                                            account_id: new_account.account_id
+                                        },
+                                        returning: true,
+                                        plain: true
+                                    }).then(update_account => {
+                                        res.send({
+                                            status: 200,
+                                            message: 'success',
+                                            success: true,
+                                            data: new_user
+                                        })
                                     })
+                                        .catch(err => {
+                                            return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                                        })
                                 })
                                     .catch(err => {
                                         return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
                                     })
-                            })
-                                .catch(err => {
-                                    return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
-                                })
+                            } else {
+                                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredSaveAccount'], 1, 403);
+                            }
+
                         })
                     }
                 } else {
@@ -400,15 +409,17 @@ class accounts extends baseModelbo {
 
     isUniqueDomain(domain, account_id) {
         return new Promise((resolve, reject) => {
-            if(domain) {
-                this.db['accounts'].findAll({where : {
-                        active : 'Y',
-                        domain : {
+            if (domain) {
+                this.db['accounts'].findAll({
+                    where: {
+                        active: 'Y',
+                        domain: {
                             [Sequelize.Op.iLike]: domain
                         }
-                    }})
+                    }
+                })
                     .then(accounts => {
-                        if(accounts && accounts.length !== 0) {
+                        if (accounts && accounts.length !== 0) {
                             if (domain === accounts[0].domain && parseInt(account_id) === accounts[0].account_id) {
                                 resolve(true);
                             } else {

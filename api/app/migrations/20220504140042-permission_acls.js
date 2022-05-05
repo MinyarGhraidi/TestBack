@@ -18,6 +18,12 @@ module.exports = {
         type: Sequelize.STRING,
         defaultValue: 'Y'
       },
+      label: {
+        type: Sequelize.STRING
+      },
+      code: {
+        type: Sequelize.STRING
+      },
     });
   },
 
