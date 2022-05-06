@@ -41,7 +41,7 @@ class users extends baseModelbo {
                     if (!user) {
                         this.sendResponseError(res, ['Error.UserNotFound'], 0, 403);
                     } else {
-                        if (user.password_hash && password) {
+                        if (user.password_hash && password && user.verifyPassword(password)) {
                             if (user.password_hash && password) {
                                 this.db['has_permissions'].findAll({
                                     include: [{
@@ -106,7 +106,6 @@ class users extends baseModelbo {
                         }
                     }
                 }).catch((error) => {
-                    console.log(error)
                     return this.sendResponseError(res, ['Error.AnErrorHasOccuredUser'], 1, 403);
                 });
             }
