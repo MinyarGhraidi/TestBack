@@ -146,7 +146,6 @@ class agents extends baseModelbo {
     saveAgent(req, res, next) {
         let _this = this;
         let {values, accountcode, bulkNumn} = req.body;
-        console.log(bulkNumn)
         let sip_device = JSON.parse(JSON.stringify(values.sip_device));
         this.db['users'].findOne({where: {active: 'Y', role_crm_id: values.role_crm_id}, order: [['user_id', 'DESC']]})
             .then(lastAgent => {
