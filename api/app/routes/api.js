@@ -39,7 +39,7 @@ lookupController = require('../controllers/lookups.controller');
 truncksController = require('../controllers/truncks.controller');
 callstatusController = require('../controllers/callstatus.controller');
 pausestatusController = require('../controllers/pausestatus.controller');
-didsController = require('../controllers/did.controller');
+didsgroupsController = require('../controllers/didgroups.controller');
 audiosController = require('../controllers/audio.controller');
 agent_log_eventsController = require('../controllers/agent_log_events.controller');
 meetingsController = require('../controllers/meeting.controller');
@@ -48,6 +48,8 @@ roles_crmController = require('../controllers/roles_crm.controller');
 acl_Controller = require('../controllers/Permissionacl.controller');
 sales_Controller = require('../controllers/sales.controller');
 liveCallsController = require('../controllers/livecalls.Controller');
+roles_crmsController = require('../controllers/roles_crm.controller');
+didsController = require('../controllers/dids.controller');
 
 
 let apiRouters = function (passport) {
@@ -145,6 +147,12 @@ let apiRouters = function (passport) {
     router.delete("/api/lookup/delete/:params", passport.authenticate("jwt", {session: false}), lookupController.delete);
     router.post("/api/lookup/save", passport.authenticate("jwt", {session: false}), lookupController.save);
 
+    router.post("/api/roles_crms/find", passport.authenticate("jwt", {session: false}), roles_crmController.find);
+    router.get("/api/roles_crms/findById/:entity_id", passport.authenticate("jwt", {session: false}), roles_crmController.findById);
+    router.put("/api/roles_crms/update", passport.authenticate("jwt", {session: false}), roles_crmController.update);
+    router.delete("/api/roles_crms/delete/:params", passport.authenticate("jwt", {session: false}), roles_crmController.delete);
+    router.post("/api/roles_crms/save", passport.authenticate("jwt", {session: false}), roles_crmController.save);
+
     //efiles routers
     router.post("/api/efile/find/:params?", passport.authenticate('jwt', {session: false}), efilesController.find);
     router.get("/api/efile/findById/:entity_id", passport.authenticate('jwt', {session: false}), efilesController.findById);
@@ -196,11 +204,17 @@ let apiRouters = function (passport) {
     router.post("/api/callfile/save", passport.authenticate('jwt', {session: false}), callfileController.save);
 
     // dids routers
-    router.post("/api/did/find", passport.authenticate('jwt', {session: false}), didsController.find);
-    router.get("/api/did/findById/:entity_id", passport.authenticate('jwt', {session: false}), didsController.findById);
-    router.put("/api/did/update", passport.authenticate('jwt', {session: false}), didsController.update);
-    router.delete("/api/did/delete/:params", passport.authenticate('jwt', {session: false}), didsController.delete);
-    router.post("/api/did/save", passport.authenticate('jwt', {session: false}), didsController.save);
+    router.post("/api/didsgroups/find", passport.authenticate('jwt', {session: false}), didsgroupsController.find);
+    router.get("/api/didsgroups/findById/:entity_id", passport.authenticate('jwt', {session: false}), didsgroupsController.findById);
+    router.put("/api/didsgroups/update", passport.authenticate('jwt', {session: false}), didsgroupsController.update);
+    router.delete("/api/didsgroups/delete/:params", passport.authenticate('jwt', {session: false}), didsgroupsController.delete);
+    router.post("/api/didsgroups/save", passport.authenticate('jwt', {session: false}), didsgroupsController.save);
+
+    router.post("/api/dids/find", passport.authenticate('jwt', {session: false}), didsController.find);
+    router.get("/api/dids/findById/:entity_id", passport.authenticate('jwt', {session: false}), didsController.findById);
+    router.put("/api/dids/update", passport.authenticate('jwt', {session: false}), didsController.update);
+    router.delete("/api/dids/delete/:params", passport.authenticate('jwt', {session: false}), didsController.delete);
+    router.post("/api/dids/save", passport.authenticate('jwt', {session: false}), didsController.save);
 
     // audios routers
     router.post("/api/audio/find", passport.authenticate('jwt', {session: false}), audiosController.find);

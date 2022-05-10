@@ -217,59 +217,80 @@ class meetings extends baseModelbo {
         let start = moment(new Date(day)).format("YYYY-MM-DD ") + meeting_start
         let duration_moment = moment(finished_at).diff(moment(started_at), 'minutes');
         let duration = parseInt(duration_moment);
-        this.db["users"]
-            .findAll({
+
+        this.db["roles_crms"]
+            .findOne({
                 where: {
                     active: "Y",
-                    role_crm_id: 5,
+                    value: 'sales',
                 },
             })
-            .then((list) => {
-                let list_of_sales_men = list.filter(sales => sales.params.agents.includes(agent_id));
-                let availableSales = [];
-                let promise = [];
-                if (list_of_sales_men && list_of_sales_men.length !== 0) {
-                    promise.push(new Promise(function (resolve, reject) {
-                        let index = 0;
-                        list_of_sales_men.forEach(sales => {
-                            _this.getAvailability(sales, start, meeting_start, meeting_end, duration)
-                                .then(availableSale => {
-                                    if (availableSale) {
-                                        availableSale.meetings = _this.getMeetings(availableSale.user_id, res) || [];
-                                        availableSales.push(availableSale);
-                                    }
-                                    if (index < list_of_sales_men.length - 1) {
-                                        index++;
-                                    } else {
-                                        resolve(availableSales);
-                                    }
-                                })
-                                .catch((err) => {
-                                    reject(err)
-                                });
-                        });
-                    }));
-                    Promise.all(promise).then((availableSales) => {
-                        res.send({
-                            message: "Success",
-                            success: true,
-                            result: availableSales[0],
-                        });
+            .then((sale_role_info) => {
+                if (sale_role_info) {
+                this.db["users"]
+                    .findAll({
+                        where: {
+                            active: "Y",
+                            role_crm_id: sale_role_info.id,
+                        },
                     })
-                        .catch((err) => {
-                            return _this.sendResponseError(res, ['Error cannot get availability', err], 1, 403);
-                        });
+                    .then((list) => {
+                        let list_of_sales_men = list.filter(sales => sales.params.agents.includes(agent_id));
+                        let availableSales = [];
+                        let promise = [];
+                        if (list_of_sales_men && list_of_sales_men.length !== 0) {
+                            promise.push(new Promise(function (resolve, reject) {
+                                let index = 0;
+                                list_of_sales_men.forEach(sales => {
+                                    _this.getAvailability(sales, start, meeting_start, meeting_end, duration)
+                                        .then(availableSale => {
+                                            if (availableSale) {
+                                                availableSale.meetings = _this.getMeetings(availableSale.user_id, res) || [];
+                                                availableSales.push(availableSale);
+                                            }
+                                            if (index < list_of_sales_men.length - 1) {
+                                                index++;
+                                            } else {
+                                                resolve(availableSales);
+                                            }
+                                        })
+                                        .catch((err) => {
+                                            reject(err)
+                                        });
+                                });
+                            }));
+                            Promise.all(promise).then((availableSales) => {
+                                res.send({
+                                    message: "Success",
+                                    success: true,
+                                    result: availableSales[0],
+                                });
+                            })
+                                .catch((err) => {
+                                    return _this.sendResponseError(res, ['Error cannot get availability', err], 1, 403);
+                                });
+                        } else {
+                            res.send({
+                                message: "No sales found",
+                                success: true,
+                                result: [],
+                            });
+                        }
+                    })
+                    .catch((err) => {
+                        return _this.sendResponseError(res, ['cannot fetch from DB', err], 1, 403);
+                    });
+
                 } else {
                     res.send({
-                        message: "No sales found",
+                        message: "No role sales found",
                         success: true,
                         result: [],
                     });
                 }
-            })
-            .catch((err) => {
-                return _this.sendResponseError(res, ['cannot fetch from DB', err], 1, 403);
-            });
+            }) .catch((err) => {
+            return _this.sendResponseError(res, ['cannot fetch role_sale data from DB', err], 1, 403);
+        });
     }
 
 }
