@@ -17,4 +17,7 @@ module.exports = {
     delete: function (req, res, next) {
         didsDaoGroupsInst.delete(req, res, next);
     },
+    affectDidsGpToCamp: function (req, res, next) {
+        didsDaoGroupsInst.affectDidsGpToCamp(req, res, next);
+    },
 }

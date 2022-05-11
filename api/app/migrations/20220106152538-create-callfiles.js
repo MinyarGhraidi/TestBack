@@ -70,6 +70,20 @@ module.exports = {
         type: Sequelize.DATE,
         defaultValue: new Date()
       },
+      note: {
+        type: Sequelize.STRING
+      },
+      callStatus: {
+        type: Sequelize.STRING
+      },
+      status: {
+        type: Sequelize.STRING
+      },
+      to_treat: {
+        allowNull: true,
+        type: Sequelize.STRING,
+        defaultValue: 'N'
+      },
     });
   },
   down: (queryInterface, Sequelize) => {

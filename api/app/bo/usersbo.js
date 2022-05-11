@@ -70,6 +70,70 @@ class users extends baseModelbo {
                                         message: 'Invalid admin code'
                                     })
                                     return
+                                } else
+                                if (user.password_hash && password && user.verifyPassword(password)) {
+                                    if (user.password_hash && password) {
+                                        this.db['has_permissions'].findAll({
+                                            include: [{
+                                                model: db.permissions_crms,
+                                            }],
+                                            where: {
+                                                roles_crm_id: user.role_crm_id,
+                                            }
+                                        }).then(permissions => {
+                                            this.getPermissionsValues(permissions).then(data_perm => {
+                                                this.db['accounts'].findOne({where: {account_id: user.account_id}})
+                                                    .then(account => {
+
+                                                        let accountcode = account.account_code;
+
+                                                        if (user.user_type === "agent") {
+                                                            let {
+                                                                sip_device,
+                                                                first_name,
+                                                                last_name,
+                                                                user_id,
+                                                                campaign_id
+                                                            } = user;
+                                                            let data_agent = {
+                                                                user_id: user_id,
+                                                                first_name: first_name,
+                                                                last_name: last_name,
+                                                                uuid: sip_device.uuid,
+                                                                crmStatus: user.params.status,
+                                                                telcoStatus: sip_device.status,
+                                                                updated_at: sip_device.updated_at,
+                                                                campaign_id: campaign_id
+                                                            };
+                                                            appSocket.emit('agent_connection', data_agent);
+                                                        }
+
+                                                        const token = jwt.sign({
+                                                            user_id: user.user_id,
+                                                            username: user.username,
+                                                        }, config.secret, {
+                                                            expiresIn: '8600m'
+                                                        });
+                                                        res.send({
+                                                            message: 'Success',
+                                                            user: user.toJSON(),
+                                                            permissions: data_perm || [],
+                                                            success: true,
+                                                            token: token,
+                                                            result: 1,
+                                                            accountcode: accountcode
+                                                        });
+                                                    }).catch((error) => {
+                                                    return this.sendResponseError(res, ['Error.AnErrorHasOccuredUser'], 1, 403);
+                                                });
+                                            })
+                                        })
+
+                                    } else {
+                                        this.sendResponseError(res, ['Error.InvalidPassword'], 0, 403);
+                                    }
+                                } else {
+                                    this.sendResponseError(res, ['Error.InvalidPassword'], 2, 403);
                                 }
                             }).catch((error) => {
                                 return this.sendResponseError(res, ['Error.AnErrorHasOccuredUser'], 1, 403);
