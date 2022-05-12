@@ -6,6 +6,7 @@ const {default: axios} = require("axios");
 const {Sequelize} = require("sequelize");
 const usersbo = require('./usersbo');
 const agentbo = require('./agentsbo')
+const {add} = require("nodemon/lib/rules");
 const call_center_token = require(__dirname + '/../config/config.json')["call_center_token"];
 const base_url_cc_kam = require(__dirname + '/../config/config.json')["base_url_cc_kam"];
 const call_center_authorization = {
@@ -51,7 +52,8 @@ class campaigns extends baseModelbo {
                                     .then(response => {
                                         res.send({
                                             status: 200,
-                                            message: "succes"
+                                            message: "success",
+                                            data: campaign
                                         })
                                     })
                                     .catch(err => {
@@ -627,6 +629,7 @@ class campaigns extends baseModelbo {
     }
 
     addToQueue(tiers, queue_uuid) {
+        console.log(queue_uuid)
         return new Promise((resolve, reject) => {
             if (tiers.tiers && tiers.tiers.length !== 0) {
                 axios
@@ -680,6 +683,10 @@ class campaigns extends baseModelbo {
     assignAgents(req, res, next) {
         let _this = this;
         let {campaign_id, queue_uuid, assignedAgents, notAssignedAgents, campaign_agents} = req.body;
+        if (!!!campaign_id || !!!queue_uuid || !!!assignedAgents || !!!notAssignedAgents || !!!campaign_agents) {
+                return _this.sendResponseError(res, ['cannot update status of assigned agents'], 1, 403);
+
+        }
         let _agents = (assignedAgents && assignedAgents.length !== 0) ? assignedAgents.map(el => el.user_id) : [];
         let agents_arr = ['*'];
         let agents_kam = {agents: agents_arr};

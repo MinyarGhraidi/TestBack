@@ -22,13 +22,11 @@ class AppSocket extends Socket {
     }
 
 
-    emit(event, data)
-    {// console.log(sizeof(data));
+    emit(event, data) {
         return socket.emit(event, data);
     }
 
-    listen(event, callback)
-    {
+    listen(event, callback) {
         return socket.on(event, callback);
     }
 

@@ -12,12 +12,12 @@ class agent_log_events extends baseModelbo {
     getLastEvent(req, res, next) {
         let _this = this;
         let {user_id} = req.body;
-        this.db['agent_log_events'].findAll({where : {active: 'Y', user_id : user_id}})
+        this.db['agent_log_events'].findAll({where : {active: 'Y', user_id : user_id}, order: [['agent_log_event_id', 'DESC']]})
             .then(events => {
                 res.send({
                     status : 200,
                     message : 'success',
-                    data : events[events.length - 1]
+                    data : events[0]
                 });
             })
             .catch(err => {

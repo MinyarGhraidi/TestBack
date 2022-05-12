@@ -1,14 +1,20 @@
 module.exports = (sequelize, Sequelize) => {
-    const dids = sequelize.define("dids", {
-            id: {
+    const didsgroup = sequelize.define("didsgroups", {
+            did_id: {
                 primaryKey: true,
                 autoIncrement: true,
                 type: Sequelize.INTEGER
             },
-            number: {
+            name: {
                 type: Sequelize.STRING
             },
-            did_group_id: {
+            description: {
+                type: Sequelize.STRING
+            },
+            type: {
+                type: Sequelize.STRING
+            },
+            campaign_id: {
                 type: Sequelize.INTEGER
             },
             active: {
@@ -34,27 +40,31 @@ module.exports = (sequelize, Sequelize) => {
         {timestamps: false,}
     )
 
-    dids.prototype.fields = [
-        'id',
-        'did_group_id',
-        'number',
+    didsgroup.prototype.fields = [
+        'did_id',
+        'name',
+        'description',
+        'campaign_id',
         "active",
         'status',
         'created_at',
         'updated_at',
-    ]
-    dids.prototype.fieldsSearchMetas = [
-        'id',
-        'number',
-        'did_group_id',
-        'status',
-        'created_at',
-        'updated_at'
-    ]
-    dids.associate = function (models) {
-        dids.belongsTo(models.didsgroups, {
-            foreignKey: 'did_group_id'
+        'type'
+    ],
+        didsgroup.prototype.fieldsSearchMetas = [
+            'did_id',
+            'name',
+            'description',
+            'campaign_id',
+            'status',
+            'created_at',
+            'updated_at',
+            'type'
+        ]
+    didsgroup.associate = function (models) {
+        didsgroup.belongsTo(models.campaigns, {
+            foreignKey: 'campaign_id'
         });
     };
-    return dids
+    return didsgroup
 }

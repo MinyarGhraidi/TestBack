@@ -4,9 +4,9 @@ let db = require('../models');
  
 class dids extends baseModelbo {
     constructor() {
-        super('dids', 'did_id');
+        super('dids', 'id');
         this.baseModal = "dids";
-        this.primaryKey = 'did_id';
+        this.primaryKey = 'id';
     }
 }
 

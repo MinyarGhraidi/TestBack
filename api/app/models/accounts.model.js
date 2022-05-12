@@ -83,6 +83,9 @@ module.exports = (sequelize, Sequelize) => {
             lang: {
                 type: Sequelize.STRING,
             },
+            code: {
+                type: Sequelize.STRING,
+            },
         },
         {timestamps: false}
     );
@@ -111,7 +114,8 @@ module.exports = (sequelize, Sequelize) => {
         "status",
         "role_crm_id",
         "user_id",
-        "lang"
+        "lang",
+        "code"
     ];
 
     account.prototype.fieldsSearchMetas = [
@@ -138,7 +142,8 @@ module.exports = (sequelize, Sequelize) => {
         "status",
         "role_crm_id",
         "user_id",
-        "lang"
+        "lang",
+        "code"
     ];
 
     account.associate = function (models) {
