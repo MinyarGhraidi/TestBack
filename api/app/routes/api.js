@@ -50,6 +50,7 @@ sales_Controller = require('../controllers/sales.controller');
 liveCallsController = require('../controllers/livecalls.Controller');
 roles_crmsController = require('../controllers/roles_crm.controller');
 didsController = require('../controllers/dids.controller');
+callBlundingController = require('../controllers/callBlunding.controller');
 
 
 let apiRouters = function (passport) {
@@ -210,6 +211,14 @@ let apiRouters = function (passport) {
     router.delete("/api/didsgroups/delete/:params", passport.authenticate('jwt', {session: false}), didsgroupsController.delete);
     router.post("/api/didsgroups/save", passport.authenticate('jwt', {session: false}), didsgroupsController.save);
     router.post("/api/didsgroups/affectDidsGpToCamp", passport.authenticate('jwt', {session: false}), didsgroupsController.affectDidsGpToCamp);
+
+
+
+    router.post("/api/callBlunding/find", passport.authenticate('jwt', {session: false}), callBlundingController.find);
+    router.get("/api/callBlunding/findById/:entity_id", passport.authenticate('jwt', {session: false}), callBlundingController.findById);
+    router.put("/api/callBlunding/update", passport.authenticate('jwt', {session: false}), callBlundingController.update);
+    router.delete("/api/callBlunding/delete/:params", passport.authenticate('jwt', {session: false}), callBlundingController.delete);
+    router.post("/api/callBlunding/save", passport.authenticate('jwt', {session: false}), callBlundingController.save);
 
     router.post("/api/dids/find", passport.authenticate('jwt', {session: false}), didsController.find);
     router.get("/api/dids/findById/:entity_id", passport.authenticate('jwt', {session: false}), didsController.findById);

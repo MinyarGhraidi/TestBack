@@ -452,21 +452,34 @@ class campaigns extends baseModelbo {
                                                             .then((list_pausestatus) => {
                                                                 this.savePauseStatus(list_pausestatus, cloned_campaign_id)
                                                                     .then(result => {
-                                                                        res.send({
-                                                                            status: 200,
-                                                                            message: "succes"
-                                                                        })
+                                                                        if (campaign && campaign.didsGp_ids.length !== 0) {
+                                                                            this.db['didsgroups'].update({campaign_id: data.campaign_id}, {where: {did_id: {in: campaign.didsGp_ids}}}).then(data => {
+                                                                                res.send({
+                                                                                    status: 200,
+                                                                                    data: data,
+                                                                                    message: "success clone campaign"
+                                                                                })
+                                                                            }).catch((err) => {
+                                                                                return _this.sendResponseError(res, ['Error.AffectDidGroupsCampaign', err], 1, 403);
+                                                                            });
+                                                                        } else {
+                                                                            res.send({
+                                                                                status: 200,
+                                                                                data: data,
+                                                                                message: "success clone campaign"
+                                                                            })
+                                                                        }
                                                                     })
                                                                     .catch((err) => {
                                                                         return _this.sendResponseError(res, ['cannot save pause status', err], 1, 403);
                                                                     });
                                                             })
                                                             .catch((err) => {
-                                                                return _this.sendResponseError(res, ['cannot save pause status', err], 1, 403);
+                                                                return _this.sendResponseError(res, ['cannot fetch list call status', err], 1, 403);
                                                             });
                                                     })
                                                     .catch((err) => {
-                                                        return _this.sendResponseError(res, ['cannot fetch list call status', err], 1, 403);
+                                                        return _this.sendResponseError(res, ['cannot save campaign', err], 1, 403);
                                                     });
                                             })
                                             .catch((err) => {
@@ -474,16 +487,15 @@ class campaigns extends baseModelbo {
                                             });
                                     })
                                     .catch((err) => {
-                                        return _this.sendResponseError(res, ['cannot save campaign', err], 1, 403);
+                                        return _this.sendResponseError(res, ['cannot save campaign in kamailio', err], 1, 403);
                                     });
                             })
                             .catch((err) => {
-                                return _this.sendResponseError(res, ['cannot save campaign in kamailio', err], 1, 403);
+                                return _this.sendResponseError(res, ['error in generate unique name', err], 1, 403);
                             });
-                    })
-                    .catch((err) => {
-                        return _this.sendResponseError(res, ['error in generate unique name', err], 1, 403);
-                    });
+                    }).catch(err => {
+                    _this.sendResponseError(res, ['cannot save pause status', err, 403]);
+                })
             })
             .catch((err) => {
                 return _this.sendResponseError(res, ['cannot fetch campaign', err], 1, 403);
@@ -684,7 +696,7 @@ class campaigns extends baseModelbo {
         let _this = this;
         let {campaign_id, queue_uuid, assignedAgents, notAssignedAgents, campaign_agents} = req.body;
         if (!!!campaign_id || !!!queue_uuid || !!!assignedAgents || !!!notAssignedAgents || !!!campaign_agents) {
-                return _this.sendResponseError(res, ['cannot update status of assigned agents'], 1, 403);
+            return _this.sendResponseError(res, ['cannot update status of assigned agents'], 1, 403);
 
         }
         let _agents = (assignedAgents && assignedAgents.length !== 0) ? assignedAgents.map(el => el.user_id) : [];
@@ -819,10 +831,10 @@ class campaigns extends baseModelbo {
             }
         })
     }
-    
+
     deleteCallFiles(listcallfiles_id) {
         return new Promise((resolve, reject) => {
-            if(listcallfiles_id && listcallfiles_id.length -1) {
+            if (listcallfiles_id && listcallfiles_id.length - 1) {
                 this.db['callfiles']
                     .update({active: 'N'}, {where: {listcallfile_id: listcallfiles_id, active: 'Y'}})
                     .then(() => {
@@ -839,7 +851,7 @@ class campaigns extends baseModelbo {
 
     changeStatusCallFiles(listcallfiles_id, status) {
         return new Promise((resolve, reject) => {
-            if(listcallfiles_id && listcallfiles_id.length -1) {
+            if (listcallfiles_id && listcallfiles_id.length - 1) {
                 this.db['callfiles']
                     .update({status: status}, {where: {listcallfile_id: listcallfiles_id, active: 'Y'}})
                     .then(() => {
@@ -857,7 +869,7 @@ class campaigns extends baseModelbo {
     deleteCampaignFiles(campaign_id) {
         return new Promise((resolve, reject) => {
             this.db['listcallfiles']
-                .findAll({where:{campaign_id: campaign_id, active: 'Y'}})
+                .findAll({where: {campaign_id: campaign_id, active: 'Y'}})
                 .then(listcallfiles => {
                     let listcallfiles_id = listcallfiles.map(el => el.listcallfile_id);
                     this.db['listcallfiles']
@@ -884,7 +896,7 @@ class campaigns extends baseModelbo {
     changeStatusCampaignFiles(campaign_id, status) {
         return new Promise((resolve, reject) => {
             this.db['listcallfiles']
-                .findAll({where:{campaign_id: campaign_id, active: 'Y'}})
+                .findAll({where: {campaign_id: campaign_id, active: 'Y'}})
                 .then(listcallfiles => {
                     let listcallfiles_id = listcallfiles.map(el => el.listcallfile_id);
                     this.db['listcallfiles']
