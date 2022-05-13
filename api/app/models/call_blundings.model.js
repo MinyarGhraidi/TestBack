@@ -5,7 +5,7 @@ module.exports = (sequelize, Sequelize) => {
                 autoIncrement: true,
                 type: Sequelize.INTEGER
             },
-            did_gp_id: {
+            did_id: {
                 type: Sequelize.INTEGER
             },
             campaign_id: {
@@ -38,7 +38,6 @@ module.exports = (sequelize, Sequelize) => {
 
     didsgroup.prototype.fields = [
         'did_id',
-        'did_gp_id',
         'campaign_id',
         "active",
         'status',
@@ -47,7 +46,7 @@ module.exports = (sequelize, Sequelize) => {
         'account_id'
     ],
         didsgroup.prototype.fieldsSearchMetas = [
-            'did_gp_id',
+            'did_id',
             'campaign_id',
             "active",
             'status',
@@ -59,8 +58,8 @@ module.exports = (sequelize, Sequelize) => {
         didsgroup.belongsTo(models.campaigns, {
             foreignKey: 'campaign_id'
         });
-        didsgroup.belongsTo(models.didsgroups, {
-            foreignKey: 'did_gp_id'
+        didsgroup.belongsTo(models.dids, {
+            foreignKey: 'did_id'
         });
         didsgroup.belongsTo(models.accounts, {
             foreignKey: 'account_id'
