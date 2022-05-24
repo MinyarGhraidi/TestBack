@@ -44,7 +44,7 @@ module.exports = (sequelize, Sequelize) => {
         'created_at',
         'updated_at',
         'account_id'
-    ],
+    ]
         didsgroup.prototype.fieldsSearchMetas = [
             'did_id',
             'campaign_id',
