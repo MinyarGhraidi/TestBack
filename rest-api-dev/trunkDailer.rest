@@ -68,6 +68,6 @@ Authorization: Bearer LucH6JQhHjpXVhP8K6buVmGFrrYrQ9jR56Zx5Ftcq2X93fXcxRfFwrQU2K
 ###
 
 # DELETE GATEWAY BY UUID
-DELETE http://92.222.227.222:8091/api/v1/dialer/gateways/defd480d-b611-45f2-89c0-a8f842b3a8a6
+DELETE http://92.222.227.222:8091/api/v1/dialer/gateways/03622c67-f888-47d7-a89f-04b2511033c3
 Content-Type: application/json
 Authorization: Bearer LucH6JQhHjpXVhP8K6buVmGFrrYrQ9jR56Zx5Ftcq2X93fXcxRfFwrQU2Ka7J8Mr

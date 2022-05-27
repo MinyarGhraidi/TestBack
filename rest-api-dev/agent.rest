@@ -5,13 +5,13 @@ Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9c
 
 ###
 #GET AGENT BY UUID
-GET https://occ.oxilog.net:2443/api/v1/agents/cc51a9c8-5197-44d4-a934-0ea1857a98de
+GET https://occ.oxilog.net:2443/api/v1/agents/5675fa13-4af2-4264-ad22-2fd465b83ace
 Content-Type: application/json
 Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9cIi2IY5
 
 ###
 #GET AGENT SIPINFO BY UUID
-GET https://occ.oxilog.net:2443/api/v1/agents/5319c2ce-7ac3-4396-975a-a7259c803051/sipinfo
+GET https://occ.oxilog.net:2443/api/v1/agents/5675fa13-4af2-4264-ad22-2fd465b83ace/sipinfo
 Content-Type: application/json
 Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9cIi2IY5
 
@@ -47,18 +47,18 @@ Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9c
 
 ###
 #UPDATE AGENT
-PUT https://occ.oxilog.net:2443/api/v1/agents/fe29c88a-d59f-483d-aecf-e61a9063e31d
+PUT https://occ.oxilog.net:2443/api/v1/agents/5675fa13-4af2-4264-ad22-2fd465b83ace
 Content-Type: application/json
 Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9cIi2IY5
 
 {
-  "username": "mariem",
+  "username": "805296642433",
   "domain": "occ.oxilog.net",
-  "password": "pwdpwd2021",
-  "accountcode": "1",
-  "subscriber_id": 149,
+  "password": "ExZQc3Jy5vhU",
+  "accountcode": "703596960803",
+  "subscriber_id": 267,
   "enabled": true,
-  "status": "available",
+  "status": "logged-out",
   "options": {
     "call_timeout": 30,
     "wrap_up_time": 20,
