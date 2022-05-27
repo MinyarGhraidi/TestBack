@@ -405,7 +405,6 @@ class agents extends baseModelbo {
                         reject(err);
                     });
             } else {
-                console.log('herrrer')
                 axios
                     .get(`${base_url_cc_kam}api/v1/agents/${uuid}`, call_center_authorization)
                     .then(resp => {
@@ -467,27 +466,47 @@ class agents extends baseModelbo {
                         order: [['start_at', 'DESC']],
                         limit: 1,
                     }).then(result => {
-                        this.db['agent_log_events'].update({
-                                finish_at: new Date(),
-                                updated_at: updatedAt_tz
-                            },
-                            {
-                                where: {
-                                    agent_log_event_id: result.agent_log_event_id,
-                                    start_at: {
-                                        $ne: null
-                                    }
+                        if(result) {
+                            this.db['agent_log_events'].update({
+                                    finish_at: new Date(),
+                                    updated_at: updatedAt_tz
                                 },
-                                returning: true,
-                                plain: true
-                            }
-                        ).then(last_action => {
+                                {
+                                    where: {
+                                        agent_log_event_id: result.agent_log_event_id,
+                                        start_at: {
+                                            $ne: null
+                                        }
+                                    },
+                                    returning: true,
+                                    plain: true
+                                }
+                            ).then(last_action => {
+                                this.db['agent_log_events'].build({
+                                    user_id: user_id,
+                                    action_name: agent.params.status,
+                                    created_at: new Date(),
+                                    updated_at: updatedAt_tz,
+                                    start_at: last_action[1].finish_at
+                                }).save().then(agent_event => {
+                                    resolve({
+                                        success: true,
+                                        data: agent_event
+                                    })
+
+                                }).catch(err => {
+                                    reject(err)
+                                })
+                            }).catch(err => {
+                                reject(err)
+                            })
+                        } else {
                             this.db['agent_log_events'].build({
                                 user_id: user_id,
                                 action_name: agent.params.status,
                                 created_at: new Date(),
                                 updated_at: updatedAt_tz,
-                                start_at: last_action[1].finish_at
+                                start_at: new Date()
                             }).save().then(agent_event => {
                                 resolve({
                                     success: true,
@@ -497,9 +516,8 @@ class agents extends baseModelbo {
                             }).catch(err => {
                                 reject(err)
                             })
-                        }).catch(err => {
-                            reject(err)
-                        })
+                        }
+
                     })
 
                 })

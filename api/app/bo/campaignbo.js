@@ -695,9 +695,9 @@ class campaigns extends baseModelbo {
     assignAgents(req, res, next) {
         let _this = this;
         let {campaign_id, queue_uuid, assignedAgents, notAssignedAgents, campaign_agents} = req.body;
+        console.log(req.body)
         if (!!!campaign_id || !!!queue_uuid || !!!assignedAgents || !!!notAssignedAgents || !!!campaign_agents) {
             return _this.sendResponseError(res, ['cannot update status of assigned agents'], 1, 403);
-
         }
         let _agents = (assignedAgents && assignedAgents.length !== 0) ? assignedAgents.map(el => el.user_id) : [];
         let agents_arr = ['*'];

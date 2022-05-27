@@ -51,7 +51,9 @@ liveCallsController = require('../controllers/livecalls.Controller');
 roles_crmsController = require('../controllers/roles_crm.controller');
 didsController = require('../controllers/dids.controller');
 callBlundingController = require('../controllers/callBlunding.controller');
-
+MessageController = require('../controllers/messageController');
+MessageChannelController = require('../controllers/message_channelController');
+EfileController = require('../controllers/efiles.controller')
 
 let apiRouters = function (passport) {
 
@@ -158,7 +160,7 @@ let apiRouters = function (passport) {
     router.delete("/api/efile/delete/:params", passport.authenticate('jwt', {session: false}), efilesController.delete);
     router.post("/api/efile/save", passport.authenticate('jwt', {session: false}), efilesController.save);
     router.post("/api/uploadFile", passport.authenticate('jwt', {session: false}), upload.single("file"), efilesController.upload);
-    router.get("/api/file/thumb/full/:file_id/", passport.authenticate('jwt', {session: false}), efilesController.getImageByStyle);
+    router.get("/api/file/thumb/full/:file_id/", efilesController.getImageByStyle);
     router.get("/api/efile/getListCallFiles/:file_id", passport.authenticate('jwt', {session: false}), efilesController.getListCallFiles);
     router.post("/api/efile/getHeaderCallFile", passport.authenticate('jwt', {session: false}), efilesController.getHeaderCallFile);
 
@@ -287,6 +289,18 @@ let apiRouters = function (passport) {
     router.post("/api/livecalls/getLiveCallsByAccount", passport.authenticate('jwt', {session: false}), liveCallsController.getLiveCallsByAccount);
 
     router.post('/api/callfile/UpdateCall', passport.authenticate('jwt', {session: false}), callfileController.updateCallFileQualification)
+
+
+    router.post('/api/message/save', passport.authenticate('jwt', {session: false}), MessageController.save);
+    router.get('/api/message/get/:params?', passport.authenticate('jwt', {session: false}), MessageController.get);
+    router.get('/api/message/getById/:params',  passport.authenticate('jwt', {session: false}),MessageController.getById);
+    router.put('/api/message/update',  passport.authenticate('jwt', {session: false}),MessageController.update);
+    router.delete('/api/message/delete/:params',  passport.authenticate('jwt', {session: false}),MessageController.delete);
+
+    router.post('/api/message_channel/createNewChannel', passport.authenticate('jwt', {session: false}), MessageChannelController.createNewChannel);
+    router.post('/api/message_channel/sendNewMessage', passport.authenticate('jwt', {session: false}), MessageChannelController.sendNewMessage);
+    router.post('/api/message_channel/getMyChannel', passport.authenticate('jwt', {session: false}), MessageChannelController.getMyChannel);
+    router.post('/api/message_channel/getMessageChannel', passport.authenticate('jwt', {session: false}), MessageChannelController.getChannelMessages);
     return router;
 
 

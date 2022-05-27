@@ -6,6 +6,11 @@
     "database": "oxilog-crm-app",
     "port":5432,
     "dialect": "postgres",
+    "underscored":true,
+    "define": {
+      "createdAt": "created_at",
+      "updatedAt": "updated_at"
+    },
     "socketUrl": "https://ip221.ip-92-222-227.eu:3002",
     "pool": {
       "max": 500,

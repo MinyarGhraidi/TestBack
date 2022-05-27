@@ -68,6 +68,9 @@ module.exports = (sequelize, Sequelize) => {
             },
             role_crm_id :{
                 type: Sequelize.INTEGER
+            },
+            profile_image_id :{
+                type: Sequelize.INTEGER
             }
         },
         {timestamps: false})
@@ -90,7 +93,8 @@ module.exports = (sequelize, Sequelize) => {
         'campaign_id',
         'sip_device',
         'params',
-        'role_crm_id'
+        'role_crm_id',
+        'profile_image_id'
 
     ],
         user.prototype.fieldsSearchMetas = [
