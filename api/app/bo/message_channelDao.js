@@ -98,8 +98,8 @@ class message_channelDao extends baseModelbo {
                 this.db['message_channels'].build({
                     created_by_id: subscribers[0],
                     channel_type: (subscribers.length === 2) ? 'S' : 'G',
-                    // created_at: new Date(),
-                    //pdated_at: new Date(),
+                    created_at: new Date(),
+                    updated_at: new Date(),
                 }).save().then(save_channel => {
                     if (save_channel) {
                         this.createChannelSubscribers(subscribers, save_channel, content).then(data => {
@@ -172,7 +172,7 @@ class message_channelDao extends baseModelbo {
                         }
                     }).then(update_message_channel => {
                         if (update_message_channel) {
-                            this.get_message_subscribers(save_message.message_channel_id).then(result => {
+                            this.get_message_subscribers(save_message.message_channel_id,  message.created_by_id).then(result => {
                                 if (result.data.length !== null) {
                                     result.data.forEach(subscriber => {
                                         this.db['message_readers'].build({
@@ -319,6 +319,7 @@ class message_channelDao extends baseModelbo {
     sendNewMessage(req, res, next) {
         let content = req.body.content;
         let message_channel_id = req.body.message_channel_id;
+        let created_by_id = req.body.created_by_id;
         let user_id = req.body.user_id;
         if ((content == null) || (content === '')) {
             res.send({
@@ -358,7 +359,7 @@ class message_channelDao extends baseModelbo {
                          SET status_read = 'Y'
                           FROM message_readers mr
                           INNER JOIN messages as m on m.message_id = mr.message_id AND m.active = 'Y'
-                           WHERE mr.user_id = 2 AND m.message_channel_id = 6 AND mr.status_read <> 'Y'`;
+                           WHERE mr.user_id = :user_id AND m.message_channel_id = :message_channel_id AND mr.status_read <> 'Y'`;
 
             db.sequelize.query(sql,
                 {
@@ -411,7 +412,7 @@ class message_channelDao extends baseModelbo {
                             active: 'Y',
                         }
                     })
-                    .then(message => {
+                    .then(messages => {
                         let sql_count = `
                         SELECT count(*) as totalItems FROM (
                             SELECT m.message_id
@@ -436,10 +437,10 @@ class message_channelDao extends baseModelbo {
                             })
                             .then(count_total => {
                                 let has_no_readed_msgs = false;
-                                this.AllMessage(message, has_no_readed_msgs, message_channel_id, user_id, count_total).then(all_message => {
+                                this.AllMessage(messages, has_no_readed_msgs, message_channel_id, user_id, count_total).then(all_message => {
                                     if (all_message.success === true) {
                                         res.send({
-                                            data: message,
+                                            data: messages,
                                             success: true,
                                             total: count_total[0].totalItems
                                         })
@@ -461,20 +462,21 @@ class message_channelDao extends baseModelbo {
 
     }
 
-    AllMessage(message, has_no_readed_msgs, message_channel_id, user_id, count_total) {
+    AllMessage(messages, has_no_readed_msgs, message_channel_id, user_id, count_total) {
         return new Promise((resolve, reject) => {
-            message.forEach(msg => {
+            messages.forEach(msg => {
                 if (msg.status_read !== null && msg.status_read !== 'Y') {
                     has_no_readed_msgs = true;
                 }
             })
             if (has_no_readed_msgs) {
+                console.log(has_no_readed_msgs)
                 this.set_message_channel_as_read(message_channel_id, user_id).then(update_message_channel => {
                     if (update_message_channel.status === true) {
                         this.update_user_total_messages_not_readed(user_id).then(update_user_msg => {
                             if (update_user_msg.status === true) {
                                 resolve({
-                                    data: message,
+                                    data: messages,
                                     success: true,
                                     total: count_total[0].totalItems
                                 })
@@ -486,7 +488,7 @@ class message_channelDao extends baseModelbo {
 
             } else {
                 resolve({
-                    data: message,
+                    data: messages,
                     success: true,
                     total: count_total[0].totalItems
                 })
@@ -591,7 +593,7 @@ class message_channelDao extends baseModelbo {
         };
 
         let sql = `SELECT mc.*, u.profile_image_id as channel_picture_efile_id, count(m.message_id) as total_messages, count(mr_count.message_id) as total_not_read, m_last.message_id as last_message_id, m_last.content as last_message_content
-                  , m_last.created_by_id    FROM message_channels as mc
+                  , m_last.created_by_id ,  m_last.created_at as last_message_date    FROM message_channels as mc
                       LEFT JOIN message_channel_subscribers as mcs on mcs.active = :active and mcs.message_channel_id = mc.message_channel_id
                       LEFT JOIN message_channel_subscribers as mcs2 on mcs2.active = :active and mcs2.message_channel_id = mc.message_channel_id and mcs.user_id <> mcs2.user_id
                       LEFT JOIN messages as m on m.message_channel_id = mc.message_channel_id and m.active = :active
