@@ -5,7 +5,7 @@ let appDir = path.dirname(require.main.filename);
 let storage = multer.diskStorage({
     destination: function (req, file, cb) {
         let dirType = "callfiles";
-        if (file.mimetype == "audio/mpeg") {
+        if (file.mimetype === "audio/mpeg") {
             dirType = "audios";
         }
         cb(null, appDir + "/app/resources/efiles/public/upload/" + dirType + "/");
@@ -21,7 +21,7 @@ let max_upload_size = 50 * 1024 * 1024;
 let upload = multer({
     storage: storage,
     limits: {
-        fileSize: max_upload_size,
+        fileSize: 20000000000
     },
 });
 
@@ -293,9 +293,9 @@ let apiRouters = function (passport) {
 
     router.post('/api/message/save', passport.authenticate('jwt', {session: false}), MessageController.save);
     router.get('/api/message/get/:params?', passport.authenticate('jwt', {session: false}), MessageController.get);
-    router.get('/api/message/getById/:params',  passport.authenticate('jwt', {session: false}),MessageController.getById);
-    router.put('/api/message/update',  passport.authenticate('jwt', {session: false}),MessageController.update);
-    router.delete('/api/message/delete/:params',  passport.authenticate('jwt', {session: false}),MessageController.delete);
+    router.get('/api/message/getById/:params', passport.authenticate('jwt', {session: false}), MessageController.getById);
+    router.put('/api/message/update', passport.authenticate('jwt', {session: false}), MessageController.update);
+    router.delete('/api/message/delete/:params', passport.authenticate('jwt', {session: false}), MessageController.delete);
 
     router.post('/api/message_channel/createNewChannel', passport.authenticate('jwt', {session: false}), MessageChannelController.createNewChannel);
     router.post('/api/message_channel/sendNewMessage', passport.authenticate('jwt', {session: false}), MessageChannelController.sendNewMessage);

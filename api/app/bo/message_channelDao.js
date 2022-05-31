@@ -69,6 +69,7 @@ class message_channelDao extends baseModelbo {
 
     createNewChannel(req, res, next) {
         let subscribers = req.body.subscribers;
+        let channel_name = req.body.channel_name;
         let content = req.body.content;
         this.get_channel_id_for_subscribers(subscribers).then(data => {
             if (data.data.length !== 0) {
@@ -98,6 +99,7 @@ class message_channelDao extends baseModelbo {
                 this.db['message_channels'].build({
                     created_by_id: subscribers[0],
                     channel_type: (subscribers.length === 2) ? 'S' : 'G',
+                    channel_name: channel_name,
                     created_at: new Date(),
                     updated_at: new Date(),
                 }).save().then(save_channel => {
@@ -159,76 +161,165 @@ class message_channelDao extends baseModelbo {
             this.db['messages'].build({
                 created_by_id: message.created_by_id,
                 message_channel_id: message.message_channel_id,
+                //attachment_post_id: message.attachment_post_id,
                 created_at: new Date(),
                 updated_at: new Date(),
                 content: message.content
             }).save().then(save_message => {
                 if (save_message) {
-                    this.db['message_channels'].update({
-                        updated_at: save_message.updated_at
-                    }, {
-                        where: {
-                            message_channel_id: save_message.message_channel_id
-                        }
-                    }).then(update_message_channel => {
-                        if (update_message_channel) {
-                            this.get_message_subscribers(save_message.message_channel_id,  message.created_by_id).then(result => {
-                                if (result.data.length !== null) {
-                                    result.data.forEach(subscriber => {
-                                        this.db['message_readers'].build({
-                                            message_id: save_message.message_id,
-                                            active: 'Y',
-                                            created_at: save_message.created_at,
-                                            updated_at: save_message.updated_at,
-                                            user_id: subscriber.user_id,
-                                            status_read: (subscriber.user_id === save_message.created_by_id) ? 'Y' : 'N',
-                                        }).save().then(save_message_reader => {
-                                            if (save_message_reader) {
-                                                this.db['messages'].findAll({
-                                                    where: {
-                                                        message_channel_id: message.message_channel_id,
-                                                        active: 'Y'
-                                                    }
-                                                }).then(all_messages => {
-                                                    if (subscriber.user_id !== save_message.created_by_id) {
-                                                        this.update_user_total_messages_not_readed(subscriber.user_id).then(res => {
-                                                            if (res.status === true) {
-                                                                resolve({
-                                                                    status: true,
-                                                                    data: save_message,
-                                                                    all_messages: all_messages
-                                                                })
-                                                            } else {
-                                                                resolve({
-                                                                    status: false,
-                                                                    data: null
-                                                                })
-                                                            }
+                    if (message.attachment_post_id) {
+                        this.db['message_attachments'].build({
+                            attachment_efile_id: message.attachment_post_id,
+                            message_id: save_message.message_id,
+                            created_at: new Date(),
+                            updated_at: new Date(),
+                        }).save().then(save_message_attachment => {
+                            this.db['messages'].update({
+                                attachment_post_id: save_message_attachment.attachment_post_id
+                            }, {
+                                where: {
+                                    message_id: save_message.message_id
+                                }
+                            }).then(update_message_channel => {
+                                this.db['message_channels'].update({
+                                    updated_at: save_message.updated_at
+                                }, {
+                                    where: {
+                                        message_channel_id: save_message.message_channel_id
+                                    }
+                                }).then(update_message_channel => {
+                                    if (update_message_channel) {
+                                        this.get_message_subscribers(save_message.message_channel_id, message.created_by_id).then(result => {
+                                            if (result.data.length !== null) {
+                                                result.data.forEach(subscriber => {
+                                                    this.db['message_readers'].build({
+                                                        message_id: save_message.message_id,
+                                                        active: 'Y',
+                                                        created_at: save_message.created_at,
+                                                        updated_at: save_message.updated_at,
+                                                        user_id: subscriber.user_id,
+                                                        status_read: (subscriber.user_id === save_message.created_by_id) ? 'Y' : 'N',
+                                                    }).save().then(save_message_reader => {
+                                                        if (save_message_reader) {
+                                                            this.db['messages'].findAll({
+                                                                where: {
+                                                                    message_channel_id: message.message_channel_id,
+                                                                    active: 'Y'
+                                                                }
+                                                            }).then(all_messages => {
+                                                                if (subscriber.user_id !== save_message.created_by_id) {
+                                                                    this.update_user_total_messages_not_readed(subscriber.user_id).then(res => {
+                                                                        if (res.status === true) {
+                                                                            resolve({
+                                                                                status: true,
+                                                                                data: save_message,
+                                                                                all_messages: all_messages
+                                                                            })
+                                                                        } else {
+                                                                            resolve({
+                                                                                status: false,
+                                                                                data: null
+                                                                            })
+                                                                        }
 
-                                                        }).catch(err => {
-                                                            reject(err)
-                                                        })
-                                                    }
-                                                }).catch(err => {
-                                                    reject(err)
+                                                                    }).catch(err => {
+                                                                        reject(err)
+                                                                    })
+                                                                }
+                                                            }).catch(err => {
+                                                                reject(err)
+                                                            })
+
+                                                        }
+                                                    }).catch(err => {
+                                                        reject(err)
+                                                    })
                                                 })
 
                                             }
+
                                         }).catch(err => {
                                             reject(err)
                                         })
-                                    })
+                                    }
 
-                                }
-
+                                }).catch(err => {
+                                    reject(err)
+                                })
                             }).catch(err => {
                                 reject(err)
                             })
-                        }
+                        }).catch(err => {
+                            reject(err)
+                        })
+                    } else {
+                        this.db['message_channels'].update({
+                            updated_at: save_message.updated_at
+                        }, {
+                            where: {
+                                message_channel_id: save_message.message_channel_id
+                            }
+                        }).then(update_message_channel => {
+                            if (update_message_channel) {
+                                this.get_message_subscribers(save_message.message_channel_id, message.created_by_id).then(result => {
+                                    if (result.data.length !== null) {
+                                        result.data.forEach(subscriber => {
+                                            this.db['message_readers'].build({
+                                                message_id: save_message.message_id,
+                                                active: 'Y',
+                                                created_at: save_message.created_at,
+                                                updated_at: save_message.updated_at,
+                                                user_id: subscriber.user_id,
+                                                status_read: (subscriber.user_id === save_message.created_by_id) ? 'Y' : 'N',
+                                            }).save().then(save_message_reader => {
+                                                if (save_message_reader) {
+                                                    this.db['messages'].findAll({
+                                                        where: {
+                                                            message_channel_id: message.message_channel_id,
+                                                            active: 'Y'
+                                                        }
+                                                    }).then(all_messages => {
+                                                        if (subscriber.user_id !== save_message.created_by_id) {
+                                                            this.update_user_total_messages_not_readed(subscriber.user_id).then(res => {
+                                                                if (res.status === true) {
+                                                                    resolve({
+                                                                        status: true,
+                                                                        data: save_message,
+                                                                        all_messages: all_messages
+                                                                    })
+                                                                } else {
+                                                                    resolve({
+                                                                        status: false,
+                                                                        data: null
+                                                                    })
+                                                                }
 
-                    }).catch(err => {
-                        reject(err)
-                    })
+                                                            }).catch(err => {
+                                                                reject(err)
+                                                            })
+                                                        }
+                                                    }).catch(err => {
+                                                        reject(err)
+                                                    })
+
+                                                }
+                                            }).catch(err => {
+                                                reject(err)
+                                            })
+                                        })
+
+                                    }
+
+                                }).catch(err => {
+                                    reject(err)
+                                })
+                            }
+
+                        }).catch(err => {
+                            reject(err)
+                        })
+                    }
+
                 } else {
                     resolve({
                         status: false,
@@ -319,9 +410,10 @@ class message_channelDao extends baseModelbo {
     sendNewMessage(req, res, next) {
         let content = req.body.content;
         let message_channel_id = req.body.message_channel_id;
+        let attachment_post_id = req.body.attachment_post_id;
         let created_by_id = req.body.created_by_id;
         let user_id = req.body.user_id;
-        if ((content == null) || (content === '')) {
+        if ((!!!content || content === '') && !!!attachment_post_id) {
             res.send({
                 success: false,
                 data: null,
@@ -343,7 +435,6 @@ class message_channelDao extends baseModelbo {
                         })
                     }
                 })
-
             } else {
                 res.send({
                     data: null,
@@ -389,18 +480,19 @@ class message_channelDao extends baseModelbo {
 
         this.user_has_access_to_channel(message_channel_id, user_id).then(result => {
             if (result.status === true) {
-                let sql = `SELECT m.*,
+                let sql = `SELECT m.*,ma.attachment_efile_id,ef.file_type ,
                     u.first_name as user_firstname, u.username as user_lastname, u.profile_image_id as profile_picture_efile_id, mr.status_read
-                  
                                 FROM messages as m
                     
                                 LEFT JOIN users as u on u.user_id = m.created_by_id and u.active = :active
                    
                                 LEFT JOIN message_readers as mr on mr.message_id = m.message_id and mr.active = :active and mr.user_id = :user_id
+                                LEFT JOIN message_attachments as ma on ma.attachment_post_id = m.attachment_post_id and ma.active = :active
+                                LEFT JOIN efiles as ef on ef.file_id = ma.attachment_efile_id and ef.active = :active
                     
                                 WHERE m.active = :active AND m.message_channel_id = :message_channel_id
                                         
-                                GROUP BY m.message_id,u.first_name,u.username,u.profile_image_id,mr.status_read
+                                GROUP BY m.message_id,u.first_name,u.username,u.profile_image_id,mr.status_read, ma.attachment_efile_id, ef.file_type
                     
                                 ORDER BY m.updated_at ASC`;
                 db.sequelize.query(sql,
@@ -470,7 +562,6 @@ class message_channelDao extends baseModelbo {
                 }
             })
             if (has_no_readed_msgs) {
-                console.log(has_no_readed_msgs)
                 this.set_message_channel_as_read(message_channel_id, user_id).then(update_message_channel => {
                     if (update_message_channel.status === true) {
                         this.update_user_total_messages_not_readed(user_id).then(update_user_msg => {
@@ -584,6 +675,7 @@ class message_channelDao extends baseModelbo {
 
     getMyChannel(req, res, next) {
         let user_id = req.body.user_id;
+        let channel_name = req.body.channel_key
         const defaultParams = {
             limit: 20,
             filter: [],
@@ -604,9 +696,15 @@ class message_channelDao extends baseModelbo {
                       WHERE 1 = 1
                           AND mc.active = :active
                           AND mcs.user_id = :user_id
+                        EXTRAWHERE
                      GROUP BY mc.message_channel_id, mc.last_excerpt, u.profile_image_id, m_last.message_id , m_last.created_by_id
                     ORDER BY mc.updated_at DESC
                     OFFSET :offset LIMIT :limit`;
+        let extra_where = "";
+        if (channel_name) {
+            extra_where = extra_where + " AND mc.channel_name like :channel_name";
+        }
+        sql = sql.replace(/EXTRAWHERE/g, extra_where);
 
         db.sequelize.query(sql,
             {
@@ -616,6 +714,7 @@ class message_channelDao extends baseModelbo {
                     offset: defaultParams.offset,
                     limit: defaultParams.limit,
                     active: 'Y',
+                    channel_name: channel_name ? channel_name.concat('%'): null
                 }
             })
             .then(channels => {
