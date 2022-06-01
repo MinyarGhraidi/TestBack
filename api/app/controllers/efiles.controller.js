@@ -2,7 +2,7 @@ const efilesDao = require('../bo/efilesbo');
 let efilesDaoInst = new efilesDao;
 
 module.exports = {
-    update : function (req, res, next) {
+    update: function (req, res, next) {
         efilesDaoInst.update(req, res, next)
     },
     find: function (req, res, next) {

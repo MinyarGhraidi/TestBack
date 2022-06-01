@@ -133,13 +133,13 @@ class efiles extends baseModelbo {
                     let path = appDir + '/app/resources/efiles' + efile.uri;
                     if (efile.file_extension === 'csv' || efile.file_extension === 'xls' || efile.file_extension === 'xlsx') {
                         if (fs.existsSync(path)) {
-                            const workbookHeaders = xlsx.readFile(path, { sheetRows: 1 });
+                            const workbookHeaders = xlsx.readFile(path, {sheetRows: 1});
                             const headers = Object.values(Object.values(workbookHeaders.Sheets)[0]).map(el => el.v);
                             res.send({
                                 status: 200,
                                 success: true,
                                 messages: "Success",
-                                data : headers
+                                data: headers
                             })
                         } else {
                             res.send({
