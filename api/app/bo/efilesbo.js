@@ -66,7 +66,7 @@ class efiles extends baseModelbo {
     }
 
     return_default_image(res) {
-        const file_path = appDir + '/app/resources/assets/images/no-image.jpg';
+        const file_path = appDir + '/app/resources/assets/images/no-image.png';
         res.sendFile(file_path);
     }
 

@@ -70,6 +70,7 @@ class message_channelDao extends baseModelbo {
     createNewChannel(req, res, next) {
         let subscribers = req.body.subscribers;
         let channel_name = req.body.channel_name;
+        let is_gp = req.body.is_gp;
         let content = req.body.content;
         this.get_channel_id_for_subscribers(subscribers).then(data => {
             if (data.data.length !== 0) {
@@ -477,22 +478,22 @@ class message_channelDao extends baseModelbo {
 
     getChannelMessages(req, res, next) {
         let {message_channel_id, user_id} = req.body;
-
         this.user_has_access_to_channel(message_channel_id, user_id).then(result => {
             if (result.status === true) {
-                let sql = `SELECT m.*,ma.attachment_efile_id,ef.file_type ,
+                let sql = `SELECT m.*,ma.attachment_efile_id,ef.file_type ,mc.channel_type,
                     u.first_name as user_firstname, u.username as user_lastname, u.profile_image_id as profile_picture_efile_id, mr.status_read
                                 FROM messages as m
                     
                                 LEFT JOIN users as u on u.user_id = m.created_by_id and u.active = :active
                    
                                 LEFT JOIN message_readers as mr on mr.message_id = m.message_id and mr.active = :active and mr.user_id = :user_id
+                                LEFT JOIN message_channels as mc on mc.message_channel_id = m.message_channel_id and mc.active = :active
                                 LEFT JOIN message_attachments as ma on ma.attachment_post_id = m.attachment_post_id and ma.active = :active
                                 LEFT JOIN efiles as ef on ef.file_id = ma.attachment_efile_id and ef.active = :active
                     
                                 WHERE m.active = :active AND m.message_channel_id = :message_channel_id
                                         
-                                GROUP BY m.message_id,u.first_name,u.username,u.profile_image_id,mr.status_read, ma.attachment_efile_id, ef.file_type
+                                GROUP BY m.message_id,u.first_name,u.username,u.profile_image_id,mr.status_read, ma.attachment_efile_id, ef.file_type, mc.channel_type
                     
                                 ORDER BY m.updated_at ASC`;
                 db.sequelize.query(sql,
@@ -632,7 +633,7 @@ class message_channelDao extends baseModelbo {
                 if (channel.channel_type === 'G') {
                     new_channel_name = subscriber.user_familyname + ' ' + subscriber.user_name;
                 } else if (subscriber.user_id !== user_id) {
-                    channel.channel_picture_efile_id = subscriber.profile_image_id;
+                   // channel.channel_picture_efile_id = subscriber.profile_image_id;
                     new_channel_name = subscriber.first_name + ' ' + subscriber.last_name;
                 }
             })
@@ -684,7 +685,7 @@ class message_channelDao extends baseModelbo {
             sortDir: 'ASC'
         };
 
-        let sql = `SELECT mc.*, u.profile_image_id as channel_picture_efile_id, count(m.message_id) as total_messages, count(mr_count.message_id) as total_not_read, m_last.message_id as last_message_id, m_last.content as last_message_content
+        let sql = `SELECT mc.*, u.profile_image_id as profile_image_id, count(m.message_id) as total_messages, count(mr_count.message_id) as total_not_read, m_last.message_id as last_message_id, m_last.content as last_message_content
                   , m_last.created_by_id ,  m_last.created_at as last_message_date    FROM message_channels as mc
                       LEFT JOIN message_channel_subscribers as mcs on mcs.active = :active and mcs.message_channel_id = mc.message_channel_id
                       LEFT JOIN message_channel_subscribers as mcs2 on mcs2.active = :active and mcs2.message_channel_id = mc.message_channel_id and mcs.user_id <> mcs2.user_id
@@ -718,9 +719,11 @@ class message_channelDao extends baseModelbo {
                 }
             })
             .then(channels => {
+               // console.log(channels)
                 if (channels && channels.length !== 0) {
                     this.updateChannel(channels, user_id).then(result => {
                         if (result) {
+                            console.log(result.data)
                             res.send({
                                 success: true,
                                 status: 200,
