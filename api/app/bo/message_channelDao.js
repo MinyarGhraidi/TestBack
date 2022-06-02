@@ -719,11 +719,9 @@ class message_channelDao extends baseModelbo {
                 }
             })
             .then(channels => {
-               // console.log(channels)
                 if (channels && channels.length !== 0) {
                     this.updateChannel(channels, user_id).then(result => {
                         if (result) {
-                            console.log(result.data)
                             res.send({
                                 success: true,
                                 status: 200,

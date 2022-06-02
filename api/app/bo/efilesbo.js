@@ -1,9 +1,7 @@
 const {baseModelbo} = require('./basebo');
-let sequelize = require('sequelize');
 let db = require('../models');
 const {appDir} = require("../helpers/app");
 const EFile = db.efiles;
-const mime = require('mime');
 const path = require('path');
 const fs = require('fs');
 const csv = require('csvtojson');
@@ -18,8 +16,7 @@ class efiles extends baseModelbo {
 
     upload(req, res, next) {
         if (!req.file) {
-            return res.json({msg: 'File not exists'});
-
+            return res.send({msg: 'File not exists'});
         } else {
             EFile.create({
                 file_title: req.query.category,
@@ -40,27 +37,30 @@ class efiles extends baseModelbo {
                         dirType = "audios"
                     }
                     const file_uri = '/public/upload/' + dirType + "/" + new_file_name;
-
                     EFile.update({file_name: new_file_name, uri: file_uri},
                         {
                             where: {
                                 file_name: req.file.filename
                             }
-                        }).then();
-
-                    fs.rename(req.file.path, appDir + '/app/resources/efiles' + file_uri, (err) => {
-                        if (err) throw err;
+                        }).then(result => {
+                        fs.rename(req.file.path, appDir + '/app/resources/efiles' + file_uri, (err) => {
+                            if (err) throw err;
+                        });
                     });
-
-                    res.json({
+                    res.send({
                         success: true,
                         data: row.file_id,
                         messages: ['File uploaded with success']
                     });
-
+                } else {
+                    res.send({
+                        success: true,
+                        data: row.file_id,
+                        messages: ['Error upload file']
+                    });
                 }
             }).catch(err => {
-                res.json({msg: 'Error', detail: err});
+                res.send({msg: 'Error', detail: err});
             });
         }
     }
@@ -74,14 +74,13 @@ class efiles extends baseModelbo {
         if (!parseInt(req.params.file_id)) {
             return this.return_default_image(res);
         }
-
         EFile.findById(req.params.file_id).then(efile => {
             if (!efile) {
-                this.return_default_image(res)
+                this.return_default_image(res);
             } else {
                 const file_path = appDir + '/app/resources/efiles/' + efile.uri;
                 if (fs.existsSync(!path)) {
-                    this.return_default_image(res)
+                    this.return_default_image(res);
                 } else {
                     res.sendFile(file_path);
                 }

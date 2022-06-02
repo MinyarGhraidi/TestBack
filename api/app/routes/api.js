@@ -53,7 +53,9 @@ didsController = require('../controllers/dids.controller');
 callBlundingController = require('../controllers/callBlunding.controller');
 MessageController = require('../controllers/messageController');
 MessageChannelController = require('../controllers/message_channelController');
-EfileController = require('../controllers/efiles.controller')
+EfileController = require('../controllers/efiles.controller');
+UserDataIndexController = require('../controllers/user_indexs.controller');
+
 
 let apiRouters = function (passport) {
 
@@ -301,6 +303,12 @@ let apiRouters = function (passport) {
     router.post('/api/message_channel/sendNewMessage', passport.authenticate('jwt', {session: false}), MessageChannelController.sendNewMessage);
     router.post('/api/message_channel/getMyChannel', passport.authenticate('jwt', {session: false}), MessageChannelController.getMyChannel);
     router.post('/api/message_channel/getMessageChannel', passport.authenticate('jwt', {session: false}), MessageChannelController.getChannelMessages);
+
+    router.post("/api/userDataIndexs/find/:params?", passport.authenticate('jwt', {session: false}), UserDataIndexController.find);
+    router.get("/api/userDataIndexs/findById/:entity_id", passport.authenticate('jwt', {session: false}), UserDataIndexController.findById);
+    router.put("/api/userDataIndexs/update", passport.authenticate('jwt', {session: false}), UserDataIndexController.update);
+    router.delete("/api/userDataIndexs/delete/:params", passport.authenticate('jwt', {session: false}), UserDataIndexController.delete);
+    router.post("/api/userDataIndexs/save", passport.authenticate('jwt', {session: false}), UserDataIndexController.save);
     return router;
 
 

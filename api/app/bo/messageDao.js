@@ -5,10 +5,6 @@ class messageDao extends baseModelbo {
         this.baseModal = 'messages';
         this.primaryKey = 'message_id';
     }
-
-
-
-
 }
 
 module.exports = messageDao;
