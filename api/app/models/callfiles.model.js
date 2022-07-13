@@ -85,6 +85,11 @@ module.exports = (sequelize, Sequelize) => {
                 type: Sequelize.STRING,
                 defaultValue: 'N'
             },
+            save_in_hooper: {
+                allowNull: true,
+                type: Sequelize.STRING,
+                defaultValue: 'N'
+            },
         },
         {timestamps: false,}
     )
@@ -107,7 +112,8 @@ module.exports = (sequelize, Sequelize) => {
         'email',
         'country_code',
         'customfields',
-        'to_treat'
+        'to_treat',
+        'save_in_hooper'
 
     ]
     callfile.prototype.fieldsSearchMetas = [
@@ -128,7 +134,8 @@ module.exports = (sequelize, Sequelize) => {
         'email',
         'country_code',
         'customfields',
-        'to_treat'
+        'to_treat',
+        'save_in_hooper'
     ]
 
     return callfile

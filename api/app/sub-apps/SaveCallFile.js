@@ -41,6 +41,7 @@ function start() {
             amqpConn = conn;
 
             conn.createChannel(function (error1, channel) {
+                console.log('error1', error1, channel)
                 if (error1) {
                     throw error1;
                 }

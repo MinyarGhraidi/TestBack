@@ -163,7 +163,7 @@ class callfiles extends baseModelbo {
                     listcallfile_id: listcallfile_id
                 },
             }).then(res_listCallFile => {
-                console.log('res_listCallFile', res_listCallFile)
+                //console.log('res_listCallFile', res_listCallFile)
                 if (res_listCallFile && res_listCallFile.length !== 0) {
                     _this.CallFilesInfo(res_listCallFile, params).then(callFilesMapping => {
                         if(callFilesMapping.success){

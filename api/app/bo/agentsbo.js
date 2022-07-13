@@ -337,16 +337,17 @@ class agents extends baseModelbo {
         let {user_id, uuid, crmStatus, telcoStatus} = req.body;
         this.onConnectFunc(user_id, uuid, crmStatus, telcoStatus)
             .then((user) => {
-                let {sip_device, first_name, last_name, user_id} = user;
+                let {sip_device, first_name, last_name, user_id} = user.agent.user;
                 let data_agent = {
                     user_id: user_id,
                     first_name: first_name,
                     last_name: last_name,
                     uuid: sip_device.uuid,
-                    crmStatus: user.params.status,
+                    crmStatus: user.agent.user.params.status,
                     telcoStatus: sip_device.status,
                     updated_at: sip_device.updated_at
                 };
+                console.log('data_agent', data_agent)
                 appSocket.emit('agent_connection', data_agent);
                 res.send({
                     status: 200,
@@ -367,8 +368,16 @@ class agents extends baseModelbo {
                         let params = user.params;
                         user.updated_at = moment(new Date());
                         this.updateAgentStatus(user_id, user, crmStatus, created_at, params)
-                            .then(() => {
-                                resolve(user);
+                            .then((agent) => {
+                                if(agent.success){
+                                    resolve({
+                                        success: true,
+                                        agent:agent});
+                                }else{
+                                    resolve({
+                                        success: false,
+                                    });
+                                }
                             })
                             .catch((err) => {
                                 reject(err);
@@ -378,7 +387,6 @@ class agents extends baseModelbo {
                         reject(err);
                     });
             } else {
-                console.log('herrrer')
                 axios
                     .get(`${base_url_cc_kam}api/v1/agents/${uuid}`, call_center_authorization)
                     .then(resp => {
@@ -392,8 +400,16 @@ class agents extends baseModelbo {
                                         let params = user.params;
                                         agent.updated_at = moment(new Date());
                                         this.updateAgentStatus(user_id, agent, crmStatus, created_at, params)
-                                            .then(() => {
-                                                resolve(user);
+                                            .then(agent => {
+                                                if(agent.success){
+                                                    resolve({
+                                                        success: true,
+                                                        agent:agent});
+                                                }else{
+                                                    resolve({
+                                                        success: false,
+                                                        });
+                                                }
                                             })
                                             .catch((err) => {
                                                 reject(err);
@@ -428,8 +444,10 @@ class agents extends baseModelbo {
                 agent.params.status = crmStatus;
             }
 
-            this.db['users'].update(agent, {where: {user_id: user_id}})
-                .then(result => {
+            this.db['users'].update(agent, {where: {user_id: user_id},
+                returning: true,
+                plain: true})
+                .then(data_user => {
                     this.db['agent_log_events'].findOne({
                         where: {
                             user_id: user_id,
@@ -464,7 +482,8 @@ class agents extends baseModelbo {
                             }).save().then(agent_event => {
                                 resolve({
                                     success: true,
-                                    data: agent_event
+                                    data: agent_event,
+                                    user: data_user[1]
                                 })
 
                             }).catch(err => {
