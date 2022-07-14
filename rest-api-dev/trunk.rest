@@ -8,7 +8,7 @@ Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9c
 ###
 # GET GATEWAY BY UUID
 
-GET https://occ.oxilog.net:2443/api/v1/gateways/cc217ca9-4991-4311-bd58-aca92d008998
+GET https://occ.oxilog.net:2443/api/v1/gateways/b6cbd147-38db-4f2c-a308-78da1adf0df8
 Content-Type: application/json
 Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9cIi2IY5
 
