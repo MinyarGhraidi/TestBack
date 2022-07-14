@@ -53,12 +53,6 @@ function start() {
                         });
                         whenConnected();
                     }).then(queue_data => {
-                        // const queue = rabbitmq_config.queues.addCallFiles;
-                        // console.log('queue',queue)
-                        // channel.assertQueue(queue, {
-                        //     durable: true
-                        // });
-                        // whenConnected();
                     })
                 } else {
                     const queue = rabbitmq_config.queues.addCallFiles;
