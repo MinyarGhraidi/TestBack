@@ -101,7 +101,6 @@ class callfiles extends baseModelbo {
 
                     if (listCallFileItem.mapping[key]) {
                         let fieldName =  (listCallFileItem.mapping[key]) ;
-                        console.log('item_callFile[fieldName]', item_callFile[fieldName])
                         callFile.customfields[key] = item_callFile[fieldName];
                     }
                     if (indexMapping < listCallFileItem.mapping.length - 1) {
@@ -188,7 +187,6 @@ class callfiles extends baseModelbo {
         let _this = this;
         return new Promise((resolve, reject) => {
                 let data_listCallFileItem = res_listCallFile.toJSON();
-            console.log('data_listCallFileItem',data_listCallFileItem)
                 params.filter = [{
                     operator: 'and',
                     conditions: [
@@ -339,7 +337,6 @@ class callfiles extends baseModelbo {
                         data_call.index =index;
                         data_call.progress= progress;
                         data_call.finish = callFiles.length === index;
-
                         channel.sendToQueue(queue, Buffer.from(JSON.stringify(data_call)), {type: 'save call file'});
                     }).then((all_r) => {
                             resolve({
