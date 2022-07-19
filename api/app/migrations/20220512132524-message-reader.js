@@ -1,0 +1,56 @@
+'use strict';
+
+module.exports = {
+  up: (queryInterface, Sequelize) => {
+    return queryInterface.createTable('message_readers', {
+      message_reader_id: {
+        allowNull: false,
+        autoIncrement: true,
+        primaryKey: true,
+        type: Sequelize.INTEGER
+      },
+      message_id: {
+        allowNull: true,
+        type: Sequelize.INTEGER
+      },
+      user_id: {
+        allowNull: true,
+        type: Sequelize.INTEGER
+      },
+      createdAt: {
+        allowNull: true,
+        type: Sequelize.DATE,
+      },
+      updatedAt: {
+        allowNull: true,
+        type: Sequelize.DATE
+      },
+      active: {
+        allowNull: true,
+        type: Sequelize.STRING,
+        defaultValue: 'Y'
+      },
+      status_read: {
+        allowNull: true,
+        type: Sequelize.STRING,
+      }
+    })
+    /*
+      Add altering commands here.
+      Return a promise to correctly handle asynchronicity.
+
+      Example:
+      return queryInterface.createTable('users', { id: Sequelize.INTEGER });
+    */
+  },
+
+  down: (queryInterface, Sequelize) => {
+    /*
+      Add reverting commands here.
+      Return a promise to correctly handle asynchronicity.
+
+      Example:
+      return queryInterface.dropTable('users');
+    */
+  }
+};

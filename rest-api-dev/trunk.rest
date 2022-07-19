@@ -1,0 +1,153 @@
+###
+# GET ALL GATEWAYS
+
+GET https://occ.oxilog.net:2443/api/v1/gateways
+Content-Type: application/json
+Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9cIi2IY5
+
+###
+# GET GATEWAY BY UUID
+
+GET https://occ.oxilog.net:2443/api/v1/gateways/b6cbd147-38db-4f2c-a308-78da1adf0df8
+Content-Type: application/json
+Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9cIi2IY5
+
+###
+# CREATE NEW GATEWAY
+
+POST https://occ.oxilog.net:2443/api/v1/gateways
+Content-Type: application/json
+Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9cIi2IY5
+
+{
+  "accountcode": "010",
+  "channels": 10,
+  "codec_prefs": "PM",
+  "name": "Trunk-017",
+  "password": null,
+  "proxy": "prox-01",
+  "register": true,
+  "username": null
+}
+
+
+###
+# CREATE NEW GATEWAY
+
+POST https://occ.oxilog.net:2443/api/v1/gateways
+Content-Type: application/json
+Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9cIi2IY5
+
+{
+  "name":"oxilog",
+  "username":"oxilog",
+  "accountcode":"1",
+  "proxy":"sip.oxilog.net",
+  "register":false,
+  "caller_id_in_from":true,
+  "extension":"oxilog",
+  "extension_in_contact":true,
+  "codec_prefs":"PCMA"
+}
+
+
+###
+# CREATE NEW GATEWAY
+
+POST https://occ.oxilog.net:2443/api/v1/gateways
+Content-Type: application/json
+Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9cIi2IY5
+
+{
+  "name":"voxgate",
+  "accountcode":"1",
+  "username":"test",
+  "password":"test",
+  "proxy":"sip.voxnode.com",
+  "register":true,
+  "expire_seconds":900,
+  "retry_seconds":90,
+  "caller_id_in_from":true,
+  "extension":"voxgate",
+  "extension_in_contact":true,
+  "codec_prefs":"PCMA,PCMU"
+}
+
+###
+# UPDATE GATEWAY BY UUID
+
+PUT https://occ.oxilog.net:2443/api/v1/gateways/7e8936d9-b42d-4cf7-86ea-6607a4f61991
+Content-Type: application/json
+Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9cIi2IY5
+
+{
+  "name": "VOS3000",
+  "accountcode":"1",
+  "username": "callcenter",
+  "password": "",
+  "realm": "",
+  "proxy": "51.222.183.77",
+  "outbound_proxy": "",
+  "register": false,
+  "register_proxy": "",
+  "register_transport": "udp",
+  "expire_seconds": 900,
+  "retry_seconds": 90,
+  "distinct_to": false,
+  "auth_username": "",
+  "from_user": "",
+  "from_domain": "",
+  "caller_id_in_from": true,
+  "extension": "callcenter",
+  "extension_in_contact": true,
+  "contact_params": "",
+  "ping": 0,
+  "supress_cng": false,
+  "sip_cid_type": "pid",
+  "codec_prefs": "PCMA",
+  "channels": 0,
+  "enabled": true
+}
+
+###
+# UPDATE GATEWAY BY UUID
+
+PUT https://occ.oxilog.net:2443/api/v1/gateways/79558201-4450-49ad-ba99-4b0ca040b5ca
+Content-Type: application/json
+Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9cIi2IY5
+
+{
+  "accountcode": "1",
+  "name": "oxilog-sbc",
+  "username": "dialer",
+  "password": "",
+  "realm": "",
+  "proxy": "sip.oxilog.net",
+  "outbound_proxy": "",
+  "register": false,
+  "register_proxy": "",
+  "register_transport": "udp",
+  "expire_seconds": 900,
+  "retry_seconds": 90,
+  "distinct_to": false,
+  "auth_username": "",
+  "from_user": "",
+  "from_domain": "",
+  "caller_id_in_from": true,
+  "extension": "dialer",
+  "extension_in_contact": true,
+  "contact_params": "",
+  "ping": 0,
+  "supress_cng": false,
+  "sip_cid_type": "none",
+  "codec_prefs": "PCMA",
+  "channels": 0,
+  "enabled": true
+}
+
+###
+
+# DELETE GATEWAY BY UUID
+DELETE https://occ.oxilog.net:2443/api/v1/gateways/91c891ab-a8e7-4b2c-89cc-3b63e181ab99
+Content-Type: application/json
+Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9cIi2IY5

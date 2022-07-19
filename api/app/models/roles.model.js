@@ -53,6 +53,7 @@ module.exports = (sequelize, Sequelize) => {
             role.belongsTo(models.accounts, {
                 foreignKey: 'account_id'
             });
+            role.belongsToMany(models.permission_acls, {foreignKey : 'role_id', through: models.acls });
         };
     return role
 }

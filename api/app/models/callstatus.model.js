@@ -23,6 +23,9 @@ module.exports = (sequelize, Sequelize) => {
         type: Sequelize.STRING,
         defaultValue: "N",
       },
+        call_type: {
+            type: Sequelize.STRING
+        },
       campaign_id: {
         type: Sequelize.INTEGER
       },

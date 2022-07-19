@@ -17,4 +17,7 @@ module.exports = {
     delete: function (req, res, next) {
         agent_log_eventsDaoInst.delete(req, res, next);
     },
+    getLastEvent: function (req, res, next) {
+        agent_log_eventsDaoInst.getLastEvent(req, res, next);
+    },
 }

@@ -1,4 +1,4 @@
-const { baseModelbo } = require("./basebo");
+const {baseModelbo} = require("./basebo");
 let sequelize = require("sequelize");
 let db = require("../models");
 let moment = require("moment");
@@ -6,148 +6,292 @@ const tz = require(__dirname + '/../config/config.json')["tz"];
 
 
 class meetings extends baseModelbo {
-  constructor() {
-    super("meetings", "meeting_id");
-    this.baseModal = "meetings";
-    this.primaryKey = "meeting_id";
-  }
+    constructor() {
+        super("meetings", "meeting_id");
+        this.baseModal = "meetings";
+        this.primaryKey = "meeting_id";
+    }
 
-  isAvailableDay(day, first_day, last_day, availableDays) {
-    let dayName = moment(day).format("dddd");
-    if (moment(day).isBetween(first_day[0], last_day[0])) {
-      return availableDays.includes(dayName);
-    } else return false;
-  }
+    isValidDuration(duration_of_meeting, availability_duration) {
+        return duration_of_meeting === availability_duration && duration_of_meeting > 0;
+    }
 
-  getData(sales, day) {
-    return new Promise((resolve, reject) => {
-      let sales_json = sales.toJSON();
-      let first_day = sales_json?.params?.availability?.first_day;
-      let last_day = sales_json?.params?.availability?.last_day;
-      if (
-        this.isAvailableDay(
-          day,
-          first_day,
-          last_day,
-          sales_json?.params?.availability?.days
-        )
-      )
-        resolve(sales_json);
-      else resolve(null);
-    });
-  }
+    isTimeInFuture(started_at) {
+        let current_time = moment(new Date()).format("YYYY-MM-DD HH:mm:ss");
+        let difference = moment(started_at, "YYYY-MM-DD HH:mm:ss").diff(moment(current_time, "YYYY-MM-DD HH:mm:ss"), 'minutes');
+        return parseInt(difference) > 0
+    }
 
-  getMeetings(sales_id) {
-    this.db["meetings"]
-      .findAll({
-        where: {
-          active: "Y",
-          sales_id: sales_id,
-        },
-      })
-      .then((meetings) => {
-        console.log("meetings", meetings);
-        return meetings;
-      })
-      .catch((err) => {
-        let res = [];
-        let messages = "Cannot fetch data from database Meetings";
-        this.sendResponseError(res, messages, err, (status = 500));
-      });
-  }
+    isAvailableDay(day, first_day, last_day, availableDays) {
+        let f_day = moment(moment(new Date(first_day)).format("YYYY-MM-DD")).subtract(1, 'days');
+        let l_day = moment(moment(new Date(last_day)).format("YYYY-MM-DD")).add(1, 'days');
+        let meeting_day = moment(new Date(day)).format("YYYY-MM-DD");
+        let dayName = moment(new Date(meeting_day)).format("dddd");
+        if (moment(meeting_day).isBetween(f_day, l_day)) {
+            return availableDays.includes(dayName);
+        } else return false;
+    }
 
-  getAvailableSales(req, res, next) {
-    let { day } = req.body;
+    isAvailableTime(meeting_start, meeting_end, first_day, last_day, interval) {
+        let format = 'HH:mm:ss';
+        let start_work_hour = moment(moment(new Date(first_day))).subtract(1, 'minutes').format("HH:mm:ss");
+        let end_work_hour = moment(moment(new Date(last_day))).add(interval + 1, 'minutes').format("HH:mm:ss");
+        let first_condition = moment(meeting_start, format).isBetween(moment(start_work_hour, format), moment(end_work_hour, format));
+        let second_condition = moment(meeting_end, format).isBetween(moment(start_work_hour, format), moment(end_work_hour, format));
+        return first_condition && second_condition
+    }
 
-    const { Op } = db.sequelize;
-    this.db["users"]
-      .findAll({
-        where: {
-          active: "Y",
-          user_type: "sales",
-        },
-      })
-      .then((result) => {
+    checkMeetings(meeting_start, meeting_end, start_exist_meeting, end_exist_meeting, interval) {
+        let format = 'HH:mm:ss';
+        let start_of_existing_meeting = moment(moment(new Date(start_exist_meeting))).subtract(interval, 'minutes').format("HH:mm:ss");
+        let end_of_existing_meeting = moment(moment(new Date(end_exist_meeting))).add(interval, 'minutes').format("HH:mm:ss");
+        let first_condition = moment(meeting_start, format).isBetween(moment(start_of_existing_meeting, format), moment(end_of_existing_meeting, format));
+        let second_condition = moment(meeting_end, format).isBetween(moment(start_of_existing_meeting, format), moment(end_of_existing_meeting, format));
+        let third_condition = moment(start_of_existing_meeting, format).isBetween(moment(meeting_start, format), moment(meeting_end, format));
+        let forth_condition = moment(end_of_existing_meeting, format).isBetween(moment(meeting_start, format), moment(meeting_end, format));
+        return !(first_condition || second_condition || third_condition || forth_condition)
+    }
+
+    getAvailability(sales, day, meeting_start, meeting_end, duration) {
         let _this = this;
-        let availableSales = [];
-        // let meetings = []
-        if (result) {
-          let promise = new Promise(function (resolve, reject) {
-            let index = 0;
-            result.forEach((sales) => {
-              _this.getData(sales, day).then((availableSale) => {
-                if (availableSale) {
-                  let meetings = _this.getMeetings(availableSale.user_id) || [];
-                  //let meetings = [];
-                  availableSale.meetings = meetings;
-                  availableSales = [...availableSales, availableSale];
-                }
-                if (index < result.length - 1) {
-                  index++;
+        return new Promise((resolve, reject) => {
+            let sales_man = sales.toJSON();
+            let first_day;
+            let last_day;
+            let days;
+            if (sales_man.params.availability !== undefined) {
+                first_day = sales_man.params.availability.first_day;
+                last_day = sales_man.params.availability.last_day;
+                days = sales_man.params.availability.days;
+                let sale_id = sales_man.user_id;
+                let availability_duration = parseInt(sales_man.params.availability.duration);
+                let interval = parseInt(sales_man.params.availability.interval);
+                if (this.isTimeInFuture(day)) {
+                    if (this.isValidDuration(duration, availability_duration)) {
+                        if (this.isAvailableDay(day, first_day[0], last_day[0], days)) {
+                            if (this.isAvailableTime(meeting_start, meeting_end, first_day[0], last_day[0], interval)) {
+                                _this.isAvailable(sale_id, day, meeting_start, meeting_end, interval)
+                                    .then(isAvailableMeeting => {
+                                        if (isAvailableMeeting) {
+                                            resolve(sales_man);
+                                        } else {
+                                            resolve(null);
+                                        }
+                                    })
+                                    .catch(err => {
+                                        reject(err)
+                                    })
+                            } else {
+                                resolve(null);
+                            }
+                        } else {
+                            resolve(null);
+                        }
+                    } else {
+                        resolve(null);
+                    }
                 } else {
-                  resolve(availableSales);
+                    resolve(null);
                 }
-              });
-            });
-          });
+            }
+        });
+    }
 
-          Promise.all([promise]).then((availableSales) => {
-            res.send({
-              message: "Success",
-              success: true,
-              result: availableSales[0],
+    getMeetings(sales_id, res) {
+        let _this = this;
+        this.db["meetings"]
+            .findAll({
+                where: {
+                    active: "Y",
+                    sales_id: sales_id
+                },
+            })
+            .then((meetings) => {
+                return meetings;
+            })
+            .catch((err) => {
+                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
             });
-          });
-        } else {
-          res.send({
-            message: "No sales found",
-            success: true,
-            result: [],
-          });
+    }
+
+    authorize(req, res, next) {
+        let _this = this;
+        let to_number = req.body.to_number;
+        let data_resp = {
+            "action": "allow",
+            "deny_code": "",
+            "deny_reason": "",
+            "type": "queue",
+            "destination": "",
+            "caller_id_number": "",
+            "pai": "",
+            "privacy": 0,
+            "max_duration": 0,
+            "gateways": []
         }
-      })
-      .catch((err) => {
-        let res = [];
-        let messages = "Cannot fetch data from database";
-        this.sendResponseError(res, messages, err, (status = 500));
-      });
+        this.db["campaigns"]
+            .findAll({
+                where: {
+                    active: "Y",
+                },
+            })
+            .then(campaigns => {
+                if (campaigns && campaigns.length !== 0) {
+                    let current_camp = campaigns.filter(item => item.params.queue.extension === to_number);
+                    if (current_camp && current_camp.length !== 0) {
+                        data_resp.destination = current_camp[0].params.queue.extension;
+                        res.send(data_resp);
+                    } else {
+                        data_resp.destination = to_number
+                        data_resp.action = "allow";
+                        res.send(data_resp);
+                    }
+                } else {
+                    data_resp.destination = to_number
+                    data_resp.action = "allow";
+                    res.send(data_resp);
+                }
+            })
+            .catch((err) => {
+                data_resp.destination = to_number
+                data_resp.action = "allow";
+                res.send(data_resp);
+            });
     }
 
-    saveMeetings(req, res, next) {
-        console.log(req.body.sales_id)
-        let sales_id = req.body.sales_id
-        let started_at = req.body.started_at
-        this.db["users"]
-        .find({
-          where: {
-            active: "Y",
-            user_id: sales_id,
-          },
-        })
-        .then(result =>             
-            {   
-                let updated_event = result;
-                let duration = result.params.availability.duration ;
-                let interval = result.params.availability.interval;
-                let totalTime = +duration + +interval;
-                let finished_at = moment.tz(started_at, tz).add(totalTime, 'minutes')
-                
-                updated_event.finished_at = finished_at
-                this.save(updated_event)
-
-            return (res.send({
-            message: "Success",
-            success: true,
-            result: {
-                started_at:started_at,
-                finished_at : finished_at,
-                totalTime : totalTime
-            },
-          }))
+    isAvailable(sales_id, day, meeting_start, meeting_end, interval) {
+        let _this = this;
+        let index = 0;
+        return new Promise((resolve, reject) => {
+            this.getSalemanMeetings(sales_id, day)
+                .then(meetings => {
+                    if (meetings && meetings.length !== 0) {
+                        meetings.forEach(meeting => {
+                            let start_of_existed_meeting = meeting.started_at;
+                            let end_of_existed_meeting = meeting.finished_at;
+                            let isAvailable = _this.checkMeetings(meeting_start, meeting_end, start_of_existed_meeting, end_of_existed_meeting, interval);
+                            if (!isAvailable) {
+                                resolve(false)
+                            } else if (index < meetings.length - 1) {
+                                index++;
+                            } else {
+                                resolve(true);
+                            }
+                        })
+                    } else {
+                        resolve(true)
+                    }
+                })
+                .catch(err => {
+                    reject(err)
+                })
         })
     }
 
+    getSalemanMeetings(sales_id, day) {
+        let _day = moment(new Date(day)).format("YYYY-MM-DD");
+        return new Promise((resolve, reject) => {
+            this.db["meetings"]
+                .findAll({
+                    where: {
+                        active: "Y",
+                        sales_id: sales_id,
+                        day: _day
+                    },
+                })
+                .then((meetings) => {
+                    resolve(meetings)
+                })
+                .catch((err) => {
+                    reject(err);
+                });
+        })
+    }
 
+    getAvailableSales(req, res, next) {
+        let _this = this;
+        let agent_id = req.body.agent_id;
+        let {day, started_at, finished_at} = req.body.date;
+        let meeting_start = moment(new Date(started_at)).format("HH:mm:ss");
+        let meeting_end = moment(new Date(finished_at)).format("HH:mm:ss");
+        let start = moment(new Date(day)).format("YYYY-MM-DD ") + meeting_start
+        let duration_moment = moment(finished_at).diff(moment(started_at), 'minutes');
+        let duration = parseInt(duration_moment);
+
+        this.db["roles_crms"]
+            .findOne({
+                where: {
+                    active: "Y",
+                    value: 'sales',
+                },
+            })
+            .then((sale_role_info) => {
+                if (sale_role_info) {
+                this.db["users"]
+                    .findAll({
+                        where: {
+                            active: "Y",
+                            role_crm_id: sale_role_info.id,
+                        },
+                    })
+                    .then((list) => {
+                        let list_of_sales_men = list.filter(sales => sales.params.agents.includes(agent_id));
+                        let availableSales = [];
+                        let promise = [];
+                        if (list_of_sales_men && list_of_sales_men.length !== 0) {
+                            promise.push(new Promise(function (resolve, reject) {
+                                let index = 0;
+                                list_of_sales_men.forEach(sales => {
+                                    _this.getAvailability(sales, start, meeting_start, meeting_end, duration)
+                                        .then(availableSale => {
+                                            if (availableSale) {
+                                                availableSale.meetings = _this.getMeetings(availableSale.user_id, res) || [];
+                                                availableSales.push(availableSale);
+                                            }
+                                            if (index < list_of_sales_men.length - 1) {
+                                                index++;
+                                            } else {
+                                                resolve(availableSales);
+                                            }
+                                        })
+                                        .catch((err) => {
+                                            reject(err)
+                                        });
+                                });
+                            }));
+                            Promise.all(promise).then((availableSales) => {
+                                res.send({
+                                    message: "Success",
+                                    success: true,
+                                    result: availableSales[0],
+                                });
+                            })
+                                .catch((err) => {
+                                    return _this.sendResponseError(res, ['Error cannot get availability', err], 1, 403);
+                                });
+                        } else {
+                            res.send({
+                                message: "No sales found",
+                                success: true,
+                                result: [],
+                            });
+                        }
+                    })
+                    .catch((err) => {
+                        return _this.sendResponseError(res, ['cannot fetch from DB', err], 1, 403);
+                    });
+
+                } else {
+                    res.send({
+                        message: "No role sales found",
+                        success: true,
+                        result: [],
+                    });
+                }
+            }) .catch((err) => {
+            return _this.sendResponseError(res, ['cannot fetch role_sale data from DB', err], 1, 403);
+        });
+    }
 
 }
 

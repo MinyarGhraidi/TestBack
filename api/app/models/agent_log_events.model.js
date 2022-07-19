@@ -1,5 +1,4 @@
 const {} = require("http-errors")
-let bcrypt = require('bcryptjs');
 
 module.exports = (sequelize, Sequelize) => {
     const agent_log_event = sequelize.define("agent_log_events", {
@@ -23,31 +22,40 @@ module.exports = (sequelize, Sequelize) => {
             created_at: {
                 allowNull: true,
                 type: Sequelize.DATE,
-                defaultValue: new Date()
             },
             updated_at: {
                 allowNull: true,
                 type: Sequelize.DATE,
-                defaultValue: new Date()
-
+            },
+            start_at: {
+                allowNull: true,
+                type: Sequelize.DATE,
+            },
+            finish_at: {
+                allowNull: true,
+                type: Sequelize.DATE,
             }
         },
         {timestamps: false})
 
-        agent_log_event.prototype.fields = [
+    agent_log_event.prototype.fields = [
         'agent_log_event_id',
         'action_name',
         'active',
         'created_at',
         'updated_at',
-        'user_id'
-    ],
+        'user_id',
+        'start_at',
+        'finish_at'
+    ]
     agent_log_event.prototype.fieldsSearchMetas = [
         'agent_log_event_id',
         'action_name',
         'active',
-        'user_id'
-        ]
+        'user_id',
+        'start_at',
+        'finish_at'
+    ]
 
     return agent_log_event
 }

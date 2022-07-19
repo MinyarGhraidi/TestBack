@@ -25,7 +25,6 @@ module.exports = (sequelize, Sequelize) => {
             },
             user_type: {
                 type: Sequelize.STRING,
-                defaultValue: 'admin'
             },
             account_id: {
                 type: Sequelize.INTEGER
@@ -66,6 +65,12 @@ module.exports = (sequelize, Sequelize) => {
                 type: Sequelize.DATE,
                 defaultValue: new Date()
 
+            },
+            role_crm_id :{
+                type: Sequelize.INTEGER
+            },
+            profile_image_id :{
+                type: Sequelize.INTEGER
             }
         },
         {timestamps: false})
@@ -87,11 +92,12 @@ module.exports = (sequelize, Sequelize) => {
         'isAssigned',
         'campaign_id',
         'sip_device',
-        'params'
+        'params',
+        'role_crm_id',
+        'profile_image_id'
 
     ],
         user.prototype.fieldsSearchMetas = [
-            'user_id',
             'username',
             'first_name',
             'last_name',
@@ -103,7 +109,8 @@ module.exports = (sequelize, Sequelize) => {
             'isAssigned',
             'campaign_id',
             "sip_device",
-            'params'
+            'params',
+            'role_crm_id'
         ],
         user.prototype.setPassword_hash = function (password) {
             let salt = bcrypt.genSaltSync();
@@ -118,6 +125,9 @@ module.exports = (sequelize, Sequelize) => {
         });
         user.belongsTo(models.accounts, {
             foreignKey: 'account_id'
+        });
+        user.belongsTo(models.roles_crms, {
+            foreignKey: 'role_crm_id'
         })
     };
 

@@ -2,7 +2,7 @@ const {TooManyRequests} = require("http-errors")
 
 module.exports = (sequelize, Sequelize) => {
     const callfile = sequelize.define("callfiles", {
-        callfile_id: {
+            callfile_id: {
                 primaryKey: true,
                 autoIncrement: true,
                 type: Sequelize.INTEGER
@@ -60,6 +60,7 @@ module.exports = (sequelize, Sequelize) => {
                 type: Sequelize.STRING,
                 defaultValue: 'Y'
             },
+
             created_at: {
                 allowNull: true,
                 type: Sequelize.DATE,
@@ -69,6 +70,25 @@ module.exports = (sequelize, Sequelize) => {
                 allowNull: true,
                 type: Sequelize.DATE,
                 defaultValue: new Date()
+            },
+            note: {
+                type: Sequelize.STRING
+            },
+            callStatus: {
+                type: Sequelize.STRING
+            },
+            status: {
+                type: Sequelize.STRING
+            },
+            to_treat: {
+                allowNull: true,
+                type: Sequelize.STRING,
+                defaultValue: 'N'
+            },
+            save_in_hooper: {
+                allowNull: true,
+                type: Sequelize.STRING,
+                defaultValue: 'N'
             },
         },
         {timestamps: false,}
@@ -91,28 +111,32 @@ module.exports = (sequelize, Sequelize) => {
         'postal_code',
         'email',
         'country_code',
-        'customfields'
-       
-    ],
+        'customfields',
+        'to_treat',
+        'save_in_hooper'
+
+    ]
     callfile.prototype.fieldsSearchMetas = [
-            'callfile_id',
-            'listcallfile_id',
-            'phone_number',
-            'first_name',
-            "last_name",
-            'middle_initial',
-            'title',
-            'address1',
-            'address2',
-            'address3',
-            'state',
-            "city",
-            'province',
-            'postal_code',
-            'email',
-            'country_code',
-            'customfields'
-        ]
-        
+        'callfile_id',
+        'listcallfile_id',
+        'phone_number',
+        'first_name',
+        "last_name",
+        'middle_initial',
+        'title',
+        'address1',
+        'address2',
+        'address3',
+        'state',
+        "city",
+        'province',
+        'postal_code',
+        'email',
+        'country_code',
+        'customfields',
+        'to_treat',
+        'save_in_hooper'
+    ]
+
     return callfile
 }

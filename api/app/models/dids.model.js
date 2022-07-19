@@ -1,19 +1,14 @@
-const {TooManyRequests} = require("http-errors")
-
 module.exports = (sequelize, Sequelize) => {
-    const did = sequelize.define("dids", {
-            did_id: {
+    const dids = sequelize.define("dids", {
+            id: {
                 primaryKey: true,
                 autoIncrement: true,
                 type: Sequelize.INTEGER
             },
-            name: {
+            number: {
                 type: Sequelize.STRING
             },
-            description: {
-                type: Sequelize.STRING
-            },
-            campaign_id: {
+            did_group_id: {
                 type: Sequelize.INTEGER
             },
             active: {
@@ -39,30 +34,27 @@ module.exports = (sequelize, Sequelize) => {
         {timestamps: false,}
     )
 
-    did.prototype.fields = [
-        'did_id',
-        'name',
-        'description',
-        'campaign_id',
+    dids.prototype.fields = [
+        'id',
+        'did_group_id',
+        'number',
         "active",
         'status',
         'created_at',
-        'updated_at'
-    ],
-    did.prototype.fieldsSearchMetas = [
-        'did_id',
-        'name',
-        'description',
-        'campaign_id',
+        'updated_at',
+    ]
+    dids.prototype.fieldsSearchMetas = [
+        'id',
+        'number',
+        'did_group_id',
         'status',
         'created_at',
         'updated_at'
-        ]
-        ,
-        did.associate = function (models) {
-            did.belongsTo(models.campaigns, {
-                foreignKey: 'campaign_id'
-            });
-        };
-    return did
+    ]
+    dids.associate = function (models) {
+        dids.belongsTo(models.didsgroups, {
+            foreignKey: 'did_group_id'
+        });
+    };
+    return dids
 }

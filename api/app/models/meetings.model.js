@@ -1,6 +1,6 @@
 
 module.exports = (sequelize, Sequelize) => {
-    const meeting = sequelize.define("meetings", {
+    const meetings = sequelize.define("meetings", {
             meeting_id: {
                 primaryKey: true,
                 autoIncrement: true,
@@ -22,7 +22,6 @@ module.exports = (sequelize, Sequelize) => {
                 type: Sequelize.INTEGER
             },
             active: {
-                allowNull: true,
                 type: Sequelize.STRING,
                 defaultValue: 'Y'
             },
@@ -30,28 +29,38 @@ module.exports = (sequelize, Sequelize) => {
                 type: Sequelize.STRING
             },
             started_at: {
-                allowNull: true,
                 type: Sequelize.DATE
             },
             finished_at: {
-                allowNull: true,
                 type: Sequelize.DATE
             },
             created_at: {
                 allowNull: true,
                 type: Sequelize.DATE,
-                defaultValue: new Date()
             },
             updated_at: {
                 allowNull: true,
                 type: Sequelize.DATE,
-                defaultValue: new Date()
+            },
+            day: {
+                type: Sequelize.STRING,
+            },
+            treated: {
+                type: Sequelize.STRING,
+                defaultValue : 'N'
+            },
+            status: {
+                type: Sequelize.INTEGER,
+                defaultValue : 1
+            },
+            campaign_id: {
+                type: Sequelize.INTEGER,
             },
         },
         {timestamps: false,}
     )
 
-    meeting.prototype.fields = [
+    meetings.prototype.fields = [
         'did_id',
         'name',
         'description',
@@ -63,9 +72,13 @@ module.exports = (sequelize, Sequelize) => {
         "finished_at",
         'address',
         'created_at',
-        'updated_at'
+        'updated_at',
+        "day",
+        "treated",
+        "status",
+        "campaign_id"
     ],
-    meeting.prototype.fieldsSearchMetas = [
+    meetings.prototype.fieldsSearchMetas = [
         'did_id',
         'name',
         'description',
@@ -77,8 +90,16 @@ module.exports = (sequelize, Sequelize) => {
         'created_at',
         'updated_at',
         "started_at",
-        "finished_at"
+        "finished_at",
+        "day",
+        "treated"
         ]
+        ,
+        meetings.associate = function (models) {
+            meetings.belongsTo(models.users, {
+                foreignKey: 'agent_id'
+            });
+        };
 
-    return meeting
+    return meetings
 }

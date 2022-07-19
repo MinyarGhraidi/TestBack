@@ -22,5 +22,26 @@ module.exports = {
     },
     signIn: function (req, res, next) {
         agentsDaoInst.signIn(req, res, next)
+    },
+    saveAgent: function (req, res, next) {
+        agentsDaoInst.saveAgent(req, res, next)
+    },
+    updateAgent: function (req, res, next) {
+        agentsDaoInst.updateAgent(req, res, next)
+    },
+    deleteAgent: function (req, res, next) {
+        agentsDaoInst.deleteAgent(req, res, next)
+    },
+    onConnect: function (req, res, next) {
+        agentsDaoInst.onConnect(req, res, next)
+    },
+    getConnectedAgents: function (req, res, next) {
+        agentsDaoInst.getConnectedAgents(req, res, next)
+    },
+    filterDashboard: function (req, res, next) {
+        agentsDaoInst.filterDashboard(req, res, next)
+    },
+    autSip: function (req,res, next) {
+        agentsDaoInst.autSip(req, res, next)
     }
 }

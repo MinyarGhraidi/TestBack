@@ -29,4 +29,31 @@ module.exports = {
     verifyToken: function (req, res, next) {
         _itembo.verifyToken(req, res, next)
     },
+    saveUser: function (req, res, next) {
+        _itembo.saveUser(req, res, next)
+    },
+    validPassword: function (req, res, next) {
+        _itembo.validPassword(req, res, next)
+    },
+    switchToNewAccount: function (req, res, next) {
+        _itembo.switchToNewAccount(req, res, next)
+    },
+    generatedUniqueUsername: function (req, res, next) {
+        _itembo.generatedUniqueUsername(req, res, next)
+    },
+    getSalesByAgent: function (req, res, next) {
+        _itembo.getSalesByAgent(req, res, next)
+    },
+    deleteSalesRepresentative: function (req, res, next) {
+        _itembo.deleteSalesRepresentative(req, res, next)
+    },
+    assignAgentsToSales: function (req, res, next) {
+        _itembo.assignAgentsToSales(req, res, next)
+    },
+    getDataAgent: function (req, res, next) {
+        _itembo.getDataAgent(req, res, next)
+    },
+    cloneSales: function (req, res, next) {
+        _itembo.cloneSales(req, res, next)
+    },
 }
