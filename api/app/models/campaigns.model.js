@@ -1,5 +1,5 @@
 module.exports = (sequelize, Sequelize) => {
-    const campaign = sequelize.define("campaigns", { 
+    const campaign = sequelize.define("campaigns", {
         campaign_id : {
             primaryKey : true,
             autoIncrement: true,
@@ -51,11 +51,14 @@ module.exports = (sequelize, Sequelize) => {
             allowNull: true,
             type: Sequelize.DATE,
             defaultValue: new Date()
-        }, 
+        },
         updated_at : {
             allowNull: true,
             type: Sequelize.DATE,
             defaultValue: new Date()
+        },
+        current_strategy:{
+            type: Sequelize.STRING
         }},
         {timestamps: false,}
         );
@@ -70,11 +73,12 @@ module.exports = (sequelize, Sequelize) => {
             'hopper',
             'dial_level',
             'dialtimeout',
-            'created_at', 
-            'updated_at', 
+            'created_at',
+            'updated_at',
             'agents',
             'status',
-            'params'
+            'params',
+            'current_strategy'
         ],
         campaign.prototype.fieldsSearchMetas = [
             'campaign_id',
@@ -86,16 +90,17 @@ module.exports = (sequelize, Sequelize) => {
             'hopper',
             'dial_level',
             'dialtimeout',
-            'created_at', 
+            'created_at',
             'updated_at',
             'agents',
-            'status'
+            'status',
+            'current_strategy'
         ]
         campaign.associate = function (models) {
             campaign.belongsTo(models.accounts, {
                 foreignKey: 'account_id'
             });
-        }; 
+        };
 
         return campaign
 }

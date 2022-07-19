@@ -41,6 +41,7 @@ function start() {
             amqpConn = conn;
 
             conn.createChannel(function (error1, channel) {
+                console.log('error1', error1, channel)
                 if (error1) {
                     throw error1;
                 }
@@ -53,6 +54,12 @@ function start() {
                         });
                         whenConnected();
                     }).then(queue_data => {
+                        const queue = rabbitmq_config.queues.addCallFiles;
+                        console.log('queue',queue)
+                        channel.assertQueue(queue, {
+                            durable: true
+                        });
+                        whenConnected();
                     })
                 } else {
                     const queue = rabbitmq_config.queues.addCallFiles;
