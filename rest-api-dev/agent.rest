@@ -86,7 +86,7 @@ Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9c
 
 ###
 #UPDATE AGENT STATUS
-PUT https://occ.oxilog.net:2443/api/v1/agents/2066dab4-279f-4c6e-88a8-cf82b9ffd1ce/status
+PUT https://occ.oxilog.net:2443/api/v1/agents/fe29c88a-d59f-483d-aecf-e61a9063e31d/status
 Content-Type: application/json
 Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9cIi2IY5
 

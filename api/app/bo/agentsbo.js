@@ -17,39 +17,12 @@ const {Sequelize} = require("sequelize");
 const Op = require("sequelize");
 let _usersbo = new usersbo;
 const appSocket = new (require('../providers/AppSocket'))();
-let sip = require('sip');
-let digest = require('sip/digest');
-let util = require('util');
-let os = require('os');
+
 class agents extends baseModelbo {
     constructor() {
         super('agents', 'user_id');
         this.baseModal = 'agents';
         this.primaryKey = 'user_id'
-    }
-
-    autSip (req, res, next) {
-        let user = {
-            //  User Name
-            "User": "mariem",
-            //  Password
-            "Pass": "pwdpwd2021",
-            //  Auth Realm
-            "Realm": "occ.oxilog.net",
-            // Display Name
-            "Display": "mariem",
-            // WebSocket URL
-            "WSServer": "wss://occ.oxilog.net:3443/wss" ,
-            "absoluteURI": "wss://occ.oxilog.net:3443/wss"
-        };
-        sip.start({}, function(request) {
-            let response = sip.makeResponse(request, 302, 'Moved Temporarily');
-            console.log('request')
-            let uri = sip.parseUri('sip:2000@occ.oxilog.net');
-            uri.host = 'http://localhost:3001';
-            response.headers.contact = [{uri: uri}];
-            sip.send(response);
-        });
     }
 
     signUp(req, res, next) {
@@ -435,7 +408,7 @@ class agents extends baseModelbo {
                                                 }else{
                                                     resolve({
                                                         success: false,
-                                                        });
+                                                    });
                                                 }
                                             })
                                             .catch((err) => {
@@ -485,47 +458,27 @@ class agents extends baseModelbo {
                         order: [['start_at', 'DESC']],
                         limit: 1,
                     }).then(result => {
-                        if(result) {
-                            this.db['agent_log_events'].update({
-                                    finish_at: new Date(),
-                                    updated_at: updatedAt_tz
+                        this.db['agent_log_events'].update({
+                                finish_at: new Date(),
+                                updated_at: updatedAt_tz
+                            },
+                            {
+                                where: {
+                                    agent_log_event_id: result.agent_log_event_id,
+                                    start_at: {
+                                        $ne: null
+                                    }
                                 },
-                                {
-                                    where: {
-                                        agent_log_event_id: result.agent_log_event_id,
-                                        start_at: {
-                                            $ne: null
-                                        }
-                                    },
-                                    returning: true,
-                                    plain: true
-                                }
-                            ).then(last_action => {
-                                this.db['agent_log_events'].build({
-                                    user_id: user_id,
-                                    action_name: agent.params.status,
-                                    created_at: new Date(),
-                                    updated_at: updatedAt_tz,
-                                    start_at: last_action[1].finish_at
-                                }).save().then(agent_event => {
-                                    resolve({
-                                        success: true,
-                                        data: agent_event
-                                    })
-
-                                }).catch(err => {
-                                    reject(err)
-                                })
-                            }).catch(err => {
-                                reject(err)
-                            })
-                        } else {
+                                returning: true,
+                                plain: true
+                            }
+                        ).then(last_action => {
                             this.db['agent_log_events'].build({
                                 user_id: user_id,
                                 action_name: agent.params.status,
                                 created_at: new Date(),
                                 updated_at: updatedAt_tz,
-                                start_at: new Date()
+                                start_at: last_action[1].finish_at
                             }).save().then(agent_event => {
                                 resolve({
                                     success: true,
@@ -536,8 +489,9 @@ class agents extends baseModelbo {
                             }).catch(err => {
                                 reject(err)
                             })
-                        }
-
+                        }).catch(err => {
+                            reject(err)
+                        })
                     })
 
                 })
