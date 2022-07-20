@@ -17,4 +17,7 @@ module.exports = {
     delete: function (req, res, next) {
         didsDaoInst.delete(req, res, next);
     },
+    saveBulk: function (req, res, next) {
+        didsDaoInst.saveBulk(req, res, next);
+    },
 }

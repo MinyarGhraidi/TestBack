@@ -224,6 +224,8 @@ let apiRouters = function (passport) {
     router.get("/api/dids/findById/:entity_id", passport.authenticate('jwt', {session: false}), didsController.findById);
     router.put("/api/dids/update", passport.authenticate('jwt', {session: false}), didsController.update);
     router.delete("/api/dids/delete/:params", passport.authenticate('jwt', {session: false}), didsController.delete);
+    router.post("/api/dids/saveBulk", passport.authenticate('jwt', {session: false}), didsController.saveBulk);
+
     router.post("/api/dids/save", passport.authenticate('jwt', {session: false}), didsController.save);
 
     // audios routers
