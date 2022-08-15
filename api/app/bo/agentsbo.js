@@ -365,23 +365,30 @@ class agents extends baseModelbo {
             if (crmStatus === "in_call" || crmStatus === "in_qualification") {
                 this.db["users"].findOne({where: {user_id: user_id}})
                     .then(user => {
-                        let params = user.params;
-                        user.updated_at = moment(new Date());
-                        this.updateAgentStatus(user_id, user, crmStatus, created_at, params)
-                            .then((agent) => {
-                                if(agent.success){
-                                    resolve({
-                                        success: true,
-                                        agent:agent});
-                                }else{
-                                    resolve({
-                                        success: false,
-                                    });
-                                }
+                        if (user){
+                            let params = user.params;
+                            user.updated_at = moment(new Date());
+                            this.updateAgentStatus(user_id, user, crmStatus, created_at, params)
+                                .then((agent) => {
+                                    if(agent.success){
+                                        resolve({
+                                            success: true,
+                                            agent:agent});
+                                    }else{
+                                        resolve({
+                                            success: false,
+                                        });
+                                    }
+                                })
+                                .catch((err) => {
+                                    reject(err);
+                                });
+                        }else{
+                            resolve({
+                                success: false
                             })
-                            .catch((err) => {
-                                reject(err);
-                            });
+                        }
+
                     })
                     .catch((err) => {
                         reject(err);
@@ -397,23 +404,30 @@ class agents extends baseModelbo {
                             .then(() => {
                                 this.db["users"].findOne({where: {user_id: user_id}})
                                     .then(user => {
-                                        let params = user.params;
-                                        agent.updated_at = moment(new Date());
-                                        this.updateAgentStatus(user_id, agent, crmStatus, created_at, params)
-                                            .then(agent => {
-                                                if(agent.success){
-                                                    resolve({
-                                                        success: true,
-                                                        agent:agent});
-                                                }else{
-                                                    resolve({
-                                                        success: false,
-                                                    });
-                                                }
+                                        if (user){
+                                            let params = user.params;
+                                            agent.updated_at = moment(new Date());
+                                            this.updateAgentStatus(user_id, agent, crmStatus, created_at, params)
+                                                .then(agent => {
+                                                    if(agent.success){
+                                                        resolve({
+                                                            success: true,
+                                                            agent:agent});
+                                                    }else{
+                                                        resolve({
+                                                            success: false,
+                                                        });
+                                                    }
+                                                })
+                                                .catch((err) => {
+                                                    reject(err);
+                                                });
+                                        }else{
+                                            resolve({
+                                                success: false
                                             })
-                                            .catch((err) => {
-                                                reject(err);
-                                            });
+                                        }
+
                                     })
                                     .catch((err) => {
                                         reject(err);
@@ -436,63 +450,93 @@ class agents extends baseModelbo {
         let updatedAt_tz = moment(created_at).format("YYYY-MM-DD HH:mm:ss");
         return new Promise((resolve, reject) => {
             let agent;
-            if (crmStatus === "in_call" || crmStatus === "in_qualification") {
-                agent = {user_id: user_id, params: params};
-                agent["params"].status = crmStatus;
-            } else {
-                agent = {user_id: user_id, sip_device: agent_, params: params};
-                agent.params.status = crmStatus;
-            }
-
-            this.db['users'].update(agent, {where: {user_id: user_id},
+            agent = {user_id: user_id, sip_device: agent_, params: params};
+            agent.params.status = crmStatus;
+            this.db['users'].update(agent, {
+                where: {user_id: user_id},
                 returning: true,
-                plain: true})
+                plain: true
+            })
                 .then(data_user => {
-                    this.db['agent_log_events'].findOne({
-                        where: {
-                            user_id: user_id,
-                            start_at: {
-                                $ne: null
-                            }
-                        },
-                        order: [['start_at', 'DESC']],
-                        limit: 1,
-                    }).then(result => {
-                        this.db['agent_log_events'].update({
-                                finish_at: new Date(),
-                                updated_at: updatedAt_tz
-                            },
-                            {
-                                where: {
-                                    agent_log_event_id: result.agent_log_event_id,
-                                    start_at: {
-                                        $ne: null
-                                    }
-                                },
-                                returning: true,
-                                plain: true
-                            }
-                        ).then(last_action => {
-                            this.db['agent_log_events'].build({
+                    if (data_user){
+                        this.db['agent_log_events'].findOne({
+                            where: {
                                 user_id: user_id,
-                                action_name: agent.params.status,
-                                created_at: new Date(),
-                                updated_at: updatedAt_tz,
-                                start_at: last_action[1].finish_at
-                            }).save().then(agent_event => {
-                                resolve({
-                                    success: true,
-                                    data: agent_event,
-                                    user: data_user[1]
-                                })
+                                start_at: {
+                                    $ne: null
+                                }
+                            },
+                            order: [['start_at', 'DESC']],
+                            limit: 1,
+                        }).then(result => {
+                            if (result) {
+                                this.db['agent_log_events'].update({
+                                        finish_at: new Date(),
+                                        updated_at: updatedAt_tz
+                                    },
+                                    {
+                                        where: {
+                                            agent_log_event_id: result.agent_log_event_id,
+                                            start_at: {
+                                                $ne: null
+                                            }
+                                        },
+                                        returning: true,
+                                        plain: true
+                                    }
+                                ).then(last_action => {
+                                    if (last_action){
+                                        this.db['agent_log_events'].build({
+                                            user_id: user_id,
+                                            action_name: agent.params.status,
+                                            created_at: new Date(),
+                                            updated_at: updatedAt_tz,
+                                            start_at: last_action[1].finish_at
+                                        }).save().then(agent_event => {
+                                            resolve({
+                                                success: true,
+                                                data: agent_event,
+                                                user: data_user[1]
+                                            })
 
-                            }).catch(err => {
-                                reject(err)
-                            })
+                                        }).catch(err => {
+                                            reject(err)
+                                        })
+                                    }else{
+                                        resolve({
+                                            success: false
+                                        })
+                                    }
+
+                                }).catch(err => {
+                                    reject(err)
+                                })
+                            } else {
+                                this.db['agent_log_events'].build({
+                                    user_id: user_id,
+                                    action_name: agent.params.status,
+                                    created_at: new Date(),
+                                    updated_at: updatedAt_tz,
+                                    start_at: new Date()
+                                }).save().then(agent_event => {
+                                    resolve({
+                                        success: true,
+                                        data: agent_event,
+                                        user: data_user[1]
+                                    })
+
+                                }).catch(err => {
+                                    reject(err)
+                                })
+                            }
                         }).catch(err => {
                             reject(err)
                         })
-                    })
+                    }else{
+                        resolve({
+                            success : false
+                        })
+                    }
 
                 })
                 .catch(err => {
