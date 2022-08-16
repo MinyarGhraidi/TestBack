@@ -11,7 +11,9 @@ const call_center_authorization = {
 const base_url_dailer = require(__dirname + '/../config/config.json')["base_url_dailer"];
 const dialer_authorization = {
     headers: {Authorization: dialer_token}
-};
+}
+;const { Op } = require("sequelize");
+
 
 class truncks extends baseModelbo {
     constructor() {
@@ -22,7 +24,8 @@ class truncks extends baseModelbo {
 
     saveTrunk(req, res, next) {
         let _this = this;
-        let trunk_kam = req.body;
+        let trunk_kam = req.body.values;
+        let data_db = req.body.db_values;
         axios
             .post(`${base_url_cc_kam}api/v1/gateways`, trunk_kam, call_center_authorization)
             .then((kamailio_obj) => {
@@ -31,19 +34,31 @@ class truncks extends baseModelbo {
                     .post(`${base_url_dailer}api/v1/dialer/gateways`, trunk_kam, dialer_authorization)
                     .then(dialer_obj => {
                         let dialer_uuid = dialer_obj.data.result.uuid || null;
-                        trunk_kam.gateways = {
+                        data_db.gateways = {
                             kamailio: {uuid: kamailio_uuid},
                             dialer: {uuid: dialer_uuid}
                         };
-                        let modalObj = this.db['truncks'].build(trunk_kam);
+                        let modalObj = this.db['truncks'].build(data_db);
                         modalObj.save()
                             .then(trunk => {
-                                res.send({
-                                    status: 200,
-                                    message: "success",
-                                    success: true,
-                                    data: trunk_kam
-                                })
+                                if (data_db.is_inbound === 'Y') {
+                                    this.db['truncks'].update({is_inbound: 'N'}, {where: {trunck_id: {[Op.ne]: trunk.trunck_id}}})
+                                        .then(trunk_updated => {
+                                            res.send({
+                                                status: 200,
+                                                message: "success",
+                                                success: true,
+                                                data: trunk
+                                            })
+                                        })
+                                } else {
+                                    res.send({
+                                        status: 200,
+                                        message: "success",
+                                        success: true,
+                                        data: trunk
+                                    })
+                                }
                             })
                             .catch(err => {
                                 return _this.sendResponseError(res, ['cannot save trunk in DB', err], 1, 403);
@@ -61,6 +76,7 @@ class truncks extends baseModelbo {
     updateTrunk(req, res, next) {
         let _this = this;
         let trunk_kam = req.body.values;
+        let data_db = req.body.db_values;
         let uuid = req.body.uuid;
         let dialer_uuid = req.body.dialer_uuid;
         axios
@@ -69,14 +85,27 @@ class truncks extends baseModelbo {
                 axios
                     .put(`${base_url_dailer}api/v1/dialer/gateways/${dialer_uuid}`, trunk_kam, dialer_authorization)
                     .then(dialer_obj => {
-                        this.db['truncks'].update(trunk_kam, {where: {trunck_id: trunk_kam.trunck_id}})
+                        this.db['truncks'].update(data_db, {where: {trunck_id: trunk_kam.trunck_id}})
                             .then(trunk => {
-                                res.send({
-                                    status: 200,
-                                    message: "success",
-                                    success: true,
-                                    data: trunk
-                                })
+                                if (data_db.is_inbound === 'Y') {
+                                    this.db['truncks'].update({is_inbound: 'N'}, {where: {trunck_id: {[Op.ne]: trunk_kam.trunck_id}}})
+                                        .then(trunk_updated => {
+                                            res.send({
+                                                status: 200,
+                                                message: "success",
+                                                success: true,
+                                                data: trunk
+                                            })
+                                        })
+                                } else {
+                                    res.send({
+                                        status: 200,
+                                        message: "success",
+                                        success: true,
+                                        data: trunk
+                                    })
+                                }
+
                             })
                     })
                     .catch(err => {

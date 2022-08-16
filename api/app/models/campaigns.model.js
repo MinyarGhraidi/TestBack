@@ -65,7 +65,10 @@ module.exports = (sequelize, Sequelize) => {
             },
             current_strategy: {
                 type: Sequelize.STRING
-            }
+            },
+            trunck_id: {
+                type: Sequelize.INTEGER
+            },
         },
         {timestamps: false,}
     );
@@ -87,7 +90,8 @@ module.exports = (sequelize, Sequelize) => {
         'params',
         'current_strategy',
         'max_sales_meet',
-        'date_start_meet'
+        'date_start_meet',
+        'trunck_id'
 
     ],
         campaign.prototype.fieldsSearchMetas = [
@@ -106,7 +110,8 @@ module.exports = (sequelize, Sequelize) => {
             'status',
             'current_strategy',
             'max_sales_meet',
-            'date_start_meet'
+            'date_start_meet',
+            'trunck_id'
         ]
     campaign.associate = function (models) {
         campaign.belongsTo(models.accounts, {
