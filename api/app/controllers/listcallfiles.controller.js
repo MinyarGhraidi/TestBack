@@ -17,4 +17,7 @@ module.exports = {
     delete: function (req, res, next) {
         listcallfilesDaoInst.delete(req, res, next);
     },
+    getStatsListCallFiles : function (req, res, next) {
+        listcallfilesDaoInst.getStatsListCallFiles(req, res, next)
+    }
 }
