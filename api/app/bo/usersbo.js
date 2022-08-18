@@ -491,45 +491,16 @@ class users extends baseModelbo {
     saveUser(req, res, next) {
         let _this = this;
         let newAccount = req.body.new_account;
-        let user_id = newAccount.user_id ? newAccount.user_id : 0;
-        let {values, accountcode} = req.body;
-        let sip_device = JSON.parse(JSON.stringify(values.sip_device));
+        let user_id = newAccount && newAccount.user_id ? newAccount.user_id : 0;
+        let {accountcode} = newAccount.sip_device;
+        let sip_device = JSON.parse(JSON.stringify(newAccount.sip_device));
         let {username, password, domain, options, status, enabled, subscriber_id} = sip_device;
         this.isUniqueUsername(newAccount.username, user_id)
             .then(isUnique => {
                 if (isUnique) {
                     if (newAccount) {
-                        this.saveUserFunction(newAccount)
-                            .then((user) => {
-
-                            })
-                            .catch(err => {
-                                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredSaveUser', err], 1, 403);
-                            })
-                    } else {
                         if (user_id) {
-                            axios
-                                .put(`${base_url_cc_kam}api/v1/agents/${sip_device.uuid}`,
-                                    {
-                                        username,
-                                        password,
-                                        domain,
-                                        options,
-                                        accountcode,
-                                        status,
-                                        enabled,
-                                        subscriber_id
-                                    },
-                                    call_center_authorization)
-                                .then((resp) => {
-                                    res.send({
-                                        message: 'success',
-                                        data: user,
-                                        success: true
-                                    })
-                                })
-                        } else {
-                            let agent = {
+                            let data_update = {
                                 username,
                                 password,
                                 domain,
@@ -538,17 +509,76 @@ class users extends baseModelbo {
                                 status,
                                 enabled,
                                 subscriber_id
-                            };
-                            console.log(agent)
+                            }
                             axios
-                                .post(`${base_url_cc_kam}api/v1/agents`, agent, call_center_authorization)
+                                .put(`${base_url_cc_kam}api/v1/agents/${sip_device.uuid}`,
+                                    data_update,
+                                    call_center_authorization)
                                 .then((resp) => {
-                                    res.send({
-                                        message: 'success',
-                                        data: user,
-                                        success: true
-                                    })
-                                })
+                                    console.log(resp.data)
+                                    let uuid = resp.data.agent.uuid || null;
+                                    let username = resp.data.agent.username || null;
+                                    newAccount.sip_device.uuid = uuid;
+                                    newAccount.sip_device.username = username;
+
+                                    this.saveUserFunction(newAccount)
+                                        .then((user) => {
+                                            res.send({
+                                                message: 'success',
+                                                data: user,
+                                                success: true
+                                            })
+                                        })
+                                        .catch(err => {
+                                            return _this.sendResponseError(res, ['Error.AnErrorHasOccuredSaveUser', err], 1, 403);
+                                        })
+
+                                }).catch(err => {
+                                    console.log(err)
+                                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredSaveUser', err], 1, 403);
+                            })
+                        } else {
+                            this.db['users'].findOne({
+                                where: {active: 'Y', role_crm_id: newAccount.role_id},
+                                order: [['user_id', 'DESC']]
+                            })
+                                .then(lastAgent => {
+                                    let increment = 1;
+                                    let lastAgentSip_device = lastAgent && lastAgent.sip_device ? lastAgent.sip_device : sip_device
+                                    let lastAgentKamailioUsername = lastAgent && lastAgentSip_device.username ? lastAgentSip_device.username : newAccount.username;
+                                    let username = (parseInt(lastAgentKamailioUsername) + increment).toString();
+                                    let agent = {
+                                        username,
+                                        password,
+                                        domain,
+                                        options,
+                                        accountcode,
+                                        status,
+                                        enabled,
+                                        subscriber_id
+                                    };
+                                    axios
+                                        .post(`${base_url_cc_kam}api/v1/agents`, agent, call_center_authorization)
+                                        .then((resp) => {
+                                            let uuid = resp.data.agent.uuid || null;
+                                            let username = resp.data.agent.username || null;
+                                            newAccount.sip_device.uuid = uuid;
+                                            newAccount.sip_device.username = username;
+                                            this.saveUserFunction(newAccount)
+                                                .then((user) => {
+                                                    res.send({
+                                                        message: 'success',
+                                                        data: user,
+                                                        success: true
+                                                    })
+                                                })
+                                                .catch(err => {
+                                                    return _this.sendResponseError(res, ['Error.AnErrorHasOccuredSaveUser', err], 1, 403);
+                                                })
+                                        })
+                                }).catch(err => {
+                                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredSaveUser', err], 1, 403);
+                            })
                         }
                     }
                 } else {
