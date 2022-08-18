@@ -227,9 +227,11 @@ class agents extends baseModelbo {
         _usersbo.isUniqueUsername(values.username, user_id)
             .then(isUnique => {
                 if (isUnique) {
+                    let dataAgent = {username, password, domain, options, accountcode, status, enabled, subscriber_id}
+                    console.log(dataAgent)
                     axios
-                        .put(`${base_url_cc_kam}api/v1/agents/${sip_device.uuid}`,
-                            {username, password, domain, options, accountcode, status, enabled, subscriber_id},
+                        .put(`${base_url_cc_kam}api/v1/agents/${sip_device.uuid}`,dataAgent
+                            ,
                             call_center_authorization)
                         .then((resp) => {
                             _usersbo

@@ -515,7 +515,6 @@ class users extends baseModelbo {
                                     data_update,
                                     call_center_authorization)
                                 .then((resp) => {
-                                    console.log(resp.data)
                                     let uuid = resp.data.agent.uuid || null;
                                     let username = resp.data.agent.username || null;
                                     newAccount.sip_device.uuid = uuid;
@@ -534,7 +533,6 @@ class users extends baseModelbo {
                                         })
 
                                 }).catch(err => {
-                                    console.log(err)
                                 return _this.sendResponseError(res, ['Error.AnErrorHasOccuredSaveUser', err], 1, 403);
                             })
                         } else {
