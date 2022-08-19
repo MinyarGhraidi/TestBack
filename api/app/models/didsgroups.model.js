@@ -36,6 +36,9 @@ module.exports = (sequelize, Sequelize) => {
                 type: Sequelize.DATE,
                 defaultValue: new Date()
             },
+            account_id: {
+                type: Sequelize.INTEGER
+            },
         },
         {timestamps: false,}
     )
@@ -49,8 +52,9 @@ module.exports = (sequelize, Sequelize) => {
         'status',
         'created_at',
         'updated_at',
-        'type'
-    ],
+        'type',
+        'account_id'
+    ]
         didsgroup.prototype.fieldsSearchMetas = [
             'did_id',
             'name',
@@ -59,7 +63,8 @@ module.exports = (sequelize, Sequelize) => {
             'status',
             'created_at',
             'updated_at',
-            'type'
+            'type',
+            'account_id'
         ]
     didsgroup.associate = function (models) {
         didsgroup.belongsTo(models.campaigns, {

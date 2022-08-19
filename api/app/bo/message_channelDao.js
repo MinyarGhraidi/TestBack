@@ -736,6 +736,7 @@ class message_channelDao extends baseModelbo {
                         }
 
                     }).catch(err => {
+                        console.log(err)
                         this.sendResponseError(res, ['Error.getDataChannel'], err);
                     })
                 } else {
@@ -744,6 +745,7 @@ class message_channelDao extends baseModelbo {
                     })
                 }
             }).catch(err => {
+                console.log(err)
             this.sendResponseError(res, ['Error.getDataChannel'], err);
         })
     }

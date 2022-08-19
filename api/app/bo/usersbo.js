@@ -9,7 +9,13 @@ const bcrypt = require("bcrypt");
 const {appSecret} = require("../helpers/app");
 const {Sequelize} = require("sequelize");
 const moment = require("moment");
+const {default: axios} = require("axios");
 const appSocket = new (require('../providers/AppSocket'))();
+const call_center_token = require(__dirname + '/../config/config.json')["call_center_token"];
+const base_url_cc_kam = require(__dirname + '/../config/config.json')["base_url_cc_kam"];
+const call_center_authorization = {
+    headers: {Authorization: call_center_token}
+};
 
 class users extends baseModelbo {
     constructor() {
@@ -52,8 +58,7 @@ class users extends baseModelbo {
 
                             })
                             return
-                        } else
-                        if ((user_info && user_info.roles_crm && user_info.roles_crm.value === 'agent') && code) {
+                        } else if ((user_info && user_info.roles_crm && user_info.roles_crm.value === 'agent') && code) {
                             this.db['accounts'].findOne({
                                 where: {
                                     account_id: user_info.account_id,
@@ -70,8 +75,7 @@ class users extends baseModelbo {
                                         message: 'Invalid admin code'
                                     })
                                     return
-                                } else
-                                if (user.password_hash && password && user.verifyPassword(password)) {
+                                } else if (user.password_hash && password && user.verifyPassword(password)) {
                                     if (user.password_hash && password) {
                                         this.db['has_permissions'].findAll({
                                             include: [{
@@ -138,71 +142,70 @@ class users extends baseModelbo {
                             }).catch((error) => {
                                 return this.sendResponseError(res, ['Error.AnErrorHasOccuredUser'], 1, 403);
                             });
-                        } else
-                                if (user.password_hash && password && user.verifyPassword(password)) {
-                                    if (user.password_hash && password) {
-                                        this.db['has_permissions'].findAll({
-                                            include: [{
-                                                model: db.permissions_crms,
-                                            }],
-                                            where: {
-                                                roles_crm_id: user.role_crm_id,
-                                            }
-                                        }).then(permissions => {
-                                            this.getPermissionsValues(permissions).then(data_perm => {
-                                                this.db['accounts'].findOne({where: {account_id: user.account_id}})
-                                                    .then(account => {
-
-                                                        let accountcode = account.account_code;
-
-                                                        if (user.user_type === "agent") {
-                                                            let {
-                                                                sip_device,
-                                                                first_name,
-                                                                last_name,
-                                                                user_id,
-                                                                campaign_id
-                                                            } = user;
-                                                            let data_agent = {
-                                                                user_id: user_id,
-                                                                first_name: first_name,
-                                                                last_name: last_name,
-                                                                uuid: sip_device.uuid,
-                                                                crmStatus: user.params.status,
-                                                                telcoStatus: sip_device.status,
-                                                                updated_at: sip_device.updated_at,
-                                                                campaign_id: campaign_id
-                                                            };
-                                                            appSocket.emit('agent_connection', data_agent);
-                                                        }
-
-                                                        const token = jwt.sign({
-                                                            user_id: user.user_id,
-                                                            username: user.username,
-                                                        }, config.secret, {
-                                                            expiresIn: '8600m'
-                                                        });
-                                                        res.send({
-                                                            message: 'Success',
-                                                            user: user.toJSON(),
-                                                            permissions: data_perm || [],
-                                                            success: true,
-                                                            token: token,
-                                                            result: 1,
-                                                            accountcode: accountcode
-                                                        });
-                                                    }).catch((error) => {
-                                                    return this.sendResponseError(res, ['Error.AnErrorHasOccuredUser'], 1, 403);
-                                                });
-                                            })
-                                        })
-
-                                    } else {
-                                        this.sendResponseError(res, ['Error.InvalidPassword'], 0, 403);
+                        } else if (user.password_hash && password && user.verifyPassword(password)) {
+                            if (user.password_hash && password) {
+                                this.db['has_permissions'].findAll({
+                                    include: [{
+                                        model: db.permissions_crms,
+                                    }],
+                                    where: {
+                                        roles_crm_id: user.role_crm_id,
                                     }
-                                } else {
-                                    this.sendResponseError(res, ['Error.InvalidPassword'], 2, 403);
-                                }
+                                }).then(permissions => {
+                                    this.getPermissionsValues(permissions).then(data_perm => {
+                                        this.db['accounts'].findOne({where: {account_id: user.account_id}})
+                                            .then(account => {
+
+                                                let accountcode = account.account_code;
+
+                                                if (user.user_type === "agent") {
+                                                    let {
+                                                        sip_device,
+                                                        first_name,
+                                                        last_name,
+                                                        user_id,
+                                                        campaign_id
+                                                    } = user;
+                                                    let data_agent = {
+                                                        user_id: user_id,
+                                                        first_name: first_name,
+                                                        last_name: last_name,
+                                                        uuid: sip_device.uuid,
+                                                        crmStatus: user.params.status,
+                                                        telcoStatus: sip_device.status,
+                                                        updated_at: sip_device.updated_at,
+                                                        campaign_id: campaign_id
+                                                    };
+                                                    appSocket.emit('agent_connection', data_agent);
+                                                }
+
+                                                const token = jwt.sign({
+                                                    user_id: user.user_id,
+                                                    username: user.username,
+                                                }, config.secret, {
+                                                    expiresIn: '8600m'
+                                                });
+                                                res.send({
+                                                    message: 'Success',
+                                                    user: user.toJSON(),
+                                                    permissions: data_perm || [],
+                                                    success: true,
+                                                    token: token,
+                                                    result: 1,
+                                                    accountcode: accountcode
+                                                });
+                                            }).catch((error) => {
+                                            return this.sendResponseError(res, ['Error.AnErrorHasOccuredUser'], 1, 403);
+                                        });
+                                    })
+                                })
+
+                            } else {
+                                this.sendResponseError(res, ['Error.InvalidPassword'], 0, 403);
+                            }
+                        } else {
+                            this.sendResponseError(res, ['Error.InvalidPassword'], 2, 403);
+                        }
                     }
                 }).catch((error) => {
                     return this.sendResponseError(res, ['Error.AnErrorHasOccuredUser'], 1, 403);
@@ -487,22 +490,95 @@ class users extends baseModelbo {
 
     saveUser(req, res, next) {
         let _this = this;
-        let newAccount = req.body;
-        let user_id = newAccount.user_id ? newAccount.user_id : 0;
+        let newAccount = req.body.new_account;
+        let user_id = newAccount && newAccount.user_id ? newAccount.user_id : 0;
+        let {accountcode} = newAccount.sip_device;
+        let sip_device = JSON.parse(JSON.stringify(newAccount.sip_device));
+        let {username, password, domain, options, status, enabled, subscriber_id} = sip_device;
         this.isUniqueUsername(newAccount.username, user_id)
             .then(isUnique => {
                 if (isUnique) {
-                    this.saveUserFunction(newAccount)
-                        .then((user) => {
-                            res.send({
-                                message: 'success',
-                                data: user,
-                                success: true
+                    if (newAccount) {
+                        if (user_id) {
+                            let data_update = {
+                                username,
+                                password,
+                                domain,
+                                options,
+                                accountcode,
+                                status,
+                                enabled,
+                                subscriber_id
+                            }
+                            axios
+                                .put(`${base_url_cc_kam}api/v1/agents/${sip_device.uuid}`,
+                                    data_update,
+                                    call_center_authorization)
+                                .then((resp) => {
+                                    let uuid = resp.data.agent.uuid || null;
+                                    let username = resp.data.agent.username || null;
+                                    newAccount.sip_device.uuid = uuid;
+                                    newAccount.sip_device.username = username;
+
+                                    this.saveUserFunction(newAccount)
+                                        .then((user) => {
+                                            res.send({
+                                                message: 'success',
+                                                data: user,
+                                                success: true
+                                            })
+                                        })
+                                        .catch(err => {
+                                            return _this.sendResponseError(res, ['Error.AnErrorHasOccuredSaveUser', err], 1, 403);
+                                        })
+
+                                }).catch(err => {
+                                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredSaveUser', err], 1, 403);
                             })
-                        })
-                        .catch(err => {
-                            return _this.sendResponseError(res, ['Error.AnErrorHasOccuredSaveUser', err], 1, 403);
-                        })
+                        } else {
+                            this.db['users'].findOne({
+                                where: {active: 'Y', role_crm_id: newAccount.role_id},
+                                order: [['user_id', 'DESC']]
+                            })
+                                .then(lastAgent => {
+                                    let increment = 1;
+                                    let lastAgentSip_device = lastAgent && lastAgent.sip_device ? lastAgent.sip_device : sip_device
+                                    let lastAgentKamailioUsername = lastAgent && lastAgentSip_device.username ? lastAgentSip_device.username : newAccount.username;
+                                    let username = (parseInt(lastAgentKamailioUsername) + increment).toString();
+                                    let agent = {
+                                        username,
+                                        password,
+                                        domain,
+                                        options,
+                                        accountcode,
+                                        status,
+                                        enabled,
+                                        subscriber_id
+                                    };
+                                    axios
+                                        .post(`${base_url_cc_kam}api/v1/agents`, agent, call_center_authorization)
+                                        .then((resp) => {
+                                            let uuid = resp.data.result.agent.uuid || null;
+                                            let username = resp.data.result.agent.username || null;
+                                            newAccount.sip_device.uuid = uuid;
+                                            newAccount.sip_device.username = username;
+                                            this.saveUserFunction(newAccount)
+                                                .then((user) => {
+                                                    res.send({
+                                                        message: 'success',
+                                                        data: user,
+                                                        success: true
+                                                    })
+                                                })
+                                                .catch(err => {
+                                                    return _this.sendResponseError(res, ['Error.AnErrorHasOccuredSaveUser', err], 1, 403);
+                                                })
+                                        })
+                                }).catch(err => {
+                                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredSaveUser', err], 1, 403);
+                            })
+                        }
+                    }
                 } else {
                     res.send({
                         status: 200,

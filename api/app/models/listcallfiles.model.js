@@ -41,6 +41,9 @@ module.exports = (sequelize, Sequelize) => {
             check_duplication: {
                 type: Sequelize.INTEGER,
             },
+            prefix: {
+                type: Sequelize.STRING,
+            },
             created_at: {
                 allowNull: true,
                 type: Sequelize.DATE,
@@ -68,8 +71,9 @@ module.exports = (sequelize, Sequelize) => {
         'processing_status',
         'check_duplication',
         'created_at',
-        'updated_at'
-    ],
+        'updated_at',
+        'prefix'
+    ]
     listcallfile.prototype.fieldsSearchMetas = [
         'listcallfile_id',
         'name',
@@ -83,9 +87,9 @@ module.exports = (sequelize, Sequelize) => {
         'check_duplication',
         'processing_status',
         'created_at',
-        'updated_at'
+        'updated_at',
+        'prefix'
         ]
-        ,
         listcallfile.associate = function (models) {
             listcallfile.belongsTo(models.efiles, {
                 foreignKey: 'file_id'
