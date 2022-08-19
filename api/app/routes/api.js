@@ -55,7 +55,8 @@ MessageController = require('../controllers/messageController');
 MessageChannelController = require('../controllers/message_channelController');
 EfileController = require('../controllers/efiles.controller');
 UserDataIndexController = require('../controllers/user_indexs.controller');
-
+dialpansController = require('../controllers/dialplan.controller')
+dialpanItemsController = require('../controllers/dialplanItems.controller');
 
 let apiRouters = function (passport) {
 
@@ -312,6 +313,20 @@ let apiRouters = function (passport) {
     router.put("/api/userDataIndexs/update", passport.authenticate('jwt', {session: false}), UserDataIndexController.update);
     router.delete("/api/userDataIndexs/delete/:params", passport.authenticate('jwt', {session: false}), UserDataIndexController.delete);
     router.post("/api/userDataIndexs/save", passport.authenticate('jwt', {session: false}), UserDataIndexController.save);
+
+
+    router.post('/api/dialplan/find/:params?', passport.authenticate('jwt', {session: false}), dialpansController.find);
+    router.get('/api/dialplan/findById/:entity_id', passport.authenticate('jwt', {session: false}), dialpansController.findById);
+    router.put('/api/dialplan/update', passport.authenticate('jwt', {session: false}), dialpansController.update);
+    router.delete('/api/dialplan/delete/:params', passport.authenticate('jwt', {session: false}), dialpansController.delete);
+    router.post('/api/dialplan/save', passport.authenticate('jwt', {session: false}), dialpansController.save);
+
+
+    router.post('/api/dialplanItems/find/:params?', passport.authenticate('jwt', {session: false}), dialpanItemsController.find);
+    router.get('/api/dialplanItems/findById/:entity_id', passport.authenticate('jwt', {session: false}), dialpanItemsController.findById);
+    router.put('/api/dialplanItems/update', passport.authenticate('jwt', {session: false}), dialpanItemsController.update);
+    router.delete('/api/dialplanItems/delete/:params', passport.authenticate('jwt', {session: false}), dialpanItemsController.delete);
+    router.post('/api/dialplanItems/save', passport.authenticate('jwt', {session: false}), dialpanItemsController.save);
     return router;
 
 

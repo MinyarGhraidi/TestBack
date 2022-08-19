@@ -558,8 +558,8 @@ class users extends baseModelbo {
                                     axios
                                         .post(`${base_url_cc_kam}api/v1/agents`, agent, call_center_authorization)
                                         .then((resp) => {
-                                            let uuid = resp.data.agent.uuid || null;
-                                            let username = resp.data.agent.username || null;
+                                            let uuid = resp.data.result.agent.uuid || null;
+                                            let username = resp.data.result.agent.username || null;
                                             newAccount.sip_device.uuid = uuid;
                                             newAccount.sip_device.username = username;
                                             this.saveUserFunction(newAccount)
