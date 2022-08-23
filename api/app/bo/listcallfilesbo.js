@@ -35,6 +35,32 @@ class listcallfiles extends baseModelbo {
                 _this.sendResponseError(res,['Error get stats callFiles'], err)
         })
     }
+    getStatsListCallFileCallStatus(req, res, next) {
+        let _this = this;
+        let {listCallfile_id} = req.body
+        let sqlStats = `SELECT code, count(call_f.*) as count_call_status
+                        FROM callstatuses as call_s
+                        LEFT JOIN callfiles as call_f on call_f.call_status = call_s.code and call_f.to_treat = :active and call_f.active= :active  and call_f.listcallfile_id = :listCallfile_id
+                        WHERE call_s.active = :active   
+                        GROUP by code`
+        db.sequelize.query(sqlStats,
+            {
+                type: db.sequelize.QueryTypes.SELECT,
+                replacements: {
+                    listCallfile_id: listCallfile_id,
+                    active: 'Y',
+                }
+            })
+            .then(statsListCallFiles => {
+                res.send({
+                    data: statsListCallFiles,
+                    status: 200,
+                    success :true
+                })
+            }).catch(err => {
+                _this.sendResponseError(res,['Error get stats callFiles by callStatus'], err)
+        })
+    }
 
     cloneListCallFiles = (req, res, next) => {
         console.log(req.body)
