@@ -19,5 +19,9 @@ module.exports = {
     },
     getStatsListCallFiles : function (req, res, next) {
         listcallfilesDaoInst.getStatsListCallFiles(req, res, next)
-    }
+    },
+    cloneListCallFiles : function (req, res, next) {
+        listcallfilesDaoInst.cloneListCallFiles(req, res, next)
+    },
+
 }
