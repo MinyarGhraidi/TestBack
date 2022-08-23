@@ -74,7 +74,7 @@ module.exports = (sequelize, Sequelize) => {
             note: {
                 type: Sequelize.STRING
             },
-            callStatus: {
+            call_status: {
                 type: Sequelize.STRING
             },
             status: {
