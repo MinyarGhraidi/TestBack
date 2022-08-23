@@ -3,7 +3,8 @@ const config = require('../config/config.json');
 const rabbitmq_config = (config.rabbitmq) ? config.rabbitmq : {
     "host": "amqp://localhost",
     "queues": {
-        "addCallFiles": "oxilog.addCallFiles"
+        "addCallFiles": "oxilog.addCallFiles",
+        "clone_List_CallFiles": "oxilog.clone_List_CallFiles"
     }
 };
 const request = require('request');
@@ -48,8 +49,12 @@ function start() {
                 if (accounts && accounts.length !== 0) {
                     PromiseBB.each(accounts, (item_account) => {
                         let queueCall = rabbitmq_config.queues.addCallFiles + item_account.account_id;
+                        let queueCloneCall = rabbitmq_config.queues.clone_List_CallFiles + item_account.account_id;
                         console.log('queueCall', queueCall)
                         channel.assertQueue(queueCall, {
+                            durable: true
+                        });
+                        channel.assertQueue(queueCloneCall, {
                             durable: true
                         });
                         whenConnected();
@@ -106,6 +111,7 @@ function startReadData() {
                 if (accounts && accounts.length !== 0) {
                     PromiseBB.each(accounts, (item_account) => {
                         ch.consume(rabbitmq_config.queues.addCallFiles + item_account.account_id, processMsg,);
+                        ch.consume(rabbitmq_config.queues.clone_List_CallFiles + item_account.account_id, processMsg,);
                     }).then(data_queue => {
                         console.log("data clone is started");
                     })
@@ -114,6 +120,7 @@ function startReadData() {
         });
 
         function processMsg(msg) {
+            console.log(msg.properties.type)
             switch (msg.properties.type) {
                 case 'save call file': {
                     const incomingDate = (new Date()).toISOString();
@@ -131,6 +138,25 @@ function startReadData() {
                         }
 
                     });
+                    break;
+                }
+                case 'clone listCallFile': {
+                    console.log(msg.content.toString())
+                    const incomingDate = (new Date()).toISOString();
+                    let data = JSON.parse(msg.content.toString());
+                    SaveItemCallFiles(data).then(result_saveCall => {
+                        console.log("Sending Ack for msg at time " + incomingDate);
+                        console.log(result_saveCall)
+                        if (result_saveCall.success) {
+                            appSocket.emit('refresh_clone_list_callFiles', {
+                                data: data
+                            });
+                            ch.ack(msg);
+                        } else {
+                            ch.reject(msg, true);
+                        }
+
+                    });
                 }
             }
         }
@@ -138,6 +164,7 @@ function startReadData() {
 }
 
 SaveCallFiles = (data) => {
+    console.log(data)
     return new Promise((resolve, reject) => {
         const options = {
             uri: "http://localhost:3001/api/saveCallFile",
@@ -158,8 +185,29 @@ SaveCallFiles = (data) => {
             }
         });
     })
+}
+SaveItemCallFiles = (data) => {
+    console.log(data)
+    return new Promise((resolve, reject) => {
+        const options = {
+            uri: "http://localhost:3001/api/callfile/save",
+            method: 'POST',
+            json: true,
+            body: data
+        };
 
-
+        request(options, function (error, response, body) {
+            if (body) {
+                resolve({
+                    success: true,
+                })
+            } else {
+                resolve({
+                    success: false
+                })
+            }
+        });
+    })
 }
 
 function closeOnErr(err) {

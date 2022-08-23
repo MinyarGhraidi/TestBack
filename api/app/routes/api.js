@@ -174,6 +174,7 @@ let apiRouters = function (passport) {
     router.delete("/api/listcallfile/delete/:params", passport.authenticate('jwt', {session: false}), listcallfilesController.delete);
     router.post("/api/listcallfile/save", passport.authenticate('jwt', {session: false}), listcallfilesController.save);
     router.get("/api/listcallfile/getStatsListCallFiles", passport.authenticate('jwt', {session: false}), listcallfilesController.getStatsListCallFiles);
+    router.post("/api/listcallfile/cloneListCallFiles", passport.authenticate('jwt', {session: false}), listcallfilesController.cloneListCallFiles);
 
     //trunks routers
     router.post("/api/trunk/find/:params?", passport.authenticate('jwt', {session: false}), truncksController.find);
@@ -205,7 +206,7 @@ let apiRouters = function (passport) {
     router.get("/api/callfile/findById/:entity_id", passport.authenticate('jwt', {session: false}), callfileController.findById);
     router.put("/api/callfile/update", passport.authenticate('jwt', {session: false}), callfileController.update);
     router.delete("/api/callfile/delete/:params", passport.authenticate('jwt', {session: false}), callfileController.delete);
-    router.post("/api/callfile/save", passport.authenticate('jwt', {session: false}), callfileController.save);
+    router.post("/api/callfile/save",  callfileController.save);
 
     // dids routers
     router.post("/api/didsgroups/find", passport.authenticate('jwt', {session: false}), didsgroupsController.find);
