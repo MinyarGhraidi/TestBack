@@ -26,5 +26,9 @@ module.exports = {
     getStatsListCallFileCallStatus : function (req, res, next) {
         listcallfilesDaoInst.getStatsListCallFileCallStatus(req, res, next)
     },
+    getStatsListCallFileCallStatusCampaign : function (req, res, next) {
+        listcallfilesDaoInst.getStatsListCallFileCallStatusCampaign(req, res, next)
+    },
+
 
 }

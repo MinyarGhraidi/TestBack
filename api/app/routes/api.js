@@ -176,6 +176,7 @@ let apiRouters = function (passport) {
     router.get("/api/listcallfile/getStatsListCallFiles", passport.authenticate('jwt', {session: false}), listcallfilesController.getStatsListCallFiles);
     router.post("/api/listcallfile/cloneListCallFiles", passport.authenticate('jwt', {session: false}), listcallfilesController.cloneListCallFiles);
     router.post("/api/listcallfile/getStatsListCallFileCallStatus", passport.authenticate('jwt', {session: false}), listcallfilesController.getStatsListCallFileCallStatus);
+    router.post("/api/listcallfile/getStatsListCallFileCallStatusCampaign", passport.authenticate('jwt', {session: false}), listcallfilesController.getStatsListCallFileCallStatusCampaign);
 
     //trunks routers
     router.post("/api/trunk/find/:params?", passport.authenticate('jwt', {session: false}), truncksController.find);
