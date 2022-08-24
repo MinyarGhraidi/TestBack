@@ -7,6 +7,7 @@ const rabbitmq_url = appHelper.rabbitmq_url;
 const PromiseBB = require('bluebird');
 const appSocket = new (require('../providers/AppSocket'))();
 const moment = require('moment');
+const {reject} = require("bcrypt/promises");
 
 class listcallfiles extends baseModelbo {
     constructor() {
@@ -14,6 +15,7 @@ class listcallfiles extends baseModelbo {
         this.baseModal = "listcallfiles";
         this.primaryKey = 'listcallfile_id';
     }
+
     getStatsListCallFiles(req, res, next) {
         let _this = this;
         let sqlStats = `SELECT listCallf.listcallfile_id as id,count(callf.*) as total, count(case when callf.to_treat = 'Y' then 1 else null end) as total_called, count(case when callf.to_treat = 'N' then 1 else null end)  as total_available    from  public.listcallfiles as listCallf
@@ -29,43 +31,97 @@ class listcallfiles extends baseModelbo {
                 res.send({
                     data: statsListCallFiles,
                     status: 200,
-                    success :true
+                    success: true
                 })
             }).catch(err => {
-                _this.sendResponseError(res,['Error get stats callFiles'], err)
+            _this.sendResponseError(res, ['Error get stats callFiles'], err)
         })
     }
+
     getStatsListCallFileCallStatus(req, res, next) {
         let _this = this;
         let {listCallfile_id} = req.body
-        let sqlStats = `SELECT code, count(call_f.*) as count_call_status
-                        FROM callstatuses as call_s
-                        LEFT JOIN callfiles as call_f on call_f.call_status = call_s.code and call_f.to_treat = :active and call_f.active= :active  and call_f.listcallfile_id = :listCallfile_id
-                        WHERE call_s.active = :active   
-                        GROUP by code`
-        db.sequelize.query(sqlStats,
+        if (!!!listCallfile_id) {
+            _this.sendResponseError(res, ['Error.listCallFile_id is required'])
+            return
+        }
+        _this.getStatsCallStatusByLisCallFile(listCallfile_id).then(data_stats => {
+            res.send({
+                data: data_stats,
+                status: 200,
+                success: true
+            })
+        }).catch(err => {
+            _this.sendResponseError(res, ['Error get stats callFiles by callStatus'], err)
+        })
+    }
+
+    getStatsListCallFileCallStatusCampaign(req, res, next) {
+        let _this = this;
+        let {campaign_id} = req.body
+        if (!!!campaign_id) {
+            _this.sendResponseError(res, ['Error.campaign_id is required'])
+            return
+        }
+
+        let sql_stats = `select callstatuses.code, 
+                              CASE all_s.count_call_status 
+                               WHEN null THEN 0
+                               ELSE all_s.count_call_status
+                              END
+                        from callstatuses left join (
+                           SELECT code,
+                                count(call_f.*) as count_call_status
+                                FROM callstatuses as call_s
+                        LEFT JOIN callfiles as call_f on call_f.call_status = call_s.code and call_f.to_treat = :active and call_f.active= :active  
+                        LEFT JOIN listcallfiles as list_call_f on list_call_f.listcallfile_id = call_f.listcallfile_id and list_call_f.active = 'Y' and call_f.active= :active
+                        LEFT JOIN campaigns as camp on camp.campaign_id = list_call_f.campaign_id and camp.active = :active 
+                        WHERE call_s.active = 'Y' and camp.campaign_id= :campaign_id
+                        GROUP by code) as all_s on all_s.code  = callstatuses.code`
+        db.sequelize.query(sql_stats,
             {
                 type: db.sequelize.QueryTypes.SELECT,
                 replacements: {
-                    listCallfile_id: listCallfile_id,
+                    campaign_id: campaign_id,
                     active: 'Y',
                 }
             })
             .then(statsListCallFiles => {
                 res.send({
-                    data: statsListCallFiles,
-                    status: 200,
-                    success :true
+                    success: true,
+                    data: statsListCallFiles
                 })
             }).catch(err => {
-                _this.sendResponseError(res,['Error get stats callFiles by callStatus'], err)
+            _this.sendResponseError(res, ['Error get stats callFiles by callStatus'], err)
+        })
+    }
+
+    getStatsCallStatusByLisCallFile(listCallfile_id) {
+        return new Promise((resolve, reject) => {
+            let sqlStats = `SELECT code, count(call_f.*) as count_call_status
+                        FROM callstatuses as call_s
+                        LEFT JOIN callfiles as call_f on call_f.call_status = call_s.code and call_f.to_treat = :active and call_f.active= :active  and call_f.listcallfile_id = :listCallfile_id
+                        WHERE call_s.active = :active   
+                        GROUP by code`
+            db.sequelize.query(sqlStats,
+                {
+                    type: db.sequelize.QueryTypes.SELECT,
+                    replacements: {
+                        listCallfile_id: listCallfile_id,
+                        active: 'Y',
+                    }
+                })
+                .then(statsListCallFiles => {
+                    resolve(statsListCallFiles)
+                }).catch(err => {
+                reject(err)
+            })
         })
     }
 
     cloneListCallFiles = (req, res, next) => {
-        console.log(req.body)
         let _this = this;
-        let {listCallFile_id,listCallFile_name , account_id, campaign_id} = req.body;
+        let {listCallFile_id, listCallFile_name, account_id, campaign_id} = req.body;
 
         if (!listCallFile_id) {
             _this.sendResponseError(res, 'invalid source list call file')
@@ -95,7 +151,7 @@ class listcallfiles extends baseModelbo {
                             listcallfile_id: listCallFile_id,
                         }
                     }).then(callFiles_items => {
-                        _this.pushItemsToQueue(callFiles_items, list_CallFile_saved.listcallfile_id,listcallfile, listCallFile_name, account_id).then(items => {
+                        _this.pushItemsToQueue(callFiles_items, list_CallFile_saved.listcallfile_id, listcallfile, listCallFile_name, account_id).then(items => {
                             res.send({
                                 success: true,
                                 data: items
@@ -119,7 +175,7 @@ class listcallfiles extends baseModelbo {
 
     }
 
-    pushItemsToQueue = (callFiles_items, listcallfile_id,cloned_listcallfile, listCallFile_name, account_id) => {
+    pushItemsToQueue = (callFiles_items, listcallfile_id, cloned_listcallfile, listCallFile_name, account_id) => {
         let _this = this;
         return new Promise((resolve, reject) => {
             if (callFiles_items.length !== 0) {
@@ -131,7 +187,8 @@ class listcallfiles extends baseModelbo {
                         if (error1) {
                             throw error1;
                         }
-                        const queue = app_config.rabbitmq.queues.clone_List_CallFiles + account_id;;
+                        const queue = app_config.rabbitmq.queues.clone_List_CallFiles + account_id;
+                        ;
                         channel.assertQueue(queue, {
                             durable: true
                         });
