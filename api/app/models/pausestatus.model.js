@@ -15,7 +15,7 @@ module.exports = (sequelize, Sequelize) => {
       label: {
         type: Sequelize.STRING,
       },
-      isDefault: {
+        isSystem: {
         type: Sequelize.STRING,
         defaultValue: "N",
       },
@@ -51,7 +51,7 @@ module.exports = (sequelize, Sequelize) => {
     "pausestatus_id",
     "code",
     "label",
-    "isDefault",
+    "isSystem",
     "duration",
     "campaign_id",
     "active",
