@@ -24,7 +24,8 @@
       "password": "oxilog2021",
       "port": "5009",
       "queues": {
-        "addCallFiles": "oxilog.addCallFiles"
+        "addCallFiles": "oxilog.addCallFiles",
+        "clone_List_CallFiles": "oxilog.clone_List_CallFiles"
       }
     }
   },

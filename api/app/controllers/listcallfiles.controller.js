@@ -25,5 +25,15 @@ module.exports = {
     },
     downloadList: function (req, res, next){
         listcallfilesDaoInst.downloadList(req, res, next)
-    }
+    },
+    cloneListCallFiles : function (req, res, next) {
+        listcallfilesDaoInst.cloneListCallFiles(req, res, next)
+    },
+    getStatsListCallFileCallStatus : function (req, res, next) {
+        listcallfilesDaoInst.getStatsListCallFileCallStatus(req, res, next)
+    },
+    getStatsListCallFileCallStatusCampaign : function (req, res, next) {
+        listcallfilesDaoInst.getStatsListCallFileCallStatusCampaign(req, res, next)
+    },
+
 }

@@ -48,28 +48,27 @@ Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9c
 
 ###
 #UPDATE AGENT
-PUT https://occ.oxilog.net:2443/api/v1/agents/5675fa13-4af2-4264-ad22-2fd465b83ace
+PUT https://occ.oxilog.net:2443/api/v1/agents/ebaeeaeb-ce15-478d-9a9c-13c1ede492c5
 Content-Type: application/json
 Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9cIi2IY5
 
 {
-  "username": "805296642433",
+  "username": "881996364199",
+  "password": "cMIhJoovaxBD7",
   "domain": "occ.oxilog.net",
-  "password": "ExZQc3Jy5vhU",
   "accountcode": "703596960803",
-  "subscriber_id": 267,
-  "enabled": true,
   "status": "logged-out",
+  "enabled": true,
+  "subscriber_id": 1,
   "options": {
     "call_timeout": 30,
-    "wrap_up_time": 20,
     "max_no_answer": 0,
-    "busy_delay_time": 20,
+    "wrap_up_time": 20,
     "reject_delay_time": 50,
+    "busy_delay_time": 20,
     "no_answer_delay_time": 20
-  },
-  "created_at": "2022-02-22 10:57:08",
-  "updated_at": "2022-02-22 10:57:08"
+  }
+
 }
 
 ###
