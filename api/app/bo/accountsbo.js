@@ -10,12 +10,17 @@ const agentsbo = require('../bo/agentsbo');
 const campaignsbo = require('../bo/campaignbo');
 const trunksbo = require('../bo/truncksbo');
 const {Sequelize} = require("sequelize");
+const {default: axios} = require("axios");
 let _usersbo = new usersbo();
 let _agentsbo = new agentsbo();
 let _campaignsbo = new campaignsbo();
 let _trunksbo = new trunksbo();
 const appSocket = new (require('../providers/AppSocket'))();
-
+const call_center_token = require(__dirname + '/../config/config.json')["call_center_token"];
+const base_url_cc_kam = require(__dirname + '/../config/config.json')["base_url_cc_kam"];
+const call_center_authorization = {
+    headers: {Authorization: call_center_token}
+};
 class accounts extends baseModelbo {
     constructor() {
         super('accounts', 'account_id');
@@ -99,67 +104,115 @@ class accounts extends baseModelbo {
             || !!!newAccount.role_crm_id) {
             return _this.sendResponseError(res, 'Error.InvalidData');
         }
+        let {accountcode} = newAccount.sip_device;
+
+        let sip_device = JSON.parse(JSON.stringify(newAccount.sip_device));
+        let {username, password, options, status, enabled, subscriber_id} = sip_device;
         this.isUniqueDomain(domain, account_id)
             .then(isUniqueDomain => {
                 if (isUniqueDomain) {
                     if (newAccount.account_id) {
-                        this.db['accounts'].update(
-                            newAccount,
-                            {
-                                where: {
-                                    account_id: newAccount.account_id
-                                },
-                                returning: true,
-                                plain: true
-                            }).then(account => {
-                            _usersbo.saveUserFunction(newAccount.user, {where: {user_id: account.user_id}})
-                                .then(user => {
-                                    res.send({
-                                        status: 200,
-                                        message: 'success',
-                                        success: true,
-                                        data: user
-                                    })
-                                })
-                                .catch(err => {
-                                    return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
-                                })
-                        }).catch(err => {
-                            return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
-                        })
-                    } else {
-                        let modalObj = this.db['accounts'].build(newAccount);
-                        modalObj.save().then(new_account => {
-                            if (new_account) {
-                                newAccount.user.account_id = new_account.account_id;
-                                _usersbo.saveUserFunction(newAccount.user).then(new_user => {
-                                    this.db['accounts'].update({
-                                        user_id: new_user.user_id
-                                    }, {
+                        let data_update = {
+                            username,
+                            password,
+                            domain,
+                            options,
+                            accountcode,
+                            status,
+                            enabled,
+                            subscriber_id
+                        }
+                        axios
+                            .put(`${base_url_cc_kam}api/v1/agents/${sip_device.uuid}`,
+                                data_update,
+                                call_center_authorization)
+                            .then((resp) => {
+                                let uuid = resp.data.agent.uuid || null;
+                                let username = resp.data.agent.username || null;
+                                newAccount.sip_device.uuid = uuid;
+                                newAccount.sip_device.username = username;
+                                this.db['accounts'].update(
+                                    newAccount,
+                                    {
                                         where: {
-                                            account_id: new_account.account_id
+                                            account_id: newAccount.account_id
                                         },
                                         returning: true,
                                         plain: true
-                                    }).then(update_account => {
-                                        res.send({
-                                            status: 200,
-                                            message: 'success',
-                                            success: true,
-                                            data: new_user
+                                    }).then(account => {
+                                    _usersbo.saveUserFunction(newAccount.user, {where: {user_id: account.user_id}})
+                                        .then(user => {
+                                            res.send({
+                                                status: 200,
+                                                message: 'success',
+                                                success: true,
+                                                data: user
+                                            })
                                         })
-                                    })
                                         .catch(err => {
                                             return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
                                         })
+                                }).catch(err => {
+                                    return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
                                 })
-                                    .catch(err => {
-                                        return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
-                                    })
-                            } else {
-                                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredSaveAccount'], 1, 403);
-                            }
+                            }).catch(err => {
+                            return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                        })
+                    } else {
+                        let dataAccount = {
+                            username,
+                            password,
+                            domain,
+                            options,
+                            accountcode,
+                            status,
+                            enabled,
+                            subscriber_id
+                        };
+                        axios
+                            .post(`${base_url_cc_kam}api/v1/agents`, dataAccount, call_center_authorization)
+                            .then((resp) => {
+                                let uuid = resp.data.result.agent.uuid || null;
+                                let username = resp.data.result.agent.username || null;
+                                newAccount.user.sip_device.uuid = uuid;
+                                newAccount.user.sip_device.username = username;
+                                let modalObj = this.db['accounts'].build(newAccount);
+                                modalObj.save().then(new_account => {
+                                    if (new_account) {
+                                        newAccount.user.account_id = new_account.account_id;
+                                        _usersbo.saveUserFunction(newAccount.user).then(new_user => {
+                                            this.db['accounts'].update({
+                                                user_id: new_user.user_id
+                                            }, {
+                                                where: {
+                                                    account_id: new_account.account_id
+                                                },
+                                                returning: true,
+                                                plain: true
+                                            }).then(update_account => {
+                                                res.send({
+                                                    status: 200,
+                                                    message: 'success',
+                                                    success: true,
+                                                    data: new_user
+                                                })
+                                            })
+                                                .catch(err => {
+                                                    return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                                                })
+                                        })
+                                            .catch(err => {
+                                                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                                            })
+                                    } else {
+                                        return _this.sendResponseError(res, ['Error.AnErrorHasOccuredSaveAccount'], 1, 403);
+                                    }
 
+                                }).catch(err => {
+                                    return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                                })
+                            }).catch(err => {
+                            return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
                         })
                     }
                 } else {

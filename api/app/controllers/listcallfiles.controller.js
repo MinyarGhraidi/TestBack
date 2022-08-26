@@ -20,6 +20,12 @@ module.exports = {
     getStatsListCallFiles : function (req, res, next) {
         listcallfilesDaoInst.getStatsListCallFiles(req, res, next)
     },
+    CallFileQualification: function (req, res, next){
+        listcallfilesDaoInst.CallFileQualification(req, res, next)
+    },
+    downloadList: function (req, res, next){
+        listcallfilesDaoInst.downloadList(req, res, next)
+    },
     cloneListCallFiles : function (req, res, next) {
         listcallfilesDaoInst.cloneListCallFiles(req, res, next)
     },
@@ -29,6 +35,5 @@ module.exports = {
     getStatsListCallFileCallStatusCampaign : function (req, res, next) {
         listcallfilesDaoInst.getStatsListCallFileCallStatusCampaign(req, res, next)
     },
-
 
 }

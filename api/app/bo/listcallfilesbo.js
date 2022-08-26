@@ -1,5 +1,9 @@
 const {baseModelbo} = require('./basebo');
 let db = require('../models');
+const ObjectsToCsv = require('objects-to-csv');
+const path = require('path');
+const fs = require("fs");
+const appDir = path.dirname(require.main.path);
 const amqp = require('amqplib/callback_api');
 const appHelper = require("../helpers/app");
 const app_config = appHelper.appConfig;
@@ -119,6 +123,70 @@ class listcallfiles extends baseModelbo {
         })
     }
 
+    async  printCsv(data) {
+        const csv = new ObjectsToCsv(data);
+        const file_name = Date.now() + 'ListCallFileQualification.csv';
+        const file_path = appDir + '/api/app/resources/qualificationListCallFile/' + file_name;
+        await csv.toDisk(file_path);
+        await csv.toString()
+        return  file_name
+    }
+
+     CallFileQualification (req, res, next){
+        let listClaFile_id = req.body.listcallfile_id;
+
+        this.db['callfiles'].findAll({
+            where:{
+                listcallfile_id:listClaFile_id,
+                active: 'Y'
+            }
+        }).then(listCalFile =>{
+
+            if(listCalFile && listCalFile.length !== 0){
+                let dataCall = listCalFile.map(item=>{
+                    delete item.dataValues.callfile_id
+                    delete item.dataValues.listcallfile_id
+                    delete item.dataValues.created_at
+                    delete item.dataValues.updated_at
+                    delete item.dataValues.to_treat
+                    delete item.dataValues.save_in_hooper
+                    delete item.dataValues.active
+                    return item.dataValues
+                })
+                this.printCsv(dataCall).then(data=>{
+                    if( data){
+                        res.send({
+                            file_name: data
+                        })
+                    }
+
+                })
+            }
+        })
+    }
+
+    downloadList(req, res, next) {
+        let _this = this;
+        let file_name = req.params.filename;
+        if (file_name && file_name !== 'undefined') {
+            const file = appDir + '/api/app/resources/qualificationListCallFile/' + file_name;
+            res.download(file, function (err) {
+                if (err) {
+                    _this.sendResponseError(res, err);
+                } else {
+                    fs.unlink(file, function (err) {
+                        if (err)
+                            throw(err)
+                    });
+                }
+            })
+        } else {
+            res.send({
+                success: false,
+                message: 'invalid file name'
+            })
+        }
+    }
     cloneListCallFiles = (req, res, next) => {
         let _this = this;
         let {listCallFile_id, listCallFile_name, account_id, campaign_id} = req.body;
@@ -217,18 +285,6 @@ class listcallfiles extends baseModelbo {
         })
     }
 
-    orderEmitSocket(rate, action, key, total, cloned_name, rate_group_name_save) {
-        appSocket.emit('rate.clone', {
-            action: action,
-            last_clone_user_id: rate.last_clone_user_id,
-            rate_group_id: rate.rate_group_id,
-            rate: rate,
-            total: total,
-            current_rate: key,
-            cloned_name: cloned_name,
-            saved_name: rate_group_name_save
-        });
-    }
 }
 
 module.exports = listcallfiles;
