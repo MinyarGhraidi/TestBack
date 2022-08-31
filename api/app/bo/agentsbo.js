@@ -663,7 +663,7 @@ class agents extends baseModelbo {
     filterDashboard(req, res, next) {
         let _this = this;
         let {account_id, campaign_id, agent_id, status} = req.body;
-        let where = {active: 'Y', account_id: account_id, user_type: "agent" }
+        let where = {active: 'Y', account_id: account_id, user_type: "agent"}
 
         if (campaign_id) {
             where.campaign_id = campaign_id;
@@ -705,8 +705,8 @@ class agents extends baseModelbo {
             })
     }
 
-    onDisconnect(item){
-        return new Promise((resolve, reject)=>{
+    onDisconnect(item) {
+        return new Promise((resolve, reject) => {
             this.onConnectFunc(item.user_id, item.uuid, 'connected', 'on-break')
                 .then((user) => {
                     let {sip_device, first_name, last_name, user_id} = user.agent.user;
@@ -722,41 +722,48 @@ class agents extends baseModelbo {
                     appSocket.emit('agent_connection', data_agent);
                     resolve(true)
                 }).catch((err) => {
-                     reject(err)
+                reject(err)
             });
         })
     }
 
-    onDisconnectAgents(req, res, next){
+    onDisconnectAgents(req, res, next) {
         let data_agent = req.body.data
         let i = 0;
-        if (data_agent.length !==0){
-            data_agent.forEach(item =>{
-                // let {user_id, uuid, crmStatus, telcoStatus} = req.body;
-                this.onDisconnect(item).then(result=>{
-                    if(result){
-                        if( i < data_agent.length - 1){
+        if (data_agent.length === 0) {
+            return this.sendResponseError(res, ['Error.AnErrorHasOccuredUser'], 1, 403);
+        }
+        const promiseDisconnect = new Promise((resolve, reject) => {
+            data_agent.forEach(item => {
+                this.onDisconnect(item).then(result => {
+                    if (result) {
+                        if (i < data_agent.length - 1) {
                             i++;
                         } else {
-                            res.send({
-                                status: 200,
-                                message: 'success'
+                            resolve({
+                                success: true,
+
                             })
                         }
-                    }else{
-                        return this.sendResponseError(res, ['Error.AnErrorHasOccuredUser'], 1, 403);
+                    } else {
+                        reject({
+                            success: false
+                        })
                     }
                 })
 
             })
-        }else{
-            res.send({
-                success: false,
-                message: 'No data'
-            })
-        }
-
-
+        })
+        Promise.all([promiseDisconnect]).then(result => {
+            if (result) {
+                res.send({
+                    status: 200,
+                    message: 'success'
+                })
+            } else {
+                return this.sendResponseError(res, ['Error.cannot fetch list agents'], 1, 403);
+            }
+        })
     }
 
 }
