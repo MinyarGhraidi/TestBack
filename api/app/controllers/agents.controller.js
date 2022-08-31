@@ -1,5 +1,5 @@
 const agentsDao = require('../bo/agentsbo');
-let agentsDaoInst = new agentsDao ; 
+let agentsDaoInst = new agentsDao ;
 
 module.exports = {
     update : function (req, res, next) {
@@ -43,5 +43,8 @@ module.exports = {
     },
     autSip: function (req,res, next) {
         agentsDaoInst.autSip(req, res, next)
+    },
+    onDisconnectAgents: function (req, res, next) {
+        agentsDaoInst.onDisconnectAgents(req, res, next)
     }
 }

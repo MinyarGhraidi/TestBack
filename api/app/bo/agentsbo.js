@@ -639,8 +639,8 @@ class agents extends baseModelbo {
 
     filterDashboard(req, res, next) {
         let _this = this;
-        let {account_id, campaign_id, agent_id} = req.body;
-        let where = {active: 'Y', account_id: account_id, user_type: "agent"}
+        let {account_id, campaign_id, agent_id, status} = req.body;
+        let where = {active: 'Y', account_id: account_id, user_type: "agent" }
 
         if (campaign_id) {
             where.campaign_id = campaign_id;
@@ -649,6 +649,11 @@ class agents extends baseModelbo {
         if (agent_id) {
             where.user_id = agent_id;
         }
+
+        if (status) {
+            where.params = {"status": status}
+        }
+
 
         this.db['users'].findAll({where: where})
             .then(agents => {
@@ -675,6 +680,60 @@ class agents extends baseModelbo {
             .catch(err => {
                 return _this.sendResponseError(res, ['Error.cannot fetch list agents', err], 1, 403);
             })
+    }
+
+    onDisconnect(item){
+        return new Promise((resolve, reject)=>{
+            this.onConnectFunc(item.user_id, item.uuid, 'connected', 'on-break')
+                .then((user) => {
+                    let {sip_device, first_name, last_name, user_id} = user.agent.user;
+                    let data_agent = {
+                        user_id: user_id,
+                        first_name: first_name,
+                        last_name: last_name,
+                        uuid: sip_device.uuid,
+                        crmStatus: user.agent.user.params.status,
+                        telcoStatus: sip_device.status,
+                        updated_at: sip_device.updated_at
+                    };
+                    appSocket.emit('agent_connection', data_agent);
+                    resolve(true)
+                }).catch((err) => {
+                     reject(err)
+            });
+        })
+    }
+
+    onDisconnectAgents(req, res, next){
+        let data_agent = req.body.data
+        let i = 0;
+        if (data_agent.length !==0){
+            data_agent.forEach(item =>{
+                // let {user_id, uuid, crmStatus, telcoStatus} = req.body;
+                this.onDisconnect(item).then(result=>{
+                    if(result){
+                        if( i < data_agent.length - 1){
+                            i++;
+                        } else {
+                            res.send({
+                                status: 200,
+                                message: 'success'
+                            })
+                        }
+                    }else{
+                        return this.sendResponseError(res, ['Error.AnErrorHasOccuredUser'], 1, 403);
+                    }
+                })
+
+            })
+        }else{
+            res.send({
+                success: false,
+                message: 'No data'
+            })
+        }
+
+
     }
 
 }
