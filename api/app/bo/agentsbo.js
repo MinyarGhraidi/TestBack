@@ -12,9 +12,11 @@ const base_url_cc_kam = require(__dirname + '/../config/config.json')["base_url_
 const call_center_authorization = {
     headers: {Authorization: call_center_token}
 };
+
 const usersbo = require('./usersbo');
 const {Sequelize} = require("sequelize");
 const Op = require("sequelize");
+const {promise, reject} = require("bcrypt/promises");
 let _usersbo = new usersbo;
 const appSocket = new (require('../providers/AppSocket'))();
 
@@ -145,76 +147,95 @@ class agents extends baseModelbo {
 
     saveAgent(req, res, next) {
         let _this = this;
-        let {values, accountcode, bulkNumn} = req.body;
+        let {values, accountcode, bulkNum} = req.body;
+        if (!!!bulkNum) {
+            _this.sendResponseError(res, ['Error.BulkNum is required'])
+            return
+        }
         let sip_device = JSON.parse(JSON.stringify(values.sip_device));
-        this.db['users'].findOne({where: {active: 'Y', role_crm_id: values.role_crm_id}, order: [['user_id', 'DESC']]})
-            .then(lastAgent => {
-                let increment = bulkNumn ? bulkNumn : 1;
-                let lastAgentSip_device = lastAgent ? lastAgent.sip_device : values.sip_device
-                let lastAgentKamailioUsername = lastAgent ? lastAgentSip_device.username : values.username;
-                let username = (parseInt(lastAgentKamailioUsername) + increment).toString();
-                let {password, domain, options, status, enabled, subscriber_id} = sip_device;
-                sip_device.username = username;
-                sip_device.created_at = moment().format("YYYY-MM-DD HH:mm:ss");
-                sip_device.updated_at = moment().format("YYYY-MM-DD HH:mm:ss");
-                sip_device.status = "logged-out";
-                values.sip_device = sip_device;
-                _usersbo.isUniqueUsername(values.username, 0)
-                    .then(isUnique => {
-                        if (isUnique) {
-                            let agent = {
-                                username,
-                                password,
-                                domain,
-                                options,
-                                accountcode,
-                                status,
-                                enabled,
-                                subscriber_id
-                            };
-                            axios
-                                .post(`${base_url_cc_kam}api/v1/agents`, agent, call_center_authorization)
-                                .then((resp) => {
-                                    let uuid = resp.data.result.agent.uuid || null;
-                                    values.sip_device.uuid = uuid;
-                                    values.params = {sales: [], status: "logged-out"}
-                                    this.saveAgentInDB(values)
-                                        .then(agent => {
-                                            res.send({
-                                                status: 200,
-                                                message: "success",
-                                                data: agent,
-                                                success: true
+        sip_device.status = 'logged-out'
+        sip_device.enabled = true
+        let AddAgent = new Promise((resolve, reject) => {
+            let idx = 0
+            bulkNum.forEach(item_ag => {
+                _usersbo.generateUniqueUsernameFunction().then(username => {
+                    values.username = username;
+                    this.db['users'].findOne({
+                        where: {active: 'Y', role_crm_id: values.role_crm_id},
+                        order: [['user_id', 'DESC']]
+                    })
+                        .then(lastAgent => {
+                            let increment = item_ag ? item_ag + 1 : 1;
+                            let lastAgentSip_device = lastAgent ? lastAgent.sip_device : values.sip_device
+                            let lastAgentKamailioUsername = lastAgent ? lastAgentSip_device.username : values.username;
+                            let username = (parseInt(lastAgentKamailioUsername) + increment).toString();
+                            let {password, domain, options, status, enabled, subscriber_id} = sip_device;
+                            sip_device.username = username;
+                            sip_device.created_at = moment().format("YYYY-MM-DD HH:mm:ss");
+                            sip_device.updated_at = moment().format("YYYY-MM-DD HH:mm:ss");
+                            sip_device.status = "logged-out";
+                            values.sip_device = sip_device;
+                            _usersbo.isUniqueUsername(values.username, 0)
+                                .then(isUnique => {
+                                    if (isUnique) {
+                                        let agent = {
+                                            username,
+                                            password,
+                                            domain,
+                                            options,
+                                            accountcode,
+                                            status,
+                                            enabled,
+                                            subscriber_id
+                                        };
+                                        axios
+                                            .post(`${base_url_cc_kam}api/v1/agents`, agent, call_center_authorization)
+                                            .then((resp) => {
+                                                values.sip_device.uuid = resp.data.result.agent.uuid || null;
+                                                this.saveAgentInDB(values)
+                                                    .then(agent => {
+                                                        if (idx < bulkNum.length - 1) {
+                                                            idx++
+                                                        } else {
+                                                            resolve({message: 'success'})
+                                                        }
+                                                    })
+                                                    .catch(err => {
+                                                        reject(err)
+                                                    })
                                             })
-                                        })
-                                        .catch(err => {
-                                            return _this.sendResponseError(res, ['Error.AnErrorHasOccuredSaveAgentdb', err], 1, 403);
-                                        })
+                                            .catch((err) => {
+                                                console.log(err)
+                                                reject(err)
+                                            });
+                                    } else {
+                                        if (idx < bulkNum.length - 1) {
+                                            idx++
+                                        } else {
+                                            resolve({message: 'username already exist'})
+                                        }
+                                    }
                                 })
-                                .catch((err) => {
-                                    res.send({
-                                        status: 403,
-                                        message: 'failed',
-                                        error_type: 'telco',
-                                        errors: err.response.data.errors
-                                    });
-                                });
-                        } else {
-                            res.send({
-                                status: 403,
-                                success: false,
-                                error_type: 'check_username',
-                                message: 'This username is already exist'
-                            });
-                        }
-                    })
-                    .catch(err => {
-                        return _this.sendResponseError(res, ['Error.AnErrorHasOccuredgetUniqueUsername', err], 1, 403);
-                    })
+                                .catch(err => {
+                                    reject(err)
+                                })
+                        })
+                        .catch(err => {
+                            reject(err)
+                        })
+                })
             })
-            .catch(err => {
-                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+        })
+        Promise.all([AddAgent]).then(saveAgent => {
+            res.send({
+                success: true,
+                status: 200
             })
+            console.log(saveAgent)
+        }).catch(err => {
+            reject(err)
+        })
+
     }
 
     updateAgent(req, res, next) {
@@ -230,7 +251,7 @@ class agents extends baseModelbo {
                     let dataAgent = {username, password, domain, options, accountcode, status, enabled, subscriber_id}
                     console.log(dataAgent)
                     axios
-                        .put(`${base_url_cc_kam}api/v1/agents/${sip_device.uuid}`,dataAgent
+                        .put(`${base_url_cc_kam}api/v1/agents/${sip_device.uuid}`, dataAgent
                             ,
                             call_center_authorization)
                         .then((resp) => {
@@ -367,16 +388,17 @@ class agents extends baseModelbo {
             if (crmStatus === "in_call" || crmStatus === "in_qualification") {
                 this.db["users"].findOne({where: {user_id: user_id}})
                     .then(user => {
-                        if (user){
+                        if (user) {
                             let params = user.params;
                             user.updated_at = moment(new Date());
                             this.updateAgentStatus(user_id, user, crmStatus, created_at, params)
                                 .then((agent) => {
-                                    if(agent.success){
+                                    if (agent.success) {
                                         resolve({
                                             success: true,
-                                            agent:agent});
-                                    }else{
+                                            agent: agent
+                                        });
+                                    } else {
                                         resolve({
                                             success: false,
                                         });
@@ -385,7 +407,7 @@ class agents extends baseModelbo {
                                 .catch((err) => {
                                     reject(err);
                                 });
-                        }else{
+                        } else {
                             resolve({
                                 success: false
                             })
@@ -406,16 +428,17 @@ class agents extends baseModelbo {
                             .then(() => {
                                 this.db["users"].findOne({where: {user_id: user_id}})
                                     .then(user => {
-                                        if (user){
+                                        if (user) {
                                             let params = user.params;
                                             agent.updated_at = moment(new Date());
                                             this.updateAgentStatus(user_id, agent, crmStatus, created_at, params)
                                                 .then(agent => {
-                                                    if(agent.success){
+                                                    if (agent.success) {
                                                         resolve({
                                                             success: true,
-                                                            agent:agent});
-                                                    }else{
+                                                            agent: agent
+                                                        });
+                                                    } else {
                                                         resolve({
                                                             success: false,
                                                         });
@@ -424,7 +447,7 @@ class agents extends baseModelbo {
                                                 .catch((err) => {
                                                     reject(err);
                                                 });
-                                        }else{
+                                        } else {
                                             resolve({
                                                 success: false
                                             })
@@ -460,7 +483,7 @@ class agents extends baseModelbo {
                 plain: true
             })
                 .then(data_user => {
-                    if (data_user){
+                    if (data_user) {
                         this.db['agent_log_events'].findOne({
                             where: {
                                 user_id: user_id,
@@ -487,7 +510,7 @@ class agents extends baseModelbo {
                                         plain: true
                                     }
                                 ).then(last_action => {
-                                    if (last_action){
+                                    if (last_action) {
                                         this.db['agent_log_events'].build({
                                             user_id: user_id,
                                             action_name: agent.params.status,
@@ -504,7 +527,7 @@ class agents extends baseModelbo {
                                         }).catch(err => {
                                             reject(err)
                                         })
-                                    }else{
+                                    } else {
                                         resolve({
                                             success: false
                                         })
@@ -534,9 +557,9 @@ class agents extends baseModelbo {
                         }).catch(err => {
                             reject(err)
                         })
-                    }else{
+                    } else {
                         resolve({
-                            success : false
+                            success: false
                         })
                     }
 
