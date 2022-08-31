@@ -135,8 +135,7 @@ let apiRouters = function (passport) {
     router.post("/api/agent/onConnect", passport.authenticate('jwt', {session: false}), agentsController.onConnect);
     router.post("/api/agent/getConnectedAgents", passport.authenticate('jwt', {session: false}), agentsController.getConnectedAgents);
     router.post("/api/agent/filterDashboard", passport.authenticate('jwt', {session: false}), agentsController.filterDashboard);
-    router.post("/api/agent/autSip", agentsController.autSip);
-    router.post("/api/agent/DeconnectAgent",passport.authenticate('jwt', {session: false}), agentsController.onDisconnectAgents)
+    router.post("/api/agent/DisConnectAgent",passport.authenticate('jwt', {session: false}), agentsController.onDisconnectAgents)
 
     router.post("/api/signup", agentsController.signUp);
     router.post("/api/signin", agentsController.signIn);

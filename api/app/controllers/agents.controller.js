@@ -41,9 +41,6 @@ module.exports = {
     filterDashboard: function (req, res, next) {
         agentsDaoInst.filterDashboard(req, res, next)
     },
-    autSip: function (req,res, next) {
-        agentsDaoInst.autSip(req, res, next)
-    },
     onDisconnectAgents: function (req, res, next) {
         agentsDaoInst.onDisconnectAgents(req, res, next)
     }

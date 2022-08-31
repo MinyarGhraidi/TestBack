@@ -754,7 +754,6 @@ class agents extends baseModelbo {
 
               })
           })
-
         Promise.all([promiseDisconnect]).then(result=>{
             if (result){
                 res.send({
@@ -765,7 +764,6 @@ class agents extends baseModelbo {
                 return this.sendResponseError(res, ['Error.cannot fetch list agents'], 1, 403);
             }
         })
-
     }
 
 }
