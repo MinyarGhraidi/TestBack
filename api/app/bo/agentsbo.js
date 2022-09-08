@@ -730,38 +730,36 @@ class agents extends baseModelbo {
     onDisconnectAgents(req, res, next) {
         let data_agent = req.body.data
         let i = 0;
-        if (data_agent.length ===0){
+        if (data_agent.length === 0) {
             return this.sendResponseError(res, ['Error.AnErrorHasOccuredUser'], 1, 403);
         }
-          const promiseDisconnect = new Promise((resolve, reject)=>{
-              data_agent.forEach(item =>{
-                  this.onDisconnect(item).then(result=>{
-                      if(result){
-                          if( i < data_agent.length - 1){
-                              i++;
-                          } else {
-                              resolve({
-                                  success: true,
+        const promiseDisconnect = new Promise((resolve, reject) => {
+            data_agent.forEach(item => {
+                this.onDisconnect(item).then(result => {
+                    if (result) {
+                        if (i < data_agent.length - 1) {
+                            i++;
+                        } else {
+                            resolve({
+                                success: true,
 
-                              })
-                          }
-                      }else{
-                         reject({
-                             success: false
-                         })
-                      }
-                  })
+                            })
+                        }
+                    } else {
+                        reject({
+                            success: false
+                        })
+                    }
+                })
 
-              })
-          })
-        Promise.all([promiseDisconnect]).then(result=>{
-            if (result){
-
+            })
+        })
+        Promise.all([promiseDisconnect]).then(result => {
+            if (result) {
                 res.send({
                     status: 200,
                     message: 'success'
                 })
-
             } else {
                 return this.sendResponseError(res, ['Error.cannot fetch list agents'], 1, 403);
             }
