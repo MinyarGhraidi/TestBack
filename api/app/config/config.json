@@ -1,22 +1,43 @@
 {
   "development": {
-    "host": "188.165.157.213",
-    "username": "postgres",
-    "password": "oxilog",
-    "database": "oxilog-crm-app",
-    "port":5432,
-    "dialect": "postgres",
-    "underscored":true,
-    "define": {
-      "createdAt": "created_at",
-      "updatedAt": "updated_at"
-    },
-    "socketUrl": "https://ip221.ip-92-222-227.eu:3002",
-    "pool": {
-      "max": 500,
-      "min": 0,
-      "acquire": 3000000,
-      "idle": 100000
+    "databases": {
+      "crm-app": {
+        "host": "188.165.157.213",
+        "username": "postgres",
+        "password": "oxilog",
+        "database": "oxilog-crm-app",
+        "port": 5432,
+        "dialect": "postgres",
+        "underscored": true,
+        "define": {
+          "createdAt": "created_at",
+          "updatedAt": "updated_at"
+        }
+      },
+      "cdr-db": {
+        "host": "188.165.157.213",
+        "username": "postgres",
+        "password": "oxilog",
+        "database": "cdr",
+        "port":5432,
+        "dialect": "postgres",
+        "socketUrl": "https://ip221.ip-92-222-227.eu:3002",
+        "logging": true,
+        "define": {
+          "freezeTableName": true
+        },
+        "dialectOptions": {
+          "options": {
+            "requestTimeout": 30000
+          }
+        },
+        "pool": {
+          "max": 500,
+          "min": 0,
+          "acquire": 3000000,
+          "idle": 100000
+        }
+      }
     },
     "rabbitmq": {
       "host": "188.165.157.213",
@@ -25,9 +46,18 @@
       "port": "5009",
       "queues": {
         "addCallFiles": "oxilog.addCallFiles",
-        "clone_List_CallFiles": "oxilog.clone_List_CallFiles"
+        "clone_List_CallFiles": "oxilog.clone_List_CallFiles",
+        "exportCsv": "oxilog.exportCsv"
       }
-    }
+    },
+    "pool": {
+      "max": 500,
+      "min": 0,
+      "acquire": 3000000,
+      "idle": 100000
+    },
+    "socketUrl": "https://ip221.ip-92-222-227.eu:3002",
+    "TZ": "Europe/Paris"
   },
   "secret": "'BL#,miQFau,amA!?FFW@oKO3<_<E-j-]PVO65d!c%|V2h{(3#~~*$8{X<H}BVm",
   "call_center_token": "Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9cIi2IY5",
@@ -35,8 +65,7 @@
   "base_url_dailer": "http://92.222.227.222:8091/",
   "base_url_cc_fs": "https://occ.oxilog.net:1443/",
   "base_url_cc_kam": "https://occ.oxilog.net:2443/",
-  "tz" : "Europe/Paris",
-  "salt" : "$2b$10$TOzGnzuUQjfTzmecOw7NKe"
-
+  "tz": "Europe/Paris",
+  "salt": "$2b$10$TOzGnzuUQjfTzmecOw7NKe"
 }
 

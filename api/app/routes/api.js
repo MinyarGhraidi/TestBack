@@ -57,6 +57,8 @@ EfileController = require('../controllers/efiles.controller');
 UserDataIndexController = require('../controllers/user_indexs.controller');
 dialpansController = require('../controllers/dialplan.controller')
 dialpanItemsController = require('../controllers/dialplanItems.controller');
+accController = require('../controllers/acc.controller')
+
 
 let apiRouters = function (passport) {
 
@@ -331,6 +333,11 @@ let apiRouters = function (passport) {
     router.put('/api/dialplanItems/update', passport.authenticate('jwt', {session: false}), dialpanItemsController.update);
     router.delete('/api/dialplanItems/delete/:params', passport.authenticate('jwt', {session: false}), dialpanItemsController.delete);
     router.post('/api/dialplanItems/save', passport.authenticate('jwt', {session: false}), dialpanItemsController.save);
+
+    router.post('/api/acc/getCdrs/:params?',passport.authenticate('jwt', {session: false}),  accController.getCdrs);
+    router.post('/api/acc/pushDataToSocket/:params?', passport.authenticate('jwt', {session: false}),accController.pushDataToSocket);
+
+
     return router;
 
 

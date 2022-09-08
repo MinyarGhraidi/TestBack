@@ -21,9 +21,9 @@ class message_channelDao extends baseModelbo {
                         WHERE mcs.active = :active AND mcs.user_id IN (:subs_list ) 
                          GROUP BY mcs.message_channel_id, T1.total_subscribers) AS TG
                          WHERE TG.total_subscribers = TG.total_finded AND TG.total_subscribers = :total_requested`;
-            db.sequelize.query(sql,
+            db.sequelize['crm-app'].query(sql,
                 {
-                    type: db.sequelize.QueryTypes.SELECT,
+                    type: db.sequelize['crm-app'].QueryTypes.SELECT,
                     replacements: {
                         total_requested: subscribers.length,
                         active: 'Y',
@@ -346,9 +346,9 @@ class message_channelDao extends baseModelbo {
                 AND mr.status_read <> 'Y'
                 AND mr.user_id = :user_id
             `;
-            db.sequelize.query(sql,
+            db.sequelize['crm-app'].query(sql,
                 {
-                    type: db.sequelize.QueryTypes.SELECT,
+                    type: db.sequelize['crm-app'].QueryTypes.SELECT,
                     replacements: {
                         user_id: user_id,
                         active: 'Y',
@@ -453,9 +453,9 @@ class message_channelDao extends baseModelbo {
                           INNER JOIN messages as m on m.message_id = mr.message_id AND m.active = 'Y'
                            WHERE mr.user_id = :user_id AND m.message_channel_id = :message_channel_id AND mr.status_read <> 'Y'`;
 
-            db.sequelize.query(sql,
+            db.sequelize['crm-app'].query(sql,
                 {
-                    type: db.sequelize.QueryTypes.SELECT,
+                    type: db.sequelize['crm-app'].QueryTypes.SELECT,
                     replacements: {
                         message_channel_id: message_channel_id,
                         user_id: user_id,
@@ -496,9 +496,9 @@ class message_channelDao extends baseModelbo {
                                 GROUP BY m.message_id,u.first_name,u.username,u.profile_image_id,mr.status_read, ma.attachment_efile_id, ef.file_type, mc.channel_type
                     
                                 ORDER BY m.updated_at ASC`;
-                db.sequelize.query(sql,
+                db.sequelize['crm-app'].query(sql,
                     {
-                        type: db.sequelize.QueryTypes.SELECT,
+                        type: db.sequelize['crm-app'].QueryTypes.SELECT,
                         replacements: {
                             message_channel_id: message_channel_id,
                             user_id: user_id,
@@ -519,9 +519,9 @@ class message_channelDao extends baseModelbo {
                         WHERE m.message_channel_id = :message_channel_id AND m.active = :active
 
                         GROUP BY m.message_id ) as T`;
-                        db.sequelize.query(sql_count,
+                        db.sequelize['crm-app'].query(sql_count,
                             {
-                                type: db.sequelize.QueryTypes.SELECT,
+                                type: db.sequelize['crm-app'].QueryTypes.SELECT,
                                 replacements: {
                                     message_channel_id: message_channel_id,
                                     user_id: user_id,
@@ -596,9 +596,9 @@ class message_channelDao extends baseModelbo {
                    and mcs.user_id != :current_user_id
                    ORDER BY mcs.created_at ASC
                    LIMIT 50`;
-            db.sequelize.query(sql,
+            db.sequelize['crm-app'].query(sql,
                 {
-                    type: db.sequelize.QueryTypes.SELECT,
+                    type: db.sequelize['crm-app'].QueryTypes.SELECT,
                     replacements: {
                         message_channel_id: message_channel_id,
                         active: 'Y',
@@ -707,9 +707,9 @@ class message_channelDao extends baseModelbo {
         }
         sql = sql.replace(/EXTRAWHERE/g, extra_where);
 
-        db.sequelize.query(sql,
+        db.sequelize['crm-app'].query(sql,
             {
-                type: db.sequelize.QueryTypes.SELECT,
+                type: db.sequelize['crm-app'].QueryTypes.SELECT,
                 replacements: {
                     user_id: user_id,
                     offset: defaultParams.offset,
