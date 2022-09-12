@@ -36,13 +36,13 @@ module.exports = (sequelize, Sequelize) => {
             hangupCause :{
                 type: Sequelize.STRING
             },
-            startTime :{
+            start_time :{
                 type: Sequelize.STRING
             },
             answerTime:{
                 type: Sequelize.STRING
             } ,
-            endTime :{
+            end_time :{
                 type: Sequelize.STRING
             },
             durationSec :{
@@ -104,6 +104,12 @@ module.exports = (sequelize, Sequelize) => {
             },
             call_events: {
                 type: Sequelize.JSONB
+            },
+            debit: {
+                type: Sequelize.REAL
+            },
+            cost: {
+                type: Sequelize.REAL
             }
 
         },
@@ -121,9 +127,9 @@ module.exports = (sequelize, Sequelize) => {
         "sipToURI" ,
         "sipToTag" ,
         "hangupCause" ,
-        "startTime" ,
+        "start_time" ,
         "answerTime" ,
-        "endTime" ,
+        "end_time" ,
         "durationSec" ,
         "durationMsec" ,
         "privacy" ,
@@ -143,7 +149,9 @@ module.exports = (sequelize, Sequelize) => {
         "sipFromTag_Dailer",
         "sipToURI_Dailer",
         "sipToTag_Dailer",
-        "call_events"
+        "call_events",
+        "debit",
+        "cost"
 
     ];
 

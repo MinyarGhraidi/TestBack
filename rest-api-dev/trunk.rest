@@ -148,6 +148,6 @@ Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9c
 ###
 
 # DELETE GATEWAY BY UUID
-DELETE https://occ.oxilog.net:2443/api/v1/gateways/91c891ab-a8e7-4b2c-89cc-3b63e181ab99
+DELETE https://occ.oxilog.net:2443/api/v1/gateways/962639c4-7196-4bb6-8bc7-326ec0ceaf6f
 Content-Type: application/json
 Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9cIi2IY5

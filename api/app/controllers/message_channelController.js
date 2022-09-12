@@ -30,5 +30,11 @@ module.exports = {
     },
     getChannelMessages: function (req, res, next){
         message_channelDaoInst.getChannelMessages(req, res, next)
+    },
+    updateMessageChannelSubscribes: function (req, res, next){
+        message_channelDaoInst.updateMessageChannelSubscribes(req, res, next)
+    },
+    addSubscribersToChannel: function (req, res, next) {
+        message_channelDaoInst.addSubscribersToChannel(req, res, next)
     }
 };

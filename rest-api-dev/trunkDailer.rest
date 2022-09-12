@@ -1,7 +1,7 @@
 ###
 # GET ALL GATEWAYS
 
-GET http://92.222.227.222:8091/api/v1/dialer/gateways
+GET http://5.135.68.122:8091/api/v1/dialer/gateways
 Content-Type: application/json
 Authorization: Bearer LucH6JQhHjpXVhP8K6buVmGFrrYrQ9jR56Zx5Ftcq2X93fXcxRfFwrQU2Ka7J8Mr
 
@@ -15,15 +15,15 @@ Authorization: Bearer LucH6JQhHjpXVhP8K6buVmGFrrYrQ9jR56Zx5Ftcq2X93fXcxRfFwrQU2K
 ###
 # CREATE NEW GATEWAY
 
-POST http://92.222.227.222:8091/api/v1/dialer/gateways
+POST http://5.135.68.122:8091/api/v1/dialer/gateways
 Content-Type: application/json
 Authorization: Bearer LucH6JQhHjpXVhP8K6buVmGFrrYrQ9jR56Zx5Ftcq2X93fXcxRfFwrQU2Ka7J8Mr
 
 {
-  "name":"SBC",
+  "name":"SBC002",
   "username":"",
   "accountcode":"010",
-  "proxy":"51.254.233.219",
+  "proxy":"92.222.227.223",
   "register":false,
   "caller_id_in_from":true,
   "extension":"SBC",

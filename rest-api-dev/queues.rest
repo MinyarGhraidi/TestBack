@@ -5,7 +5,7 @@ Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9c
 
 ###
 #GET QUEUE BY UUID
-GET https://occ.oxilog.net:2443/api/v1/queues/6145ba9f-9f23-4e29-9ee1-9e0f69eadf2f
+GET https://occ.oxilog.net:2443/api/v1/queues/a51e6303-06f1-491d-9a89-4e2421838285
 Content-Type: application/json
 Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9cIi2IY5
 
@@ -16,7 +16,7 @@ Content-Type: application/json
 Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9cIi2IY5
 
 {
-  "extension": "495507611574",
+  "extension": "495507611841",
   "options": {
     "max_wait_time": "1",
     "tier_rule_wait_second": "1",
@@ -43,8 +43,9 @@ Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9c
   "hold_music": [
     "http://myTestServer/IVRS/11"
   ],
-  "name": "522557217894"
+  "name": "52255859"
 }
+
 
 ###
 #UPDATE QUEUE
@@ -91,14 +92,14 @@ Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9c
 
 ###
 #GET QUEUE TIERS
-GET https://occ.oxilog.net:2443/api/v1/queues/6145ba9f-9f23-4e29-9ee1-9e0f69eadf2f/tiers
+GET https://occ.oxilog.net:2443/api/v1/queues/73cc7812-1b96-4515-915c-3cd5ae3d29c8/tiers
 Content-Type: application/json
 Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9cIi2IY5
 
 
 ###
 #ADD/UPDATE QUEUE TIERS
-POST https://occ.oxilog.net:2443/api/v1/queues/6145ba9f-9f23-4e29-9ee1-9e0f69eadf2f/tiers
+POST https://occ.oxilog.net:2443/api/v1/queues/8a44eacb-fd14-42e4-b39f-4092267bffcc/tiers
 Content-Type: application/json
 Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9cIi2IY5
 
