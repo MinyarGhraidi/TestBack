@@ -27,9 +27,9 @@ class listcallfiles extends baseModelbo {
                         WHERE listCallf.active= 'Y' 
                           GROUP  by listCallf.listcallfile_id 
                           ORDER by listCallf.listcallfile_id desc`
-        db.sequelize.query(sqlStats,
+        db.sequelize['crm-app'].query(sqlStats,
             {
-                type: db.sequelize.QueryTypes.SELECT,
+                type: db.sequelize['crm-app'].QueryTypes.SELECT,
             })
             .then(statsListCallFiles => {
                 res.send({
@@ -82,9 +82,9 @@ class listcallfiles extends baseModelbo {
                         LEFT JOIN campaigns as camp on camp.campaign_id = list_call_f.campaign_id and camp.active = :active 
                         WHERE call_s.active = 'Y' and camp.campaign_id= :campaign_id
                         GROUP by code) as all_s on all_s.code  = callstatuses.code`
-        db.sequelize.query(sql_stats,
+        db.sequelize['crm-app'].query(sql_stats,
             {
-                type: db.sequelize.QueryTypes.SELECT,
+                type: db.sequelize['crm-app'].QueryTypes.SELECT,
                 replacements: {
                     campaign_id: campaign_id,
                     active: 'Y',
@@ -107,9 +107,9 @@ class listcallfiles extends baseModelbo {
                         LEFT JOIN callfiles as call_f on call_f.call_status = call_s.code and call_f.to_treat = :active and call_f.active= :active  and call_f.listcallfile_id = :listCallfile_id
                         WHERE call_s.active = :active   
                         GROUP by code`
-            db.sequelize.query(sqlStats,
+            db.sequelize['crm-app'].query(sqlStats,
                 {
-                    type: db.sequelize.QueryTypes.SELECT,
+                    type: db.sequelize['crm-app'].QueryTypes.SELECT,
                     replacements: {
                         listCallfile_id: listCallfile_id,
                         active: 'Y',
@@ -256,7 +256,7 @@ class listcallfiles extends baseModelbo {
                             throw error1;
                         }
                         const queue = app_config.rabbitmq.queues.clone_List_CallFiles + account_id;
-                        ;
+
                         channel.assertQueue(queue, {
                             durable: true
                         });

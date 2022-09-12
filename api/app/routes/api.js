@@ -57,6 +57,8 @@ EfileController = require('../controllers/efiles.controller');
 UserDataIndexController = require('../controllers/user_indexs.controller');
 dialpansController = require('../controllers/dialplan.controller')
 dialpanItemsController = require('../controllers/dialplanItems.controller');
+accController = require('../controllers/acc.controller')
+
 
 let apiRouters = function (passport) {
 
@@ -312,6 +314,8 @@ let apiRouters = function (passport) {
     router.post('/api/message_channel/sendNewMessage', passport.authenticate('jwt', {session: false}), MessageChannelController.sendNewMessage);
     router.post('/api/message_channel/getMyChannel', passport.authenticate('jwt', {session: false}), MessageChannelController.getMyChannel);
     router.post('/api/message_channel/getMessageChannel', passport.authenticate('jwt', {session: false}), MessageChannelController.getChannelMessages);
+    router.post('/api/message_channel/updateMessageChannelSubscribes', passport.authenticate('jwt', {session: false}), MessageChannelController.updateMessageChannelSubscribes);
+    router.post('/api/message_channel/addSubscribersToChannel', passport.authenticate('jwt', {session: false}), MessageChannelController.addSubscribersToChannel);
 
     router.post("/api/userDataIndexs/find/:params?", passport.authenticate('jwt', {session: false}), UserDataIndexController.find);
     router.get("/api/userDataIndexs/findById/:entity_id", passport.authenticate('jwt', {session: false}), UserDataIndexController.findById);
@@ -332,6 +336,11 @@ let apiRouters = function (passport) {
     router.put('/api/dialplanItems/update', passport.authenticate('jwt', {session: false}), dialpanItemsController.update);
     router.delete('/api/dialplanItems/delete/:params', passport.authenticate('jwt', {session: false}), dialpanItemsController.delete);
     router.post('/api/dialplanItems/save', passport.authenticate('jwt', {session: false}), dialpanItemsController.save);
+
+    router.post('/api/acc/getCdrs/:params?',passport.authenticate('jwt', {session: false}),  accController.getCdrs);
+    router.post('/api/acc/pushDataToSocket/:params?', passport.authenticate('jwt', {session: false}),accController.pushDataToSocket);
+
+
     return router;
 
 

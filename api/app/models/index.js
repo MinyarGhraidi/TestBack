@@ -9,13 +9,18 @@ process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0;
 
 const config = require(__dirname + '/../config/config.json')[env];
 const db = {};
-
+const databases = Object.keys(config.databases);
 const timezone = 'Africa/Tunis';
 process.env.TZ = timezone;
-
-let sequelize;
+let sequelize ={};
 let sequalize_extra_config = config;
-sequalize_extra_config.pool = {
+
+for (let i = 0; i < databases.length; ++i) {
+  let database = databases[i];
+  let dbPath = config.databases[database];
+  sequelize[database] = new Sequelize(dbPath.database, dbPath.username, dbPath.password, dbPath);
+}
+  sequalize_extra_config.pool = {
   max: 30,
   min: 0,
   idle: 10000,
@@ -32,18 +37,27 @@ sequalize_extra_config.dialectOptions = {
   timezone: timezone
 }
 
-if (config.use_env_variable) {
-  sequelize = new Sequelize(process.env[config.use_env_variable], sequalize_extra_config);
-} else {
-  sequelize = new Sequelize(config.database, config.username, config.password, sequalize_extra_config);
-}
+// if (config.use_env_variable) {
+//   sequelize = new Sequelize(process.env[config.use_env_variable], sequalize_extra_config);
+// } else {
+//   sequelize = new Sequelize(config.database, config.username, config.password, sequalize_extra_config);
+// }
 
 fs.readdirSync(__dirname)
     .filter(file => {
       return (file.indexOf('.') !== 0) && (file !== basename) && (file.slice(-3) === '.js');
     })
     .forEach(file => {
-      const model = sequelize['import'](path.join(__dirname, file));
+      const model = sequelize['crm-app']['import'](path.join(__dirname, file));
+      db[model.name] = model;
+    });
+
+fs.readdirSync(__dirname + '/acc_cdrs')
+    .filter(file => {
+      return (file.indexOf('.') !== 0) && (file !== basename) && (file.slice(-3) === '.js');
+    })
+    .forEach(file => {
+      const model = sequelize['cdr-db']['import'](path.join(__dirname + '/cdr-db', file));
       db[model.name] = model;
     });
 
