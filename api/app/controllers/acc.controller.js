@@ -23,5 +23,8 @@ module.exports ={
     },
     pushDataToSocket : function (req, res, next){
         _itemAccBo.pushDataToSocket(req, res, next)
-    }
+    },
+    getSip_codes: function (req, res, next) {
+        _itemAccBo.getSip_codes(req, res, next)
+    },
 }
