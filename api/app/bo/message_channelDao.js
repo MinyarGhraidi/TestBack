@@ -14,8 +14,8 @@ class message_channelDao extends baseModelbo {
         return new Promise((resolve, reject) => {
             let subs_list = subscribers;
             let sql = `SELECT message_channel_id
-                      FROM (SELECT mcs.message_channel_id, count(mcs.message_channel_subscriber_id) as total_finded, T1.total_subscribers
-                        FROM message_channel_subscribers as mcs
+                       FROM (SELECT mcs.message_channel_id, count(mcs.message_channel_subscriber_id) as total_finded, T1.total_subscribers
+                       FROM message_channel_subscribers as mcs
                        INNER JOIN message_channels as mc on mc.message_channel_id = mcs.message_channel_id and mc.active = :active
                        LEFT JOIN (SELECT mcs2.message_channel_id, count(mcs2.message_channel_subscriber_id) as total_subscribers FROM message_channel_subscribers as mcs2 WHERE mcs2.active = :active GROUP BY mcs2.message_channel_id) as T1 on T1.message_channel_id = mcs.message_channel_id
                         WHERE mcs.active = :active AND mcs.user_id IN (:subs_list ) 
@@ -42,11 +42,11 @@ class message_channelDao extends baseModelbo {
         })
     }
 
-    createChannelSubscribers(subscribers, save_channel, content) {
+    createChannelSubscribers(subscribers, message_channel_id, content) {
         return new Promise((resolve, reject) => {
             subscribers.forEach(subscribe => {
                 this.db['message_channel_subscribers'].build({
-                    message_channel_id: save_channel.message_channel_id,
+                    message_channel_id,
                     user_id: subscribe,
                     // created_at: new Date(),
                     //pdated_at: new Date(),
@@ -72,65 +72,98 @@ class message_channelDao extends baseModelbo {
         let channel_name = req.body.channel_name;
         let is_gp = req.body.is_gp;
         let content = req.body.content;
-        this.get_channel_id_for_subscribers(subscribers).then(data => {
-            if (data.data.length !== 0) {
-                this.db['message_channels'].update({
-                    updated_at: new Date()
-                }, {
-                    where: {
-                        message_channel_id: data.data[0].message_channel_id,
-                    }
-                }).then(message_channel => {
-                    if (message_channel) {
-                        res.send({
-                            data: message_channel,
-                            success: true,
-                        })
-                    } else {
-                        res.send({
-                            message: 'failed to find message channel',
-                            success: false,
-                        })
-                    }
-                }).catch(err => {
-                    this.sendResponseError(res, ['Error.UpdateChannel'], err)
-                })
+        if (is_gp) {
+            this.db['message_channels'].build({
+                created_by_id: subscribers[0],
+                channel_type: (subscribers.length === 2) ? 'S' : 'G',
+                channel_name: channel_name,
+                created_at: new Date(),
+                updated_at: new Date(),
+            }).save().then(save_channel => {
+                if (save_channel) {
+                    this.createChannelSubscribers(subscribers, save_channel.message_channel_id, content).then(data => {
+                        if (data.success === true) {
+                            res.send({
+                                data: data.data,
+                                success: true
+                            })
+                        } else {
+                            res.send({
+                                message: 'create channel subscribers failed',
+                                success: false
+                            })
+                        }
+                    }).catch(err => {
+                        this.sendResponseError(res, ['Error.CreateChannelSUBSCRIBER'], err)
+                    })
+                } else {
+                    res.send({
+                        message: 'create channel failed',
+                        success: false
+                    })
+                }
+            })
+        } else {
+            this.get_channel_id_for_subscribers(subscribers).then(data => {
+                if (data.data.length !== 0) {
+                    this.db['message_channels'].update({
+                        updated_at: new Date()
+                    }, {
+                        where: {
+                            message_channel_id: data.data[0].message_channel_id,
+                        }
+                    }).then(message_channel => {
+                        if (message_channel) {
+                            res.send({
+                                data: message_channel,
+                                success: true,
+                            })
+                        } else {
+                            res.send({
+                                message: 'failed to find message channel',
+                                success: false,
+                            })
+                        }
+                    }).catch(err => {
+                        this.sendResponseError(res, ['Error.UpdateChannel'], err)
+                    })
 
-            } else {
-                this.db['message_channels'].build({
-                    created_by_id: subscribers[0],
-                    channel_type: (subscribers.length === 2) ? 'S' : 'G',
-                    channel_name: channel_name,
-                    created_at: new Date(),
-                    updated_at: new Date(),
-                }).save().then(save_channel => {
-                    if (save_channel) {
-                        this.createChannelSubscribers(subscribers, save_channel, content).then(data => {
-                            if (data.success === true) {
-                                res.send({
-                                    data: data.data,
-                                    success: true
-                                })
-                            } else {
-                                res.send({
-                                    message: 'create channel subscribers failed',
-                                    success: false
-                                })
-                            }
-                        }).catch(err => {
-                            this.sendResponseError(res, ['Error.CreateChannelSUBSCRIBER'], err)
-                        })
-                    } else {
-                        res.send({
-                            message: 'create channel failed',
-                            success: false
-                        })
-                    }
-                })
+                } else {
+                    this.db['message_channels'].build({
+                        created_by_id: subscribers[0],
+                        channel_type: (subscribers.length === 2) ? 'S' : 'G',
+                        channel_name: channel_name,
+                        created_at: new Date(),
+                        updated_at: new Date(),
+                    }).save().then(save_channel => {
+                        if (save_channel) {
+                            this.createChannelSubscribers(subscribers, save_channel.message_channel_id, content).then(data => {
+                                if (data.success === true) {
+                                    res.send({
+                                        data: data.data,
+                                        success: true
+                                    })
+                                } else {
+                                    res.send({
+                                        message: 'create channel subscribers failed',
+                                        success: false
+                                    })
+                                }
+                            }).catch(err => {
+                                this.sendResponseError(res, ['Error.CreateChannelSUBSCRIBER'], err)
+                            })
+                        } else {
+                            res.send({
+                                message: 'create channel failed',
+                                success: false
+                            })
+                        }
+                    })
 
-            }
+                }
 
-        })
+            })
+        }
     }
 
     user_has_access_to_channel(message_channel_id, user_id) {
@@ -633,7 +666,7 @@ class message_channelDao extends baseModelbo {
                 if (channel.channel_type === 'G') {
                     new_channel_name = subscriber.user_familyname + ' ' + subscriber.user_name;
                 } else if (subscriber.user_id !== user_id) {
-                   // channel.channel_picture_efile_id = subscriber.profile_image_id;
+                    // channel.channel_picture_efile_id = subscriber.profile_image_id;
                     new_channel_name = subscriber.first_name + ' ' + subscriber.last_name;
                 }
             })
@@ -686,7 +719,7 @@ class message_channelDao extends baseModelbo {
         };
 
         let sql = `SELECT mc.*, u.profile_image_id as profile_image_id, count(m.message_id) as total_messages, count(mr_count.message_id) as total_not_read, m_last.message_id as last_message_id, m_last.content as last_message_content
-                  , m_last.created_by_id ,  m_last.created_at as last_message_date    FROM message_channels as mc
+                  , m_last.created_by_id as m_last_created_by_id ,  m_last.created_at as last_message_date    FROM message_channels as mc
                       LEFT JOIN message_channel_subscribers as mcs on mcs.active = :active and mcs.message_channel_id = mc.message_channel_id
                       LEFT JOIN message_channel_subscribers as mcs2 on mcs2.active = :active and mcs2.message_channel_id = mc.message_channel_id and mcs.user_id <> mcs2.user_id
                       LEFT JOIN messages as m on m.message_channel_id = mc.message_channel_id and m.active = :active
@@ -715,7 +748,7 @@ class message_channelDao extends baseModelbo {
                     offset: defaultParams.offset,
                     limit: defaultParams.limit,
                     active: 'Y',
-                    channel_name: channel_name ? channel_name.concat('%'): null
+                    channel_name: channel_name ? channel_name.concat('%') : null
                 }
             })
             .then(channels => {
@@ -745,11 +778,78 @@ class message_channelDao extends baseModelbo {
                     })
                 }
             }).catch(err => {
-                console.log(err)
+            console.log(err)
             this.sendResponseError(res, ['Error.getDataChannel'], err);
         })
     }
 
+    updateMessageChannelSubscribes(req, res, next) {
+        let {message_channel_id, userDeleted} = req.body;
+        this.db['message_channel_subscribers'].update({
+                active: 'N',
+            },
+            {
+                where: {
+                    message_channel_id: message_channel_id,
+                    user_id: {
+                        $in: userDeleted
+                    }
+                },
+            }
+        ).then(manageChatUsers => {
+            this.db['message_channel_subscribers'].findAll({
+                where: {
+                    message_channel_id: message_channel_id,
+                    active: 'Y'
+                }
+            }).then(data_message_channel => {
+                if (data_message_channel && data_message_channel.length > 1) {
+                    res.send({
+                        success: true,
+                        data: []
+                    })
+                } else {
+                    this.db['message_channels'].update({
+                            active: 'N',
+                        },
+                        {
+                            where: {
+                                message_channel_id: message_channel_id,
+                            },
+                        }
+                    ).then(manageChatUsers => {
+                        res.send({
+                            success: true,
+                            data: []
+                        })
+                    }).catch(err => {
+                        this.sendResponseError(res, ['error.update.message'], err);
+                    })
+                }
+
+            }).catch(err => {
+                this.sendResponseError(res, ['error.update.message'], err);
+            })
+        }).catch(err => {
+            this.sendResponseError(res, ['error.update.message'], err);
+        })
+    }
+
+    addSubscribersToChannel(req, res, next) {
+        let _this = this;
+        let {message_channel_id, contacts} = req.body
+        if (!message_channel_id || !contacts && contacts.length === 0) {
+            _this.sendResponseError(res, ['Error data please try again'])
+        }
+        _this.createChannelSubscribers(contacts, message_channel_id).then(data => {
+            res.send({
+                success: true,
+                status: 200
+            })
+        }).catch(err => {
+            _this.sendResponseError(res, ['An Error has occurred please try again'])
+        })
+    }
 }
 
 module.exports = message_channelDao;

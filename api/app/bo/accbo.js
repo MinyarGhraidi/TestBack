@@ -69,6 +69,7 @@ class AccBo extends baseModelbo{
                     // sip_reason: filter.sip_reason,
                     // directions: filter.directions,
                      accounts_code: filter.accounts_code,
+                    // accounts_code: filter.accounts_code,
                     // src_ip: filter.ip ? (filter.ip.concat('%')).toString() : null,
                     // from: from ? (from.concat('%')).toString() : null,
                     // to: to ? (to.concat('%')).toString() : null,
@@ -127,6 +128,7 @@ class AccBo extends baseModelbo{
                         // sip_reason: filter.sip_reason,
                         // directions: filter.directions,
                          accounts_code: filter.accounts_code,
+                        // accounts_code: filter.accounts_code,
                         // src_ip: filter.ip ? (filter.ip.concat('%')).toString() : null,
                         // from: from ? (from.concat('%')).toString() : null,
                         // to: to ? (to.concat('%')).toString() : null,
@@ -240,6 +242,7 @@ class AccBo extends baseModelbo{
                     // sip_code: sip_code,
                     // directions: directions,
                      accounts_code: filter.accounts_code,
+                    // accounts_code: accounts_code,
                     // src_ip: filter.ip ? (filter.ip.concat('%')).toString() : null,
                     // from: from ? (from.concat('%')).toString() : null,
                     // to: to ? (to.concat('%')).toString() : null,
@@ -298,6 +301,7 @@ class AccBo extends baseModelbo{
                         // sip_code: sip_code,
                         // directions: directions,
                          accounts_code: filter.accounts_code,
+                        // accounts_code: accounts_code,
                         // src_ip: filter.ip ? (filter.ip.concat('%')).toString() : null,
                         // from: from ? (from.concat('%')).toString() : null,
                         // to: to ? (to.concat('%')).toString() : null,
@@ -374,6 +378,7 @@ class AccBo extends baseModelbo{
         }).catch(err=>{
             console.log('err', err)
         })
+
     }
 
     DataEmitSocket(data, action, key, total, sessionId, totalItems, currentItems) {

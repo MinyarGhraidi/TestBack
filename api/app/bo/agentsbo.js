@@ -205,7 +205,6 @@ class agents extends baseModelbo {
                                                     })
                                             })
                                             .catch((err) => {
-                                                console.log(err)
                                                 reject(err)
                                             });
                                     } else {
@@ -231,7 +230,6 @@ class agents extends baseModelbo {
                 success: true,
                 status: 200
             })
-            console.log(saveAgent)
         }).catch(err => {
             reject(err)
         })
@@ -248,8 +246,8 @@ class agents extends baseModelbo {
         _usersbo.isUniqueUsername(values.username, user_id)
             .then(isUnique => {
                 if (isUnique) {
+                    console.log(isUnique)
                     let dataAgent = {username, password, domain, options, accountcode, status, enabled, subscriber_id}
-                    console.log(dataAgent)
                     axios
                         .put(`${base_url_cc_kam}api/v1/agents/${sip_device.uuid}`, dataAgent
                             ,
@@ -370,7 +368,6 @@ class agents extends baseModelbo {
                     telcoStatus: sip_device.status,
                     updated_at: sip_device.updated_at
                 };
-                console.log('data_agent', data_agent)
                 appSocket.emit('agent_connection', data_agent);
                 res.send({
                     status: 200,
@@ -471,7 +468,6 @@ class agents extends baseModelbo {
     }
 
     updateAgentStatus(user_id, agent_, crmStatus, created_at, params) {
-        let createdAt_tz = moment(created_at).format("YYYY-MM-DD HH:mm:ss");
         let updatedAt_tz = moment(created_at).format("YYYY-MM-DD HH:mm:ss");
         return new Promise((resolve, reject) => {
             let agent;

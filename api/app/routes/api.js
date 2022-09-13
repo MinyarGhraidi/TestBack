@@ -314,6 +314,8 @@ let apiRouters = function (passport) {
     router.post('/api/message_channel/sendNewMessage', passport.authenticate('jwt', {session: false}), MessageChannelController.sendNewMessage);
     router.post('/api/message_channel/getMyChannel', passport.authenticate('jwt', {session: false}), MessageChannelController.getMyChannel);
     router.post('/api/message_channel/getMessageChannel', passport.authenticate('jwt', {session: false}), MessageChannelController.getChannelMessages);
+    router.post('/api/message_channel/updateMessageChannelSubscribes', passport.authenticate('jwt', {session: false}), MessageChannelController.updateMessageChannelSubscribes);
+    router.post('/api/message_channel/addSubscribersToChannel', passport.authenticate('jwt', {session: false}), MessageChannelController.addSubscribersToChannel);
 
     router.post("/api/userDataIndexs/find/:params?", passport.authenticate('jwt', {session: false}), UserDataIndexController.find);
     router.get("/api/userDataIndexs/findById/:entity_id", passport.authenticate('jwt', {session: false}), UserDataIndexController.findById);
@@ -338,7 +340,6 @@ let apiRouters = function (passport) {
     router.post('/api/acc/getCdrs/:params?',passport.authenticate('jwt', {session: false}),  accController.getCdrs);
     router.post('/api/acc/pushDataToSocket/:params?', passport.authenticate('jwt', {session: false}),accController.pushDataToSocket);
     router.get('/api/acc/getSip_codes', passport.authenticate('jwt', {session: false}), accController.getSip_codes);
-
 
 
     return router;
