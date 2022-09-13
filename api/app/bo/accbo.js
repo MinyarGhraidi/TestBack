@@ -5,6 +5,8 @@ const app_config = appHelper.appConfig;
 const moment = require("moment-timezone");
 const PromiseBB = require("bluebird");
 const appSocket = new (require("../providers/AppSocket"))();
+const amqp = require("amqplib/callback_api");
+const rabbitmq_url = appHelper.rabbitmq_url;
 
 class AccBo extends baseModelbo{
     constructor() {
@@ -412,6 +414,63 @@ class AccBo extends baseModelbo{
             .catch((err) => {
                 _this.sendResponseError(res, [], err);
             });
+    }
+
+    pushItemsToQueue = (pages, params) => {
+        let _this = this;
+        return new Promise((resolve, reject) => {
+            params.time_export = new Date().getTime();
+            if (pages !== 0) {
+                amqp.connect(rabbitmq_url, function (error0, connection) {
+                    if (error0) {
+                        throw error0;
+                    }
+                    connection.createChannel(function (error1, channel) {
+                        if (error1) {
+                            throw error1;
+                        }
+                        const queue = app_config.rabbitmq.queues.exportCsv + params.sessionId;
+                        channel.assertQueue(queue, {
+                            durable: true,
+                        });
+                        _this.createItemsArray(pages).then((pages_array) => {
+                            let index = 0;
+                            PromiseBB.each(pages_array, (item) => {
+                                params.page = item;
+                                let data = {
+                                    params: params,
+                                    currentPage: item,
+                                    pages: pages,
+                                    sessionId: params.sessionId,
+                                };
+                                channel.sendToQueue(queue, Buffer.from(JSON.stringify(data)), {
+                                    type: "export csv",
+                                });
+                            }).then((all_r) => {
+                                resolve(all_r);
+                            });
+                        });
+                    });
+                });
+            } else {
+                reject(false);
+            }
+        });
+    };
+    createItemsArray = (total) => {
+        return new Promise((resolve, reject) => {
+            let _this = this;
+            let array = [];
+            let index = 0;
+            for (let i = 1; i <= total; i++) {
+                array.push(i);
+                if (index < total - 1) {
+                    index++;
+                } else {
+                    resolve(array);
+                }
+            }
+        })
     }
 }
 

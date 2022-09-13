@@ -566,6 +566,7 @@
       "resolved": "https://registry.npmjs.org/wkx/-/wkx-0.5.0.tgz",
       "version": "0.5.0"
     },
+    "write-excel-file": "^1.4.12",
     "ws": "^8.6.0",
     "xlsx": "^0.18.5",
     "xtend": {

@@ -4,7 +4,8 @@ const rabbitmq_config = (config.rabbitmq) ? config.rabbitmq : {
     "host": "amqp://localhost",
     "queues": {
         "addCallFiles": "oxilog.addCallFiles",
-        "clone_List_CallFiles": "oxilog.clone_List_CallFiles"
+        "clone_List_CallFiles": "oxilog.clone_List_CallFiles",
+        "exportCsv": "oxilog.exportCsv"
     }
 };
 const request = require('request');
@@ -19,6 +20,8 @@ const writeXlsxFile = require("write-excel-file/node");
 const path = require("path");
 const fctManager = new FunctionsManager();
 const appDir = path.dirname(require.main.path);
+const moment = require("moment-timezone");
+
 
 let FullDataToCsv = {};
 let details_export = {};
@@ -138,6 +141,7 @@ function start() {
                 })
                     .then(accounts => {
                         if (accounts && accounts.length !== 0) {
+                            console.log('rabbitmq_config.queues.exportCsv',rabbitmq_config.queues.exportCsv)
                             PromiseBB.each(accounts, (item_account) => {
                                 ch.consume(rabbitmq_config.queues.exportCsv + item_account.account_id, processMsg);
                             }).then(data_queue => {
@@ -202,15 +206,15 @@ function start() {
                                     {
                                         column: 'account',
                                         type: String,
-                                        value: cdr => cdr.account ? cdr.account.company_name + "(" + cdr.account.first_name + " " + cdr.account.last_name + ")" : cdr.accountcode
+                                        value: cdr => cdr.account ? cdr.account.company_name + "(" + cdr.account.first_name + " " + cdr.account.last_name + ")" : cdr.account_code
 
                                     },
-                                    {
-                                        column: 'duration',
-                                        type: String,
-                                        value: cdr => cdr.duration.toString()
-
-                                    },
+                                    // {
+                                    //     column: 'duration',
+                                    //     type: String,
+                                    //     value: cdr => cdr.duration.toString()
+                                    //
+                                    // },
                                     {
                                         column: 'direction',
                                         type: String,
@@ -238,7 +242,7 @@ function start() {
                                     }, {
                                         column: 'debit',
                                         type: String,
-                                        value: cdr => cdr.debit.toString()
+                                        value: cdr => cdr.debit !== null ? cdr.debit.toString() : ''
 
                                     },
                                 ]

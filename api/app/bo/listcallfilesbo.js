@@ -187,7 +187,6 @@ class listcallfiles extends baseModelbo {
             })
         }
     }
-
     cloneListCallFiles = (req, res, next) => {
         let _this = this;
         let {listCallFile_id, listCallFile_name, account_id, campaign_id} = req.body;
@@ -244,12 +243,10 @@ class listcallfiles extends baseModelbo {
 
     }
 
-    pushItemsToQueue = (pages, params) => {
-        console.log('heeeereee')
+    pushItemsToQueue = (callFiles_items, listcallfile_id, cloned_listcallfile, listCallFile_name, account_id) => {
         let _this = this;
         return new Promise((resolve, reject) => {
-            params.time_export = new Date().getTime();
-            if (pages !== 0) {
+            if (callFiles_items.length !== 0) {
                 amqp.connect(rabbitmq_url, function (error0, connection) {
                     if (error0) {
                         throw error0;
@@ -259,33 +256,34 @@ class listcallfiles extends baseModelbo {
                             throw error1;
                         }
                         const queue = app_config.rabbitmq.queues.clone_List_CallFiles + account_id;
+
                         channel.assertQueue(queue, {
-                            durable: true,
+                            durable: true
                         });
-                        _this.createItemsArray(pages).then((pages_array) => {
-                            let index = 0;
-                            PromiseBB.each(pages_array, (item) => {
-                                params.page = item;
-                                let data = {
-                                    params: params,
-                                    currentPage: item,
-                                    pages: pages,
-                                    sessionId: params.sessionId,
-                                };
-                                channel.sendToQueue(queue, Buffer.from(JSON.stringify(data)), {
-                                    type: "export csv",
-                                });
-                            }).then((all_r) => {
-                                resolve(all_r);
-                            });
-                        });
+                        let index = 1;
+                        PromiseBB.each(callFiles_items, item => {
+                            let current_callFile = item.toJSON();
+                            delete current_callFile['callfile_id']
+                            current_callFile.listcallfile_id = listcallfile_id
+                            current_callFile.total_callFiles = callFiles_items.length;
+                            current_callFile.current_callFile = index;
+                            current_callFile.source_listCallFile = cloned_listcallfile.name;
+                            current_callFile.listCallFile_name = listCallFile_name
+                            current_callFile.callFiles_options = listCallFile_name
+                            current_callFile.to_treat = 'N'
+                            current_callFile.save_in_hooper = 'N'
+                            index++;
+                            channel.sendToQueue(queue, Buffer.from(JSON.stringify(current_callFile)), {type: 'clone listCallFile'});
+                        }).then((all_r) => {
+                            resolve(all_r);
+                        })
                     });
                 });
             } else {
                 reject(false);
             }
-        });
-    };
+        })
+    }
 
 }
 
