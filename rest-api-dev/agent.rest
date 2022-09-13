@@ -48,27 +48,29 @@ Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9c
 
 ###
 #UPDATE AGENT
-PUT https://occ.oxilog.net:2443/api/v1/agents/ebaeeaeb-ce15-478d-9a9c-13c1ede492c5
+PUT https://occ.oxilog.net:2443/api/v1/agents/259518e1-6f34-4ac1-81fa-d4d34a608192
 Content-Type: application/json
 Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9cIi2IY5
 
 {
-  "username": "881996364199",
-  "password": "cMIhJoovaxBD7",
+  "uuid": "259518e1-6f34-4ac1-81fa-d4d34a608192",
+  "username": "990407202411",
   "domain": "occ.oxilog.net",
+  "password": "o37AHjTHcWWb",
   "accountcode": "703596960803",
-  "status": "logged-out",
+  "subscriber_id": 24,
   "enabled": true,
-  "subscriber_id": 1,
+  "status": "on-break",
   "options": {
     "call_timeout": 30,
-    "max_no_answer": 0,
     "wrap_up_time": 20,
-    "reject_delay_time": 50,
+    "max_no_answer": 0,
     "busy_delay_time": 20,
+    "reject_delay_time": 50,
     "no_answer_delay_time": 20
-  }
-
+  },
+  "created_at": "2022-08-23 11:30:25",
+  "updated_at": "2022-08-31 12:20:18"
 }
 
 ###
@@ -85,7 +87,7 @@ Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9c
 
 ###
 #UPDATE AGENT STATUS
-PUT https://occ.oxilog.net:2443/api/v1/agents/fe29c88a-d59f-483d-aecf-e61a9063e31d/status
+PUT https://occ.oxilog.net:2443/api/v1/agents/d3c944d0-d314-4d9a-a1e5-339186e90c14/status
 Content-Type: application/json
 Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9cIi2IY5
 
