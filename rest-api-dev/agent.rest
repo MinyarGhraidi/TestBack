@@ -59,14 +59,26 @@ Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9c
 
 ###
 #UPDATE AGENT
+<<<<<<< HEAD
+PUT https://occ.oxilog.net:2443/api/v1/agents/259518e1-6f34-4ac1-81fa-d4d34a608192
+=======
 PUT https://occ.oxilog.net:2443/api/v1/agents/78615171-b085-445f-bb78-df8ef3c9f9ff
+>>>>>>> cd55c6d246681a8cd2054ffbdbe1851554dcbbb6
 Content-Type: application/json
 Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9cIi2IY5
 
 {
-  "username": '713251170959',
-  "password": 'Ps0Q6YWKSulr',
-  "domain": 'occ.oxilog.net',
+  "uuid": "259518e1-6f34-4ac1-81fa-d4d34a608192",
+  "username": "990407202411",
+  "domain": "occ.oxilog.net",
+  "password": "o37AHjTHcWWb",
+  "accountcode": "703596960803",
+  "subscriber_id": 24,
+  "enabled": true,
+  "status": "on-break",
+  "username": "713251170959",
+  "password": "Ps0Q6YWKSulr",
+  "domain": "occ.oxilog.net",
   "options": {
     "call_timeout": 30,
     "wrap_up_time": 20,
@@ -75,8 +87,10 @@ Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9c
     "reject_delay_time": 50,
     "no_answer_delay_time": 20
   },
-  "accountcode": '0214586987441',
-  "status": 'logged-out',
+  "created_at": "2022-08-23 11:30:25",
+  "updated_at": "2022-08-31 12:20:18",
+  "accountcode": "0214586987441",
+  "status": "logged-out",
   "enabled": true,
   "subscriber_id": 1
 }
@@ -96,7 +110,11 @@ Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9c
 
 ###
 #UPDATE AGENT STATUS
+<<<<<<< HEAD
+PUT https://occ.oxilog.net:2443/api/v1/agents/d3c944d0-d314-4d9a-a1e5-339186e90c14/status
+=======
 PUT https://occ.oxilog.net:2443/api/v1/agents/9977c6b0-5f26-40af-8070-eccaf1c61d18/status
+>>>>>>> cd55c6d246681a8cd2054ffbdbe1851554dcbbb6
 Content-Type: application/json
 Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9cIi2IY5
 
