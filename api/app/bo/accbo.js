@@ -28,7 +28,7 @@ class AccBo extends baseModelbo{
         if (filter.date !== current_Date) {
             let sqlCount = `select count(*)
                             from cdrs_:date
-                            WHERE 1 = 1
+                            WHERE SUBSTRING("custom_vars", 0 , POSITION(':' in "custom_vars") ) = :accounts_code
                                 EXTRA_WHERE`
             let extra_where_count = '';
             if (filter.start_time && filter.start_time !== '') {
@@ -45,9 +45,6 @@ class AccBo extends baseModelbo{
             }
             if (filter.directions && filter.directions !== '' && filter.directions.length !== 0) {
                 extra_where_count += ' AND direction in (:directions)';
-            }
-            if (filter && filter.accounts_code && filter.accounts_code !== '' && filter.accounts_code.length !== 0) {
-                extra_where_count += ' AND accountcode in (:accounts_code)';
             }
             if (filter.ip && filter.ip !== '') {
                 extra_where_count += ' AND src_ip in like :src_ip';
@@ -71,7 +68,7 @@ class AccBo extends baseModelbo{
                     // sip_code: filter.sip_code,
                     // sip_reason: filter.sip_reason,
                     // directions: filter.directions,
-                    // accounts_code: filter.accounts_code,
+                     accounts_code: filter.accounts_code,
                     // src_ip: filter.ip ? (filter.ip.concat('%')).toString() : null,
                     // from: from ? (from.concat('%')).toString() : null,
                     // to: to ? (to.concat('%')).toString() : null,
@@ -81,7 +78,7 @@ class AccBo extends baseModelbo{
                 let pages = Math.ceil(countAll[0].count / params.limit);
                 let sql = `select *
                            from cdrs_:date
-                           WHERE id >= ( select id from cdrs_:date WHERE 1 =1
+                           WHERE id >= ( select id from cdrs_:date WHERE SUBSTRING("custom_vars", 0 , POSITION(':' in "custom_vars") ) = :accounts_code
                                EXTRA_WHERE
                                LIMIT 1
                                OFFSET :offset
@@ -103,9 +100,6 @@ class AccBo extends baseModelbo{
                 }
                 if (filter && filter.directions && filter.directions !== '' && filter.directions.length !== 0) {
                     extra_where += ' AND direction in (:directions)';
-                }
-                if (filter && filter.accounts_code && filter.accounts_code !== '' && filter.accounts_code.length !== 0) {
-                    extra_where += ' AND accountcode in (:accounts_code)';
                 }
                 if (filter && filter.ip && filter.ip !== '') {
                     extra_where += ' AND src_ip like :src_ip';
@@ -132,7 +126,7 @@ class AccBo extends baseModelbo{
                         // sip_code: filter.sip_code,
                         // sip_reason: filter.sip_reason,
                         // directions: filter.directions,
-                        // accounts_code: filter.accounts_code,
+                         accounts_code: filter.accounts_code,
                         // src_ip: filter.ip ? (filter.ip.concat('%')).toString() : null,
                         // from: from ? (from.concat('%')).toString() : null,
                         // to: to ? (to.concat('%')).toString() : null,
@@ -204,7 +198,7 @@ class AccBo extends baseModelbo{
         } else {
             let sqlCount = `select count(*)
                             from acc_cdrs
-                            WHERE 1 = 1
+                            WHERE SUBSTRING("custom_vars", 0 , POSITION(':' in "custom_vars") ) = :accounts_code
                  EXTRA_WHERE`
             let extra_where_countCurrenDate = '';
             if (filter.start_time && filter.start_time !== '') {
@@ -221,9 +215,6 @@ class AccBo extends baseModelbo{
             }
             if (filter.directions && filter.directions !== '' && filter.directions.length !== 0) {
                 extra_where_countCurrenDate += ' AND direction in (:directions)';
-            }
-            if (filter && filter.accounts_code && filter.accounts_code !== '' && filter.accounts_code.length !== 0) {
-                extra_where_countCurrenDate += ' AND accountcode in (:accounts_code)';
             }
             if (filter.ip && filter.ip !== '') {
                 extra_where_countCurrenDate += ' AND src_ip like :src_ip';
@@ -248,7 +239,7 @@ class AccBo extends baseModelbo{
                     end_time: filter.end_time,
                     // sip_code: sip_code,
                     // directions: directions,
-                    // accounts_code: accounts_code,
+                     accounts_code: filter.accounts_code,
                     // src_ip: filter.ip ? (filter.ip.concat('%')).toString() : null,
                     // from: from ? (from.concat('%')).toString() : null,
                     // to: to ? (to.concat('%')).toString() : null,
@@ -258,7 +249,7 @@ class AccBo extends baseModelbo{
                 let pages = Math.ceil(countAll[0].count / params.limit);
                 let sqlData = `select *
                                from acc_cdrs
-                               WHERE 1=1 
+                               WHERE SUBSTRING("custom_vars", 0 , POSITION(':' in "custom_vars") ) = :accounts_code 
                   AND id >= ( select id  from acc_cdrs where 1=1 
                    EXTRA_WHERE
                     LIMIT 1
@@ -281,9 +272,6 @@ class AccBo extends baseModelbo{
                 }
                 if (filter && filter.directions && filter.directions !== '' && filter.directions.length !== 0) {
                     extra_where_currentDate += ' AND direction in (:directions)';
-                }
-                if (filter && filter.accounts_code && filter.accounts_code !== '' && filter.accounts_code.length !== 0) {
-                    extra_where_currentDate += ' AND accountcode in (:accounts_code)';
                 }
                 if (filter && filter.ip && filter.ip !== '') {
                     extra_where_currentDate += ' AND src_ip like :src_ip';
@@ -309,7 +297,7 @@ class AccBo extends baseModelbo{
                         end_time: filter.end_time,
                         // sip_code: sip_code,
                         // directions: directions,
-                        // accounts_code: accounts_code,
+                         accounts_code: filter.accounts_code,
                         // src_ip: filter.ip ? (filter.ip.concat('%')).toString() : null,
                         // from: from ? (from.concat('%')).toString() : null,
                         // to: to ? (to.concat('%')).toString() : null,
@@ -383,7 +371,9 @@ class AccBo extends baseModelbo{
                 success: true,
                 data: items,
             });
-        });
+        }).catch(err=>{
+            console.log('err', err)
+        })
     }
 
     DataEmitSocket(data, action, key, total, sessionId, totalItems, currentItems) {
@@ -397,6 +387,27 @@ class AccBo extends baseModelbo{
             totalItems: totalItems
         });
     };
+
+    getSip_codes(req, res, next) {
+        let _this = this;
+        let sqlSipCode = `select distinct sip_code, sip_reason
+                          from acc_cdrs
+                          where sip_code notnull and sip_reason notnull and sip_code != '' and sip_reason != ''`;
+        db.sequelize["cdr-db"]
+            .query(sqlSipCode, {
+                type: db.sequelize["cdr-db"].QueryTypes.SELECT,
+            })
+            .then((sip_codes) => {
+                res.send({
+                    success: true,
+                    status: 200,
+                    data: sip_codes,
+                });
+            })
+            .catch((err) => {
+                _this.sendResponseError(res, [], err);
+            });
+    }
 }
 
 module.exports = AccBo

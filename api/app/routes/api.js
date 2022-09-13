@@ -337,6 +337,8 @@ let apiRouters = function (passport) {
 
     router.post('/api/acc/getCdrs/:params?',passport.authenticate('jwt', {session: false}),  accController.getCdrs);
     router.post('/api/acc/pushDataToSocket/:params?', passport.authenticate('jwt', {session: false}),accController.pushDataToSocket);
+    router.get('/api/acc/getSip_codes', passport.authenticate('jwt', {session: false}), accController.getSip_codes);
+
 
 
     return router;
