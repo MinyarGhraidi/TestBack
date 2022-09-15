@@ -6,7 +6,9 @@ const moment = require("moment-timezone");
 const PromiseBB = require("bluebird");
 const appSocket = new (require("../providers/AppSocket"))();
 const amqp = require("amqplib/callback_api");
+const path = require("path");
 const rabbitmq_url = appHelper.rabbitmq_url;
+const appDir = path.dirname(require.main.filename);
 
 class AccBo extends baseModelbo{
     constructor() {
@@ -129,7 +131,7 @@ class AccBo extends baseModelbo{
                         // sip_code: filter.sip_code,
                         // sip_reason: filter.sip_reason,
                         // directions: filter.directions,
-                         accounts_code: filter.accounts_code,
+                        accounts_code: filter.accounts_code,
                         // accounts_code: filter.accounts_code,
                         // src_ip: filter.ip ? (filter.ip.concat('%')).toString() : null,
                         // from: from ? (from.concat('%')).toString() : null,
@@ -243,7 +245,7 @@ class AccBo extends baseModelbo{
                     end_time: filter.end_time,
                     // sip_code: sip_code,
                     // directions: directions,
-                     accounts_code: filter.accounts_code,
+                    accounts_code: filter.accounts_code,
                     // accounts_code: accounts_code,
                     // src_ip: filter.ip ? (filter.ip.concat('%')).toString() : null,
                     // from: from ? (from.concat('%')).toString() : null,
@@ -302,7 +304,7 @@ class AccBo extends baseModelbo{
                         end_time: filter.end_time,
                         // sip_code: sip_code,
                         // directions: directions,
-                         accounts_code: filter.accounts_code,
+                        accounts_code: filter.accounts_code,
                         // accounts_code: accounts_code,
                         // src_ip: filter.ip ? (filter.ip.concat('%')).toString() : null,
                         // from: from ? (from.concat('%')).toString() : null,
@@ -324,12 +326,12 @@ class AccBo extends baseModelbo{
                             cdrs_data.push(item);
                         }).then(cdrs_data => {
                             res.send({
-                                            success: true,
-                                            status: 200,
-                                            data: cdrs_data,
-                                            pages: pages,
-                                            countAll: countAll[0].count
-                                        })
+                                success: true,
+                                status: 200,
+                                data: cdrs_data,
+                                pages: pages,
+                                countAll: countAll[0].count
+                            })
                             // this.db['gateways'].findAll({
                             //     where: {
                             //         active: 'Y'
@@ -384,6 +386,7 @@ class AccBo extends baseModelbo{
     }
 
     DataEmitSocket(data, action, key, total, sessionId, totalItems, currentItems) {
+        console.log('heeerree ', data)
         appSocket.emit('export.cdr', {
             data: data,
             action: action,
@@ -435,6 +438,7 @@ class AccBo extends baseModelbo{
                         });
                         _this.createItemsArray(pages).then((pages_array) => {
                             let index = 0;
+                            console.log('pages_array', pages_array)
                             PromiseBB.each(pages_array, (item) => {
                                 params.page = item;
                                 let data = {
@@ -471,6 +475,23 @@ class AccBo extends baseModelbo{
                 }
             }
         })
+    }
+
+    downloadCdr(req, res, next) {
+        let file_name = req.params.filename;
+        if (file_name && file_name !== 'undefined') {
+            const file = appDir + '/app/resources/cdrs/' + file_name;
+            res.download(file, function (err) {
+                if (err) {
+                    console.log(err);
+                }
+            });
+        } else {
+            res.send({
+                success: false,
+                message: 'invalid file name'
+            })
+        }
     }
 }
 

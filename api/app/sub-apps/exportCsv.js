@@ -113,6 +113,8 @@ function start() {
                 }
                 callback(dataCallback);
             }
+        }).catch(err=>{
+            console.log('errrrr', err)
         })
 
         // });
@@ -154,6 +156,7 @@ function start() {
             function processMsg(msg) {
                 switch (msg.properties.type) {
                     case 'export csv': {
+                        console.log('heeeeerrree')
                         const incomingDate = (new Date()).toISOString();
                         const item_data = JSON.parse(msg.content.toString());
                         if (!details_export[item_data.sessionId + item_data.params.time_export]) {
@@ -185,13 +188,6 @@ function start() {
 
                                 let schema = [
                                     {
-                                        column: 'init time',
-                                        type: Date,
-                                        format: 'YYYY-MM-DD HH:mm:ss',
-                                        value: cdr => new Date(moment(cdr.init_time).add(2, 'hours').tz('Europe/Paris').utc().format('YYYY-MM-DD HH:mm:ss'))
-
-                                    },
-                                    {
                                         column: 'start time',
                                         type: Date,
                                         format: 'YYYY-MM-DD HH:mm:ss',
@@ -203,88 +199,16 @@ function start() {
                                         format: 'YYYY-MM-DD HH:mm:ss',
                                         value: cdr => new Date(moment(cdr.end_time).add(2, 'hours').tz('Europe/Paris').utc().format('YYYY-MM-DD HH:mm:ss'))
                                     },
-                                    {
-                                        column: 'account',
-                                        type: String,
-                                        value: cdr => cdr.account ? cdr.account.company_name + "(" + cdr.account.first_name + " " + cdr.account.last_name + ")" : cdr.account_code
-
-                                    },
-                                    // {
-                                    //     column: 'duration',
-                                    //     type: String,
-                                    //     value: cdr => cdr.duration.toString()
-                                    //
-                                    // },
-                                    {
-                                        column: 'direction',
-                                        type: String,
-                                        value: cdr => cdr.direction
-                                    },
-                                    {
-                                        column: 'src user',
-                                        type: String,
-                                        value: cdr => cdr.src_user
-                                    }, {
-                                        column: 'dst user',
-                                        type: String,
-                                        value: cdr => cdr.dst_user
-
-                                    }, {
-                                        column: 'sip code',
-                                        type: String,
-                                        value: cdr => cdr.sip_code
-
-                                    }, {
-                                        column: 'sip reason',
-                                        type: String,
-                                        value: cdr => cdr.sip_reason
-
-                                    }, {
-                                        column: 'debit',
-                                        type: String,
-                                        value: cdr => cdr.debit !== null ? cdr.debit.toString() : ''
-
-                                    },
                                 ]
-                                if (data.role_value === "admin") {
-                                    schema.push(
-                                        {
-                                            column: 'cost',
-                                            type: String,
-                                            value: cdr => cdr.cost.toString()
-                                        },
-                                        {
-                                            column: 'profit',
-                                            type: String,
-                                            value: cdr => (Number.parseFloat(cdr.debit) - Number.parseFloat(cdr.cost)).toFixed(6)
-
-                                        },
-                                        {
-                                            column: 'debit resaler',
-                                            type: String,
-                                            value: cdr => cdr.debit_rct !== null ?cdr.debit_rct.toString() :0
-
-                                        },
-                                        {
-                                            column: 'cost resaler',
-                                            type: String,
-                                            value: cdr => cdr.cost_rct !== null ?cdr.cost_rct.toString():0
-                                        },
-                                        {
-                                            column: 'profit resaler',
-                                            type: String,
-                                            value: cdr => cdr.debit_rct === null ||cdr.cost_rct === null ? 0:(Number.parseFloat(cdr.debit_rct) - Number.parseFloat(cdr.cost_rct)).toFixed(6)
-
-                                        },
-
-                                    )
-                                }
                                 const file_name = Date.now() + '-cdr.xlsx';
                                 const file_path = appDir + '/resources/cdrs/' + file_name;
+                                console.log('hereee data', item_data.sessionId , item_data.params.time_export ,schema )
+
                                 writeXlsxFile(FullDataToCsv[item_data.sessionId + item_data.params.time_export], {
                                     schema,
                                     filePath: file_path
                                 }).then(data_file => {
+                                    console.log('here')
                                     accBo.DataEmitSocket({file_name: file_name}, 'export.cdr', data.currentPage, data.total, data.sessionId, item_data.params.total, FullDataToCsv[item_data.sessionId + item_data.params.time_export].length);
                                     console.log("Sending Ack for msg at time " + incomingDate);
                                     try {
