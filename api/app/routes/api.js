@@ -310,6 +310,7 @@ let apiRouters = function (passport) {
     router.put('/api/message/update', passport.authenticate('jwt', {session: false}), MessageController.update);
     router.delete('/api/message/delete/:params', passport.authenticate('jwt', {session: false}), MessageController.delete);
 
+    router.put('/api/message_channel/update', passport.authenticate('jwt', {session: false}), MessageChannelController.update);
     router.post('/api/message_channel/createNewChannel', passport.authenticate('jwt', {session: false}), MessageChannelController.createNewChannel);
     router.post('/api/message_channel/sendNewMessage', passport.authenticate('jwt', {session: false}), MessageChannelController.sendNewMessage);
     router.post('/api/message_channel/getMyChannel', passport.authenticate('jwt', {session: false}), MessageChannelController.getMyChannel);
