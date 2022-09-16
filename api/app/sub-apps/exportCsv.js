@@ -4,7 +4,8 @@ const rabbitmq_config = (config.rabbitmq) ? config.rabbitmq : {
     "host": "amqp://localhost",
     "queues": {
         "addCallFiles": "oxilog.addCallFiles",
-        "clone_List_CallFiles": "oxilog.clone_List_CallFiles"
+        "clone_List_CallFiles": "oxilog.clone_List_CallFiles",
+        "exportCsv": "oxilog.exportCsv"
     }
 };
 const request = require('request');
@@ -19,6 +20,8 @@ const writeXlsxFile = require("write-excel-file/node");
 const path = require("path");
 const fctManager = new FunctionsManager();
 const appDir = path.dirname(require.main.path);
+const moment = require("moment-timezone");
+
 
 let FullDataToCsv = {};
 let details_export = {};
@@ -82,17 +85,8 @@ function start() {
     }
 
     function getData(data, callback) {
-        // let _this = this
-        // const options = {
-        //     uri: config.appBaseUrl + "/api/acc/getCdrs/:params?",
-        //     method: 'POST',
-        //     json: true,
-        //     body: data.params
-        // };
-        // request(options, function (error, response, body) {
         fctManager.getCdrMq(data.params).then(body => {
             if (body && body.success === true) {
-                //accBo.DataEmitSocket(body.data, 'export.cdr',data.currentPage, data.pages);
                 let dataCallback = {
                     data: body.data,
                     status: true,
@@ -100,7 +94,6 @@ function start() {
                     currentPage: data.currentPage,
                     sessionId: data.sessionId,
                     role_id: data.params.role_id,
-                    resaler_id: data.params.resaler_id,
                     role_value: data.params.role_value
                 }
                 callback(dataCallback);
@@ -110,6 +103,8 @@ function start() {
                 }
                 callback(dataCallback);
             }
+        }).catch(err=>{
+            console.log('errrrr', err)
         })
 
         // });
@@ -138,6 +133,7 @@ function start() {
                 })
                     .then(accounts => {
                         if (accounts && accounts.length !== 0) {
+                            console.log('rabbitmq_config.queues.exportCsv',rabbitmq_config.queues.exportCsv)
                             PromiseBB.each(accounts, (item_account) => {
                                 ch.consume(rabbitmq_config.queues.exportCsv + item_account.account_id, processMsg);
                             }).then(data_queue => {
@@ -178,15 +174,7 @@ function start() {
                                 }
                             } else
                             if (data.total === data.currentPage) {
-
                                 let schema = [
-                                    {
-                                        column: 'init time',
-                                        type: Date,
-                                        format: 'YYYY-MM-DD HH:mm:ss',
-                                        value: cdr => new Date(moment(cdr.init_time).add(2, 'hours').tz('Europe/Paris').utc().format('YYYY-MM-DD HH:mm:ss'))
-
-                                    },
                                     {
                                         column: 'start time',
                                         type: Date,
@@ -208,75 +196,49 @@ function start() {
                                     {
                                         column: 'duration',
                                         type: String,
-                                        value: cdr => cdr.duration.toString()
+                                        value: cdr => Math.ceil(Number(cdr.durationsec) + Number(cdr.durationmsec / 1000)).toString()
 
                                     },
                                     {
                                         column: 'direction',
                                         type: String,
-                                        value: cdr => cdr.direction
+                                        value: cdr => cdr.calldirection
                                     },
                                     {
                                         column: 'src user',
                                         type: String,
-                                        value: cdr => cdr.src_user
+                                        value: cdr => cdr.call_events ? cdr.call_events[0].callerNumber : ''
                                     }, {
                                         column: 'dst user',
                                         type: String,
-                                        value: cdr => cdr.dst_user
+                                        value: cdr => cdr.call_events ? cdr.call_events[0].destination : ''
 
                                     }, {
                                         column: 'sip code',
                                         type: String,
-                                        value: cdr => cdr.sip_code
+                                        value: cdr => cdr.sip_code !== null ? cdr.sip_code : ''
 
                                     }, {
                                         column: 'sip reason',
                                         type: String,
-                                        value: cdr => cdr.sip_reason
+                                        value: cdr => cdr.sip_reason !== null ? cdr.sip_reason : ''
 
                                     }, {
                                         column: 'debit',
                                         type: String,
-                                        value: cdr => cdr.debit.toString()
+                                        value: cdr => cdr.debit !== null ? cdr.debit.toString() : ''
 
                                     },
+                                    {
+                                        column: 'cost',
+                                        type: String,
+                                        value: cdr => cdr.cost !== null ? cdr.cost.toString() : ''
+
+                                    }
                                 ]
-                                if (data.role_value === "admin") {
-                                    schema.push(
-                                        {
-                                            column: 'cost',
-                                            type: String,
-                                            value: cdr => cdr.cost.toString()
-                                        },
-                                        {
-                                            column: 'profit',
-                                            type: String,
-                                            value: cdr => (Number.parseFloat(cdr.debit) - Number.parseFloat(cdr.cost)).toFixed(6)
-
-                                        },
-                                        {
-                                            column: 'debit resaler',
-                                            type: String,
-                                            value: cdr => cdr.debit_rct !== null ?cdr.debit_rct.toString() :0
-
-                                        },
-                                        {
-                                            column: 'cost resaler',
-                                            type: String,
-                                            value: cdr => cdr.cost_rct !== null ?cdr.cost_rct.toString():0
-                                        },
-                                        {
-                                            column: 'profit resaler',
-                                            type: String,
-                                            value: cdr => cdr.debit_rct === null ||cdr.cost_rct === null ? 0:(Number.parseFloat(cdr.debit_rct) - Number.parseFloat(cdr.cost_rct)).toFixed(6)
-
-                                        },
-
-                                    )
-                                }
                                 const file_name = Date.now() + '-cdr.xlsx';
                                 const file_path = appDir + '/resources/cdrs/' + file_name;
+
                                 writeXlsxFile(FullDataToCsv[item_data.sessionId + item_data.params.time_export], {
                                     schema,
                                     filePath: file_path

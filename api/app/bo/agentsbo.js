@@ -158,71 +158,68 @@ class agents extends baseModelbo {
         let AddAgent = new Promise((resolve, reject) => {
             let idx = 0
             bulkNum.forEach(item_ag => {
-                _usersbo.generateUniqueUsernameFunction().then(username => {
-                    values.username = username;
-                    this.db['users'].findOne({
-                        where: {active: 'Y', role_crm_id: values.role_crm_id},
-                        order: [['user_id', 'DESC']]
-                    })
-                        .then(lastAgent => {
-                            let increment = item_ag ? item_ag + 1 : 1;
-                            let lastAgentSip_device = lastAgent ? lastAgent.sip_device : values.sip_device
-                            let lastAgentKamailioUsername = lastAgent ? lastAgentSip_device.username : values.username;
-                            let username = (parseInt(lastAgentKamailioUsername) + increment).toString();
-                            let {password, domain, options, status, enabled, subscriber_id} = sip_device;
-                            sip_device.username = username;
-                            sip_device.created_at = moment().format("YYYY-MM-DD HH:mm:ss");
-                            sip_device.updated_at = moment().format("YYYY-MM-DD HH:mm:ss");
-                            sip_device.status = "logged-out";
-                            values.sip_device = sip_device;
-                            _usersbo.isUniqueUsername(values.username, 0)
-                                .then(isUnique => {
-                                    if (isUnique) {
-                                        let agent = {
-                                            username,
-                                            password,
-                                            domain,
-                                            options,
-                                            accountcode,
-                                            status,
-                                            enabled,
-                                            subscriber_id
-                                        };
-                                        axios
-                                            .post(`${base_url_cc_kam}api/v1/agents`, agent, call_center_authorization)
-                                            .then((resp) => {
-                                                values.sip_device.uuid = resp.data.result.agent.uuid || null;
-                                                this.saveAgentInDB(values)
-                                                    .then(agent => {
-                                                        if (idx < bulkNum.length - 1) {
-                                                            idx++
-                                                        } else {
-                                                            resolve({message: 'success'})
-                                                        }
-                                                    })
-                                                    .catch(err => {
-                                                        reject(err)
-                                                    })
-                                            })
-                                            .catch((err) => {
-                                                reject(err)
-                                            });
-                                    } else {
-                                        if (idx < bulkNum.length - 1) {
-                                            idx++
-                                        } else {
-                                            resolve({message: 'username already exist'})
-                                        }
-                                    }
-                                })
-                                .catch(err => {
-                                    reject(err)
-                                })
-                        })
-                        .catch(err => {
-                            reject(err)
-                        })
+                this.db['users'].findOne({
+                    where: {active: 'Y', role_crm_id: values.role_crm_id},
+                    order: [['user_id', 'DESC']]
                 })
+                    .then(lastAgent => {
+                        let increment = item_ag ? item_ag + 1 : 1;
+                        let lastAgentSip_device = lastAgent ? lastAgent.sip_device : values.sip_device
+                        let lastAgentKamailioUsername = lastAgent ? lastAgentSip_device.username : values.username;
+                        let username = (parseInt(lastAgentKamailioUsername) + increment).toString();
+                        let {password, domain, options, status, enabled, subscriber_id} = sip_device;
+                        sip_device.username = username;
+                        sip_device.created_at = moment().format("YYYY-MM-DD HH:mm:ss");
+                        sip_device.updated_at = moment().format("YYYY-MM-DD HH:mm:ss");
+                        sip_device.status = "logged-out";
+                        values.sip_device = sip_device;
+                        _usersbo.isUniqueUsername(values.username, 0)
+                            .then(isUnique => {
+                                if (isUnique) {
+                                    let agent = {
+                                        username,
+                                        password,
+                                        domain,
+                                        options,
+                                        accountcode,
+                                        status,
+                                        enabled,
+                                        subscriber_id
+                                    };
+                                    axios
+                                        .post(`${base_url_cc_kam}api/v1/agents`, agent, call_center_authorization)
+                                        .then((resp) => {
+                                            values.sip_device.uuid = resp.data.result.agent.uuid || null;
+                                            this.saveAgentInDB(values)
+                                                .then(agent => {
+                                                    if (idx < bulkNum.length - 1) {
+                                                        idx++
+                                                    } else {
+                                                        resolve({message: 'success'})
+                                                    }
+                                                })
+                                                .catch(err => {
+                                                    reject(err)
+                                                })
+                                        })
+                                        .catch((err) => {
+                                            reject(err)
+                                        });
+                                } else {
+                                    if (idx < bulkNum.length - 1) {
+                                        idx++
+                                    } else {
+                                        resolve({message: 'username already exist'})
+                                    }
+                                }
+                            })
+                            .catch(err => {
+                                reject(err)
+                            })
+                    })
+                    .catch(err => {
+                        reject(err)
+                    })
             })
         })
         Promise.all([AddAgent]).then(saveAgent => {

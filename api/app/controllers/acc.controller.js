@@ -27,4 +27,7 @@ module.exports ={
     getSip_codes: function (req, res, next) {
         _itemAccBo.getSip_codes(req, res, next)
     },
+    downloadCdr: function (req, res, next){
+        _itemAccBo.downloadCdr(req, res, next)
+    }
 }
