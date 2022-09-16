@@ -612,21 +612,25 @@ class users extends baseModelbo {
             } else {
                 this.saveCredentials(user)
                     .then(data => {
-                        let {newAccount, email_item} = data;
-                        let modalObj = this.db['users'].build(newAccount);
-                        modalObj.save()
-                            .then(user => {
-                                this.db['emails'].update({user_id: user.user_id}, {where: {email_id: email_item.email_id}})
-                                    .then(() => {
-                                        resolve(user)
-                                    })
-                                    .catch(err => {
-                                        reject(err)
-                                    })
-                            })
-                            .catch(err => {
-                                reject(err)
-                            })
+                        _this.generateUniqueUsernameFunction().then(username => {
+                            let {newAccount, email_item} = data;
+                            newAccount.first_name = 'agent_'.concat(Math.floor(Math.random() * (999 - 100 + 1) + 100))
+                            newAccount.username = username;
+                            let modalObj = this.db['users'].build(newAccount);
+                            modalObj.save()
+                                .then(user => {
+                                    this.db['emails'].update({user_id: user.user_id}, {where: {email_id: email_item.email_id}})
+                                        .then(() => {
+                                            resolve(user)
+                                        })
+                                        .catch(err => {
+                                            reject(err)
+                                        })
+                                })
+                                .catch(err => {
+                                    reject(err)
+                                })
+                        })
                     })
                     .catch(err => {
                         reject(err)

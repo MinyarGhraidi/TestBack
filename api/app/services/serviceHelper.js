@@ -16,7 +16,7 @@ class FunctionsManager {
             if (filter.date !== moment(new Date()).format('YYYYMMDD')) {
                 let sql = `select *
                            from cdrs_:date
-                           WHERE 1 = 1
+                           WHERE SUBSTRING("custom_vars", 0 , POSITION(':' in "custom_vars") ) = :accounts_code
                                EXTRA_WHERE
                            ORDER BY start_time ASC
                                LIMIT :limit
@@ -37,9 +37,6 @@ class FunctionsManager {
                 }
                 if (filter && filter.directions && filter.directions !== '' && filter.directions.length !== 0) {
                     extra_where += ' AND direction in (:directions) ';
-                }
-                if (filter && filter.accounts_code && filter.accounts_code !== '' && filter.accounts_code.length !== 0) {
-                    extra_where += ' AND accountcode in (:accounts_code) ';
                 }
                 if (filter && filter.ip && filter.ip !== '') {
                     extra_where += ' AND src_ip like :src_ip ';

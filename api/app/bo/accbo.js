@@ -5,6 +5,10 @@ const app_config = appHelper.appConfig;
 const moment = require("moment-timezone");
 const PromiseBB = require("bluebird");
 const appSocket = new (require("../providers/AppSocket"))();
+const amqp = require("amqplib/callback_api");
+const path = require("path");
+const rabbitmq_url = appHelper.rabbitmq_url;
+const appDir = path.dirname(require.main.filename);
 
 class AccBo extends baseModelbo{
     constructor() {
@@ -24,7 +28,6 @@ class AccBo extends baseModelbo{
 
         let currentDate = moment(new Date()).tz(app_config.TZ).format('YYYY-MM-DD');
         let {start_time, end_time, sip_code, directions, accounts_code, ip, from, to, sip_reason} = params.filter;
-        console.log('start_time', start_time)
         if (filter.date !== current_Date) {
             let sqlCount = `select count(*)
                             from cdrs_:date
@@ -68,7 +71,7 @@ class AccBo extends baseModelbo{
                     // sip_code: filter.sip_code,
                     // sip_reason: filter.sip_reason,
                     // directions: filter.directions,
-                    accounts_code: filter.accounts_code,
+                     accounts_code: filter.accounts_code,
                     // accounts_code: filter.accounts_code,
                     // src_ip: filter.ip ? (filter.ip.concat('%')).toString() : null,
                     // from: from ? (from.concat('%')).toString() : null,
@@ -144,14 +147,11 @@ class AccBo extends baseModelbo{
 
                         let cdrs_data = []
                         PromiseBB.each(data, item => {
-                            console.log('item', item)
-
                             let account_data = accounts.filter(item_acc => item_acc.account_number === item.accountcode);
                             item.account_info = account_data[0] ? account_data[0].first_name + " " + account_data[0].last_name : null;
                             item.account = account_data[0];
                             cdrs_data.push(item);
                         }).then(cdr_data => {
-                            console.log('cdr_data', cdr_data)
                             res.send({
                                 success: true,
                                 status: 200,
@@ -376,7 +376,7 @@ class AccBo extends baseModelbo{
                 data: items,
             });
         }).catch(err=>{
-            console.log('err', err)
+            _this.sendResponseError(res, [], err);
         })
 
     }
@@ -412,6 +412,79 @@ class AccBo extends baseModelbo{
             .catch((err) => {
                 _this.sendResponseError(res, [], err);
             });
+    }
+
+    pushItemsToQueue = (pages, params) => {
+        let _this = this;
+        return new Promise((resolve, reject) => {
+            params.time_export = new Date().getTime();
+            if (pages !== 0) {
+                amqp.connect(rabbitmq_url, function (error0, connection) {
+                    if (error0) {
+                        throw error0;
+                    }
+                    connection.createChannel(function (error1, channel) {
+                        if (error1) {
+                            throw error1;
+                        }
+                        const queue = app_config.rabbitmq.queues.exportCsv + params.sessionId;
+                        channel.assertQueue(queue, {
+                            durable: true,
+                        });
+                        _this.createItemsArray(pages).then((pages_array) => {
+                            let index = 0;
+                            PromiseBB.each(pages_array, (item) => {
+                                params.page = item;
+                                let data = {
+                                    params: params,
+                                    currentPage: item,
+                                    pages: pages,
+                                    sessionId: params.sessionId,
+                                };
+                                channel.sendToQueue(queue, Buffer.from(JSON.stringify(data)), {
+                                    type: "export csv",
+                                });
+                            }).then((all_r) => {
+                                resolve(all_r);
+                            });
+                        });
+                    });
+                });
+            } else {
+                reject(false);
+            }
+        });
+    };
+    createItemsArray = (total) => {
+        return new Promise((resolve, reject) => {
+            let _this = this;
+            let array = [];
+            let index = 0;
+            for (let i = 1; i <= total; i++) {
+                array.push(i);
+                if (index < total - 1) {
+                    index++;
+                } else {
+                    resolve(array);
+                }
+            }
+        })
+    }
+
+    downloadCdr(req, res, next) {
+        let file_name = req.params.filename;
+        if (file_name && file_name !== 'undefined') {
+            const file = appDir + '/app/resources/cdrs/' + file_name;
+            res.download(file, function (err) {
+                if (err) {
+                    this.sendResponseError(res, [], err);                }
+            });
+        } else {
+            res.send({
+                success: false,
+                message: 'invalid file name'
+            })
+        }
     }
 }
 
