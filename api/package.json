@@ -584,7 +584,7 @@
     "test": "mocha --exit -r 'test/**/*.js'  --grep",
     "saveCalls": "NODE_ENV=development nodemon SaveCallFile ",
     "startSip": "nodemon  --unhandled-rejections=strict --experimental-modules --es-module-specifier-resolution=node  ./app/sub-apps/sipConnect.js",
-    "exportCdr" : "NODE_ENV=development nodemon exportCsv.js  "
+    "exportCdr" : "NODE_ENV=development nodemon app/sub-apps/exportCsv.js  "
   },
   "devDependencies": {
     "nodemon": "^2.0.19"

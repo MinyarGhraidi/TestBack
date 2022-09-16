@@ -85,17 +85,8 @@ function start() {
     }
 
     function getData(data, callback) {
-        // let _this = this
-        // const options = {
-        //     uri: config.appBaseUrl + "/api/acc/getCdrs/:params?",
-        //     method: 'POST',
-        //     json: true,
-        //     body: data.params
-        // };
-        // request(options, function (error, response, body) {
         fctManager.getCdrMq(data.params).then(body => {
             if (body && body.success === true) {
-                //accBo.DataEmitSocket(body.data, 'export.cdr',data.currentPage, data.pages);
                 let dataCallback = {
                     data: body.data,
                     status: true,
@@ -103,7 +94,6 @@ function start() {
                     currentPage: data.currentPage,
                     sessionId: data.sessionId,
                     role_id: data.params.role_id,
-                    resaler_id: data.params.resaler_id,
                     role_value: data.params.role_value
                 }
                 callback(dataCallback);
@@ -156,7 +146,6 @@ function start() {
             function processMsg(msg) {
                 switch (msg.properties.type) {
                     case 'export csv': {
-                        console.log('heeeeerrree')
                         const incomingDate = (new Date()).toISOString();
                         const item_data = JSON.parse(msg.content.toString());
                         if (!details_export[item_data.sessionId + item_data.params.time_export]) {
@@ -185,7 +174,6 @@ function start() {
                                 }
                             } else
                             if (data.total === data.currentPage) {
-
                                 let schema = [
                                     {
                                         column: 'start time',
@@ -199,16 +187,62 @@ function start() {
                                         format: 'YYYY-MM-DD HH:mm:ss',
                                         value: cdr => new Date(moment(cdr.end_time).add(2, 'hours').tz('Europe/Paris').utc().format('YYYY-MM-DD HH:mm:ss'))
                                     },
+                                    {
+                                        column: 'account',
+                                        type: String,
+                                        value: cdr => cdr.account ? cdr.account.company_name + "(" + cdr.account.first_name + " " + cdr.account.last_name + ")" : cdr.accountcode
+
+                                    },
+                                    {
+                                        column: 'duration',
+                                        type: String,
+                                        value: cdr => Math.ceil(Number(cdr.durationsec) + Number(cdr.durationmsec / 1000)).toString()
+
+                                    },
+                                    {
+                                        column: 'direction',
+                                        type: String,
+                                        value: cdr => cdr.calldirection
+                                    },
+                                    {
+                                        column: 'src user',
+                                        type: String,
+                                        value: cdr => cdr.call_events ? cdr.call_events[0].callerNumber : ''
+                                    }, {
+                                        column: 'dst user',
+                                        type: String,
+                                        value: cdr => cdr.call_events ? cdr.call_events[0].destination : ''
+
+                                    }, {
+                                        column: 'sip code',
+                                        type: String,
+                                        value: cdr => cdr.sip_code !== null ? cdr.sip_code : ''
+
+                                    }, {
+                                        column: 'sip reason',
+                                        type: String,
+                                        value: cdr => cdr.sip_reason !== null ? cdr.sip_reason : ''
+
+                                    }, {
+                                        column: 'debit',
+                                        type: String,
+                                        value: cdr => cdr.debit !== null ? cdr.debit.toString() : ''
+
+                                    },
+                                    {
+                                        column: 'cost',
+                                        type: String,
+                                        value: cdr => cdr.cost !== null ? cdr.cost.toString() : ''
+
+                                    }
                                 ]
                                 const file_name = Date.now() + '-cdr.xlsx';
                                 const file_path = appDir + '/resources/cdrs/' + file_name;
-                                console.log('hereee data', item_data.sessionId , item_data.params.time_export ,schema )
 
                                 writeXlsxFile(FullDataToCsv[item_data.sessionId + item_data.params.time_export], {
                                     schema,
                                     filePath: file_path
                                 }).then(data_file => {
-                                    console.log('here')
                                     accBo.DataEmitSocket({file_name: file_name}, 'export.cdr', data.currentPage, data.total, data.sessionId, item_data.params.total, FullDataToCsv[item_data.sessionId + item_data.params.time_export].length);
                                     console.log("Sending Ack for msg at time " + incomingDate);
                                     try {
