@@ -28,7 +28,6 @@ class AccBo extends baseModelbo{
 
         let currentDate = moment(new Date()).tz(app_config.TZ).format('YYYY-MM-DD');
         let {start_time, end_time, sip_code, directions, accounts_code, ip, from, to, sip_reason} = params.filter;
-        console.log('start_time', start_time)
         if (filter.date !== current_Date) {
             let sqlCount = `select count(*)
                             from cdrs_:date
@@ -148,14 +147,11 @@ class AccBo extends baseModelbo{
 
                         let cdrs_data = []
                         PromiseBB.each(data, item => {
-                            console.log('item', item)
-
                             let account_data = accounts.filter(item_acc => item_acc.account_number === item.accountcode);
                             item.account_info = account_data[0] ? account_data[0].first_name + " " + account_data[0].last_name : null;
                             item.account = account_data[0];
                             cdrs_data.push(item);
                         }).then(cdr_data => {
-                            console.log('cdr_data', cdr_data)
                             res.send({
                                 success: true,
                                 status: 200,
@@ -380,13 +376,12 @@ class AccBo extends baseModelbo{
                 data: items,
             });
         }).catch(err=>{
-            console.log('err', err)
+            _this.sendResponseError(res, [], err);
         })
 
     }
 
     DataEmitSocket(data, action, key, total, sessionId, totalItems, currentItems) {
-        console.log('heeerree ', data)
         appSocket.emit('export.cdr', {
             data: data,
             action: action,
@@ -438,7 +433,6 @@ class AccBo extends baseModelbo{
                         });
                         _this.createItemsArray(pages).then((pages_array) => {
                             let index = 0;
-                            console.log('pages_array', pages_array)
                             PromiseBB.each(pages_array, (item) => {
                                 params.page = item;
                                 let data = {
@@ -483,8 +477,7 @@ class AccBo extends baseModelbo{
             const file = appDir + '/app/resources/cdrs/' + file_name;
             res.download(file, function (err) {
                 if (err) {
-                    console.log(err);
-                }
+                    this.sendResponseError(res, [], err);                }
             });
         } else {
             res.send({

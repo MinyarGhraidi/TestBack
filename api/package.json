@@ -255,7 +255,6 @@
       "resolved": "https://registry.npmjs.org/negotiator/-/negotiator-0.6.2.tgz",
       "version": "0.6.2"
     },
-    "nodemon": "^2.0.7",
     "npm": "^8.5.1",
     "object-assign": {
       "integrity": "sha1-IQmtx5ZYh8/AXLvUQsrIv7s2CGM=",
@@ -584,6 +583,10 @@
     "start": "nodemon server.js",
     "test": "mocha --exit -r 'test/**/*.js'  --grep",
     "saveCalls": "NODE_ENV=development nodemon SaveCallFile ",
-    "startSip": "nodemon  --unhandled-rejections=strict --experimental-modules --es-module-specifier-resolution=node  ./app/sub-apps/sipConnect.js"
+    "startSip": "nodemon  --unhandled-rejections=strict --experimental-modules --es-module-specifier-resolution=node  ./app/sub-apps/sipConnect.js",
+    "exportCdr" : "NODE_ENV=development nodemon exportCsv.js  "
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.19"
   }
 }
