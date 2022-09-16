@@ -2,7 +2,6 @@ const {baseModelbo} = require('./basebo');
 let db = require('../models');
 const {appDir} = require("../helpers/app");
 const EFile = db.efiles;
-const path = require('path');
 const fs = require('fs');
 const csv = require('csvtojson');
 const xlsx = require("xlsx")
@@ -71,6 +70,7 @@ class efiles extends baseModelbo {
     }
 
     getImageByStyle(req, res, next) {
+        let _this = this;
         if (!parseInt(req.params.file_id)) {
             return this.return_default_image(res);
         }
@@ -79,12 +79,14 @@ class efiles extends baseModelbo {
                 this.return_default_image(res);
             } else {
                 const file_path = appDir + '/app/resources/efiles/' + efile.uri;
-                if (fs.existsSync(!path)) {
-                    this.return_default_image(res);
-                } else {
+                if (fs.existsSync(file_path)) {
                     res.sendFile(file_path);
+                } else {
+                    this.return_default_image(res);
                 }
             }
+        }).catch(err => {
+            _this.sendResponseError(res,['Error get data file'])
         });
     }
 
