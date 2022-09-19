@@ -146,6 +146,10 @@ module.exports = (sequelize, Sequelize) => {
         "code"
     ];
 
+    account.prototype.getModelIncludes = function () {
+        return ['users', 'roles_crms'];
+    };
+
     account.associate = function (models) {
         account.belongsTo(models.roles_crms, {
             foreignKey: 'role_crm_id'

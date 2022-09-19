@@ -104,9 +104,9 @@ class accounts extends baseModelbo {
             || !!!newAccount.role_crm_id) {
             return _this.sendResponseError(res, 'Error.InvalidData');
         }
-        let {accountcode} = newAccount.sip_device;
+        let {accountcode} = newAccount.user.sip_device;
 
-        let sip_device = JSON.parse(JSON.stringify(newAccount.sip_device));
+        let sip_device = JSON.parse(JSON.stringify(newAccount.user.sip_device));
         let {username, password, options, status, enabled, subscriber_id} = sip_device;
         this.isUniqueDomain(domain, account_id)
             .then(isUniqueDomain => {
@@ -129,8 +129,8 @@ class accounts extends baseModelbo {
                             .then((resp) => {
                                 let uuid = resp.data.agent.uuid || null;
                                 let username = resp.data.agent.username || null;
-                                newAccount.sip_device.uuid = uuid;
-                                newAccount.sip_device.username = username;
+                                newAccount.user.sip_device.uuid = uuid;
+                                newAccount.user.sip_device.username = username;
                                 this.db['accounts'].update(
                                     newAccount,
                                     {
@@ -156,7 +156,7 @@ class accounts extends baseModelbo {
                                     return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
                                 })
                             }).catch(err => {
-                            return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
                         })
                     } else {
                         let dataAccount = {
