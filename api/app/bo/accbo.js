@@ -10,7 +10,7 @@ const path = require("path");
 const rabbitmq_url = appHelper.rabbitmq_url;
 const appDir = path.dirname(require.main.filename);
 
-class AccBo extends baseModelbo{
+class AccBo extends baseModelbo {
     constructor() {
         super("acc", "id");
         this.baseModal = "acc";
@@ -25,7 +25,6 @@ class AccBo extends baseModelbo{
         const page = params.page || 1;
         const offset = (limit * (page - 1));
         let current_Date = moment(new Date()).tz(app_config.TZ).format('YYYYMMDD');
-
         let currentDate = moment(new Date()).tz(app_config.TZ).format('YYYY-MM-DD');
         let {start_time, end_time, sip_code, directions, accounts_code, ip, from, to, sip_reason} = params.filter;
         if (filter.date !== current_Date) {
@@ -66,17 +65,15 @@ class AccBo extends baseModelbo{
                 type: db.sequelize['cdr-db'].QueryTypes.SELECT,
                 replacements: {
                     date: parseInt(filter.date),
-                    start_time: filter.start_time,
-                    end_time: filter.end_time,
-                    // sip_code: filter.sip_code,
-                    // sip_reason: filter.sip_reason,
-                    // directions: filter.directions,
-                     accounts_code: filter.accounts_code,
-                    // accounts_code: filter.accounts_code,
-                    // src_ip: filter.ip ? (filter.ip.concat('%')).toString() : null,
-                    // from: from ? (from.concat('%')).toString() : null,
-                    // to: to ? (to.concat('%')).toString() : null,
-                    // gateway_numbers: filter.gateway_numbers
+                    start_time: start_time,
+                    end_time: end_time,
+                    sip_code: filter.sip_code,
+                    sip_reason: filter.sip_reason,
+                    directions: filter.directions,
+                    accounts_code: filter.accounts_code,
+                    src_ip: filter.ip ? (filter.ip.concat('%')).toString() : null,
+                    from: from ? (from.concat('%')).toString() : null,
+                    to: to ? (to.concat('%')).toString() : null
                 }
             }).then(countAll => {
                 let pages = Math.ceil(countAll[0].count / params.limit);
@@ -84,6 +81,7 @@ class AccBo extends baseModelbo{
                            from cdrs_:date
                            WHERE id >= ( select id from cdrs_:date WHERE SUBSTRING("custom_vars", 0 , POSITION(':' in "custom_vars") ) = :accounts_code
                                EXTRA_WHERE
+                               ORDER BY id DESC
                                LIMIT 1
                                OFFSET :offset
                                )
@@ -127,24 +125,20 @@ class AccBo extends baseModelbo{
                         offset: offset,
                         start_time: filter.start_time,
                         end_time: filter.end_time,
-                        // sip_code: filter.sip_code,
-                        // sip_reason: filter.sip_reason,
-                        // directions: filter.directions,
+                        sip_code: filter.sip_code,
+                        sip_reason: filter.sip_reason,
+                        directions: filter.directions,
                         accounts_code: filter.accounts_code,
-                        // accounts_code: filter.accounts_code,
-                        // src_ip: filter.ip ? (filter.ip.concat('%')).toString() : null,
-                        // from: from ? (from.concat('%')).toString() : null,
-                        // to: to ? (to.concat('%')).toString() : null,
-                        // gateway_numbers: filter.gateway_numbers
+                        src_ip: filter.ip ? (filter.ip.concat('%')).toString() : null,
+                        from: from ? (from.concat('%')).toString() : null,
+                        to: to ? (to.concat('%')).toString() : null
                     }
                 }).then(data => {
                     this.db['accounts'].findAll({
                         where: {
                             active: 'Y'
                         }
-
                     }).then((accounts) => {
-
                         let cdrs_data = []
                         PromiseBB.each(data, item => {
                             let account_data = accounts.filter(item_acc => item_acc.account_number === item.accountcode);
@@ -159,43 +153,17 @@ class AccBo extends baseModelbo{
                                 pages: pages,
                                 countAll: countAll[0].count
                             })
-                            // this.db['gateways'].findAll({
-                            //     where: {
-                            //         active: 'Y'
-                            //     }
-                            //
-                            // }).then((gateways) => {
-                            //     let cdr_data_details = []
-                            //     PromiseBB.each(cdr_data, item_cdr => {
-                            //         let ga_data = gateways.filter(item_ga => parseInt(item_ga.gateway_number) === parseInt(item_cdr.sip_gateway));
-                            //         item_cdr.sip_gateway = ga_data && ga_data.length !== 0 ? ga_data[0].name : null;
-                            //         cdr_data_details.push(item_cdr);
-                            //     }).then(cdrs_data_details => {
-                            //         res.send({
-                            //             success: true,
-                            //             status: 200,
-                            //             data: cdrs_data_details,
-                            //             pages: pages,
-                            //             countAll: countAll[0].count
-                            //         })
-                            //     }).catch(err => {
-                            //         _this.sendResponseError(res, [], err)
-                            //     })
-                            // }).catch(err => {
-                            //     _this.sendResponseError(res, [], err)
-                            // })
                         }).catch(err => {
-                            console.log('err',err)
-                            _this.sendResponseError(res, [], err)
+                            _this.sendResponseError(res, [], err);
                         })
                     }).catch(err => {
-                        _this.sendResponseError(res, [], err)
+                        _this.sendResponseError(res, [], err);
                     })
                 }).catch(err => {
-                    _this.sendResponseError(res, [], err)
+                    _this.sendResponseError(res, [], err);
                 })
             }).catch(err => {
-                _this.sendResponseError(res, [], err)
+                _this.sendResponseError(res, [], err);
             })
         } else {
             let sqlCount = `select count(*)
@@ -239,26 +207,24 @@ class AccBo extends baseModelbo{
                     offset: offset,
                     start_time: filter.start_time,
                     end_time: filter.end_time,
-                    // sip_code: sip_code,
-                    // directions: directions,
+                    sip_code: sip_code,
+                    directions: directions,
                     accounts_code: filter.accounts_code,
-                    // accounts_code: accounts_code,
-                    // src_ip: filter.ip ? (filter.ip.concat('%')).toString() : null,
-                    // from: from ? (from.concat('%')).toString() : null,
-                    // to: to ? (to.concat('%')).toString() : null,
-                    // gateway_numbers: filter.gateway_numbers
+                    src_ip: filter.ip ? (filter.ip.concat('%')).toString() : null,
+                    from: from ? (from.concat('%')).toString() : null,
+                    to: to ? (to.concat('%')).toString() : null
                 }
             }).then(countAll => {
                 let pages = Math.ceil(countAll[0].count / params.limit);
                 let sqlData = `select *
                                from acc_cdrs
                                WHERE SUBSTRING("custom_vars", 0 , POSITION(':' in "custom_vars") ) = :accounts_code 
-                  AND id >= ( select id  from acc_cdrs where 1=1 
-                   EXTRA_WHERE
-                    LIMIT 1
-                   OFFSET :offset
-                   )
-                EXTRA_WHERE_PARAMS
+                              AND id >= ( select id  from acc_cdrs where 1=1 
+                               EXTRA_WHERE
+                                LIMIT 1
+                               OFFSET :offset
+                               )
+                            EXTRA_WHERE_PARAMS
                                    LIMIT :limit`
                 let extra_where_currentDate = '';
                 if (filter && filter.start_time && filter.start_time !== '') {
@@ -298,14 +264,12 @@ class AccBo extends baseModelbo{
                         offset: offset,
                         start_time: filter.start_time,
                         end_time: filter.end_time,
-                        // sip_code: sip_code,
-                        // directions: directions,
+                        sip_code: sip_code,
+                        directions: directions,
                         accounts_code: filter.accounts_code,
-                        // accounts_code: accounts_code,
-                        // src_ip: filter.ip ? (filter.ip.concat('%')).toString() : null,
-                        // from: from ? (from.concat('%')).toString() : null,
-                        // to: to ? (to.concat('%')).toString() : null,
-                        // gateway_numbers: filter.gateway_numbers
+                        src_ip: filter.ip ? (filter.ip.concat('%')).toString() : null,
+                        from: from ? (from.concat('%')).toString() : null,
+                        to: to ? (to.concat('%')).toString() : null,
                     }
                 }).then(dataCurrentDate => {
                     this.db['accounts'].findAll({
@@ -328,31 +292,6 @@ class AccBo extends baseModelbo{
                                 pages: pages,
                                 countAll: countAll[0].count
                             })
-                            // this.db['gateways'].findAll({
-                            //     where: {
-                            //         active: 'Y'
-                            //     }
-                            //
-                            // }).then((gateways) => {
-                            //     let cdr_data_details = []
-                            //     PromiseBB.each(cdrs_data, item_cdr => {
-                            //         let ga_data = gateways.filter(item_ga => parseInt(item_ga.gateway_number) === parseInt(item_cdr.sip_gateway));
-                            //         item_cdr.sip_gateway = ga_data && ga_data.length !== 0 ? ga_data[0].name : null;
-                            //         cdr_data_details.push(item_cdr);
-                            //     }).then(cdrs_data_details => {
-                            //         res.send({
-                            //             success: true,
-                            //             status: 200,
-                            //             data: cdrs_data_details,
-                            //             pages: pages,
-                            //             countAll: countAll[0].count
-                            //         })
-                            //     }).catch(err => {
-                            //         _this.sendResponseError(res, [], err)
-                            //     })
-                            // }).catch(err => {
-                            //     _this.sendResponseError(res, [], err)
-                            // })
                         }).catch(err => {
                             _this.sendResponseError(res, [], err)
                         })
@@ -375,7 +314,7 @@ class AccBo extends baseModelbo{
                 success: true,
                 data: items,
             });
-        }).catch(err=>{
+        }).catch(err => {
             _this.sendResponseError(res, [], err);
         })
 
@@ -477,7 +416,8 @@ class AccBo extends baseModelbo{
             const file = appDir + '/app/resources/cdrs/' + file_name;
             res.download(file, function (err) {
                 if (err) {
-                    this.sendResponseError(res, [], err);                }
+                    this.sendResponseError(res, [], err);
+                }
             });
         } else {
             res.send({

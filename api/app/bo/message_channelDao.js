@@ -718,7 +718,7 @@ class message_channelDao extends baseModelbo {
             sortDir: 'ASC'
         };
 
-        let sql = `SELECT mc.*, u.profile_image_id as profile_image_id, count(m.message_id) as total_messages, count(mr_count.message_id) as total_not_read, m_last.message_id as last_message_id, m_last.content as last_message_content
+        let sql = `SELECT mc.*, count(m.message_id) as total_messages, count(mr_count.message_id) as total_not_read, m_last.message_id as last_message_id, m_last.content as last_message_content
                   , m_last.created_by_id as m_last_created_by_id ,  m_last.created_at as last_message_date    FROM message_channels as mc
                       LEFT JOIN message_channel_subscribers as mcs on mcs.active = :active and mcs.message_channel_id = mc.message_channel_id
                       LEFT JOIN message_channel_subscribers as mcs2 on mcs2.active = :active and mcs2.message_channel_id = mc.message_channel_id and mcs.user_id <> mcs2.user_id
@@ -731,7 +731,7 @@ class message_channelDao extends baseModelbo {
                           AND mc.active = :active
                           AND mcs.user_id = :user_id
                         EXTRAWHERE
-                     GROUP BY mc.message_channel_id, mc.last_excerpt, u.profile_image_id, m_last.message_id , m_last.created_by_id
+                     GROUP BY mc.message_channel_id, mc.last_excerpt,  m_last.message_id , m_last.created_by_id
                     ORDER BY mc.updated_at DESC
                     OFFSET :offset LIMIT :limit`;
         let extra_where = "";
