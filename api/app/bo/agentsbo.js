@@ -418,10 +418,9 @@ class agents extends baseModelbo {
                 axios
                     .get(`${base_url_cc_kam}api/v1/agents/${uuid}`, call_center_authorization)
                     .then(resp => {
-                        let agent = resp.data.result;
-                        agent.status = telcoStatus;
+                        let agent = {"status":telcoStatus};
                         axios
-                            .put(`${base_url_cc_kam}api/v1/agents/${uuid}`, agent, call_center_authorization)
+                            .put(`${base_url_cc_kam}api/v1/agents/${uuid}/status`, agent, call_center_authorization)
                             .then(() => {
                                 this.db["users"].findOne({where: {user_id: user_id}})
                                     .then(user => {
@@ -566,15 +565,11 @@ class agents extends baseModelbo {
         })
     }
 
-    getCampaigns_ids(campaign_name) {
+    getCampaigns_ids() {
         return new Promise((resolve, reject) => {
-            if (campaign_name && campaign_name !== '') {
                 this.db['campaigns'].findAll({
                     where: {
                         active: 'Y',
-                        campaign_name: {
-                            [Sequelize.Op.iLike]: `%${campaign_name}%`
-                        },
                     }
                 })
                     .then(campaigns => {
@@ -584,48 +579,18 @@ class agents extends baseModelbo {
                     .catch(err => {
                         reject(err);
                     })
-            } else {
-                resolve([]);
-            }
         })
     }
 
     getConnectedAgents(req, res, next) {
         let _this = this;
-        let {account_id, campaign_name, agent_name} = req.body;
-        this.getCampaigns_ids(campaign_name)
+        let {account_id} = req.body;
+        this.getCampaigns_ids()
             .then(campaigns_ids => {
-                let where = {active: 'Y', account_id: account_id, user_type: "agent"}
-                if (campaign_name && campaign_name !== '') {
-                    where.campaign_id = campaigns_ids;
-                }
-                if (agent_name && agent_name !== '') {
-                    let where_agent = {
-                        [Sequelize.Op.or]: [
-                            {
-                                first_name: {
-                                    [Sequelize.Op.iLike]: `%${agent_name}%`
-                                }
-                            },
-                            {
-                                last_name: {
-                                    [Sequelize.Op.iLike]: `%${agent_name}%`
-                                }
-                            },
-                            {
-                                username: {
-                                    [Sequelize.Op.iLike]: `%${agent_name}%`
-                                }
-                            }
-                        ]
-                    }
-
-                    where = {...where, ...where_agent};
-                }
+                let where = {active: 'Y', account_id: account_id, user_type: "agent", campaign_id : campaigns_ids}
 
                 this.db['users'].findAll({where: where})
                     .then(agents => {
-
                         let loggedAgents = agents.filter(el => el.sip_device.status !== "logged-out");
                         let formattedData = loggedAgents.map(user => {
                             let {sip_device, first_name, last_name, user_id, campaign_id} = user;
