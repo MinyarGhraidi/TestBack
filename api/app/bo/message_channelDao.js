@@ -639,7 +639,7 @@ class message_channelDao extends baseModelbo {
                     }
                 })
                 .then(subscribers => {
-                    if (subscribers) {
+                    if (subscribers && subscribers.length !== 0) {
                         resolve({
                             data: subscribers,
                             status: true
@@ -683,7 +683,7 @@ class message_channelDao extends baseModelbo {
     updateChannel(channels, user_id) {
         return new Promise((resolve, reject) => {
             let idx = 0;
-            channels.map(channel => {
+            channels.map((channel, idx) => {
                 this.get_message_subscribers(channel.message_channel_id, user_id).then(subscribers => {
                     if (subscribers.status === true) {
                         this.channel_name(subscribers, channel, user_id).then(name => {
@@ -699,6 +699,15 @@ class message_channelDao extends baseModelbo {
                         }).catch(err => {
                             reject(err);
                         })
+                    } else {
+                        channels.splice(idx,1)
+                        if (idx === channels.length - 1) {
+                            resolve({
+                                data: channels
+                            })
+                        } else {
+                            idx++;
+                        }
                     }
                 }).catch(err => {
                     reject(err);
@@ -769,7 +778,6 @@ class message_channelDao extends baseModelbo {
                         }
 
                     }).catch(err => {
-                        console.log(err)
                         this.sendResponseError(res, ['Error.getDataChannel'], err);
                     })
                 } else {
@@ -778,7 +786,6 @@ class message_channelDao extends baseModelbo {
                     })
                 }
             }).catch(err => {
-            console.log(err)
             this.sendResponseError(res, ['Error.getDataChannel'], err);
         })
     }
