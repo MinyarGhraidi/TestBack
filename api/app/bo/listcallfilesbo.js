@@ -73,15 +73,15 @@ class listcallfiles extends baseModelbo {
                                WHEN null THEN 0
                                ELSE all_s.count_call_status
                               END
-                        from callstatuses left join (
-                           SELECT code,
-                                count(call_f.*) as count_call_status
-                                FROM callstatuses as call_s
-                        LEFT JOIN callfiles as call_f on call_f.call_status = call_s.code and call_f.to_treat = :active and call_f.active= :active  
-                        LEFT JOIN listcallfiles as list_call_f on list_call_f.listcallfile_id = call_f.listcallfile_id and list_call_f.active = 'Y' and call_f.active= :active
-                        LEFT JOIN campaigns as camp on camp.campaign_id = list_call_f.campaign_id and camp.active = :active 
-                        WHERE call_s.active = 'Y' and camp.campaign_id= :campaign_id
-                        GROUP by code) as all_s on all_s.code  = callstatuses.code`
+                            from callstatuses left join (
+                               SELECT code,
+                                    count(call_f.*) as count_call_status
+                                    FROM callstatuses as call_s
+                            LEFT JOIN callfiles as call_f on call_f.call_status = call_s.code and call_f.to_treat = :active and call_f.active= :active  
+                            LEFT JOIN listcallfiles as list_call_f on list_call_f.listcallfile_id = call_f.listcallfile_id and list_call_f.active = 'Y' and call_f.active= :active
+                            LEFT JOIN campaigns as camp on camp.campaign_id = list_call_f.campaign_id and camp.active = :active 
+                            WHERE call_s.active = 'Y' and camp.campaign_id= :campaign_id
+                            GROUP by code) as all_s on all_s.code  = callstatuses.code`
         db.sequelize['crm-app'].query(sql_stats,
             {
                 type: db.sequelize['crm-app'].QueryTypes.SELECT,
@@ -123,27 +123,27 @@ class listcallfiles extends baseModelbo {
         })
     }
 
-    async  printCsv(data) {
+    async printCsv(data) {
         const csv = new ObjectsToCsv(data);
         const file_name = Date.now() + 'ListCallFileQualification.csv';
         const file_path = appDir + '/api/app/resources/qualificationListCallFile/' + file_name;
         await csv.toDisk(file_path);
         await csv.toString()
-        return  file_name
+        return file_name
     }
 
-    CallFileQualification (req, res, next){
+    CallFileQualification(req, res, next) {
         let listClaFile_id = req.body.listcallfile_id;
 
         this.db['callfiles'].findAll({
-            where:{
-                listcallfile_id:listClaFile_id,
+            where: {
+                listcallfile_id: listClaFile_id,
                 active: 'Y'
             }
-        }).then(listCalFile =>{
+        }).then(listCalFile => {
 
-            if(listCalFile && listCalFile.length !== 0){
-                let dataCall = listCalFile.map(item=>{
+            if (listCalFile && listCalFile.length !== 0) {
+                let dataCall = listCalFile.map(item => {
                     delete item.dataValues.callfile_id
                     delete item.dataValues.listcallfile_id
                     delete item.dataValues.created_at
@@ -153,8 +153,8 @@ class listcallfiles extends baseModelbo {
                     delete item.dataValues.active
                     return item.dataValues
                 })
-                this.printCsv(dataCall).then(data=>{
-                    if( data){
+                this.printCsv(dataCall).then(data => {
+                    if (data) {
                         res.send({
                             file_name: data
                         })
