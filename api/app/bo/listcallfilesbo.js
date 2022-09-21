@@ -141,7 +141,6 @@ class listcallfiles extends baseModelbo {
                 active: 'Y'
             }
         }).then(listCalFile => {
-
             if (listCalFile && listCalFile.length !== 0) {
                 let dataCall = listCalFile.map(item => {
                     delete item.dataValues.callfile_id
@@ -158,8 +157,9 @@ class listcallfiles extends baseModelbo {
                         res.send({
                             file_name: data
                         })
+                    } else {
+                        this.sendResponseError(res, 'Error.printFile')
                     }
-
                 })
             }
         })
@@ -198,7 +198,6 @@ class listcallfiles extends baseModelbo {
         if (!listCallFile_name) {
             _this.sendResponseError(res, ['invalid source listCallFile name'])
         }
-
         _this.db['listcallfiles'].findOne({
             where: {
                 listcallfile_id: listCallFile_id

@@ -52,23 +52,7 @@ class roles extends baseModelbo {
                             returning: true,
                             plain: true})
                             .then(role => {
-                                this.db['acls'].destroy({
-                                    where :{
-                                        role_id: role[1].role_id,
-                                    }
-                                }).then(acl => {
-                                    if(req.body.data_permissions.length !==0){
-                                        this.saveOrUpdatePermission(req.body.data_permissions, role[1]).then(result => {
-                                            res.send({
-                                                status: 200,
-                                                success: true,
-                                                message: 'Success',
-                                                data: role
-                                            })
-                                        }).catch(err =>{
-                                            return _this.sendResponseError(res, ['cannot save/update permission', err], 1, 403);
-                                        })
-                                    }else{
+                                    if (role){
                                         res.send({
                                             status: 200,
                                             success: true,
@@ -76,9 +60,6 @@ class roles extends baseModelbo {
                                             data: role
                                         })
                                     }
-                                }).catch(err=>{
-                                    return _this.sendResponseError(res, ['Error', err], 1, 403);
-                                })
                             })
                             .catch(err => {
                                 return _this.sendResponseError(res, ['cannot update role', err], 1, 403);
@@ -87,18 +68,7 @@ class roles extends baseModelbo {
                         let modalObj = this.db['roles'].build(req.body)
                         modalObj.save()
                             .then(role => {
-                                if(req.body.data_permissions.length !==0){
-                                    this.saveOrUpdatePermission(req.body.data_permissions , role).then(result =>{
-                                        res.send({
-                                            status: 200,
-                                            success: true,
-                                            message: 'Success',
-                                            data: role
-                                        })
-                                    }).catch(err =>{
-                                        return _this.sendResponseError(res, ['cannot save/update permission', err], 1, 403);
-                                    })
-                                }else{
+                                if(role){
                                     res.send({
                                         status: 200,
                                         success: true,
@@ -122,34 +92,6 @@ class roles extends baseModelbo {
             .catch(err => {
                 return _this.sendResponseError(res, ['Error', err], 1, 403);
             })
-    }
-
-
-    saveOrUpdatePermission =(permissions , role) =>{
-        return new Promise((resolve, reject) =>{
-            let i =0
-                permissions.forEach(index => {
-
-                        let modalObjPermission = this.db['acls'].build({
-                            role_id: role.role_id,
-                            permission_acl_id: index
-                        })
-                        modalObjPermission.save().then(permission => {
-
-                        }).catch(err => {
-
-                        })
-
-                    if (i < permissions.length - 1) {
-                        i++
-                    } else {
-                        resolve({
-                            success: true
-                        })
-                    }
-                })
-
-        })
     }
 
     deleteRole(req, res, next) {
