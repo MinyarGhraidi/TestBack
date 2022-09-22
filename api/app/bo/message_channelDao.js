@@ -639,8 +639,7 @@ class message_channelDao extends baseModelbo {
                     }
                 })
                 .then(subscribers => {
-                    console.log(subscribers.length)
-                    if (subscribers) {
+                    if (subscribers && subscribers.length !==0) {
                         resolve({
                             data: subscribers,
                             status: true

@@ -492,6 +492,7 @@ class users extends baseModelbo {
         let _this = this;
         let newAccount = req.body.new_account;
         let user_id = newAccount && newAccount.user_id ? newAccount.user_id : 0;
+        let is_agent = newAccount.is_agent
         let {accountcode} = newAccount.sip_device;
         let sip_device = JSON.parse(JSON.stringify(newAccount.sip_device));
         let {username, password, domain, options, status, enabled, subscriber_id} = sip_device;
@@ -520,7 +521,7 @@ class users extends baseModelbo {
                                     newAccount.sip_device.uuid = uuid;
                                     newAccount.sip_device.username = username;
 
-                                    this.saveUserFunction(newAccount)
+                                    this.saveUserFunction(newAccount, is_agent)
                                         .then((user) => {
                                             res.send({
                                                 message: 'success',
@@ -562,7 +563,7 @@ class users extends baseModelbo {
                                             let username = resp.data.result.agent.username || null;
                                             newAccount.sip_device.uuid = uuid;
                                             newAccount.sip_device.username = username;
-                                            this.saveUserFunction(newAccount)
+                                            this.saveUserFunction(newAccount, is_agent)
                                                 .then((user) => {
                                                     res.send({
                                                         message: 'success',
@@ -592,7 +593,7 @@ class users extends baseModelbo {
             })
     }
 
-    saveUserFunction(user) {
+    saveUserFunction(user, is_agent) {
         let _this = this;
         return new Promise((resolve, reject) => {
             if (user.user_id) {
@@ -614,7 +615,9 @@ class users extends baseModelbo {
                     .then(data => {
                         _this.generateUniqueUsernameFunction().then(username => {
                             let {newAccount, email_item} = data;
-                            newAccount.first_name = 'agent_'.concat(Math.floor(Math.random() * (999 - 100 + 1) + 100))
+                            if (is_agent) {
+                                newAccount.first_name = 'agent_'.concat(Math.floor(Math.random() * (999 - 100 + 1) + 100))
+                            }
                             newAccount.username = username;
                             let modalObj = this.db['users'].build(newAccount);
                             modalObj.save()
@@ -927,7 +930,7 @@ class users extends baseModelbo {
 
     cloneSales(req, res, next) {
         let _this = this;
-        let {user_id, first_name, last_name, password_hash, email, username} = req.body;
+        let {user_id, first_name, last_name, password_hash, email, username, is_agent} = req.body;
         this.db['users'].findOne({where: {user_id: user_id, active: 'Y'}})
             .then(salesToClone => {
                 if (salesToClone && salesToClone.user_id) {
@@ -961,7 +964,7 @@ class users extends baseModelbo {
                                 email,
                                 role_crm_id
                             }
-                            this.saveUserFunction(clonedSales)
+                            this.saveUserFunction(clonedSales, is_agent)
                                 .then(cloned_sales => {
                                     let sales_id = cloned_sales.user_id;
                                     let agents_ids = cloned_sales.params.agents;
