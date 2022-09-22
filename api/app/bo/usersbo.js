@@ -538,7 +538,7 @@ class users extends baseModelbo {
                             })
                         } else {
                             this.db['users'].findOne({
-                                where: {active: 'Y', role_crm_id: newAccount.role_id},
+                                where: {active: 'Y'},
                                 order: [['user_id', 'DESC']]
                             })
                                 .then(lastAgent => {
