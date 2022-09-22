@@ -1,7 +1,7 @@
 import { Exception } from "../../core";
 
 /**
- * An exception indicating a session description handler error occured.
+ * An exception indicating a session description handler error Occurred.
  * @public
  */
 export class SessionDescriptionHandlerError extends Exception {

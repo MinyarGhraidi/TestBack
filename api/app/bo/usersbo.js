@@ -128,7 +128,7 @@ class users extends baseModelbo {
                                                             accountcode: accountcode
                                                         });
                                                     }).catch((error) => {
-                                                    return this.sendResponseError(res, ['Error.AnErrorHasOccuredUser'], 1, 403);
+                                                    return this.sendResponseError(res, ['Error.AnErrorHasOccurredUser'], 1, 403);
                                                 });
                                             })
                                         })
@@ -140,7 +140,7 @@ class users extends baseModelbo {
                                     this.sendResponseError(res, ['Error.InvalidPassword'], 2, 403);
                                 }
                             }).catch((error) => {
-                                return this.sendResponseError(res, ['Error.AnErrorHasOccuredUser'], 1, 403);
+                                return this.sendResponseError(res, ['Error.AnErrorHasOccurredUser'], 1, 403);
                             });
                         } else if (user.password_hash && password && user.verifyPassword(password)) {
                             if (user.password_hash && password) {
@@ -195,7 +195,7 @@ class users extends baseModelbo {
                                                     accountcode: accountcode
                                                 });
                                             }).catch((error) => {
-                                            return this.sendResponseError(res, ['Error.AnErrorHasOccuredUser'], 1, 403);
+                                            return this.sendResponseError(res, ['Error.AnErrorHasOccurredUser'], 1, 403);
                                         });
                                     })
                                 })
@@ -208,7 +208,7 @@ class users extends baseModelbo {
                         }
                     }
                 }).catch((error) => {
-                    return this.sendResponseError(res, ['Error.AnErrorHasOccuredUser'], 1, 403);
+                    return this.sendResponseError(res, ['Error.AnErrorHasOccurredUser'], 1, 403);
                 });
             }
         }
@@ -264,14 +264,14 @@ class users extends baseModelbo {
                                             accountcode: accountcode
                                         });
                                     }).catch((error) => {
-                                    return this.sendResponseError(res, ['Error.AnErrorHasOccuredUser'], 1, 403);
+                                    return this.sendResponseError(res, ['Error.AnErrorHasOccurredUser'], 1, 403);
                                 });
 
                             })
                         })
                     }
                 }).catch((error) => {
-                    return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', error], 1, 403);
+                    return _this.sendResponseError(res, ['Error.AnErrorHasOccurredUser', error], 1, 403);
                 });
             }
         }
@@ -350,7 +350,7 @@ class users extends baseModelbo {
                 })
             })
             .catch(err => {
-                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                return _this.sendResponseError(res, ['Error.AnErrorHasOccurredUser', err], 1, 403);
             })
     }
 
@@ -530,11 +530,11 @@ class users extends baseModelbo {
                                             })
                                         })
                                         .catch(err => {
-                                            return _this.sendResponseError(res, ['Error.AnErrorHasOccuredSaveUser', err], 1, 403);
+                                            return _this.sendResponseError(res, ['Error.AnErrorHasOccurredSaveUser', err], 1, 403);
                                         })
 
                                 }).catch(err => {
-                                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredSaveUser', err], 1, 403);
+                                return _this.sendResponseError(res, ['Error.AnErrorHasOccurredSaveUser', err], 1, 403);
                             })
                         } else {
                             this.db['users'].findOne({
@@ -572,11 +572,11 @@ class users extends baseModelbo {
                                                     })
                                                 })
                                                 .catch(err => {
-                                                    return _this.sendResponseError(res, ['Error.AnErrorHasOccuredSaveUser', err], 1, 403);
+                                                    return _this.sendResponseError(res, ['Error.AnErrorHasOccurredSaveUser', err], 1, 403);
                                                 })
                                         })
                                 }).catch(err => {
-                                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredSaveUser', err], 1, 403);
+                                return _this.sendResponseError(res, ['Error.AnErrorHasOccurredSaveUser', err], 1, 403);
                             })
                         }
                     }
@@ -589,7 +589,7 @@ class users extends baseModelbo {
                 }
             })
             .catch(err => {
-                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredSaveUser', err], 1, 403);
+                return _this.sendResponseError(res, ['Error.AnErrorHasOccurredSaveUser', err], 1, 403);
             })
     }
 
@@ -712,10 +712,10 @@ class users extends baseModelbo {
                     message: 'Account user created with success!'
                 });
             }).catch((error) => {
-                return this.sendResponseError(res, ['Error.AnErrorHasOccuredSaveUser'], 1, 403);
+                return this.sendResponseError(res, ['Error.AnErrorHasOccurredSaveUser'], 1, 403);
             });
         }).catch((error) => {
-            return this.sendResponseError(res, ['Error.AnErrorHasOccuredUser'], 1, 403);
+            return this.sendResponseError(res, ['Error.AnErrorHasOccurredUser'], 1, 403);
         });
     }
 
@@ -765,7 +765,7 @@ class users extends baseModelbo {
                             })
                         })
                         .catch(err => {
-                            return _this.sendResponseError(res, ['Error.AnErrorHasOccuredGetSales', err], 1, 403);
+                            return _this.sendResponseError(res, ['Error.AnErrorHasOccurredGetSales', err], 1, 403);
                         })
                 } else {
                     res.send({
@@ -923,7 +923,7 @@ class users extends baseModelbo {
                 }
             })
             .catch(err => {
-                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredFetchUser', err], 1, 403);
+                return _this.sendResponseError(res, ['Error.AnErrorHasOccurredFetchUser', err], 1, 403);
             })
 
     }

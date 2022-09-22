@@ -82,10 +82,10 @@ class agents extends baseModelbo {
                     message: 'Account user created with success!'
                 });
             }).catch((error) => {
-                return this.sendResponseError(res, ['Error.AnErrorHasOccuredSaveUser'], 1, 403);
+                return this.sendResponseError(res, ['Error.AnErrorHasOccurredSaveUser'], 1, 403);
             });
         }).catch((error) => {
-            return this.sendResponseError(res, ['Error.AnErrorHasOccuredUser'], 1, 403);
+            return this.sendResponseError(res, ['Error.AnErrorHasOccurredUser'], 1, 403);
         });
     }
 
@@ -139,7 +139,7 @@ class agents extends baseModelbo {
                         }
                     }
                 }).catch((error) => {
-                    return this.sendResponseError(res, ['Error.AnErrorHasOccuredUser'], 1, 403);
+                    return this.sendResponseError(res, ['Error.AnErrorHasOccurredUser'], 1, 403);
                 });
             }
         }
@@ -262,7 +262,7 @@ class agents extends baseModelbo {
                                     })
                                 })
                                 .catch(err => {
-                                    return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                                    return _this.sendResponseError(res, ['Error.AnErrorHasOccurredUser', err], 1, 403);
                                 })
                         })
                         .catch((err) => {
@@ -282,7 +282,7 @@ class agents extends baseModelbo {
                 }
             })
             .catch(err => {
-                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                return _this.sendResponseError(res, ['Error.AnErrorHasOccurredUser', err], 1, 403);
             })
     }
 
@@ -346,7 +346,7 @@ class agents extends baseModelbo {
                 })
             })
             .catch((err) => {
-                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                return _this.sendResponseError(res, ['Error.AnErrorHasOccurredUser', err], 1, 403);
             });
     }
 
@@ -372,7 +372,7 @@ class agents extends baseModelbo {
                 })
             })
             .catch((err) => {
-                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                return _this.sendResponseError(res, ['Error.AnErrorHasOccurredUser', err], 1, 403);
             });
     }
 
@@ -689,7 +689,7 @@ class agents extends baseModelbo {
         let data_agent = req.body.data
         let i = 0;
         if (data_agent.length === 0) {
-            return this.sendResponseError(res, ['Error.AnErrorHasOccuredUser'], 1, 403);
+            return this.sendResponseError(res, ['Error.AnErrorHasOccurredUser'], 1, 403);
         }
         const promiseDisconnect = new Promise((resolve, reject) => {
             data_agent.forEach(item => {

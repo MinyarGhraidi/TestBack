@@ -89,7 +89,7 @@ class accounts extends baseModelbo {
                         }
                     }
                 }).catch((error) => {
-                    return this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', error], 1, 403);
+                    return this.sendResponseError(res, ['Error.AnErrorHasOccurredUser', error], 1, 403);
                 });
             }
         }
@@ -150,13 +150,13 @@ class accounts extends baseModelbo {
                                             })
                                         })
                                         .catch(err => {
-                                            return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                                            return _this.sendResponseError(res, ['Error.AnErrorHasOccurredUser', err], 1, 403);
                                         })
                                 }).catch(err => {
-                                    return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                                    return _this.sendResponseError(res, ['Error.AnErrorHasOccurredUser', err], 1, 403);
                                 })
                             }).catch(err => {
-                                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                                return _this.sendResponseError(res, ['Error.AnErrorHasOccurredUser', err], 1, 403);
                         })
                     } else {
                         let dataAccount = {
@@ -198,21 +198,21 @@ class accounts extends baseModelbo {
                                                 })
                                             })
                                                 .catch(err => {
-                                                    return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                                                    return _this.sendResponseError(res, ['Error.AnErrorHasOccurredUser', err], 1, 403);
                                                 })
                                         })
                                             .catch(err => {
-                                                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                                                return _this.sendResponseError(res, ['Error.AnErrorHasOccurredUser', err], 1, 403);
                                             })
                                     } else {
-                                        return _this.sendResponseError(res, ['Error.AnErrorHasOccuredSaveAccount'], 1, 403);
+                                        return _this.sendResponseError(res, ['Error.AnErrorHasOccurredSaveAccount'], 1, 403);
                                     }
 
                                 }).catch(err => {
-                                    return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                                    return _this.sendResponseError(res, ['Error.AnErrorHasOccurredUser', err], 1, 403);
                                 })
                             }).catch(err => {
-                            return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                            return _this.sendResponseError(res, ['Error.AnErrorHasOccurredUser', err], 1, 403);
                         })
                     }
                 } else {
@@ -440,23 +440,23 @@ class accounts extends baseModelbo {
                                                 })
                                             })
                                             .catch(err => {
-                                                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                                                return _this.sendResponseError(res, ['Error.AnErrorHasOccurredUser', err], 1, 403);
                                             })
                                     })
                                     .catch(err => {
-                                        return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                                        return _this.sendResponseError(res, ['Error.AnErrorHasOccurredUser', err], 1, 403);
                                     })
                             })
                             .catch(err => {
-                                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                                return _this.sendResponseError(res, ['Error.AnErrorHasOccurredUser', err], 1, 403);
                             })
                     })
                     .catch(err => {
-                        return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                        return _this.sendResponseError(res, ['Error.AnErrorHasOccurredUser', err], 1, 403);
                     })
             })
             .catch(err => {
-                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                return _this.sendResponseError(res, ['Error.AnErrorHasOccurredUser', err], 1, 403);
             })
     }
 
