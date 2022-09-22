@@ -82,10 +82,10 @@ class agents extends baseModelbo {
                     message: 'Account user created with success!'
                 });
             }).catch((error) => {
-                return this.sendResponseError(res, ['Error.AnErrorHasOccuredSaveUser'], 1, 403);
+                return this.sendResponseError(res, ['Error.AnErrorHasOccurredSaveUser'], 1, 403);
             });
         }).catch((error) => {
-            return this.sendResponseError(res, ['Error.AnErrorHasOccuredUser'], 1, 403);
+            return this.sendResponseError(res, ['Error.AnErrorHasOccurredUser'], 1, 403);
         });
     }
 
@@ -139,7 +139,7 @@ class agents extends baseModelbo {
                         }
                     }
                 }).catch((error) => {
-                    return this.sendResponseError(res, ['Error.AnErrorHasOccuredUser'], 1, 403);
+                    return this.sendResponseError(res, ['Error.AnErrorHasOccurredUser'], 1, 403);
                 });
             }
         }
@@ -147,7 +147,7 @@ class agents extends baseModelbo {
 
     saveAgent(req, res, next) {
         let _this = this;
-        let {values, accountcode, bulkNum} = req.body;
+        let {values, accountcode, bulkNum, is_agent} = req.body;
         if (!!!bulkNum) {
             _this.sendResponseError(res, ['Error.BulkNum is required'])
             return
@@ -190,7 +190,7 @@ class agents extends baseModelbo {
                                         .post(`${base_url_cc_kam}api/v1/agents`, agent, call_center_authorization)
                                         .then((resp) => {
                                             values.sip_device.uuid = resp.data.result.agent.uuid || null;
-                                            this.saveAgentInDB(values)
+                                            this.saveAgentInDB(values,is_agent)
                                                 .then(agent => {
                                                     if (idx < bulkNum.length - 1) {
                                                         idx++
@@ -236,6 +236,7 @@ class agents extends baseModelbo {
     updateAgent(req, res, next) {
         let _this = this;
         let values = req.body.values;
+        let is_agent = req.body.is_agent;
         let accountcode = req.body.accountcode;
         let {sip_device} = values;
         let {username, password, domain, options, status, enabled, subscriber_id} = sip_device;
@@ -251,7 +252,7 @@ class agents extends baseModelbo {
                             call_center_authorization)
                         .then((resp) => {
                             _usersbo
-                                .saveUserFunction(values)
+                                .saveUserFunction(values,is_agent)
                                 .then(agent => {
                                     res.send({
                                         status: 200,
@@ -261,15 +262,14 @@ class agents extends baseModelbo {
                                     })
                                 })
                                 .catch(err => {
-                                    return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                                    return _this.sendResponseError(res, ['Error.AnErrorHasOccurredUser', err], 1, 403);
                                 })
                         })
                         .catch((err) => {
                             res.send({
                                 status: 403,
                                 message: 'failed',
-                                error_type: 'telco',
-                                // errors: err.response.data.errors
+                                error_type: 'telco'
                             });
                         });
                 } else {
@@ -282,14 +282,14 @@ class agents extends baseModelbo {
                 }
             })
             .catch(err => {
-                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                return _this.sendResponseError(res, ['Error.AnErrorHasOccurredUser', err], 1, 403);
             })
     }
 
-    saveAgentInDB(values) {
+    saveAgentInDB(values,is_agent) {
         return new Promise((resolve, reject) => {
             _usersbo
-                .saveUserFunction(values)
+                .saveUserFunction(values, is_agent)
                 .then(agent => {
                     let user_id = agent.user_id;
                     let agentLog = {user_id: user_id};
@@ -346,7 +346,7 @@ class agents extends baseModelbo {
                 })
             })
             .catch((err) => {
-                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                return _this.sendResponseError(res, ['Error.AnErrorHasOccurredUser', err], 1, 403);
             });
     }
 
@@ -372,7 +372,7 @@ class agents extends baseModelbo {
                 })
             })
             .catch((err) => {
-                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                return _this.sendResponseError(res, ['Error.AnErrorHasOccurredUser', err], 1, 403);
             });
     }
 
@@ -689,7 +689,7 @@ class agents extends baseModelbo {
         let data_agent = req.body.data
         let i = 0;
         if (data_agent.length === 0) {
-            return this.sendResponseError(res, ['Error.AnErrorHasOccuredUser'], 1, 403);
+            return this.sendResponseError(res, ['Error.AnErrorHasOccurredUser'], 1, 403);
         }
         const promiseDisconnect = new Promise((resolve, reject) => {
             data_agent.forEach(item => {

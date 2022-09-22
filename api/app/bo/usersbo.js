@@ -131,7 +131,7 @@ class users extends baseModelbo {
                                                             accountcode: accountcode
                                                         });
                                                     }).catch((error) => {
-                                                    return this.sendResponseError(res, ['Error.AnErrorHasOccuredUser'], 1, 403);
+                                                    return this.sendResponseError(res, ['Error.AnErrorHasOccurredUser'], 1, 403);
                                                 });
                                             })
                                         })
@@ -143,7 +143,7 @@ class users extends baseModelbo {
                                     this.sendResponseError(res, ['Error.InvalidPassword'], 2, 403);
                                 }
                             }).catch((error) => {
-                                return this.sendResponseError(res, ['Error.AnErrorHasOccuredUser'], 1, 403);
+                                return this.sendResponseError(res, ['Error.AnErrorHasOccurredUser'], 1, 403);
                             });
                         } else if (user.password_hash && password && user.verifyPassword(password)) {
                             if (user.password_hash && password) {
@@ -198,7 +198,7 @@ class users extends baseModelbo {
                                                     accountcode: accountcode
                                                 });
                                             }).catch((error) => {
-                                            return this.sendResponseError(res, ['Error.AnErrorHasOccuredUser'], 1, 403);
+                                            return this.sendResponseError(res, ['Error.AnErrorHasOccurredUser'], 1, 403);
                                         });
                                     })
                                 })
@@ -211,7 +211,7 @@ class users extends baseModelbo {
                         }
                     }
                 }).catch((error) => {
-                    return this.sendResponseError(res, ['Error.AnErrorHasOccuredUser'], 1, 403);
+                    return this.sendResponseError(res, ['Error.AnErrorHasOccurredUser'], 1, 403);
                 });
             }
         }
@@ -270,14 +270,14 @@ class users extends baseModelbo {
                                             accountcode: accountcode
                                         });
                                     }).catch((error) => {
-                                    return this.sendResponseError(res, ['Error.AnErrorHasOccuredUser'], 1, 403);
+                                    return this.sendResponseError(res, ['Error.AnErrorHasOccurredUser'], 1, 403);
                                 });
 
                             })
                         })
                     }
                 }).catch((error) => {
-                    return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', error], 1, 403);
+                    return _this.sendResponseError(res, ['Error.AnErrorHasOccurredUser', error], 1, 403);
                 });
             }
         }
@@ -356,7 +356,7 @@ class users extends baseModelbo {
                 })
             })
             .catch(err => {
-                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                return _this.sendResponseError(res, ['Error.AnErrorHasOccurredUser', err], 1, 403);
             })
     }
 
@@ -498,6 +498,7 @@ class users extends baseModelbo {
         let _this = this;
         let newAccount = req.body.new_account;
         let user_id = newAccount && newAccount.user_id ? newAccount.user_id : 0;
+        let is_agent = newAccount.is_agent
         let {accountcode} = newAccount.sip_device;
         let sip_device = JSON.parse(JSON.stringify(newAccount.sip_device));
         let {username, password, domain, options, status, enabled, subscriber_id} = sip_device;
@@ -526,7 +527,7 @@ class users extends baseModelbo {
                                     newAccount.sip_device.uuid = uuid;
                                     newAccount.sip_device.username = username;
 
-                                    this.saveUserFunction(newAccount)
+                                    this.saveUserFunction(newAccount, is_agent)
                                         .then((user) => {
                                             res.send({
                                                 message: 'success',
@@ -535,15 +536,15 @@ class users extends baseModelbo {
                                             })
                                         })
                                         .catch(err => {
-                                            return _this.sendResponseError(res, ['Error.AnErrorHasOccuredSaveUser', err], 1, 403);
+                                            return _this.sendResponseError(res, ['Error.AnErrorHasOccurredSaveUser', err], 1, 403);
                                         })
 
                                 }).catch(err => {
-                                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredSaveUser', err], 1, 403);
+                                return _this.sendResponseError(res, ['Error.AnErrorHasOccurredSaveUser', err], 1, 403);
                             })
                         } else {
                             this.db['users'].findOne({
-                                where: {active: 'Y', role_crm_id: newAccount.role_id},
+                                where: {active: 'Y'},
                                 order: [['user_id', 'DESC']]
                             })
                                 .then(lastAgent => {
@@ -568,7 +569,7 @@ class users extends baseModelbo {
                                             let username = resp.data.result.agent.username || null;
                                             newAccount.sip_device.uuid = uuid;
                                             newAccount.sip_device.username = username;
-                                            this.saveUserFunction(newAccount)
+                                            this.saveUserFunction(newAccount, is_agent)
                                                 .then((user) => {
                                                     res.send({
                                                         message: 'success',
@@ -577,11 +578,11 @@ class users extends baseModelbo {
                                                     })
                                                 })
                                                 .catch(err => {
-                                                    return _this.sendResponseError(res, ['Error.AnErrorHasOccuredSaveUser', err], 1, 403);
+                                                    return _this.sendResponseError(res, ['Error.AnErrorHasOccurredSaveUser', err], 1, 403);
                                                 })
                                         })
                                 }).catch(err => {
-                                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredSaveUser', err], 1, 403);
+                                return _this.sendResponseError(res, ['Error.AnErrorHasOccurredSaveUser', err], 1, 403);
                             })
                         }
                     }
@@ -594,11 +595,11 @@ class users extends baseModelbo {
                 }
             })
             .catch(err => {
-                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredSaveUser', err], 1, 403);
+                return _this.sendResponseError(res, ['Error.AnErrorHasOccurredSaveUser', err], 1, 403);
             })
     }
 
-    saveUserFunction(user) {
+    saveUserFunction(user, is_agent) {
         let _this = this;
         return new Promise((resolve, reject) => {
             if (user.user_id) {
@@ -620,7 +621,9 @@ class users extends baseModelbo {
                     .then(data => {
                         _this.generateUniqueUsernameFunction().then(username => {
                             let {newAccount, email_item} = data;
-                            newAccount.first_name = 'agent_'.concat(Math.floor(Math.random() * (999 - 100 + 1) + 100))
+                            if (is_agent) {
+                                newAccount.first_name = 'agent_'.concat(Math.floor(Math.random() * (999 - 100 + 1) + 100))
+                            }
                             newAccount.username = username;
                             let modalObj = this.db['users'].build(newAccount);
                             modalObj.save()
@@ -715,10 +718,10 @@ class users extends baseModelbo {
                     message: 'Account user created with success!'
                 });
             }).catch((error) => {
-                return this.sendResponseError(res, ['Error.AnErrorHasOccuredSaveUser'], 1, 403);
+                return this.sendResponseError(res, ['Error.AnErrorHasOccurredSaveUser'], 1, 403);
             });
         }).catch((error) => {
-            return this.sendResponseError(res, ['Error.AnErrorHasOccuredUser'], 1, 403);
+            return this.sendResponseError(res, ['Error.AnErrorHasOccurredUser'], 1, 403);
         });
     }
 
@@ -768,7 +771,7 @@ class users extends baseModelbo {
                             })
                         })
                         .catch(err => {
-                            return _this.sendResponseError(res, ['Error.AnErrorHasOccuredGetSales', err], 1, 403);
+                            return _this.sendResponseError(res, ['Error.AnErrorHasOccurredGetSales', err], 1, 403);
                         })
                 } else {
                     res.send({
@@ -926,14 +929,14 @@ class users extends baseModelbo {
                 }
             })
             .catch(err => {
-                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredFetchUser', err], 1, 403);
+                return _this.sendResponseError(res, ['Error.AnErrorHasOccurredFetchUser', err], 1, 403);
             })
 
     }
 
     cloneSales(req, res, next) {
         let _this = this;
-        let {user_id, first_name, last_name, password_hash, email, username} = req.body;
+        let {user_id, first_name, last_name, password_hash, email, username, is_agent} = req.body;
         this.db['users'].findOne({where: {user_id: user_id, active: 'Y'}})
             .then(salesToClone => {
                 if (salesToClone && salesToClone.user_id) {
@@ -967,7 +970,7 @@ class users extends baseModelbo {
                                 email,
                                 role_crm_id
                             }
-                            this.saveUserFunction(clonedSales)
+                            this.saveUserFunction(clonedSales, is_agent)
                                 .then(cloned_sales => {
                                     let sales_id = cloned_sales.user_id;
                                     let agents_ids = cloned_sales.params.agents;

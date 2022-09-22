@@ -110,7 +110,7 @@ class meetings extends baseModelbo {
                 return meetings;
             })
             .catch((err) => {
-                return _this.sendResponseError(res, ['Error.AnErrorHasOccuredUser', err], 1, 403);
+                return _this.sendResponseError(res, ['Error.AnErrorHasOccurredUser', err], 1, 403);
             });
     }
 

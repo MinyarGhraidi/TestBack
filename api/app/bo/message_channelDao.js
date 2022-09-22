@@ -639,14 +639,14 @@ class message_channelDao extends baseModelbo {
                     }
                 })
                 .then(subscribers => {
-                    if (subscribers && subscribers.length !== 0) {
+                    if (subscribers && subscribers.length !==0) {
                         resolve({
                             data: subscribers,
                             status: true
                         })
                     } else {
                         resolve({
-                            data: null,
+                            data: [],
                             status: false
                         })
                     }
@@ -666,7 +666,6 @@ class message_channelDao extends baseModelbo {
                 if (channel.channel_type === 'G') {
                     new_channel_name = subscriber.user_familyname + ' ' + subscriber.user_name;
                 } else if (subscriber.user_id !== user_id) {
-                    // channel.channel_picture_efile_id = subscriber.profile_image_id;
                     new_channel_name = subscriber.first_name + ' ' + subscriber.last_name;
                 }
             })
@@ -683,7 +682,7 @@ class message_channelDao extends baseModelbo {
     updateChannel(channels, user_id) {
         return new Promise((resolve, reject) => {
             let idx = 0;
-            channels.map((channel, idx) => {
+            channels.map((channel, idxC) => {
                 this.get_message_subscribers(channel.message_channel_id, user_id).then(subscribers => {
                     if (subscribers.status === true) {
                         this.channel_name(subscribers, channel, user_id).then(name => {
@@ -700,7 +699,7 @@ class message_channelDao extends baseModelbo {
                             reject(err);
                         })
                     } else {
-                        channels.splice(idx,1)
+                        channels.splice(idxC,1)
                         if (idx === channels.length - 1) {
                             resolve({
                                 data: channels

@@ -1,7 +1,7 @@
 import { Exception } from "../../core";
 
 /**
- * An exception indicating an invalid state transition error occured.
+ * An exception indicating an invalid state transition error Occurred.
  * @public
  */
 export class StateTransitionError extends Exception {
