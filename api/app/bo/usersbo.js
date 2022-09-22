@@ -37,6 +37,9 @@ class users extends baseModelbo {
                     },
                         {
                             model: db.accounts,
+                        },
+                        {
+                            model: db.roles,
                         }
                     ],
                     where: {
@@ -227,6 +230,9 @@ class users extends baseModelbo {
                     },
                         {
                             model: db.accounts,
+                        },
+                        {
+                            model: db.roles,
                         }],
                     where: {
                         user_id: user_id,
