@@ -119,6 +119,9 @@ module.exports = (sequelize, Sequelize) => {
         user.prototype.verifyPassword = function (password) {
             return bcrypt.compareSync(password, this.password_hash);
         };
+    user.prototype.getModelIncludes = function () {
+        return ['roles'];
+    };
     user.associate = function (models) {
         user.belongsTo(models.roles, {
             foreignKey: 'role_id'
