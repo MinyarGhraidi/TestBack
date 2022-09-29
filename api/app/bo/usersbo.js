@@ -86,6 +86,7 @@ class users extends baseModelbo {
                                             }],
                                             where: {
                                                 roles_crm_id: user.role_crm_id,
+                                                active:'Y'
                                             }
                                         }).then(permissions => {
                                             this.getPermissionsValues(permissions).then(data_perm => {
@@ -124,7 +125,8 @@ class users extends baseModelbo {
                                                         res.send({
                                                             message: 'Success',
                                                             user: user.toJSON(),
-                                                            permissions: data_perm || [],
+                                                            permissions: data_perm.permissions_values || [],
+                                                            permissions_route:data_perm.permissions_description || [],
                                                             success: true,
                                                             token: token,
                                                             result: 1,
@@ -153,6 +155,7 @@ class users extends baseModelbo {
                                     }],
                                     where: {
                                         roles_crm_id: user.role_crm_id,
+                                        active:'Y'
                                     }
                                 }).then(permissions => {
                                     this.getPermissionsValues(permissions).then(data_perm => {
@@ -191,7 +194,8 @@ class users extends baseModelbo {
                                                 res.send({
                                                     message: 'Success',
                                                     user: user.toJSON(),
-                                                    permissions: data_perm || [],
+                                                    permissions: data_perm.permissions_values || [],
+                                                    permissions_route:data_perm.permissions_description || [],
                                                     success: true,
                                                     token: token,
                                                     result: 1,
@@ -248,6 +252,7 @@ class users extends baseModelbo {
                             }],
                             where: {
                                 roles_crm_id: user.role_crm_id,
+                                active:'Y'
                             }
                         }).then(permissions => {
                             this.getPermissionsValues(permissions).then(data_perm => {
@@ -263,7 +268,8 @@ class users extends baseModelbo {
                                         res.send({
                                             message: 'Success',
                                             user: user.toJSON(),
-                                            permissions: data_perm || [],
+                                            permissions: data_perm.permissions_values || [],
+                                            permissions_route:data_perm.permissions_description || [],
                                             success: true,
                                             token: token,
                                             result: 1,
@@ -364,13 +370,16 @@ class users extends baseModelbo {
         return new Promise((resolve, reject) => {
             if (permissions && permissions.length !== 0) {
                 let permissions_values = [];
+                let permissions_description = [];
                 let index = 0;
                 permissions.forEach(item_perm => {
                     permissions_values.push(item_perm.permissions_crm.value);
+                    permissions_description.push(item_perm.permissions_crm.description)
                     if (index < permissions.length - 1) {
                         index++
                     } else {
-                        resolve(permissions_values);
+                        resolve({permissions_values:permissions_values,
+                            permissions_description:permissions_description});
                     }
                 })
             } else {
