@@ -863,7 +863,7 @@ class users extends baseModelbo {
             res.send({
                 success: !!!err,
                 data: data,
-                message: (err) ? 'Invalid token' : 'Tokan valid',
+                message: (err) ? 'Invalid token' : 'Token valid',
             });
         });
     }
