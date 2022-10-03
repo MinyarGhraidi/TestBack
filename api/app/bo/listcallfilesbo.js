@@ -256,6 +256,7 @@ class listcallfiles extends baseModelbo {
                             throw error1;
                         }
                         const queue = app_config.rabbitmq.queues.clone_List_CallFiles + account_id;
+                        ;
                         channel.assertQueue(queue, {
                             durable: true
                         });
