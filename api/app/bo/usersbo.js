@@ -80,8 +80,6 @@ class users extends baseModelbo {
                                     return
                                 } else if (user.password_hash && password && user.verifyPassword(password)) {
                                     if (user.password_hash && password) {
-                                        if(user.role_id !== null){
-                                        }else{
                                             this.db['has_permissions'].findAll({
                                                 include: [{
                                                     model: db.permissions_crms,
@@ -139,7 +137,6 @@ class users extends baseModelbo {
                                                     });
                                                 })
                                             })
-                                        }
                                     } else {
                                         this.sendResponseError(res, ['Error.InvalidPassword'], 0, 403);
                                     }
@@ -194,7 +191,8 @@ class users extends baseModelbo {
                                                         success: true,
                                                         token: token,
                                                         result: 1,
-                                                        accountcode: accountcode
+                                                        accountcode: accountcode,
+                                                        list_permission: user.role.permission || []
                                                     });
                                                 }).catch((error) => {
                                                 return this.sendResponseError(res, ['Error.AnErrorHasOccurredUser'], 1, 403);
