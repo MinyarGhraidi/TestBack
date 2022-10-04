@@ -735,7 +735,7 @@ class users extends baseModelbo {
                         newAccount['current_session_token'] = null;
                         db['users'].update(newAccount, {where: {user_id: newAccount.user_id}})
                             .then(user => {
-                                appSocket.emit('reload.Permission', newAccount.user_id);
+                                appSocket.emit('reload.Permission', {user_id:newAccount.user_id});
                                 resolve(user)
                             })
                             .catch(err => {
