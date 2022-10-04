@@ -15,6 +15,10 @@ module.exports = (sequelize, Sequelize) => {
                 type: Sequelize.STRING,
                 defaultValue: 'Y'
             },
+            is_updatable: {
+                type: Sequelize.STRING,
+                defaultValue: 'Y'
+            },
         },
         {timestamps: false,}
     );
@@ -23,7 +27,8 @@ module.exports = (sequelize, Sequelize) => {
         'id',
         'value',
         'description',
-        'active'
+        'active',
+        'is_updatable'
 
     ];
 
@@ -31,7 +36,8 @@ module.exports = (sequelize, Sequelize) => {
         'id',
         'value',
         'description',
-        'active'
+        'active',
+        'is_updatable'
     ];
 
     return permissions_crms;

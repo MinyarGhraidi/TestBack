@@ -488,7 +488,8 @@ class users extends baseModelbo {
                     permissions_values.push(item_perm.permissions_crm.value);
                     let obj = {
                         value: item_perm.permissions_crm.value,
-                        description: item_perm.permissions_crm.description
+                        description: item_perm.permissions_crm.description,
+                        is_updatable: item_perm.permissions_crm.is_updatable
                     }
                     permissions_description.push(obj)
                     if (index < permissions.length - 1) {
