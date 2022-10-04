@@ -90,11 +90,10 @@ class users extends baseModelbo {
                                                 }
                                             }).then(permissions => {
                                                 this.getPermissionsValues(permissions).then(data_perm => {
+                                                    console.log(data_perm)
                                                     this.db['accounts'].findOne({where: {account_id: user.account_id}})
                                                         .then(account => {
-
                                                             let accountcode = account.account_code;
-
                                                             if (user.user_type === "agent") {
                                                                 let {
                                                                     sip_device,
@@ -122,15 +121,21 @@ class users extends baseModelbo {
                                                             }, config.secret, {
                                                                 expiresIn: '8600m'
                                                             });
-                                                            res.send({
-                                                                message: 'Success',
-                                                                user: user.toJSON(),
-                                                                permissions: data_perm.permissions_values || [],
-                                                                permissions_route:data_perm.permissions_description || [],
-                                                                success: true,
-                                                                token: token,
-                                                                result: 1,
-                                                                accountcode: accountcode
+                                                            console.log('heeeeeeeeeeeeeeeeeeeeeeeeeeee', token)
+                                                            this.db['users'].update({current_session_token: token}, {where: {user_id: user.user_id}})
+                                                                .then(() => {
+                                                                    res.send({
+                                                                        message: 'Success',
+                                                                        user: user.toJSON(),
+                                                                        permissions: data_perm.permissions_values || [],
+                                                                        permissions_route: data_perm.permissions_description || [],
+                                                                        success: true,
+                                                                        token: token,
+                                                                        result: 1,
+                                                                        accountcode: accountcode
+                                                                    });
+                                                                }).catch((error) => {
+                                                                return this.sendResponseError(res, ['Error.AnErrorHasOccurredUser'], 1, 403);
                                                             });
                                                         }).catch((error) => {
                                                         return this.sendResponseError(res, ['Error.AnErrorHasOccurredUser'], 1, 403);
@@ -183,17 +188,21 @@ class users extends baseModelbo {
                                                     }, config.secret, {
                                                         expiresIn: '8600m'
                                                     });
-                                                    res.send({
-                                                        message: 'Success',
-                                                        user: user.toJSON(),
-                                                        permissions: user_permission || [],
-                                                        permissions_route:  [],
-                                                        success: true,
-                                                        token: token,
-                                                        result: 1,
-                                                        accountcode: accountcode,
-                                                        list_permission: user.role.permission || []
-                                                    });
+                                                    this.db['users'].update({current_session_token: token}, {where: {user_id: user.user_id}})
+                                                        .then(() => {
+                                                            res.send({
+                                                                message: 'Success',
+                                                                user: user.toJSON(),
+                                                                permissions: user_permission || [],
+                                                                permissions_route:  [],
+                                                                success: true,
+                                                                token: token,
+                                                                result: 1,
+                                                                accountcode: accountcode,
+                                                                list_permission: user.role.permission || []
+                                                            });
+                                                        })
+
                                                 }).catch((error) => {
                                                 return this.sendResponseError(res, ['Error.AnErrorHasOccurredUser'], 1, 403);
                                             });
@@ -259,9 +268,7 @@ class users extends baseModelbo {
                                         this.getPermissionsValues(permissions).then(data_perm => {
                                             this.db['accounts'].findOne({where: {account_id: user.account_id}})
                                                 .then(account => {
-
                                                     let accountcode = account.account_code;
-
                                                     if (user.user_type === "agent") {
                                                         let {
                                                             sip_device,
@@ -289,15 +296,20 @@ class users extends baseModelbo {
                                                     }, config.secret, {
                                                         expiresIn: '8600m'
                                                     });
-                                                    res.send({
-                                                        message: 'Success',
-                                                        user: user.toJSON(),
-                                                        permissions: data_perm.permissions_values || [],
-                                                        permissions_route:data_perm.permissions_description || [],
-                                                        success: true,
-                                                        token: token,
-                                                        result: 1,
-                                                        accountcode: accountcode
+                                                    this.db['users'].update({current_session_token: token}, {where: {user_id: user.user_id}})
+                                                        .then(() => {
+                                                            res.send({
+                                                                message: 'Success',
+                                                                user: user.toJSON(),
+                                                                permissions: data_perm.permissions_values || [],
+                                                                permissions_route: data_perm.permissions_description || [],
+                                                                success: true,
+                                                                token: token,
+                                                                result: 1,
+                                                                accountcode: accountcode
+                                                            });
+                                                        }).catch((error) => {
+                                                        return this.sendResponseError(res, ['Error.AnErrorHasOccurredUser'], 1, 403);
                                                     });
                                                 }).catch((error) => {
                                                 return this.sendResponseError(res, ['Error.AnErrorHasOccurredUser'], 1, 403);
@@ -858,13 +870,19 @@ class users extends baseModelbo {
     }
 
     verifyToken(req, res, next) {
+        let _this = this;
         const token = req.body.token || null;
         jwt.verify(token, config.secret, (err, data) => {
-            res.send({
-                success: !!!err,
-                data: data,
-                message: (err) ? 'Invalid token' : 'Token valid',
-            });
+            this.db['users'].findOne({where: {current_session_token: token, active: 'Y'}})
+                .then(dataUser => {
+                    res.send({
+                        success: !!(dataUser && !!!err),
+                        data: data,
+                        message: (err) ? 'Invalid token' : 'Token valid',
+                    });
+                }).catch(err => {
+                return _this.sendResponseError(res, ['Error.AnErrorHasOccurredGetUser', err], 1, 403);
+            })
         });
     }
 

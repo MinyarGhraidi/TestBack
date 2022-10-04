@@ -47,6 +47,10 @@ module.exports = (sequelize, Sequelize) => {
                 type: Sequelize.STRING,
                 defaultValue: 'Y'
             },
+            current_session_token: {
+                allowNull: true,
+                type: Sequelize.STRING
+            },
             isAssigned: {
                 type: Sequelize.BOOLEAN,
                 defaultValue: false
@@ -94,7 +98,8 @@ module.exports = (sequelize, Sequelize) => {
         'sip_device',
         'params',
         'role_crm_id',
-        'profile_image_id'
+        'profile_image_id',
+        'current_session_token'
 
     ],
         user.prototype.fieldsSearchMetas = [
@@ -111,7 +116,7 @@ module.exports = (sequelize, Sequelize) => {
             "sip_device",
             'params',
             'role_crm_id'
-        ],
+        ]
         user.prototype.setPassword_hash = function (password) {
             let salt = bcrypt.genSaltSync();
             this.password_hash = bcrypt.hashSync(password, salt);
