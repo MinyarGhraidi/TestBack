@@ -732,8 +732,10 @@ class users extends baseModelbo {
             if (user.user_id) {
                 this.updateCredentials(user)
                     .then(newAccount => {
+                        newAccount['current_session_token'] = null;
                         db['users'].update(newAccount, {where: {user_id: newAccount.user_id}})
                             .then(user => {
+                                appSocket.emit('reload.Permission', newAccount.user_id);
                                 resolve(user)
                             })
                             .catch(err => {
