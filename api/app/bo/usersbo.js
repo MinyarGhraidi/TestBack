@@ -80,68 +80,66 @@ class users extends baseModelbo {
                                     return
                                 } else if (user.password_hash && password && user.verifyPassword(password)) {
                                     if (user.password_hash && password) {
-                                            this.db['has_permissions'].findAll({
-                                                include: [{
-                                                    model: db.permissions_crms,
-                                                }],
-                                                where: {
-                                                    roles_crm_id: user.role_crm_id,
-                                                    active:'Y'
-                                                }
-                                            }).then(permissions => {
-                                                this.getPermissionsValues(permissions).then(data_perm => {
-                                                    console.log(data_perm)
-                                                    this.db['accounts'].findOne({where: {account_id: user.account_id}})
-                                                        .then(account => {
-                                                            let accountcode = account.account_code;
-                                                            if (user.user_type === "agent") {
-                                                                let {
-                                                                    sip_device,
-                                                                    first_name,
-                                                                    last_name,
-                                                                    user_id,
-                                                                    campaign_id
-                                                                } = user;
-                                                                let data_agent = {
-                                                                    user_id: user_id,
-                                                                    first_name: first_name,
-                                                                    last_name: last_name,
-                                                                    uuid: sip_device.uuid,
-                                                                    crmStatus: user.params.status,
-                                                                    telcoStatus: sip_device.status,
-                                                                    updated_at: sip_device.updated_at,
-                                                                    campaign_id: campaign_id
-                                                                };
-                                                                appSocket.emit('agent_connection', data_agent);
-                                                            }
+                                        this.db['has_permissions'].findAll({
+                                            include: [{
+                                                model: db.permissions_crms,
+                                            }],
+                                            where: {
+                                                roles_crm_id: user.role_crm_id,
+                                                active: 'Y'
+                                            }
+                                        }).then(permissions => {
+                                            this.getPermissionsValues(permissions).then(data_perm => {
+                                                this.db['accounts'].findOne({where: {account_id: user.account_id}})
+                                                    .then(account => {
+                                                        let accountcode = account.account_code;
+                                                        if (user.user_type === "agent") {
+                                                            let {
+                                                                sip_device,
+                                                                first_name,
+                                                                last_name,
+                                                                user_id,
+                                                                campaign_id
+                                                            } = user;
+                                                            let data_agent = {
+                                                                user_id: user_id,
+                                                                first_name: first_name,
+                                                                last_name: last_name,
+                                                                uuid: sip_device.uuid,
+                                                                crmStatus: user.params.status,
+                                                                telcoStatus: sip_device.status,
+                                                                updated_at: sip_device.updated_at,
+                                                                campaign_id: campaign_id
+                                                            };
+                                                            appSocket.emit('agent_connection', data_agent);
+                                                        }
 
-                                                            const token = jwt.sign({
-                                                                user_id: user.user_id,
-                                                                username: user.username,
-                                                            }, config.secret, {
-                                                                expiresIn: '8600m'
-                                                            });
-                                                            console.log('heeeeeeeeeeeeeeeeeeeeeeeeeeee', token)
-                                                            this.db['users'].update({current_session_token: token}, {where: {user_id: user.user_id}})
-                                                                .then(() => {
-                                                                    res.send({
-                                                                        message: 'Success',
-                                                                        user: user.toJSON(),
-                                                                        permissions: data_perm.permissions_values || [],
-                                                                        permissions_route: data_perm.permissions_description || [],
-                                                                        success: true,
-                                                                        token: token,
-                                                                        result: 1,
-                                                                        accountcode: accountcode
-                                                                    });
-                                                                }).catch((error) => {
-                                                                return this.sendResponseError(res, ['Error.AnErrorHasOccurredUser'], 1, 403);
-                                                            });
-                                                        }).catch((error) => {
-                                                        return this.sendResponseError(res, ['Error.AnErrorHasOccurredUser'], 1, 403);
-                                                    });
-                                                })
+                                                        const token = jwt.sign({
+                                                            user_id: user.user_id,
+                                                            username: user.username,
+                                                        }, config.secret, {
+                                                            expiresIn: '8600m'
+                                                        });
+                                                        this.db['users'].update({current_session_token: token}, {where: {user_id: user.user_id}})
+                                                            .then(() => {
+                                                                res.send({
+                                                                    message: 'Success',
+                                                                    user: user.toJSON(),
+                                                                    permissions: data_perm.permissions_values || [],
+                                                                    permissions_route: data_perm.permissions_description || [],
+                                                                    success: true,
+                                                                    token: token,
+                                                                    result: 1,
+                                                                    accountcode: accountcode
+                                                                });
+                                                            }).catch((error) => {
+                                                            return this.sendResponseError(res, ['Error.AnErrorHasOccurredUser'], 1, 403);
+                                                        });
+                                                    }).catch((error) => {
+                                                    return this.sendResponseError(res, ['Error.AnErrorHasOccurredUser'], 1, 403);
+                                                });
                                             })
+                                        })
                                     } else {
                                         this.sendResponseError(res, ['Error.InvalidPassword'], 0, 403);
                                     }
@@ -153,9 +151,9 @@ class users extends baseModelbo {
                             });
                         } else if (user.password_hash && password && user.verifyPassword(password)) {
                             if (user.password_hash && password) {
-                                if(user.role_id !== null){
-                                    if(user.role.permission && user.role.permission.length !== 0){
-                                        this.PermissionUser(user).then(user_permission=>{
+                                if (user.role_id !== null) {
+                                    if (user.role.permission && user.role.permission.length !== 0) {
+                                        this.PermissionUser(user).then(user_permission => {
                                             this.db['accounts'].findOne({where: {account_id: user.account_id}})
                                                 .then(account => {
 
@@ -194,7 +192,7 @@ class users extends baseModelbo {
                                                                 message: 'Success',
                                                                 user: user.toJSON(),
                                                                 permissions: user_permission || [],
-                                                                permissions_route:  [],
+                                                                permissions_route: [],
                                                                 success: true,
                                                                 token: token,
                                                                 result: 1,
@@ -207,7 +205,7 @@ class users extends baseModelbo {
                                                 return this.sendResponseError(res, ['Error.AnErrorHasOccurredUser'], 1, 403);
                                             });
                                         })
-                                    }else{
+                                    } else {
                                         this.db['accounts'].findOne({where: {account_id: user.account_id}})
                                             .then(account => {
 
@@ -243,8 +241,8 @@ class users extends baseModelbo {
                                                 res.send({
                                                     message: 'Success',
                                                     user: user.toJSON(),
-                                                    permissions:  [],
-                                                    permissions_route:  [],
+                                                    permissions: [],
+                                                    permissions_route: [],
                                                     success: true,
                                                     token: token,
                                                     result: 1,
@@ -255,14 +253,14 @@ class users extends baseModelbo {
                                         });
                                     }
 
-                                }else{
+                                } else {
                                     this.db['has_permissions'].findAll({
                                         include: [{
                                             model: db.permissions_crms,
                                         }],
                                         where: {
                                             roles_crm_id: user.role_crm_id,
-                                            active:'Y'
+                                            active: 'Y'
                                         }
                                     }).then(permissions => {
                                         this.getPermissionsValues(permissions).then(data_perm => {
@@ -336,69 +334,71 @@ class users extends baseModelbo {
     switchToNewAccount(req, res, next) {
         let _this = this;
         let user_id = req.body.user_id;
-        if ((!user_id)) {
+        if (!!!user_id) {
             return _this.sendResponseError(res, ['Error.RequestDataInvalid'], 0, 403);
-        } else {
-            if (user_id) {
-                this.db['users'].findOne({
+        }
+        this.db['users'].findOne({
+            include: [{
+                model: db.roles_crms,
+            },
+                {
+                    model: db.accounts,
+                },
+                {
+                    model: db.roles,
+                }],
+            where: {
+                user_id: user_id,
+                active: 'Y'
+            }
+        }).then((user) => {
+            if (!user) {
+                _this.sendResponseError(res, ['Error.UserNotFound'], 0, 403);
+            } else {
+                this.db['has_permissions'].findAll({
                     include: [{
-                        model: db.roles_crms,
-                    },
-                        {
-                            model: db.accounts,
-                        },
-                        {
-                            model: db.roles,
-                        }],
+                        model: db.permissions_crms,
+                    }],
                     where: {
-                        user_id: user_id,
+                        roles_crm_id: user.role_crm_id,
                         active: 'Y'
                     }
-                }).then((user) => {
-                    if (!user) {
-                        _this.sendResponseError(res, ['Error.UserNotFound'], 0, 403);
-                    } else {
-                        this.db['has_permissions'].findAll({
-                            include: [{
-                                model: db.permissions_crms,
-                            }],
-                            where: {
-                                roles_crm_id: user.role_crm_id,
-                                active:'Y'
-                            }
-                        }).then(permissions => {
-                            this.getPermissionsValues(permissions).then(data_perm => {
-                                this.db['accounts'].findOne({where: {account_id: user.account_id}})
-                                    .then(account => {
-                                        let accountcode = account.account_code;
-                                        const token = jwt.sign({
-                                            user_id: user.user_id,
-                                            username: user.username,
-                                        }, config.secret, {
-                                            expiresIn: '8600m'
-                                        });
+                }).then(permissions => {
+                    this.getPermissionsValues(permissions).then(data_perm => {
+                        this.db['accounts'].findOne({where: {account_id: user.account_id}})
+                            .then(account => {
+                                let accountcode = account.account_code;
+                                const token = jwt.sign({
+                                    user_id: user.user_id,
+                                    username: user.username,
+                                }, config.secret, {
+                                    expiresIn: '8600m'
+                                });
+                                this.db['users'].update({current_session_token: token}, {where: {user_id: user.user_id}})
+                                    .then(() => {
                                         res.send({
                                             message: 'Success',
                                             user: user.toJSON(),
                                             permissions: data_perm.permissions_values || [],
-                                            permissions_route:data_perm.permissions_description || [],
+                                            permissions_route: data_perm.permissions_description || [],
                                             success: true,
                                             token: token,
                                             result: 1,
                                             accountcode: accountcode
                                         });
                                     }).catch((error) => {
-                                    return this.sendResponseError(res, ['Error.AnErrorHasOccurredUser'], 1, 403);
+                                    return this.sendResponseError(res, ['Error.AnErrorHasOccurredUpdateTokenUser'], 1, 403);
                                 });
+                            }).catch((error) => {
+                            return this.sendResponseError(res, ['Error.AnErrorHasOccurredUser'], 1, 403);
+                        });
 
-                            })
-                        })
-                    }
-                }).catch((error) => {
-                    return _this.sendResponseError(res, ['Error.AnErrorHasOccurredUser', error], 1, 403);
-                });
+                    })
+                })
             }
-        }
+        }).catch((error) => {
+            return _this.sendResponseError(res, ['Error.AnErrorHasOccurredUser', error], 1, 403);
+        });
     }
 
     isUniqueUsername(username, user_id) {
@@ -487,15 +487,17 @@ class users extends baseModelbo {
                 permissions.forEach(item_perm => {
                     permissions_values.push(item_perm.permissions_crm.value);
                     let obj = {
-                        value:item_perm.permissions_crm.value,
-                        description:item_perm.permissions_crm.description
+                        value: item_perm.permissions_crm.value,
+                        description: item_perm.permissions_crm.description
                     }
                     permissions_description.push(obj)
                     if (index < permissions.length - 1) {
                         index++
                     } else {
-                        resolve({permissions_values:permissions_values,
-                            permissions_description:permissions_description});
+                        resolve({
+                            permissions_values: permissions_values,
+                            permissions_description: permissions_description
+                        });
                     }
                 })
             } else {
@@ -1147,18 +1149,18 @@ class users extends baseModelbo {
             })
     }
 
-    PermissionUser(user){
-        return new Promise((resolve, reject)=>{
-            let permission=[];
-            let index1 =0;
-            user.role.permission.forEach(item=>{
-                let index = item.lookups.findIndex(lookup=> lookup.key === "list")
-                if(index !== -1){
+    PermissionUser(user) {
+        return new Promise((resolve, reject) => {
+            let permission = [];
+            let index1 = 0;
+            user.role.permission.forEach(item => {
+                let index = item.lookups.findIndex(lookup => lookup.key === "list")
+                if (index !== -1) {
                     permission.push(item.permission_route);
                 }
-                if(index1 < user.role.permission.length -1){
+                if (index1 < user.role.permission.length - 1) {
                     index1++
-                }else{
+                } else {
                     resolve(permission)
                 }
             })
