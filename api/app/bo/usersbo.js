@@ -401,7 +401,11 @@ class users extends baseModelbo {
                             }
                         })
                     } else {
-                        resolve([]);
+                        resolve({
+                            permissions_values: [],
+                            permissions_description: [],
+                            user_has_role_permission: []
+                        });
                     }
                 })
             }else{
@@ -427,7 +431,11 @@ class users extends baseModelbo {
                         }
                     })
                 } else {
-                    resolve([]);
+                    resolve({
+                        permissions_values: [],
+                        permissions_description: [],
+                        user_has_role_permission: []
+                    });
                 }
             }
 
