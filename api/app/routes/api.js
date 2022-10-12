@@ -71,7 +71,6 @@ let apiRouters = function (passport) {
     router.delete("/api/account/delete/:params", passport.authenticate('jwt', {session: false}), accountController.delete);
     router.post("/api/account/save", passport.authenticate('jwt', {session: false}), accountController.AddEditAccount);
     router.post("/api/account/deleteAccount", passport.authenticate('jwt', {session: false}), accountController.deleteAccount);
-
     router.post("/api/account/signin", passport.authenticate('jwt', {session: false}), accountController.signIn);
     router.post("/api/account/getAccountByToken", passport.authenticate("jwt", {session: false}), accountController.getAccountByToken);
     // campaigns routers
@@ -118,10 +117,8 @@ let apiRouters = function (passport) {
     router.post("/api/user/assignAgentsToSales", passport.authenticate('jwt', {session: false}), usersController.assignAgentsToSales);
     router.post("/api/user/getDataAgent", passport.authenticate('jwt', {session: false}), usersController.getDataAgent);
     router.post("/api/user/cloneSales", passport.authenticate('jwt', {session: false}), usersController.cloneSales);
-
     router.post("/api/signup", usersController.signUp);
     router.post("/api/signin", usersController.signIn);
-
     //agents routers
     router.post("/api/agent/find/:params?", passport.authenticate('jwt', {session: false}), agentsController.find);
     router.get("/api/agent/findById/:entity_id", passport.authenticate('jwt', {session: false}), agentsController.findById);
@@ -135,12 +132,9 @@ let apiRouters = function (passport) {
     router.post("/api/agent/getConnectedAgents", passport.authenticate('jwt', {session: false}), agentsController.getConnectedAgents);
     router.post("/api/agent/filterDashboard", passport.authenticate('jwt', {session: false}), agentsController.filterDashboard);
     router.post("/api/agent/DisConnectAgent", passport.authenticate('jwt', {session: false}), agentsController.onDisconnectAgents)
-
     router.post("/api/signup", agentsController.signUp);
     router.post("/api/signin", agentsController.signIn);
-
     //Lookups
-
     // account routers
     router.post("/api/lookup/find", passport.authenticate("jwt", {session: false}), lookupController.find);
     router.get("/api/lookup/findById/:entity_id", passport.authenticate("jwt", {session: false}), lookupController.findById);
