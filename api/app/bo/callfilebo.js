@@ -8,6 +8,7 @@ const path = require("path");
 const appDir = path.dirname(require.main.filename);
 let amqp = require('amqplib/callback_api');
 const appHelper = require("../helpers/app");
+const {reject, promise} = require("bcrypt/promises");
 const rabbitmq_url = appHelper.rabbitmq_url;
 const app_config = require("../helpers/app").appConfig;
 class callfiles extends baseModelbo {
@@ -43,55 +44,78 @@ class callfiles extends baseModelbo {
             'middle_initial']
         let indexMapping = 0;
         let key =0
-        this.CreateCallFileItem(listCallFileItem, basic_fields, callFile, item_callFile, indexMapping).then(callFile => {
-            key++;
-            this.db['callfiles'].build(callFile).save().then(result => {
-
-                let item_toUpdate = listcallfile_item_to_update;
-                item_toUpdate.processing_status = {
-                    nbr_callfiles: nbr_callFiles,
-                    nbr_uploaded_callfiles: key,
-                    nbr_duplicated_callfiles: 0
-                };
-
-                this.db['listcallfiles'].update(item_toUpdate, {
-                    where: {
-                        listcallfile_id: listCallFileItem.listcallfile_id
+        let dataMapping = {}
+        let PromiseMapping = new Promise((resolve, reject) => {
+            if(listCallFileItem.templates_id) {
+                db['templates_list_call_files'].findOne({
+                    where:{
+                        templates_list_call_files_id:listCallFileItem.templates_id,
+                        active :'Y'
                     }
-                }).then(result_list => {
-                    res.send({
-                        success: true,
-                        data: result,
-                    })
+                }).then(result=>{
+                    if (result){
+                        dataMapping = result.template
+                        resolve(dataMapping)
+                    }
+                })
+            } else {
+                dataMapping = listCallFileItem.mapping;
+                resolve(dataMapping)
+            }
+        })
+
+        Promise.all([PromiseMapping]).then(dataMapping => {
+            this.CreateCallFileItem(dataMapping[0], listCallFileItem, basic_fields, callFile, item_callFile, indexMapping).then(callFile => {
+                key++;
+                this.db['callfiles'].build(callFile).save().then(result => {
+
+                    let item_toUpdate = listcallfile_item_to_update;
+                    item_toUpdate.processing_status = {
+                        nbr_callfiles: nbr_callFiles,
+                        nbr_uploaded_callfiles: key,
+                        nbr_duplicated_callfiles: 0
+                    };
+
+                    this.db['listcallfiles'].update(item_toUpdate, {
+                        where: {
+                            listcallfile_id: listCallFileItem.listcallfile_id
+                        }
+                    }).then(result_list => {
+                        res.send({
+                            success: true,
+                            data: result,
+                        })
+                    }).catch(err => {
+                        res.send(err);
+                    });
                 }).catch(err => {
                     res.send(err);
                 });
             }).catch(err => {
                 res.send(err);
             });
-        }).catch(err => {
-            res.send(err);
-        });
+        })
+
 
     }
 
-    CreateCallFileItem = (listCallFileItem, basic_fields, callFile, item_callFile, indexMapping) => {
+    CreateCallFileItem = (dataMapping,listCallFileItem, basic_fields, callFile, item_callFile, indexMapping) => {
         return new Promise((resolve, reject) => {
-            Object.entries(listCallFileItem.mapping).forEach(([key, value]) => {
+            Object.entries(dataMapping).forEach(([key, value]) => {
                 if (basic_fields.includes(key)) {
-                    if (listCallFileItem.mapping[key]) {
-                        let fieldName =  (listCallFileItem.mapping[key]) ;
+                    if (dataMapping[key]) {
+                        let fieldName =  (dataMapping[key]) ;
                         if (item_callFile[fieldName] !== undefined){
                             callFile[key] = item_callFile[fieldName] ;
                         }
 
-                        if (indexMapping < listCallFileItem.mapping.length - 1) {
+                        if (indexMapping < dataMapping.length - 1) {
                             indexMapping++;
                         } else {
                             resolve(callFile);
                         }
                     } else {
-                        if (indexMapping < listCallFileItem.mapping.length - 1) {
+                        if (indexMapping < dataMapping.length - 1) {
                             indexMapping++;
                         } else {
                             resolve(callFile);
@@ -99,17 +123,17 @@ class callfiles extends baseModelbo {
                     }
                 } else {
 
-                    if (listCallFileItem.mapping[key]) {
-                        let fieldName =  (listCallFileItem.mapping[key]) ;
+                    if (dataMapping[key]) {
+                        let fieldName =  (dataMapping[key]) ;
                         callFile.customfields[key] = item_callFile[fieldName];
                     }
-                    if (indexMapping < listCallFileItem.mapping.length - 1) {
+                    if (indexMapping < dataMapping.length - 1) {
                         indexMapping++;
                     } else {
                         resolve(callFile);
                     }
                 }
-                if (indexMapping < listCallFileItem.mapping.length - 1) {
+                if (indexMapping < dataMapping.length - 1) {
                     indexMapping++;
                 } else {
                     resolve(callFile);
@@ -162,7 +186,6 @@ class callfiles extends baseModelbo {
                     listcallfile_id: listcallfile_id
                 },
             }).then(res_listCallFile => {
-                //console.log('res_listCallFile', res_listCallFile)
                 if (res_listCallFile && res_listCallFile.length !== 0) {
                     _this.CallFilesInfo(res_listCallFile, params).then(callFilesMapping => {
                         if(callFilesMapping.success){

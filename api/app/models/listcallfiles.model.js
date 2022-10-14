@@ -54,6 +54,9 @@ module.exports = (sequelize, Sequelize) => {
                 type: Sequelize.DATE,
                 defaultValue: new Date()
             },
+            templates_id: {
+                type: Sequelize.INTEGER,
+            }
         },
         {timestamps: false,}
     )
@@ -72,7 +75,8 @@ module.exports = (sequelize, Sequelize) => {
         'check_duplication',
         'created_at',
         'updated_at',
-        'prefix'
+        'prefix',
+        'templates_id'
     ]
     listcallfile.prototype.fieldsSearchMetas = [
         'listcallfile_id',
@@ -89,14 +93,17 @@ module.exports = (sequelize, Sequelize) => {
         'created_at',
         'updated_at',
         'prefix'
-        ]
-        listcallfile.associate = function (models) {
-            listcallfile.belongsTo(models.efiles, {
-                foreignKey: 'file_id'
-            });
-            listcallfile.belongsTo(models.campaigns, {
-                foreignKey: 'campaign_id'
-            });
-        };
+    ]
+    listcallfile.associate = function (models) {
+        listcallfile.belongsTo(models.efiles, {
+            foreignKey: 'file_id'
+        });
+        listcallfile.belongsTo(models.campaigns, {
+            foreignKey: 'campaign_id'
+        });
+        listcallfile.belongsTo(models.templates_list_call_files,{
+            foreignKey: 'templates_id'
+        })
+    };
     return listcallfile
 }

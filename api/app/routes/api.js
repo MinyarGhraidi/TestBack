@@ -57,7 +57,8 @@ EfileController = require('../controllers/efiles.controller');
 UserDataIndexController = require('../controllers/user_indexs.controller');
 dialpansController = require('../controllers/dialplan.controller')
 dialpanItemsController = require('../controllers/dialplanItems.controller');
-accController = require('../controllers/acc.controller')
+accController = require('../controllers/acc.controller');
+TemplateListCallFile = require('../controllers/templateList.controller')
 
 
 let apiRouters = function (passport) {
@@ -342,6 +343,10 @@ let apiRouters = function (passport) {
     router.post('/api/acc/pushDataToSocket/:params?', passport.authenticate('jwt', {session: false}),accController.pushDataToSocket);
     router.get('/api/acc/getSip_codes', passport.authenticate('jwt', {session: false}), accController.getSip_codes);
     router.get('/api/acc/downloadCdr/:filename',  accController.downloadCdr);
+
+    router.post('/api/templateList/save', passport.authenticate('jwt', {session: false}), TemplateListCallFile.save);
+    router.post('/api/templateList/find', passport.authenticate('jwt', {session: false}), TemplateListCallFile.find);
+    router.get('/api/templateList/findById/:entity_id', passport.authenticate('jwt', {session: false}), TemplateListCallFile.findById);
 
 
     return router;
