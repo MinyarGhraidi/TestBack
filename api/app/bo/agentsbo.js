@@ -17,6 +17,7 @@ const usersbo = require('./usersbo');
 const {Sequelize} = require("sequelize");
 const Op = require("sequelize");
 const {promise, reject} = require("bcrypt/promises");
+const PromiseBB = require("bluebird");
 let _usersbo = new usersbo;
 const appSocket = new (require('../providers/AppSocket'))();
 
@@ -190,7 +191,7 @@ class agents extends baseModelbo {
                                         .post(`${base_url_cc_kam}api/v1/agents`, agent, call_center_authorization)
                                         .then((resp) => {
                                             values.sip_device.uuid = resp.data.result.agent.uuid || null;
-                                            this.saveAgentInDB(values,is_agent)
+                                            this.saveAgentInDB(values, is_agent)
                                                 .then(agent => {
                                                     if (idx < bulkNum.length - 1) {
                                                         idx++
@@ -252,7 +253,7 @@ class agents extends baseModelbo {
                             call_center_authorization)
                         .then((resp) => {
                             _usersbo
-                                .saveUserFunction(values,is_agent)
+                                .saveUserFunction(values, is_agent)
                                 .then(agent => {
                                     res.send({
                                         status: 200,
@@ -286,7 +287,7 @@ class agents extends baseModelbo {
             })
     }
 
-    saveAgentInDB(values,is_agent) {
+    saveAgentInDB(values, is_agent) {
         return new Promise((resolve, reject) => {
             _usersbo
                 .saveUserFunction(values, is_agent)
@@ -415,7 +416,7 @@ class agents extends baseModelbo {
                 axios
                     .get(`${base_url_cc_kam}api/v1/agents/${uuid}`, call_center_authorization)
                     .then(resp => {
-                        let agent = {"status":telcoStatus};
+                        let agent = {"status": telcoStatus};
                         axios
                             .put(`${base_url_cc_kam}api/v1/agents/${uuid}/status`, agent, call_center_authorization)
                             .then(() => {
@@ -564,18 +565,18 @@ class agents extends baseModelbo {
 
     getCampaigns_ids() {
         return new Promise((resolve, reject) => {
-                this.db['campaigns'].findAll({
-                    where: {
-                        active: 'Y',
-                    }
+            this.db['campaigns'].findAll({
+                where: {
+                    active: 'Y',
+                }
+            })
+                .then(campaigns => {
+                    let campaigns_ids = campaigns.map(el => el.campaign_id);
+                    resolve(campaigns_ids);
                 })
-                    .then(campaigns => {
-                        let campaigns_ids = campaigns.map(el => el.campaign_id);
-                        resolve(campaigns_ids);
-                    })
-                    .catch(err => {
-                        reject(err);
-                    })
+                .catch(err => {
+                    reject(err);
+                })
         })
     }
 
@@ -584,7 +585,7 @@ class agents extends baseModelbo {
         let {account_id} = req.body;
         this.getCampaigns_ids()
             .then(campaigns_ids => {
-                let where = {active: 'Y', account_id: account_id, user_type: "agent", campaign_id : campaigns_ids}
+                let where = {active: 'Y', account_id: account_id, user_type: "agent", campaign_id: campaigns_ids}
 
                 this.db['users'].findAll({where: where})
                     .then(agents => {
@@ -722,6 +723,221 @@ class agents extends baseModelbo {
                 return this.sendResponseError(res, ['Error.cannot fetch list agents'], 1, 403);
             }
         })
+    }
+
+    agentCallReports(req, res, next) {
+        let _this = this;
+        const params = req.body;
+        const filter = params.filter || null;
+        const limit = parseInt(params.limit) > 0 ? params.limit : 1000;
+        const page = params.page || 1;
+        const offset = (limit * (page - 1));
+        let current_Date = moment(new Date()).tz(app_config.TZ).format('YYYYMMDD');
+        let currentDate = moment(new Date()).tz(app_config.TZ).format('YYYY-MM-DD');
+        let {start_time, end_time, accounts_code, agent_idx, listCallFiles_ids, date} = params.filter;
+        if (filter.date !== current_Date) {
+            let sqlCount = `select count(*)
+                            from cdrs_:date
+                            WHERE SUBSTRING("custom_vars", 0 , POSITION(':' in "custom_vars") ) = :accounts_code
+                                EXTRA_WHERE`
+            let extra_where_count = '';
+            if (start_time && start_time !== '') {
+                extra_where_count += ' AND start_time >= :start_time';
+            }
+            if (end_time && end_time !== '') {
+                extra_where_count += ' AND end_time <=  :end_time';
+            }
+            if (agent_idx !== '' && agent_idx !== 0) {
+                extra_where_count += ' AND agent in (:agent_idx)';
+            }
+            if (listCallFiles_ids !== '' && listCallFiles_ids !== 0) {
+                extra_where_count += ' AND REVERSE(SUBSTRING(reverse(custom_vars), 0, POSITION(\':\' IN reverse(custom_vars)))) in (:listCallFiles_ids)';
+            }
+
+            sqlCount = sqlCount.replace('EXTRA_WHERE', extra_where_count);
+            db.sequelize['cdr-db'].query(sqlCount, {
+                type: db.sequelize['cdr-db'].QueryTypes.SELECT,
+                replacements: {
+                    date: parseInt(date),
+                    start_time: start_time,
+                    end_time: end_time,
+                    sip_code: filter.sip_code,
+                    sip_reason: filter.sip_reason,
+                    agent_idx: agent_idx,
+                    accounts_code: accounts_code,
+                    listCallFiles_ids: listCallFiles_ids
+                }
+            }).then(countAll => {
+                let pages = Math.ceil(countAll[0].count / params.limit);
+                let sql = `select *
+                           from cdrs_:date
+                           WHERE id >= (select id from cdrs_:date WHERE SUBSTRING("custom_vars", 0 , POSITION(':' in "custom_vars") ) = :accounts_code
+                               EXTRA_WHERE
+                               ORDER BY id DESC
+                               LIMIT 1
+                               OFFSET :offset)
+                               EXTRA_WHERE-PARAMS
+                               LIMIT :limit`
+                let extra_where = '';
+                if (start_time && start_time !== '') {
+                    extra_where += ' AND start_time >= :start_time';
+                }
+                if (end_time && end_time !== '') {
+                    extra_where += ' AND end_time <=  :end_time';
+                }
+                if (agent_idx !== '' && agent_idx !== 0) {
+                    extra_where += ' AND agent in (:agent_idx)';
+                }
+                if (listCallFiles_ids !== '' && listCallFiles_ids !== 0) {
+                    extra_where += ' AND REVERSE(SUBSTRING(reverse(custom_vars), 0, POSITION(\':\' IN reverse(custom_vars)))) in (:listCallFiles_ids)';
+                }
+                sql = sql.replace('EXTRA_WHERE', extra_where);
+                sql = sql.replace('EXTRA_WHERE-PARAMS', extra_where);
+                db.sequelize['cdr-db'].query(sql, {
+                    type: db.sequelize['cdr-db'].QueryTypes.SELECT,
+                    replacements: {
+                        date: parseInt(date),
+                        start_time: start_time,
+                        end_time: end_time,
+                        sip_code: filter.sip_code,
+                        sip_reason: filter.sip_reason,
+                        agent_idx: agent_idx,
+                        accounts_code: accounts_code,
+                        listCallFiles_ids: listCallFiles_ids,
+                    }
+                }).then(data => {
+                    this.db['accounts'].findAll({
+                        where: {
+                            active: 'Y'
+                        }
+                    }).then((accounts) => {
+                        let cdrs_data = []
+                        PromiseBB.each(data, item => {
+                            let account_data = accounts.filter(item_acc => item_acc.account_number === item.accountcode);
+                            item.account_info = account_data[0] ? account_data[0].first_name + " " + account_data[0].last_name : null;
+                            item.account = account_data[0];
+                            cdrs_data.push(item);
+                        }).then(cdr_data => {
+                            res.send({
+                                success: true,
+                                status: 200,
+                                data: cdrs_data,
+                                pages: pages,
+                                countAll: countAll[0].count
+                            })
+                        }).catch(err => {
+                            _this.sendResponseError(res, [], err);
+                        })
+                    }).catch(err => {
+                        _this.sendResponseError(res, [], err);
+                    })
+                }).catch(err => {
+                    _this.sendResponseError(res, [], err);
+                })
+            }).catch(err => {
+                _this.sendResponseError(res, [], err);
+            })
+        } else {
+            let sqlCount = `select count(*)
+                            from acc_cdrs
+                            WHERE SUBSTRING("custom_vars", 0 , POSITION(':' in "custom_vars") ) = :accounts_code
+                 EXTRA_WHERE`
+            let extra_where_countCurrenDate = '';
+            if (start_time && start_time !== '') {
+                extra_where_countCurrenDate += ' AND start_time >= :start_time';
+            }
+            if (end_time && end_time !== '') {
+                extra_where_countCurrenDate += ' AND end_time <=  :end_time';
+            }
+            if (agent_idx !== '' && agent_idx !== 0) {
+                extra_where_countCurrenDate += ' AND agent in (:agent_idx)';
+            }
+            if (listCallFiles_ids !== '' && listCallFiles_ids !== 0) {
+                extra_where_countCurrenDate += ' AND REVERSE(SUBSTRING(reverse(custom_vars), 0, POSITION(\':\' IN reverse(custom_vars)))) in (:listCallFiles_ids)';
+            }
+            sqlCount = sqlCount.replace('EXTRA_WHERE', extra_where_countCurrenDate);
+            db.sequelize['cdr-db'].query(sqlCount, {
+                type: db.sequelize['cdr-db'].QueryTypes.SELECT,
+                replacements: {
+                    date: parseInt(date),
+                    start_time: start_time,
+                    end_time: end_time,
+                    sip_code: filter.sip_code,
+                    sip_reason: filter.sip_reason,
+                    agent_idx: agent_idx,
+                    accounts_code: accounts_code,
+                    listCallFiles_ids: listCallFiles_ids,
+                }
+            }).then(countAll => {
+                let pages = Math.ceil(countAll[0].count / params.limit);
+                let sqlData = `select *
+                               from acc_cdrs
+                               WHERE SUBSTRING("custom_vars", 0 , POSITION(':' in "custom_vars") ) = :accounts_code 
+                              AND id >= ( select id  from acc_cdrs where 1=1 
+                               EXTRA_WHERE
+                                LIMIT 1
+                               OFFSET :offset
+                               )
+                            EXTRA_WHERE_PARAMS
+                                   LIMIT :limit`
+                let extra_where_currentDate = '';
+                if (start_time && start_time !== '') {
+                    extra_where_countCurrenDate += ' AND start_time >= :start_time';
+                }
+                if (end_time && end_time !== '') {
+                    extra_where_countCurrenDate += ' AND end_time <=  :end_time';
+                }
+                if (agent_idx !== '' && agent_idx !== 0) {
+                    extra_where_countCurrenDate += ' AND agent in (:agent_idx)';
+                }
+                if (listCallFiles_ids !== '' && listCallFiles_ids !== 0) {
+                    extra_where_countCurrenDate += ' AND REVERSE(SUBSTRING(reverse(custom_vars), 0, POSITION(\':\' IN reverse(custom_vars)))) in (:listCallFiles_ids)';
+                }
+                sqlData = sqlData.replace('EXTRA_WHERE', extra_where_currentDate);
+                sqlData = sqlData.replace('EXTRA_WHERE_PARAMS', extra_where_currentDate);
+                db.sequelize['cdr-db'].query(sqlData, {
+                    type: db.sequelize['cdr-db'].QueryTypes.SELECT,
+                    replacements: {
+                        date: parseInt(date),
+                        start_time: start_time,
+                        end_time: end_time,
+                        sip_code: filter.sip_code,
+                        sip_reason: filter.sip_reason,
+                        agent_idx: agent_idx,
+                        accounts_code: accounts_code,
+                        listCallFiles_ids: listCallFiles_ids,
+                    }
+                }).then(dataCurrentDate => {
+                    this.db['accounts'].findAll({
+                        where: {
+                            active: 'Y'
+                        }
+                    }).then((accounts) => {
+                        let cdrs_data = []
+                        PromiseBB.each(dataCurrentDate, item => {
+                            let account_data = accounts.filter(item_acc => item_acc.account_number === item.accountcode);
+                            item.account_info = account_data[0] ? account_data[0].first_name + " " + account_data[0].last_name : null;
+                            item.account = account_data[0];
+                            cdrs_data.push(item);
+                        }).then(cdrs_data => {
+                            res.send({
+                                success: true,
+                                status: 200,
+                                data: cdrs_data,
+                                pages: pages,
+                                countAll: countAll[0].count
+                            })
+                        }).catch(err => {
+                            _this.sendResponseError(res, [], err)
+                        })
+                    }).catch(err => {
+                        _this.sendResponseError(res, [], err)
+                    })
+                }).catch(err => {
+                    _this.sendResponseError(res, [], err)
+                })
+            })
+        }
     }
 
 }
