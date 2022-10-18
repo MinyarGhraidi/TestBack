@@ -805,7 +805,6 @@ class agents extends baseModelbo {
                         listCallFiles_ids: listCallFiles_ids
                     }
                 }).then(countAll => {
-                    console.log(countAll)
                     if (countAll && parseInt(countAll[0].count) === 0) {
                         res.send({
                             success: true,
@@ -868,18 +867,29 @@ class agents extends baseModelbo {
                             })
                             return
                         }
-                            PromiseBB.each(dataOtherDate, item => {
-                                let account_data = dataAgent.filter(item_acc => item_acc.sip_device.uuid === item.agent);
-                                item.agent_info = account_data[0];
-                            }).then(cdr_data => {
-                                res.send({
-                                    success: true,
-                                    status: 200,
-                                    data: dataOtherDate,
-                                    pages: pages,
-                                    countAll: countAll[0].count
-                                })
+                        let statsDetails = []
+                        PromiseBB.each(dataAgent, item => {
+                            let _item = item
+                            let account_data = dataOtherDate.filter(item_acc => item_acc.agent === item.sip_device.uuid);
+                            if (account_data && account_data.length !== 0) {
+                                _item.stats = account_data[0];
+                            } else {
+                                _item.stats = {
+                                    total_appel: 0,
+                                    avg_talking: 0,
+                                    talk_duration: 0
+                                }
+                            }
+                            statsDetails.push(_item)
+                        }).then(stats_data => {
+                            res.send({
+                                success: true,
+                                status: 200,
+                                data: statsDetails,
+                                pages: pages,
+                                countAll: countAll[0].count
                             })
+                        })
 
                     }).catch(err => {
                         _this.sendResponseError(res, [], err);
@@ -981,14 +991,25 @@ class agents extends baseModelbo {
                             })
                             return
                         }
-                        PromiseBB.each(dataCurrentDate, item => {
-                            let account_data = dataAgent.filter(item_acc => item_acc.sip_device.uuid === item.agent);
-                            item.agent_info = account_data[0];
-                        }).then(cdr_data => {
+                        let statsDetails = []
+                        PromiseBB.each(dataAgent, item => {
+                            let _item = item
+                            let account_data = dataCurrentDate.filter(item_acc => item_acc.agent === item.sip_device.uuid);
+                            if (account_data && account_data.length !== 0) {
+                                _item.stats = account_data[0];
+                            } else {
+                                _item.stats = {
+                                    total_appel: 0,
+                                    avg_talking: 0,
+                                    talk_duration: 0
+                                }
+                            }
+                            statsDetails.push(_item)
+                        }).then(stats_data => {
                             res.send({
                                 success: true,
                                 status: 200,
-                                data: dataCurrentDate,
+                                data: statsDetails,
                                 pages: pages,
                                 countAll: countAll[0].count
                             })
