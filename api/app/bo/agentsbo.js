@@ -869,7 +869,7 @@ class agents extends baseModelbo {
                         }
                         let statsDetails = []
                         PromiseBB.each(dataAgent, item => {
-                            let _item = item
+                            let _item = JSON.parse(JSON.stringify(item));
                             let account_data = dataOtherDate.filter(item_acc => item_acc.agent === item.sip_device.uuid);
                             if (account_data && account_data.length !== 0) {
                                 _item.stats = account_data[0];
@@ -993,7 +993,7 @@ class agents extends baseModelbo {
                         }
                         let statsDetails = []
                         PromiseBB.each(dataAgent, item => {
-                            let _item = item
+                            let _item = JSON.parse(JSON.stringify(item))
                             let account_data = dataCurrentDate.filter(item_acc => item_acc.agent === item.sip_device.uuid);
                             if (account_data && account_data.length !== 0) {
                                 _item.stats = account_data[0];
@@ -1005,7 +1005,8 @@ class agents extends baseModelbo {
                                 }
                             }
                             statsDetails.push(_item)
-                        }).then(stats_data => {
+                        }).then(stats_dataA => {
+                            console.log(stats_dataA)
                             res.send({
                                 success: true,
                                 status: 200,
