@@ -18,8 +18,10 @@ const {Sequelize} = require("sequelize");
 const Op = require("sequelize");
 const {promise, reject} = require("bcrypt/promises");
 const PromiseBB = require("bluebird");
+const appHelper = require("../helpers/app");
 let _usersbo = new usersbo;
 const appSocket = new (require('../providers/AppSocket'))();
+const app_config = appHelper.appConfig;
 
 class agents extends baseModelbo {
     constructor() {
@@ -245,7 +247,6 @@ class agents extends baseModelbo {
         _usersbo.isUniqueUsername(values.username, user_id)
             .then(isUnique => {
                 if (isUnique) {
-                    console.log(isUnique)
                     let dataAgent = {username, password, domain, options, accountcode, status, enabled, subscriber_id}
                     axios
                         .put(`${base_url_cc_kam}api/v1/agents/${sip_device.uuid}`, dataAgent
@@ -728,216 +729,278 @@ class agents extends baseModelbo {
     agentCallReports(req, res, next) {
         let _this = this;
         const params = req.body;
-        const filter = params.filter || null;
         const limit = parseInt(params.limit) > 0 ? params.limit : 1000;
         const page = params.page || 1;
         const offset = (limit * (page - 1));
+        let dataAgent = params.dataAgents
         let current_Date = moment(new Date()).tz(app_config.TZ).format('YYYYMMDD');
-        let currentDate = moment(new Date()).tz(app_config.TZ).format('YYYY-MM-DD');
-        let {start_time, end_time, accounts_code, agent_idx, listCallFiles_ids, date} = params.filter;
-        if (filter.date !== current_Date) {
-            let sqlCount = `select count(*)
-                            from cdrs_:date
-                            WHERE SUBSTRING("custom_vars", 0 , POSITION(':' in "custom_vars") ) = :accounts_code
-                                EXTRA_WHERE`
-            let extra_where_count = '';
-            if (start_time && start_time !== '') {
-                extra_where_count += ' AND start_time >= :start_time';
-            }
-            if (end_time && end_time !== '') {
-                extra_where_count += ' AND end_time <=  :end_time';
-            }
-            if (agent_idx !== '' && agent_idx !== 0) {
-                extra_where_count += ' AND agent in (:agent_idx)';
-            }
-            if (listCallFiles_ids !== '' && listCallFiles_ids !== 0) {
-                extra_where_count += ' AND REVERSE(SUBSTRING(reverse(custom_vars), 0, POSITION(\':\' IN reverse(custom_vars)))) in (:listCallFiles_ids)';
-            }
+        let {start_time, end_time, account_code, agent_uuids, listCallFiles_ids, date, campaign_ids} = params;
+        let promiseParams = new Promise((resolve, reject) => {
+            if (campaign_ids && campaign_ids.length !== 0 && listCallFiles_ids && listCallFiles_ids.length === 0) {
+                this.db['listcallfiles'].findAll({
+                    where: {
+                        active: 'Y',
+                        campaign_id: {
+                            $in: campaign_ids
+                        }
+                    }
 
-            sqlCount = sqlCount.replace('EXTRA_WHERE', extra_where_count);
-            db.sequelize['cdr-db'].query(sqlCount, {
-                type: db.sequelize['cdr-db'].QueryTypes.SELECT,
-                replacements: {
-                    date: parseInt(date),
-                    start_time: start_time,
-                    end_time: end_time,
-                    sip_code: filter.sip_code,
-                    sip_reason: filter.sip_reason,
-                    agent_idx: agent_idx,
-                    accounts_code: accounts_code,
-                    listCallFiles_ids: listCallFiles_ids
-                }
-            }).then(countAll => {
-                let pages = Math.ceil(countAll[0].count / params.limit);
-                let sql = `select *
-                           from cdrs_:date
-                           WHERE id >= (select id from cdrs_:date WHERE SUBSTRING("custom_vars", 0 , POSITION(':' in "custom_vars") ) = :accounts_code
-                               EXTRA_WHERE
-                               ORDER BY id DESC
-                               LIMIT 1
-                               OFFSET :offset)
-                               EXTRA_WHERE-PARAMS
-                               LIMIT :limit`
-                let extra_where = '';
+                }).then((listCallFiles) => {
+                    listCallFiles_ids = listCallFiles.map(item_camp => item_camp.listcallfile_id)
+                    if (agent_uuids && agent_uuids.length === 0) {
+                        this.db['users'].findAll({
+                            where: {
+                                active: 'Y',
+                                user_type: 'agent',
+                                campaign_id: {
+                                    $in: campaign_ids
+                                }
+                            }
+
+                        }).then((agents_camp) => {
+                            agent_uuids = agents_camp.map(item_ag => item_ag.sip_device.uuid)
+                            dataAgent = agents_camp
+                            resolve(true)
+                        })
+                    } else {
+                        resolve(true)
+                    }
+
+                }).catch(err => {
+                    reject(err)
+                })
+            } else {
+                resolve(true)
+            }
+        })
+        Promise.all([promiseParams]).then(data_params => {
+            if (date !== current_Date) {
+                let sqlCount = `select count(*)
+                            from cdrs_:date
+                            WHERE SUBSTRING("custom_vars", 0 , POSITION(':' in "custom_vars") ) = :account_code
+                            AND agent IS NOT NULL
+                                EXTRA_WHERE`
+                let extra_where_count = '';
                 if (start_time && start_time !== '') {
-                    extra_where += ' AND start_time >= :start_time';
+                    extra_where_count += ' AND start_time >= :start_time';
                 }
                 if (end_time && end_time !== '') {
-                    extra_where += ' AND end_time <=  :end_time';
+                    extra_where_count += ' AND end_time <=  :end_time';
                 }
-                if (agent_idx !== '' && agent_idx !== 0) {
-                    extra_where += ' AND agent in (:agent_idx)';
+                if (agent_uuids !== '' && agent_uuids.length !== 0) {
+                    extra_where_count += ' AND agent in (:agent_uuids)';
                 }
-                if (listCallFiles_ids !== '' && listCallFiles_ids !== 0) {
-                    extra_where += ' AND REVERSE(SUBSTRING(reverse(custom_vars), 0, POSITION(\':\' IN reverse(custom_vars)))) in (:listCallFiles_ids)';
+                if (listCallFiles_ids !== '' && listCallFiles_ids.length !== 0) {
+                    extra_where_count += ' AND CAST(REVERSE(SUBSTRING(reverse(custom_vars), 0, POSITION(\':\' IN reverse(custom_vars)))) AS int) in (:listCallFiles_ids)';
                 }
-                sql = sql.replace('EXTRA_WHERE', extra_where);
-                sql = sql.replace('EXTRA_WHERE-PARAMS', extra_where);
-                db.sequelize['cdr-db'].query(sql, {
+                sqlCount = sqlCount.replace('EXTRA_WHERE', extra_where_count);
+                db.sequelize['cdr-db'].query(sqlCount, {
                     type: db.sequelize['cdr-db'].QueryTypes.SELECT,
                     replacements: {
                         date: parseInt(date),
                         start_time: start_time,
                         end_time: end_time,
-                        sip_code: filter.sip_code,
-                        sip_reason: filter.sip_reason,
-                        agent_idx: agent_idx,
-                        accounts_code: accounts_code,
-                        listCallFiles_ids: listCallFiles_ids,
+                        agent_uuids: agent_uuids,
+                        account_code: account_code,
+                        listCallFiles_ids: listCallFiles_ids
                     }
-                }).then(data => {
-                    this.db['accounts'].findAll({
-                        where: {
-                            active: 'Y'
+                }).then(countAll => {
+                    console.log(countAll)
+                    if (countAll && parseInt(countAll[0].count) === 0) {
+                        res.send({
+                            success: true,
+                            status: 200,
+                            data: [],
+                            countAll: countAll[0].count
+                        })
+                        return
+                    }
+                    let pages = Math.ceil(countAll[0].count / params.limit);
+                    let sql = ` select count(*) as total_appel,
+                                       sum(durationsec::int)/60 AS talk_duration , 
+                                       cast(cast((sum(durationsec::int)/60) AS float)/count(*) AS DECIMAL(5,3)) as avg_talking,
+                                       agent
+                                       from cdrs_:date
+                                       WHERE id >= (select id from cdrs_:date WHERE SUBSTRING("custom_vars", 0 , POSITION(':' in "custom_vars") ) = :account_code
+                                       AND agent IS NOT NULL
+                                           EXTRA_WHERE
+                                           ORDER BY id DESC
+                                           LIMIT 1
+                                           OFFSET :offset)
+                                           EXTRA_WHERE-PARAMS
+                                            group by agent
+                                           LIMIT :limit`
+                    let extra_where = '';
+                    if (start_time && start_time !== '') {
+                        extra_where += ' AND start_time >= :start_time';
+                    }
+                    if (end_time && end_time !== '') {
+                        extra_where += ' AND end_time <=  :end_time';
+                    }
+                    if (agent_uuids !== '' && agent_uuids.length !== 0) {
+                        extra_where += ' AND agent in (:agent_uuids)';
+                    }
+                    if (listCallFiles_ids !== '' && listCallFiles_ids.length !== 0) {
+                        extra_where_count += ' AND CAST(REVERSE(SUBSTRING(reverse(custom_vars), 0, POSITION(\':\' IN reverse(custom_vars)))) AS int) in (:listCallFiles_ids)';
+                    }
+                    sql = sql.replace('EXTRA_WHERE', extra_where);
+                    sql = sql.replace('EXTRA_WHERE-PARAMS', extra_where);
+                    db.sequelize['cdr-db'].query(sql, {
+                        type: db.sequelize['cdr-db'].QueryTypes.SELECT,
+                        replacements: {
+                            date: parseInt(date),
+                            start_time: start_time,
+                            end_time: end_time,
+                            agent_uuids: agent_uuids,
+                            account_code: account_code,
+                            listCallFiles_ids: listCallFiles_ids,
+                            offset: offset,
+                            limit: limit
                         }
-                    }).then((accounts) => {
-                        let cdrs_data = []
-                        PromiseBB.each(data, item => {
-                            let account_data = accounts.filter(item_acc => item_acc.account_number === item.accountcode);
-                            item.account_info = account_data[0] ? account_data[0].first_name + " " + account_data[0].last_name : null;
-                            item.account = account_data[0];
-                            cdrs_data.push(item);
-                        }).then(cdr_data => {
+                    }).then(dataOtherDate => {
+                        if (dataOtherDate && dataOtherDate.length !== 0) {
                             res.send({
                                 success: true,
                                 status: 200,
-                                data: cdrs_data,
+                                data: [],
                                 pages: pages,
                                 countAll: countAll[0].count
                             })
-                        }).catch(err => {
-                            _this.sendResponseError(res, [], err);
-                        })
+                            return
+                        }
+                            PromiseBB.each(dataOtherDate, item => {
+                                let account_data = dataAgent.filter(item_acc => item_acc.sip_device.uuid === item.agent);
+                                item.agent_info = account_data[0];
+                            }).then(cdr_data => {
+                                res.send({
+                                    success: true,
+                                    status: 200,
+                                    data: dataOtherDate,
+                                    pages: pages,
+                                    countAll: countAll[0].count
+                                })
+                            })
+
                     }).catch(err => {
                         _this.sendResponseError(res, [], err);
                     })
                 }).catch(err => {
                     _this.sendResponseError(res, [], err);
                 })
-            }).catch(err => {
-                _this.sendResponseError(res, [], err);
-            })
-        } else {
-            let sqlCount = `select count(*)
+            } else {
+                let sqlCount = `select count(*)
                             from acc_cdrs
-                            WHERE SUBSTRING("custom_vars", 0 , POSITION(':' in "custom_vars") ) = :accounts_code
+                            WHERE SUBSTRING("custom_vars", 0 , POSITION(':' in "custom_vars") ) = :account_code 
+                            AND agent IS NOT NULL
                  EXTRA_WHERE`
-            let extra_where_countCurrenDate = '';
-            if (start_time && start_time !== '') {
-                extra_where_countCurrenDate += ' AND start_time >= :start_time';
-            }
-            if (end_time && end_time !== '') {
-                extra_where_countCurrenDate += ' AND end_time <=  :end_time';
-            }
-            if (agent_idx !== '' && agent_idx !== 0) {
-                extra_where_countCurrenDate += ' AND agent in (:agent_idx)';
-            }
-            if (listCallFiles_ids !== '' && listCallFiles_ids !== 0) {
-                extra_where_countCurrenDate += ' AND REVERSE(SUBSTRING(reverse(custom_vars), 0, POSITION(\':\' IN reverse(custom_vars)))) in (:listCallFiles_ids)';
-            }
-            sqlCount = sqlCount.replace('EXTRA_WHERE', extra_where_countCurrenDate);
-            db.sequelize['cdr-db'].query(sqlCount, {
-                type: db.sequelize['cdr-db'].QueryTypes.SELECT,
-                replacements: {
-                    date: parseInt(date),
-                    start_time: start_time,
-                    end_time: end_time,
-                    sip_code: filter.sip_code,
-                    sip_reason: filter.sip_reason,
-                    agent_idx: agent_idx,
-                    accounts_code: accounts_code,
-                    listCallFiles_ids: listCallFiles_ids,
-                }
-            }).then(countAll => {
-                let pages = Math.ceil(countAll[0].count / params.limit);
-                let sqlData = `select *
-                               from acc_cdrs
-                               WHERE SUBSTRING("custom_vars", 0 , POSITION(':' in "custom_vars") ) = :accounts_code 
-                              AND id >= ( select id  from acc_cdrs where 1=1 
-                               EXTRA_WHERE
-                                LIMIT 1
-                               OFFSET :offset
-                               )
-                            EXTRA_WHERE_PARAMS
-                                   LIMIT :limit`
-                let extra_where_currentDate = '';
+                let extra_where_countCurrenDate = '';
                 if (start_time && start_time !== '') {
                     extra_where_countCurrenDate += ' AND start_time >= :start_time';
                 }
                 if (end_time && end_time !== '') {
                     extra_where_countCurrenDate += ' AND end_time <=  :end_time';
                 }
-                if (agent_idx !== '' && agent_idx !== 0) {
-                    extra_where_countCurrenDate += ' AND agent in (:agent_idx)';
+                if (agent_uuids !== '' && agent_uuids.length !== 0) {
+                    extra_where_countCurrenDate += ' AND agent in (:agent_uuids)';
                 }
-                if (listCallFiles_ids !== '' && listCallFiles_ids !== 0) {
-                    extra_where_countCurrenDate += ' AND REVERSE(SUBSTRING(reverse(custom_vars), 0, POSITION(\':\' IN reverse(custom_vars)))) in (:listCallFiles_ids)';
+                if (listCallFiles_ids !== '' && listCallFiles_ids.length !== 0) {
+                    extra_where_countCurrenDate += ' AND CAST(REVERSE(SUBSTRING(reverse(custom_vars), 0, POSITION(\':\' IN reverse(custom_vars)))) AS int) in (:listCallFiles_ids)';
                 }
-                sqlData = sqlData.replace('EXTRA_WHERE', extra_where_currentDate);
-                sqlData = sqlData.replace('EXTRA_WHERE_PARAMS', extra_where_currentDate);
-                db.sequelize['cdr-db'].query(sqlData, {
+                sqlCount = sqlCount.replace('EXTRA_WHERE', extra_where_countCurrenDate);
+                db.sequelize['cdr-db'].query(sqlCount, {
                     type: db.sequelize['cdr-db'].QueryTypes.SELECT,
                     replacements: {
                         date: parseInt(date),
                         start_time: start_time,
                         end_time: end_time,
-                        sip_code: filter.sip_code,
-                        sip_reason: filter.sip_reason,
-                        agent_idx: agent_idx,
-                        accounts_code: accounts_code,
+                        agent_uuids: agent_uuids,
+                        account_code: account_code,
                         listCallFiles_ids: listCallFiles_ids,
                     }
-                }).then(dataCurrentDate => {
-                    this.db['accounts'].findAll({
-                        where: {
-                            active: 'Y'
+                }).then(countAll => {
+                    if (countAll && parseInt(countAll[0].count) === 0) {
+                        res.send({
+                            success: true,
+                            status: 200,
+                            data: [],
+                            countAll: countAll[0].count
+                        })
+                        return
+                    }
+                    let pages = Math.ceil(countAll[0].count / params.limit);
+                    let sqlData = ` select count(*) as total_appel,
+                                           sum(durationsec::int)/60 AS talk_duration , 
+                                           cast(cast((sum(durationsec::int)/60) AS float)/count(*) AS DECIMAL(5,3)) as avg_talking,
+                                           agent
+                                           from acc_cdrs
+                                           WHERE SUBSTRING("custom_vars", 0 , POSITION(':' in "custom_vars") ) = :account_code 
+                                           AND agent IS NOT NULL
+                                           AND id >= ( select id  from acc_cdrs where SUBSTRING("custom_vars", 0 , POSITION(':' in "custom_vars") ) = '703596960803' 
+                                           EXTRA_WHERE
+                                            LIMIT 1
+                                           OFFSET :offset
+                                           )
+                                           EXTRA_WHERE_PARAMS
+                                           group by agent
+                                            LIMIT :limit`
+                    let extra_where_currentDate = '';
+                    if (start_time && start_time !== '') {
+                        extra_where_currentDate += ' AND start_time >= :start_time';
+                    }
+                    if (end_time && end_time !== '') {
+                        extra_where_currentDate += ' AND end_time <=  :end_time';
+                    }
+                    if (agent_uuids !== '' && agent_uuids.length !== 0) {
+                        extra_where_currentDate += ' AND agent in (:agent_uuids)';
+                    }
+                    if (listCallFiles_ids !== '' && listCallFiles_ids.length !== 0) {
+                        extra_where_currentDate += ' AND CAST(REVERSE(SUBSTRING(reverse(custom_vars), 0, POSITION(\':\' IN reverse(custom_vars)))) AS int) in (:listCallFiles_ids)';
+                    }
+                    sqlData = sqlData.replace('EXTRA_WHERE', extra_where_currentDate);
+                    sqlData = sqlData.replace('EXTRA_WHERE_PARAMS', extra_where_currentDate);
+                    db.sequelize['cdr-db'].query(sqlData, {
+                        type: db.sequelize['cdr-db'].QueryTypes.SELECT,
+                        replacements: {
+                            date: parseInt(date),
+                            start_time: start_time,
+                            end_time: end_time,
+                            agent_uuids: agent_uuids,
+                            account_code: account_code,
+                            listCallFiles_ids: listCallFiles_ids,
+                            offset: offset,
+                            limit: limit
                         }
-                    }).then((accounts) => {
-                        let cdrs_data = []
-                        PromiseBB.each(dataCurrentDate, item => {
-                            let account_data = accounts.filter(item_acc => item_acc.account_number === item.accountcode);
-                            item.account_info = account_data[0] ? account_data[0].first_name + " " + account_data[0].last_name : null;
-                            item.account = account_data[0];
-                            cdrs_data.push(item);
-                        }).then(cdrs_data => {
+                    }).then(dataCurrentDate => {
+                        if (dataCurrentDate && dataCurrentDate.length === 0) {
                             res.send({
                                 success: true,
                                 status: 200,
-                                data: cdrs_data,
+                                data: [],
                                 pages: pages,
                                 countAll: countAll[0].count
                             })
-                        }).catch(err => {
-                            _this.sendResponseError(res, [], err)
+                            return
+                        }
+                        PromiseBB.each(dataCurrentDate, item => {
+                            let account_data = dataAgent.filter(item_acc => item_acc.sip_device.uuid === item.agent);
+                            item.agent_info = account_data[0];
+                        }).then(cdr_data => {
+                            res.send({
+                                success: true,
+                                status: 200,
+                                data: dataCurrentDate,
+                                pages: pages,
+                                countAll: countAll[0].count
+                            })
                         })
+
                     }).catch(err => {
                         _this.sendResponseError(res, [], err)
                     })
-                }).catch(err => {
-                    _this.sendResponseError(res, [], err)
                 })
-            })
-        }
+            }
+        })
+
     }
 
 }

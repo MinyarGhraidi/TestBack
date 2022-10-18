@@ -29,7 +29,6 @@ class accounts extends baseModelbo {
     }
 
     getAccountByToken(req, res, next) {
-
         jwt.verify(req.headers.authorization.replace('Bearer ', ''), config.secret, (err, decodedToken) => {
             if (err) {
                 res.send(err);
@@ -44,7 +43,6 @@ class accounts extends baseModelbo {
                 });
             }
         });
-
     }
 
     signIn(req, res, next) {
