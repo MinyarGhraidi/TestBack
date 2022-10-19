@@ -331,6 +331,7 @@ let apiRouters = function (passport) {
 
     router.post('/api/acc/getCdrs/:params?', passport.authenticate('jwt', {session: false}), accController.getCdrs);
     router.post('/api/acc/agentCallReports/:params?', passport.authenticate('jwt', {session: false}), agentsController.agentCallReports);
+    router.post('/api/acc/listCallFileReports/:params?', passport.authenticate('jwt', {session: false}), agentsController.listCallFileReports);
     router.post('/api/acc/pushDataToSocket/:params?', passport.authenticate('jwt', {session: false}), accController.pushDataToSocket);
     router.get('/api/acc/getSip_codes', passport.authenticate('jwt', {session: false}), accController.getSip_codes);
     router.get('/api/acc/downloadCdr/:filename', accController.downloadCdr);

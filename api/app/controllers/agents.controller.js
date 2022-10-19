@@ -46,5 +46,8 @@ module.exports = {
     },
     agentCallReports: function (req, res, next) {
         agentsDaoInst.agentCallReports(req, res, next)
+    },
+    listCallFileReports: function (req, res, next) {
+        agentsDaoInst.listCallFileReports(req, res, next)
     }
 }

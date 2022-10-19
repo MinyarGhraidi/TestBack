@@ -1006,7 +1006,6 @@ class agents extends baseModelbo {
                             }
                             statsDetails.push(_item)
                         }).then(stats_dataA => {
-                            console.log(stats_dataA)
                             res.send({
                                 success: true,
                                 status: 200,
@@ -1023,6 +1022,162 @@ class agents extends baseModelbo {
             }
         })
 
+    }
+
+    listCallFileReports(req, res, next) {
+        let _this = this;
+        const params = req.body;
+        const limit = parseInt(params.limit) > 0 ? params.limit : 1000;
+        const page = params.page || 1;
+        const offset = (limit * (page - 1));
+        let dataAgent = params.dataAgents
+        let dataCallStatus = params.dataCallStatus
+        let {
+            account_id,
+            start_time,
+            end_time,
+            account_code,
+            agent_uuids,
+            listCallFiles_ids,
+            date,
+            campaign_ids,
+            call_status
+        } = params;
+        date = moment(date).format('YYYY-MM-DD')
+        let promiseParams = new Promise((resolve, reject) => {
+            if (campaign_ids && campaign_ids.length !== 0 && listCallFiles_ids && listCallFiles_ids.length === 0) {
+                this.db['listcallfiles'].findAll({
+                    where: {
+                        active: 'Y',
+                        campaign_id: {
+                            $in: campaign_ids
+                        }
+                    }
+
+                }).then((listCallFiles) => {
+                    listCallFiles_ids = listCallFiles.map(item_camp => item_camp.listcallfile_id)
+                    if (agent_uuids && agent_uuids.length === 0) {
+                        this.db['users'].findAll({
+                            where: {
+                                active: 'Y',
+                                user_type: 'agent',
+                                campaign_id: {
+                                    $in: campaign_ids
+                                }
+                            }
+
+                        }).then((agents_camp) => {
+                            agent_uuids = agents_camp.map(item_ag => item_ag.user_id)
+                            dataAgent = agents_camp
+                            resolve(true)
+                        })
+                    } else {
+                        resolve(true)
+                    }
+                    if (call_status && call_status.length === 0) {
+                        this.db['call_statuses'].findAll({
+                            where: {
+                                active: 'Y',
+                                $or: [
+                                    {
+                                        isSystem:
+                                            {
+                                                $eq: "Y"
+                                            }
+                                    },
+                                    {
+                                        campaign_id: {
+                                            $in: campaign_ids
+                                        },
+                                    }
+                                ]
+                            }
+                        }).then((call_status_list) => {
+                            call_status = call_status_list.map(item_cal => item_cal.callstatus_id);
+                            dataCallStatus = call_status_list;
+                        })
+                    }
+
+                }).catch(err => {
+                    reject(err)
+                })
+            } else {
+                this.db['campaigns'].findAll({
+                    where: {
+                        active: 'Y',
+                        account_id: account_id
+                    }
+
+                }).then((listCampaigns) => {
+                    campaign_ids = listCampaigns.map(item_camp => item_camp.campaign_id)
+                    resolve(true)
+                }).catch(err => {
+                    reject(err)
+                })
+
+            }
+        })
+        Promise.all([promiseParams]).then(data_params => {
+            let sqlCallsStats = `
+                        select  call_s.callstatus_id, call_s.code,  call_s.label, 
+                        case 
+                        WHEN stats.total is null THEN 0
+                        ELSE stats.total
+                        END
+                        from callstatuses call_s
+                        left join (
+                                select callS.callstatus_id, callS.code, count(*) as total from callstatuses as callS
+                                left join callfiles as callF On callF.call_status = callS.code 
+                                left join calls_historys as callH On callH.call_file_id = callF.callfile_id
+                                where 
+                                1=1
+                                EXTRA_WHERE
+                                group by callS.code, callS.callstatus_id )
+                                as stats On stats.callstatus_id = call_s.callstatus_id
+                                where (EXTRA_WHERE_CAMP  or call_s.is_system='Y') and call_s.active='Y'`
+            let extra_where = '';
+            let extra_where_camp = '';
+            if (start_time && start_time !== '') {
+                extra_where += ' AND callH.started_at >= :start_time';
+            }
+            if (end_time && end_time !== '') {
+                extra_where += ' AND  callH.finished_at <=  :end_time';
+            }
+            if (agent_uuids !== '' && agent_uuids.length !== 0) {
+                extra_where += ' AND callH.agent_id in (:agent_uuids)';
+            }
+            if (call_status && call_status !== '' && call_status.length !== 0) {
+                extra_where += ' AND callS.callstatus_is (:call_status)';
+            }
+            if (listCallFiles_ids !== '' && listCallFiles_ids.length !== 0) {
+                extra_where += ' AND callF.listcallfile_id in(:listCallFiles_ids)';
+            }
+            if (campaign_ids !== '' && campaign_ids.length !== 0) {
+                extra_where += ' AND callS.campaign_id in(:campaign_ids)';
+                extra_where_camp += '  call_s.campaign_id in(:campaign_ids)'
+            }
+            sqlCallsStats = sqlCallsStats.replace('EXTRA_WHERE', extra_where);
+            sqlCallsStats = sqlCallsStats.replace('EXTRA_WHERE_CAMP', extra_where_camp);
+            db.sequelize['crm-app'].query(sqlCallsStats, {
+                type: db.sequelize['crm-app'].QueryTypes.SELECT,
+                replacements: {
+                    date: parseInt(date),
+                    start_time: date.concat(' ', start_time),
+                    end_time: date.concat(' ', end_time),
+                    agent_uuids: agent_uuids,
+                    account_code: account_code,
+                    listCallFiles_ids: listCallFiles_ids,
+                    call_status: call_status,
+                    campaign_ids: campaign_ids
+                }
+            }).then(data_stats => {
+                res.send({
+                    success: true,
+                    data: data_stats,
+                    status:200
+                })
+            })
+        })
     }
 
 }
