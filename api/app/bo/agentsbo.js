@@ -1073,12 +1073,12 @@ class agents extends baseModelbo {
                         resolve(true);
                     }
                     if (call_status && call_status.length === 0) {
-                        this.db['call_statuses'].findAll({
+                        this.db['callstatuses'].findAll({
                             where: {
                                 active: 'Y',
                                 $or: [
                                     {
-                                        isSystem:
+                                        is_system:
                                             {
                                                 $eq: "Y"
                                             }
@@ -1130,9 +1130,10 @@ class agents extends baseModelbo {
                                 EXTRA_WHERE
                                 group by callS.code, callS.callstatus_id )
                                 as stats On stats.callstatus_id = call_s.callstatus_id
-                                where (EXTRA_WHERE_CAMP  or call_s.is_system='Y') and call_s.active='Y'`
+                                where (EXTRA_WHERE_CAMP  or call_s.is_system='Y') and call_s.active='Y' EXTRA_WHERE_STATUS`
             let extra_where = '';
             let extra_where_camp = '';
+            let extra_where_status = '';
             if (start_time && start_time !== '') {
                 extra_where += ' AND callH.started_at >= :start_time';
             }
@@ -1142,8 +1143,10 @@ class agents extends baseModelbo {
             if (agent_uuids !== '' && agent_uuids.length !== 0) {
                 extra_where += ' AND callH.agent_id in (:agent_uuids)';
             }
+
             if (call_status && call_status !== '' && call_status.length !== 0) {
-                extra_where += ' AND callS.callstatus_is (:call_status)';
+                extra_where += ' AND callS.callstatus_id in (:call_status)';
+                extra_where_status += ' AND call_s.callstatus_id in (:call_status)';
             }
             if (listCallFiles_ids !== '' && listCallFiles_ids.length !== 0) {
                 extra_where += ' AND callF.listcallfile_id in(:listCallFiles_ids)';
@@ -1154,6 +1157,7 @@ class agents extends baseModelbo {
             }
             sqlCallsStats = sqlCallsStats.replace('EXTRA_WHERE', extra_where);
             sqlCallsStats = sqlCallsStats.replace('EXTRA_WHERE_CAMP', extra_where_camp);
+            sqlCallsStats = sqlCallsStats.replace('EXTRA_WHERE_STATUS', extra_where_status);
             db.sequelize['crm-app'].query(sqlCallsStats, {
                 type: db.sequelize['crm-app'].QueryTypes.SELECT,
                 replacements: {
