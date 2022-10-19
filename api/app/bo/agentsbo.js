@@ -798,8 +798,8 @@ class agents extends baseModelbo {
                     type: db.sequelize['cdr-db'].QueryTypes.SELECT,
                     replacements: {
                         date: parseInt(date),
-                        start_time: start_time,
-                        end_time: end_time,
+                        start_time: moment(date).format('YYYY-MM-DD').concat(' ', start_time),
+                        end_time: moment(date).format('YYYY-MM-DD').concat(' ', end_time),
                         agent_uuids: agent_uuids,
                         account_code: account_code,
                         listCallFiles_ids: listCallFiles_ids
@@ -848,8 +848,8 @@ class agents extends baseModelbo {
                         type: db.sequelize['cdr-db'].QueryTypes.SELECT,
                         replacements: {
                             date: parseInt(date),
-                            start_time: start_time,
-                            end_time: end_time,
+                            start_time: moment(date).format('YYYY-MM-DD').concat(' ', start_time),
+                            end_time: moment(date).format('YYYY-MM-DD').concat(' ', end_time),
                             agent_uuids: agent_uuids,
                             account_code: account_code,
                             listCallFiles_ids: listCallFiles_ids,
@@ -921,8 +921,8 @@ class agents extends baseModelbo {
                     type: db.sequelize['cdr-db'].QueryTypes.SELECT,
                     replacements: {
                         date: parseInt(date),
-                        start_time: start_time,
-                        end_time: end_time,
+                        start_time: moment(date).format('YYYY-MM-DD').concat(' ', start_time),
+                        end_time: moment(date).format('YYYY-MM-DD').concat(' ', end_time),
                         agent_uuids: agent_uuids,
                         account_code: account_code,
                         listCallFiles_ids: listCallFiles_ids,
@@ -972,8 +972,8 @@ class agents extends baseModelbo {
                         type: db.sequelize['cdr-db'].QueryTypes.SELECT,
                         replacements: {
                             date: parseInt(date),
-                            start_time: start_time,
-                            end_time: end_time,
+                            start_time: moment(date).format('YYYY-MM-DD').concat(' ', start_time),
+                            end_time: moment(date).format('YYYY-MM-DD').concat(' ', end_time),
                             agent_uuids: agent_uuids,
                             account_code: account_code,
                             listCallFiles_ids: listCallFiles_ids,
@@ -1053,7 +1053,6 @@ class agents extends baseModelbo {
                             $in: campaign_ids
                         }
                     }
-
                 }).then((listCallFiles) => {
                     listCallFiles_ids = listCallFiles.map(item_camp => item_camp.listcallfile_id)
                     if (agent_uuids && agent_uuids.length === 0) {
@@ -1065,14 +1064,13 @@ class agents extends baseModelbo {
                                     $in: campaign_ids
                                 }
                             }
-
                         }).then((agents_camp) => {
-                            agent_uuids = agents_camp.map(item_ag => item_ag.user_id)
-                            dataAgent = agents_camp
-                            resolve(true)
+                            agent_uuids = agents_camp.map(item_ag => item_ag.user_id);
+                            dataAgent = agents_camp;
+                            resolve(true);
                         })
                     } else {
-                        resolve(true)
+                        resolve(true);
                     }
                     if (call_status && call_status.length === 0) {
                         this.db['call_statuses'].findAll({
@@ -1097,9 +1095,8 @@ class agents extends baseModelbo {
                             dataCallStatus = call_status_list;
                         })
                     }
-
                 }).catch(err => {
-                    reject(err)
+                    reject(err);
                 })
             } else {
                 this.db['campaigns'].findAll({
@@ -1109,20 +1106,19 @@ class agents extends baseModelbo {
                     }
 
                 }).then((listCampaigns) => {
-                    campaign_ids = listCampaigns.map(item_camp => item_camp.campaign_id)
-                    resolve(true)
+                    campaign_ids = listCampaigns.map(item_camp => item_camp.campaign_id);
+                    resolve(true);
                 }).catch(err => {
-                    reject(err)
+                    reject(err);
                 })
-
             }
         })
         Promise.all([promiseParams]).then(data_params => {
             let sqlCallsStats = `
                         select  call_s.callstatus_id, call_s.code,  call_s.label, 
                         case 
-                        WHEN stats.total is null THEN 0
-                        ELSE stats.total
+                            WHEN stats.total is null THEN 0
+                            ELSE stats.total
                         END
                         from callstatuses call_s
                         left join (
@@ -1174,8 +1170,10 @@ class agents extends baseModelbo {
                 res.send({
                     success: true,
                     data: data_stats,
-                    status:200
+                    status: 200
                 })
+            }).catch(err => {
+                reject(err);
             })
         })
     }
