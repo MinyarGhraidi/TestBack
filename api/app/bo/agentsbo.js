@@ -1027,9 +1027,6 @@ class agents extends baseModelbo {
     listCallFileReports(req, res, next) {
         let _this = this;
         const params = req.body;
-        const limit = parseInt(params.limit) > 0 ? params.limit : 1000;
-        const page = params.page || 1;
-        const offset = (limit * (page - 1));
         let dataAgent = params.dataAgents
         let dataCallStatus = params.dataCallStatus
         let {
