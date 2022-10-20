@@ -43,5 +43,8 @@ module.exports = {
     },
     onDisconnectAgents: function (req, res, next) {
         agentsDaoInst.onDisconnectAgents(req, res, next)
+    },
+    agentDetailsReports: function (req, res, next) {
+        agentsDaoInst.agentDetailsReports(req, res, next)
     }
 }

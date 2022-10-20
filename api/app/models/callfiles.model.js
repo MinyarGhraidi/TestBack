@@ -138,5 +138,11 @@ module.exports = (sequelize, Sequelize) => {
         'save_in_hooper'
     ]
 
+    callfile.associate = function (models) {
+        callfile.belongsTo(models.listcallfiles, {
+            foreignKey: 'listcallfile_id'
+        });
+    };
+
     return callfile
 }

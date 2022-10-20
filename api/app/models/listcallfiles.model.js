@@ -103,7 +103,7 @@ module.exports = (sequelize, Sequelize) => {
         });
         listcallfile.belongsTo(models.templates_list_call_files,{
             foreignKey: 'templates_id'
-        })
+        });
     };
     return listcallfile
 }

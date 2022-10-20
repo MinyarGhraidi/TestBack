@@ -19,6 +19,9 @@ const Op = require("sequelize");
 const {promise, reject} = require("bcrypt/promises");
 let _usersbo = new usersbo;
 const appSocket = new (require('../providers/AppSocket'))();
+const appHelper = require("../helpers/app");
+const app_config = appHelper.appConfig;
+
 
 class agents extends baseModelbo {
     constructor() {
@@ -190,7 +193,7 @@ class agents extends baseModelbo {
                                         .post(`${base_url_cc_kam}api/v1/agents`, agent, call_center_authorization)
                                         .then((resp) => {
                                             values.sip_device.uuid = resp.data.result.agent.uuid || null;
-                                            this.saveAgentInDB(values,is_agent)
+                                            this.saveAgentInDB(values, is_agent)
                                                 .then(agent => {
                                                     if (idx < bulkNum.length - 1) {
                                                         idx++
@@ -252,7 +255,7 @@ class agents extends baseModelbo {
                             call_center_authorization)
                         .then((resp) => {
                             _usersbo
-                                .saveUserFunction(values,is_agent)
+                                .saveUserFunction(values, is_agent)
                                 .then(agent => {
                                     res.send({
                                         status: 200,
@@ -286,7 +289,7 @@ class agents extends baseModelbo {
             })
     }
 
-    saveAgentInDB(values,is_agent) {
+    saveAgentInDB(values, is_agent) {
         return new Promise((resolve, reject) => {
             _usersbo
                 .saveUserFunction(values, is_agent)
@@ -415,7 +418,7 @@ class agents extends baseModelbo {
                 axios
                     .get(`${base_url_cc_kam}api/v1/agents/${uuid}`, call_center_authorization)
                     .then(resp => {
-                        let agent = {"status":telcoStatus};
+                        let agent = {"status": telcoStatus};
                         axios
                             .put(`${base_url_cc_kam}api/v1/agents/${uuid}/status`, agent, call_center_authorization)
                             .then(() => {
@@ -564,18 +567,18 @@ class agents extends baseModelbo {
 
     getCampaigns_ids() {
         return new Promise((resolve, reject) => {
-                this.db['campaigns'].findAll({
-                    where: {
-                        active: 'Y',
-                    }
+            this.db['campaigns'].findAll({
+                where: {
+                    active: 'Y',
+                }
+            })
+                .then(campaigns => {
+                    let campaigns_ids = campaigns.map(el => el.campaign_id);
+                    resolve(campaigns_ids);
                 })
-                    .then(campaigns => {
-                        let campaigns_ids = campaigns.map(el => el.campaign_id);
-                        resolve(campaigns_ids);
-                    })
-                    .catch(err => {
-                        reject(err);
-                    })
+                .catch(err => {
+                    reject(err);
+                })
         })
     }
 
@@ -584,7 +587,7 @@ class agents extends baseModelbo {
         let {account_id} = req.body;
         this.getCampaigns_ids()
             .then(campaigns_ids => {
-                let where = {active: 'Y', account_id: account_id, user_type: "agent", campaign_id : campaigns_ids}
+                let where = {active: 'Y', account_id: account_id, user_type: "agent", campaign_id: campaigns_ids}
 
                 this.db['users'].findAll({where: where})
                     .then(agents => {
@@ -720,6 +723,231 @@ class agents extends baseModelbo {
                 })
             } else {
                 return this.sendResponseError(res, ['Error.cannot fetch list agents'], 1, 403);
+            }
+        })
+    }
+
+    agentDetailsReports(req, res, next) {
+        const filter = req.body || null;
+
+        this.filterData(filter.campaign_id, filter.agents ,filter.listcallfile_id).then(data=>{
+            if(data.success){
+                this.DataCallsAgents(data.agents, data.list, filter.dateSelected.concat(' ',filter.start_time), filter.dateSelected.concat(' ',filter.end_time),filter.dateSelected).then(data_call=>{
+                    this.DataActionAgents(data.agents,filter.dateSelected.concat(' ',filter.start_time), filter.dateSelected.concat(' ',filter.end_time),filter.dateSelected).then(data_actions=>{
+                        data.agents.map(item=>{
+                            let index_uuid = data_call.findIndex(item_call => item_call.agent === item.sip_device.uuid);
+                            if(index_uuid !== -1){
+                                item.Number_of_call = data_call[index_uuid].count;
+                                item.Talking_Duration = data_call[index_uuid].total;
+                                item.AVG_Talking_Duration = data_call[index_uuid].moy;
+                            }else{
+                                item.Number_of_call = '0';
+                                item.Talking_Duration = '0';
+                                item.AVG_Talking_Duration = '0';
+                            }
+                            let action =[]
+                            data_actions.map(item_action=>{
+                                if(item_action.user_id === item.user_id){
+                                    action.push({
+                                        action_name: item_action.action_name,
+                                        duration: item_action.sum
+                                    })
+                                }
+                                item.data_action= action
+                            })
+                        })
+                        res.send({
+                            success: true,
+                            data: data.agents
+                        })
+                    }).catch(err=>{
+                        return this.sendResponseError(res, ['Error.cannot fetch list agents', err], 1, 403);
+                    })
+
+                }).catch(err=>{
+                    return this.sendResponseError(res, ['Error.cannot fetch list agents', err], 1, 403);
+                })
+            }
+
+        }).catch(err=>{
+            return this.sendResponseError(res, ['Error.cannot fetch list agents', err], 1, 403);
+        })
+
+    }
+
+    ListCallFile(campaign_id, listcallfile_id) {
+        return new Promise((resolve, reject) => {
+            let where = {};
+            if (listcallfile_id) {
+                where = {
+                    listcallfile_id: listcallfile_id,
+                    active: 'Y'
+                }
+            } else {
+                where = {
+                    active: 'Y'
+                }
+            }
+            db['callfiles'].findAll({
+                include: {
+                    model: db.listcallfiles,
+                    where:{
+                        campaign_id :campaign_id,
+                        active: 'Y'
+                    },
+                },
+                where: where
+            }).then(list => {
+                resolve(list)
+            }).catch(err=>{
+                reject(err)
+            })
+        })
+    }
+
+    DataCallsAgents (agents,list_Call,start_time, end_time,date) {
+        return new Promise((resolve, reject) => {
+            let current_Date = moment(new Date()).tz(app_config.TZ).format('YYYYMMDD');
+            let uuid = agents.map(item=>
+                item.sip_device.uuid
+            )
+
+            let Calls = list_Call.map(item=>
+                item.callfile_id
+            )
+
+            if (date !== current_Date){
+                let sqlCount = `select ac.agent , count(*) , SUM(CAST (ac.durationsec AS INTEGER) + CAST (ac.durationmsec AS INTEGER) /1000) /60 as total,
+                   SUM(CAST (ac.durationsec AS INTEGER) + CAST (ac.durationmsec AS INTEGER) /1000) /60 /count(*) as moy
+                            from cdrs_:date as ac
+                            WHERE agent in (:uuid) AND CAST((string_to_array("custom_vars", ':'))[3] AS INTEGER) in (:calls)
+                                EXTRA_WHERE
+                                GROUP BY ac.agent`
+                let extra_where_count = '';
+                if (start_time && start_time !== '') {
+                    extra_where_count += ' AND start_time >= :start_time';
+                }
+                if (end_time && end_time !== '') {
+                    extra_where_count += ' AND end_time <=  :end_time';
+                }
+                sqlCount = sqlCount.replace('EXTRA_WHERE', extra_where_count);
+                db.sequelize['cdr-db'].query(sqlCount, {
+                    type: db.sequelize['cdr-db'].QueryTypes.SELECT,
+                    replacements: {
+                        date: parseInt(date),
+                        start_time: start_time,
+                        end_time: end_time,
+                        uuid: uuid,
+                        calls: Calls
+                    }
+                }).then(result=>{
+                    resolve(result)
+                }).catch(err=>{
+                    reject(err)
+                })
+            } else {
+                let sqlCount = `select ac.agent , count(*) , SUM(CAST (ac.durationsec AS INTEGER) + CAST (ac.durationmsec AS INTEGER) /1000) /60 as total,
+                                SUM(CAST (ac.durationsec AS INTEGER) + CAST (ac.durationmsec AS INTEGER) /1000) /60 /count(*) as moy
+                            from acc_cdrs as ac
+                            WHERE agent in (:uuid) AND CAST((string_to_array("custom_vars", ':'))[3] AS INTEGER) in (:calls)
+                                EXTRA_WHERE
+                                GROUP BY ac.agent`
+
+                let extra_where_count = '';
+                if (start_time && start_time !== '') {
+                    extra_where_count += ' AND start_time >= :start_time';
+                }
+                if (end_time && end_time !== '') {
+                    extra_where_count += ' AND end_time <=  :end_time';
+                }
+                sqlCount = sqlCount.replace('EXTRA_WHERE', extra_where_count);
+                db.sequelize['cdr-db'].query(sqlCount, {
+                    type: db.sequelize['cdr-db'].QueryTypes.SELECT,
+                    replacements: {
+                        date: parseInt(date),
+                        start_time: start_time,
+                        end_time: end_time,
+                        uuid: uuid,
+                        calls: Calls
+                    }
+                }).then(result => {
+                    resolve(result)
+                }).catch(err=>{
+                    reject(err)
+                })
+            }
+        })
+    }
+
+    DataActionAgents (agents,start_time, end_time){
+       return new Promise((resolve, reject)=>{
+           let agent_id= agents.map(item=> item.user_id)
+           let sql = `select agent_log.user_id , agent_log.action_name,SUM (agent_log.finish_at-agent_log.start_at) 
+                       from agent_log_events as agent_log 
+                       where agent_log.user_id in (:agent_id) AND (agent_log.action_name = 'on-break' OR agent_log.action_name = 'waiting-call') AND
+                       agent_log.start_at >= :start_at AND agent_log.finish_at <= :finish_at
+                        GROUP BY agent_log.action_name ,agent_log.user_id `
+            db.sequelize['crm-app'].query(sql,{
+                type: db.sequelize['crm-app'].QueryTypes.SELECT,
+                replacements:{
+                    agent_id:agent_id,
+                    start_at: start_time,
+                    finish_at: end_time
+                }
+            }).then(result=>{
+                resolve(result)
+            }).catch(err=>{
+                reject(err)
+            })
+       })
+    }
+
+    filterData(campaign_id , agents , listcallfile_id){
+        return new Promise((resolve, reject)=>{
+            if(campaign_id && campaign_id.length !== 0){
+                if(agents &&agents.length !== 0){
+                    this.ListCallFile(campaign_id, listcallfile_id).then(list => {
+                        resolve({success: true,
+                            agents: agents,
+                            list: list})
+                    }).catch(err=>{
+                        reject(err)
+                    })
+                }else {
+                    db['users'].findAll({
+                        where:{
+                            campaign_id: campaign_id,
+                            active: 'Y'
+                        }
+                    }).then(agent=>{
+                        this.ListCallFile(campaign_id, listcallfile_id).then(list => {
+                            let data_agent = agent.map(item=> item.dataValues)
+                            resolve({success: true,
+                                agents: data_agent,
+                                list: list})
+                        })
+                    }).catch(err=>{
+                        reject(err)
+                    })
+                }
+            }else{
+                if (agents &&agents.length !== 0){
+                    let campaigns =agents.map(item=> item.campaign_id)
+                    this.ListCallFile(campaigns, listcallfile_id).then(list => {
+                        resolve({
+                            success: true,
+                            agents: agents,
+                            list: list
+                        })
+                    }).catch(err=>{
+                        reject(err)
+                    })
+
+                }else{
+                    resolve({
+                        success: false
+                    })
+                }
             }
         })
     }
