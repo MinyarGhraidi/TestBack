@@ -787,9 +787,9 @@ class agents extends baseModelbo {
                     active: 'Y'
                 }
             }
-            db['callfiles'].findAll({
+            db['listcallfiles'].findAll({
                 include: {
-                    model: db.listcallfiles,
+                    model: db.campaigns,
                     where: {
                         campaign_id: campaign_id,
                         active: 'Y'
@@ -816,7 +816,7 @@ class agents extends baseModelbo {
             )
 
             if (date !== current_Date) {
-                let sqlCount = `select ac.agent , count(*) , SUM(CAST (ac.durationsec AS INTEGER) + CAST (ac.durationmsec AS INTEGER) /1000) /60 as total,
+                let sqlCount = `select ac.agent , count(*) , SUM(CAST (ac.durationsec AS INTEGER)) /60 as total,
                    SUM(CAST (ac.durationsec AS INTEGER) + CAST (ac.durationmsec AS INTEGER) /1000) /60 /count(*) as moy
                             from cdrs_:date as ac
                             WHERE agent in (:uuid) AND CAST((string_to_array("custom_vars", ':'))[3] AS INTEGER) in (:calls)
@@ -845,7 +845,7 @@ class agents extends baseModelbo {
                     reject(err)
                 })
             } else {
-                let sqlCount = `select ac.agent , count(*) , SUM(CAST (ac.durationsec AS INTEGER) + CAST (ac.durationmsec AS INTEGER) /1000) /60 as total,
+                let sqlCount = `select ac.agent , count(*) , SUM(CAST (ac.durationsec AS INTEGER) ) /60 as total,
                                 SUM(CAST (ac.durationsec AS INTEGER) + CAST (ac.durationmsec AS INTEGER) /1000) /60 /count(*) as moy
                             from acc_cdrs as ac
                             WHERE agent in (:uuid) AND CAST((string_to_array("custom_vars", ':'))[3] AS INTEGER) in (:calls)
