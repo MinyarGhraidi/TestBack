@@ -97,7 +97,7 @@ module.exports = (sequelize, Sequelize) => {
         'trunck_id',
         'script'
 
-    ],
+    ]
         campaign.prototype.fieldsSearchMetas = [
             'campaign_id',
             'campaign_name',
