@@ -1127,7 +1127,9 @@ class agents extends baseModelbo {
                                 EXTRA_WHERE
                                 group by callS.code, callS.callstatus_id )
                                 as stats On stats.callstatus_id = call_s.callstatus_id
-                                where (EXTRA_WHERE_CAMP  or call_s.is_system='Y') and call_s.active='Y' EXTRA_WHERE_STATUS`
+                                where (EXTRA_WHERE_CAMP  or call_s.is_system='Y') and call_s.active='Y' EXTRA_WHERE_STATUS 
+                                order by total desc
+                                `
             let extra_where = '';
             let extra_where_camp = '';
             let extra_where_status = '';
