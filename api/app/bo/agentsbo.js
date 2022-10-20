@@ -1,5 +1,4 @@
 const {baseModelbo} = require('./basebo');
-let sequelize = require('sequelize');
 let db = require('../models');
 const {validateEmail} = require("../helpers/helpers");
 const config = require('../config/config.json');
@@ -12,6 +11,7 @@ const base_url_cc_kam = require(__dirname + '/../config/config.json')["base_url_
 const call_center_authorization = {
     headers: {Authorization: call_center_token}
 };
+const PromiseBB = require("bluebird");
 
 const usersbo = require('./usersbo');
 const {Sequelize} = require("sequelize");
@@ -247,7 +247,6 @@ class agents extends baseModelbo {
         _usersbo.isUniqueUsername(values.username, user_id)
             .then(isUnique => {
                 if (isUnique) {
-                    console.log(isUnique)
                     let dataAgent = {username, password, domain, options, accountcode, status, enabled, subscriber_id}
                     axios
                         .put(`${base_url_cc_kam}api/v1/agents/${sip_device.uuid}`, dataAgent
