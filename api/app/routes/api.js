@@ -340,6 +340,9 @@ let apiRouters = function (passport) {
     router.post('/api/templateList/find', passport.authenticate('jwt', {session: false}), TemplateListCallFile.find);
     router.get('/api/templateList/findById/:entity_id', passport.authenticate('jwt', {session: false}), TemplateListCallFile.findById);
 
+    router.post('/api/agent/agentReports', passport.authenticate('jwt', {session: false}),  agentsController.agentDetailsReports);
+
+
 
     return router;
 
