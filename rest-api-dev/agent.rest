@@ -5,13 +5,13 @@ Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9c
 
 ###
 #GET AGENT BY UUID
-GET https://occ.oxilog.net:2443/api/v1/agents/259518e1-6f34-4ac1-81fa-d4d34a608192
+GET https://occ.oxilog.net:2443/api/v1/agents/6a02f284-5f4a-40af-9c80-9c52109b5cc2
 Content-Type: application/json
 Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9cIi2IY5
 
 ###
 #GET AGENT SIPINFO BY UUID
-GET https://occ.oxilog.net:2443/api/v1/agents/259518e1-6f34-4ac1-81fa-d4d34a608192/sipinfo
+GET https://occ.oxilog.net:2443/api/v1/agents/6a02f284-5f4a-40af-9c80-9c52109b5cc2/sipinfo
 Content-Type: application/json
 Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9cIi2IY5
 
@@ -110,16 +110,12 @@ Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9c
 
 ###
 #UPDATE AGENT STATUS
-<<<<<<< HEAD
-PUT https://occ.oxilog.net:2443/api/v1/agents/d3c944d0-d314-4d9a-a1e5-339186e90c14/status
-=======
-PUT https://occ.oxilog.net:2443/api/v1/agents/9977c6b0-5f26-40af-8070-eccaf1c61d18/status
->>>>>>> cd55c6d246681a8cd2054ffbdbe1851554dcbbb6
+PUT https://occ.oxilog.net:2443/api/v1/agents/6a02f284-5f4a-40af-9c80-9c52109b5cc2/status
 Content-Type: application/json
 Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9cIi2IY5
 
 {
-  "status": "available"
+  "status": "available-on-demand"
 }
 
 ###
