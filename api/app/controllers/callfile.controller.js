@@ -27,5 +27,12 @@ module.exports = {
     },
     updateCallFileQualification :function (req, res, next){
         _itembo.updateCallFileQualification(req,res,next)
-    }
+    },
+    leadsStats :function (req, res, next){
+        _itembo.leadsStats(req,res,next)
+    },
+    getHistoryCallFile :function (req, res, next){
+        _itembo.getHistoryCallFile(req,res,next)
+    },
+
 };

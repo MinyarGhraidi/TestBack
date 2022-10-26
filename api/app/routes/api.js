@@ -293,6 +293,8 @@ let apiRouters = function (passport) {
     router.post("/api/livecalls/getLiveCallsByAccount", passport.authenticate('jwt', {session: false}), liveCallsController.getLiveCallsByAccount);
 
     router.post('/api/callfile/UpdateCall', passport.authenticate('jwt', {session: false}), callfileController.updateCallFileQualification)
+    router.post('/api/callfile/leadsStats', passport.authenticate('jwt', {session: false}), callfileController.leadsStats)
+    router.post('/api/callfile/getHistoryCallFile', passport.authenticate('jwt', {session: false}), callfileController.getHistoryCallFile)
 
 
     router.post('/api/message/save', passport.authenticate('jwt', {session: false}), MessageController.save);

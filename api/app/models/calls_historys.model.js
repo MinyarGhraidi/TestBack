@@ -41,6 +41,12 @@ module.exports = (sequelize, Sequelize) => {
             dmt: {
                 type: Sequelize.INTEGER
             },
+            list_call_file_id: {
+                type: Sequelize.INTEGER
+            },
+            note: {
+                type: Sequelize.STRING
+            },
         },
         {timestamps: false}
     );
@@ -56,12 +62,17 @@ module.exports = (sequelize, Sequelize) => {
         'updated_at',
         'uuid',
         'dmc',
-        'dmt'
+        'dmt',
+        'list_call_file_id',
+        'note'
 
     ];
     calls_historys.associate = function (models) {
         calls_historys.belongsTo(models.users, {
             foreignKey: 'agent_id'
+        })
+        calls_historys.belongsTo(models.callfiles, {
+            foreignKey: 'call_file_id'
         })
     }
 
