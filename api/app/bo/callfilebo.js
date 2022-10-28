@@ -9,6 +9,7 @@ const appDir = path.dirname(require.main.filename);
 let amqp = require('amqplib/callback_api');
 const appHelper = require("../helpers/app");
 const {reject, promise} = require("bcrypt/promises");
+const moment = require("moment");
 const rabbitmq_url = appHelper.rabbitmq_url;
 const app_config = require("../helpers/app").appConfig;
 class callfiles extends baseModelbo {
@@ -302,18 +303,6 @@ class callfiles extends baseModelbo {
                                 const data = xlsx.utils.sheet_to_json(workbook.Sheets[sheetNames[0]])
                                 result = data;
                                 resolve(result);
-                                // csv({
-                                //     noheader: true,
-                                //     delimiter: [',', ';']
-                                // })
-                                //     .fromFile(path)
-                                //     .then((jsonObj) => {
-                                //         console.log('jsonObj',jsonObj)
-                                //         result = jsonObj;
-                                //         console.log('result', result)
-                                //
-                                //         resolve(result);
-                                //     })
                             } else {
                                 resolve(result);
                             }
@@ -382,14 +371,140 @@ class callfiles extends baseModelbo {
             callStatus: callStatus
         },{
             where:{
-                callfile_id:callfile_id
+                callfile_id: callfile_id
             }
-        }).then(result=>{
+        }).then(result => {
             res.send({
                 success: true
             })
-        }).catch(err=>{
+        }).catch(err => {
             return this.sendResponseError(res, ['Error', err], 1, 403);
+        })
+    }
+
+    leadsStats(req, res, next) {
+        let _this = this;
+        let filter = req.body;
+        const limit = parseInt(filter.limit) > 0 ? filter.limit : 1000;
+        const page = filter.page || 1;
+        const offset = (limit * (page - 1));
+        let {start_time, end_time, listCallFiles_ids, date} = filter
+        let sqlLeads = `Select * from calls_historys as calls_h
+                        left join callfiles as callF on callF.callfile_id = calls_h.call_file_id
+                        where calls_h.active = :active 
+                               and callF.active = :active
+                               and  calls_h.call_file_id ='103945'
+                         EXTRA_WHERE 
+                         LIMIT :limit
+                         OFFSET :offset`
+        let sqlCount = `select count(*)
+                            from calls_historys as calls_h
+                                WHERE active= :active
+                                EXTRA_WHERE`
+        let extra_where_count = '';
+        let extra_where = '';
+
+        if (start_time && start_time !== '') {
+            extra_where_count += ' AND started_at >= :start_time';
+            extra_where += ' AND started_at >= :start_time';
+        }
+        if (end_time && end_time !== '') {
+            extra_where_count += ' AND finished_at <=  :end_time';
+            extra_where += ' AND finished_at <=  :end_time';
+        }
+        if (listCallFiles_ids  && listCallFiles_ids.length !== 0) {
+            extra_where_count += ' AND list_call_file_id in (:listCallFiles_ids)';
+            extra_where += ' AND list_call_file_id in (:listCallFiles_ids)';
+        }
+        sqlCount = sqlCount.replace('EXTRA_WHERE', extra_where_count);
+        sqlLeads = sqlLeads.replace('EXTRA_WHERE', extra_where);
+        db.sequelize['crm-app'].query(sqlCount, {
+            type: db.sequelize['crm-app'].QueryTypes.SELECT,
+            replacements: {
+                date: parseInt(date),
+                start_time: moment(date).format('YYYY-MM-DD').concat(' ', start_time),
+                end_time: moment(date).format('YYYY-MM-DD').concat(' ', end_time),
+                listCallFiles_ids: listCallFiles_ids,
+                active: 'Y'
+            }
+        }).then(countAll => {
+            let pages = Math.ceil(countAll[0].count / filter.limit);
+            db.sequelize['crm-app'].query(sqlLeads, {
+                type: db.sequelize['crm-app'].QueryTypes.SELECT,
+                replacements: {
+                    date: parseInt(date),
+                    start_time: moment(date).format('YYYY-MM-DD').concat(' ', start_time),
+                    end_time: moment(date).format('YYYY-MM-DD').concat(' ', end_time),
+                    listCallFiles_ids: listCallFiles_ids,
+                    active: 'Y',
+                    limit: limit,
+                    offset: offset
+                }
+            }).then(dataLeads => {
+                    res.send({
+                        success: true,
+                        status:200,
+                        data:dataLeads,
+                        pages: pages
+                    })
+            }).catch(err => {
+                _this.sendResponseError(res, ['Error stats'], err)
+            })
+        }).catch(err => {
+            _this.sendResponseError(res, ['Error stats'], err)
+        })
+    }
+
+    getHistoryCallFile(req, res, next) {
+        let _this = this;
+        let data = req.body;
+
+        if(!!!data || !!!data.call_file_id) {
+            _this.sendResponseError(res, ['Error.callFileIdRequired'])
+            return
+        }
+        _this.db['callfiles'].findOne({
+            where: {
+                active: 'Y',
+                callfile_id: data.call_file_id
+            }
+        }).then(callFileData => {
+            if(!!!callFileData) {
+                res.send({
+                    success: true,
+                    status:200,
+                    data: null
+                })
+                return
+            }
+            let sqlDetails = `select * from calls_historys  as call_h 
+                                left join users as u On u.user_id = call_h.agent_id
+                                left join callfiles as callF On callF.callfile_id = call_h.call_file_id
+                                where call_h.call_file_id =:call_file_id and call_h.active= :active`
+            _this.db['calls_historys'].findAll({
+                where: {
+                    active: 'Y',
+                    call_file_id: data.call_file_id
+                },
+                include:[{
+                    model: db.users
+                },{
+                    model: db.callfiles
+                }],
+                order: [['started_at', 'DESC']],
+            }).then(callFileStats => {
+                let callFileInfo  = callFileData.toJSON();
+                callFileInfo.stats = callFileStats;
+                res.send({
+                    success: true,
+                    status:200,
+                    data: callFileInfo,
+                })
+            }).catch(err => {
+                _this.sendResponseError(res, ['Error.getStats'], err)
+            })
+        }).catch(err => {
+            _this.sendResponseError(res, ['Error.getFileData'], err)
         })
     }
 }
