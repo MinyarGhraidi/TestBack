@@ -110,16 +110,14 @@ Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9c
 
 ###
 #UPDATE AGENT STATUS
-<<<<<<< HEAD
-PUT https://occ.oxilog.net:2443/api/v1/agents/d3c944d0-d314-4d9a-a1e5-339186e90c14/status
-=======
-PUT https://occ.oxilog.net:2443/api/v1/agents/9977c6b0-5f26-40af-8070-eccaf1c61d18/status
->>>>>>> cd55c6d246681a8cd2054ffbdbe1851554dcbbb6
+
+PUT https://occ.oxilog.net:2443/api/v1/agents/ad9753c2-2db4-4684-ab03-0d2212be9d5c/status
+
 Content-Type: application/json
 Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9cIi2IY5
 
 {
-  "status": "available"
+  "status": "available-on-demand"
 }
 
 ###
