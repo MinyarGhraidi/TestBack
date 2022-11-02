@@ -309,7 +309,7 @@ class users extends baseModelbo {
                 .then(data => {
                     if (data && data.length !== 0) {
                         if (username === data[0].username && user_id === data[0].user_id) {
-                            resolve(true)
+                            resolve(true);
                         } else {
                             resolve(false);
                         }

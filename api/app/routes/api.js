@@ -205,6 +205,7 @@ let apiRouters = function (passport) {
     router.put("/api/callfile/update", passport.authenticate('jwt', {session: false}), callfileController.update);
     router.delete("/api/callfile/delete/:params", passport.authenticate('jwt', {session: false}), callfileController.delete);
     router.post("/api/callfile/save", callfileController.save);
+    router.post("/api/callfile/getEntityRevisionByModelId", callfileController.getEntityRevisionByModelId);
 
     // dids routers
     router.post("/api/didsgroups/find", passport.authenticate('jwt', {session: false}), didsgroupsController.find);
