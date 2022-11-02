@@ -28,6 +28,71 @@ class accounts extends baseModelbo {
         this.primaryKey = 'account_id';
     }
 
+    changeStatus(acc_id,status){
+        let index = 0;
+        let indexUp = 0;
+        return new Promise((resolve, reject) => {
+            const toUpDate = [
+                'didsgroups', 'truncks', 'roles', 'users', 'templates_list_call_files', 'dialplans'
+            ]
+            toUpDate.map( dbs => {
+                if (dbs === 'users') {
+                    this.db['roles_crms'].findAll({
+                        where : {
+                            value : { in : ['agent', 'user', 'sales']},
+                        }
+                    }).then( (role) => {
+                        if (!!!role) {
+                            return reject("Error.RoleCrmsNotFound");
+                        }
+                        role.forEach( data => {
+                            this.db["users"].update({status: status , updated_at : new Date()}, {where: {role_crm_id: data.id , account_id : acc_id , active : 'Y'}})
+                                .then(data => {
+                                    if (index < role.length - 1) {
+                                        index++;
+                                    } else {
+                                        resolve(true);
+                                    }
+                                }).catch(err => {
+                                return reject(err);
+                            });
+                        });
+                    }).catch(err => {
+                        reject(err);
+                    })
+                } else {
+                    this.db[dbs].update({status: status , updated_at : new Date()}, {where: {account_id: acc_id, active : 'Y'}}).then(data=>{
+                        if (indexUp < toUpDate.length - 1) {
+                            indexUp++;
+                        } else {
+                            resolve(true);
+                        }
+                    });
+                }
+
+            });
+        })
+    }
+
+     changeStatusByIdAcc(req, res, next) {
+        let {account_id, status} = req.body;
+        if ((!!!account_id || !!!status)) {
+            return this.sendResponseError(res, ['Error.RequestDataInvalid'], 0, 403);
+        }
+        if (status !== 'N' && status !== 'Y') {
+            return this.sendResponseError(res, ['Error.StatusMustBe_Y_Or_N'], 0, 403);
+        }
+        this.changeStatus(account_id,status).then(data => {
+            res.send({
+                status: 200,
+                message: "success",
+                success: true
+            })
+        }).catch((error) => {
+             return this.sendResponseError(res, ['Error.AnErrorHasOccurredChangeStatus', error], 1, 403);
+         });
+
+    }
     getAccountByToken(req, res, next) {
         jwt.verify(req.headers.authorization.replace('Bearer ', ''), config.secret, (err, decodedToken) => {
             if (err) {
