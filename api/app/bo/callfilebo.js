@@ -389,17 +389,18 @@ class callfiles extends baseModelbo {
         const page = filter.page || 1;
         const offset = (limit * (page - 1));
         let {start_time, end_time, listCallFiles_ids, date} = filter
-        let sqlLeads = `Select * from calls_historys as calls_h
-                        left join callfiles as callF on callF.callfile_id = calls_h.call_file_id
-                        where calls_h.active = :active 
+        let sqlLeads = `Select distinct  callF.* from callfiles as callF
+                        left join calls_historys as calls_h on callF.callfile_id = calls_h.call_file_id
+                        where calls_h.active = :active
                                and callF.active = :active
-                               and  calls_h.call_file_id ='103945'
+                               and  callF.callfile_id ='103945'
                          EXTRA_WHERE 
                          LIMIT :limit
                          OFFSET :offset`
         let sqlCount = `select count(*)
                             from calls_historys as calls_h
                                 WHERE active= :active
+                                and  calls_h.call_file_id ='103945'
                                 EXTRA_WHERE`
         let extra_where_count = '';
         let extra_where = '';

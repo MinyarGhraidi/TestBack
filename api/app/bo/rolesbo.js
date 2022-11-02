@@ -117,7 +117,6 @@ class roles extends baseModelbo {
 
     deleteRole(req, res, next) {
         let id = req.params.params;
-
         this.db['roles'].update({
                 active: 'N'
             },
