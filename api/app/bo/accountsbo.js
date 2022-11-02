@@ -21,6 +21,7 @@ const base_url_cc_kam = require(__dirname + '/../config/config.json')["base_url_
 const call_center_authorization = {
     headers: {Authorization: call_center_token}
 };
+
 class accounts extends baseModelbo {
     constructor() {
         super('accounts', 'account_id');
@@ -28,53 +29,163 @@ class accounts extends baseModelbo {
         this.primaryKey = 'account_id';
     }
 
-    changeStatus(acc_id,status){
-        let index = 0;
-        let indexUp = 0;
+    changeStatus_dids(account_id, status) {
+        let indexDid_group = 0;
+
         return new Promise((resolve, reject) => {
-            const toUpDate = [
-                'didsgroups', 'truncks', 'roles', 'users', 'templates_list_call_files', 'dialplans'
-            ]
-            toUpDate.map( dbs => {
-                if (dbs === 'users') {
-                    this.db['roles_crms'].findAll({
-                        where : {
-                            value : { in : ['agent', 'user', 'sales']},
-                        }
-                    }).then( (role) => {
-                        if (!!!role) {
-                            return reject("Error.RoleCrmsNotFound");
-                        }
-                        role.forEach( data => {
-                            this.db["users"].update({status: status , updated_at : new Date()}, {where: {role_crm_id: data.id , account_id : acc_id , active : 'Y'}})
-                                .then(data => {
-                                    if (index < role.length - 1) {
-                                        index++;
-                                    } else {
-                                        resolve(true);
-                                    }
-                                }).catch(err => {
-                                return reject(err);
-                            });
-                        });
-                    }).catch(err => {
-                        reject(err);
-                    })
-                } else {
-                    this.db[dbs].update({status: status , updated_at : new Date()}, {where: {account_id: acc_id, active : 'Y'}}).then(data=>{
-                        if (indexUp < toUpDate.length - 1) {
-                            indexUp++;
-                        } else {
-                            resolve(true);
-                        }
-                    });
+            this.db['didsgroups'].findAll({
+                where: {
+                    account_id: account_id,
                 }
+            }).then((didsList) => {
+                if (!!!didsList.length !== 0) {
+                   return resolve(true)
+                }
+                console.log(didsList)
+                didsList.forEach(data => {
+                    this.db["dids"].update({
+                        status: status
+                    }, {where: {did_group_id: data.did_id, active: 'Y'}})
+                        .then(() => {
+                            if (indexDid_group < didsList.length - 1) {
+                                indexDid_group++;
+                            } else {
+                                resolve(true);
+                            }
+                        }).catch(err => {
+                        return reject(err);
+                    });
+                });
+            }).catch(err => {
+                console.log(err)
+                reject(err);
+            });
+
+        })
+    }
+
+    changeStatusDialplan_items(account_id, status) {
+        let indexDialplan = 0;
+
+        return new Promise((resolve, reject) => {
+            this.db['dialplans'].findAll({
+                where: {
+                    account_id: account_id,
+                }
+            }).then((dialplansList) => {
+                if (!!!dialplansList.length !== 0) {
+                    return resolve(true);
+                }
+                dialplansList.forEach(data => {
+                    this.db["dialplan_items"].update({
+                        status: (status === 'Y')
+                    }, {where: {dialplan_id: data.dialplan_id, active: 'Y'}})
+                        .then(() => {
+                            if (indexDialplan < dialplansList.length - 1) {
+                                indexDialplan++;
+                            } else {
+                                resolve(true);
+                            }
+                        }).catch(err => {
+                        return reject(err);
+                    });
+                });
+            }).catch(err => {
+                reject(err);
+            });
+
+        })
+    }
+
+    changeStatusUsers(account_id, status) {
+        let indexUser = 0;
+
+        return new Promise((resolve, reject) => {
+            this.db['roles_crms'].findAll({
+                where: {
+                    value: {in: ['agent', 'user', 'sales']},
+                }
+            }).then((role) => {
+                if (!!!role.length !== 0) {
+                    return resolve(true);
+                }
+                role.forEach(data => {
+                    this.db["users"].update({status: status, updated_at: new Date()}, {
+                        where: {
+                            role_crm_id: data.id,
+                            account_id: account_id,
+                            active: 'Y'
+                        }
+                    })
+                        .then(() => {
+                            if (indexUser < role.length - 1) {
+                                indexUser++;
+                            } else {
+                                resolve(true);
+                            }
+                        }).catch(err => {
+                        return reject(err);
+                    });
+                });
+            }).catch(err => {
+                reject(err);
+            });
+        })
+    }
+
+    changeStatusForEntities(entities, account_id, status) {
+        let indexEntities = 0;
+        return new Promise((resolve, reject) => {
+            entities.map(dbs => {
+                this.db[dbs].update({status: status, updated_at: new Date()}, {
+                    where: {
+                        account_id: account_id,
+                        active: 'Y'
+                    }
+                }).then(() => {
+                    if (indexEntities < entities.length - 1) {
+                        indexEntities++;
+                    } else {
+                        resolve(true);
+                    }
+                }).catch(err => {
+                    reject(err);
+                });
+
 
             });
         })
     }
 
-     changeStatusByIdAcc(req, res, next) {
+    changeStatus(account_id, status) {
+
+        return new Promise((resolve, reject) => {
+            const entities = [
+                'didsgroups', 'truncks', 'roles', 'templates_list_call_files', 'dialplans'
+            ]
+            this.changeStatusForEntities(entities, account_id, status).then(() => {
+                this.changeStatusUsers(account_id, status).then(() => {
+                    this.changeStatusDialplan_items(account_id, status).then(() => {
+                        this.changeStatus_dids(account_id, status).then(() => {
+                            resolve(true);
+                        }).catch(err => {
+                            return reject(err);
+                        })
+                    }).catch(err => {
+                        return reject(err);
+                    });
+                }).catch(err => {
+                    return reject(err);
+                });
+            }).catch(err => {
+                return reject(err);
+            });
+
+
+        })
+    }
+
+    changeStatusByIdAcc(req, res, next) {
         let {account_id, status} = req.body;
         if ((!!!account_id || !!!status)) {
             return this.sendResponseError(res, ['Error.RequestDataInvalid'], 0, 403);
@@ -82,17 +193,18 @@ class accounts extends baseModelbo {
         if (status !== 'N' && status !== 'Y') {
             return this.sendResponseError(res, ['Error.StatusMustBe_Y_Or_N'], 0, 403);
         }
-        this.changeStatus(account_id,status).then(data => {
+        this.changeStatus(account_id, status).then(data => {
             res.send({
                 status: 200,
                 message: "success",
                 success: true
             })
         }).catch((error) => {
-             return this.sendResponseError(res, ['Error.AnErrorHasOccurredChangeStatus', error], 1, 403);
-         });
+            return this.sendResponseError(res, ['Error.AnErrorHasOccurredChangeStatus', error], 1, 403);
+        });
 
     }
+
     getAccountByToken(req, res, next) {
         jwt.verify(req.headers.authorization.replace('Bearer ', ''), config.secret, (err, decodedToken) => {
             if (err) {
@@ -219,7 +331,7 @@ class accounts extends baseModelbo {
                                     return _this.sendResponseError(res, ['Error.AnErrorHasOccurredUser', err], 1, 403);
                                 })
                             }).catch(err => {
-                                return _this.sendResponseError(res, ['Error.AnErrorHasOccurredUser', err], 1, 403);
+                            return _this.sendResponseError(res, ['Error.AnErrorHasOccurredUser', err], 1, 403);
                         })
                     } else {
                         let dataAccount = {

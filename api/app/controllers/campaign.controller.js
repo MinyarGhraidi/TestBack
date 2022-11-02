@@ -46,5 +46,8 @@ module.exports = {
     authorize: function (req, res, next) {
         _itembo.authorize(req, res, next);
     },
+    changeStatusByIdCompaign: function (req, res, next) {
+        _itembo.changeStatusByIdCompaign(req, res, next);
+    }
 
 };
