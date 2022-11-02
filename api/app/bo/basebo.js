@@ -512,6 +512,7 @@ class baseModelbo {
                     model_name: model_name,
                     active: 'Y'
                 },
+                order: [['date', 'DESC']],
                 include: [{
                     model: _this.db['users']
                 }]
