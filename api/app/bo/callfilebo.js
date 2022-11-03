@@ -495,17 +495,69 @@ class callfiles extends baseModelbo {
                 order: [['started_at', 'DESC']],
             }).then(callFileStats => {
                 let callFileInfo  = callFileData.toJSON();
-                callFileInfo.stats = callFileStats;
-                res.send({
-                    success: true,
-                    status:200,
-                    data: callFileInfo,
+                let statsData = [];
+                let idx  = 0
+                let historyPromise = new Promise((resolve, reject) => {
+                    callFileStats.forEach(item_callFile => {
+                        _this.getEntityRevisionByItem(2, 'dialplan_items').then(data_revision => {
+                            let item_callFile_json = item_callFile.toJSON();
+                            let data = [];
+                            data_revision.forEach((item_revision, idx) => {
+                                data.push({
+                                    key: idx,
+                                    before: item_revision.before,
+                                    after: item_revision.after,
+                                    changes: item_revision.changes,
+                                    date: moment(item_revision.date).format('YYYY-MM-DD HH:mm:ss'),
+                                    user: item_revision.user
+                                })
+                            });
+                            item_callFile_json.revisionData = data
+                            statsData.push(item_callFile_json)
+                            if(idx < callFileStats.length - 1) {
+                                idx++
+                            } else {
+                                resolve(statsData)
+                            }
+                        }).catch(err => {
+                            reject(err)
+                        })
+                    })
+                })
+                Promise.all([historyPromise]).then(data_stats => {
+                    callFileInfo.stats = statsData;
+                    res.send({
+                        success: true,
+                        status:200,
+                        data: callFileInfo,
+                    })
                 })
             }).catch(err => {
                 _this.sendResponseError(res, ['Error.getStats'], err)
             })
         }).catch(err => {
             _this.sendResponseError(res, ['Error.getFileData'], err)
+        })
+    }
+    getEntityRevisionByItem(model_id, model_name) {
+        let _this = this;
+        return new Promise((resolve, reject) => {
+            _this.db['revisions'].findAll({
+                where: {
+                    model_id: model_id,
+                    model_name: model_name,
+                    active: 'Y'
+                },
+                order: [['date', 'DESC']],
+                include: [{
+                    model: _this.db['users']
+                }]
+
+            }).then((data) => {
+                resolve(data)
+            }).catch(err => {
+                reject(err)
+            })
         })
     }
 }
