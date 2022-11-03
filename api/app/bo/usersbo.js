@@ -8,6 +8,7 @@ const bcrypt = require("bcrypt");
 const {Sequelize} = require("sequelize");
 const moment = require("moment");
 const {default: axios} = require("axios");
+const {json} = require("mocha/lib/reporters");
 const appSocket = new (require('../providers/AppSocket'))();
 const call_center_token = require(__dirname + '/../config/config.json')["call_center_token"];
 const base_url_cc_kam = require(__dirname + '/../config/config.json')["base_url_cc_kam"];
@@ -87,7 +88,7 @@ class users extends baseModelbo {
                                                 active: 'Y'
                                             }
                                         }).then(permissions => {
-                                            this.getPermissionsValues(permissions).then(data_perm => {
+                                            this.getPermissionsValues(permissions, user).then(data_perm => {
                                                 this.db['accounts'].findOne({where: {account_id: user.account_id}})
                                                     .then(account => {
                                                         let accountcode = account.account_code;
@@ -149,6 +150,7 @@ class users extends baseModelbo {
                             });
                         } else if (user.password_hash && password && user.verifyPassword(password)) {
                             if (user.password_hash && password) {
+                                console.log(user.account.role_crm_id)
                                 this.db['has_permissions'].findAll({
                                     include: [{
                                         model: db.permissions_crms,
@@ -174,10 +176,10 @@ class users extends baseModelbo {
                                                         user_id: user_id,
                                                         first_name: first_name,
                                                         last_name: last_name,
-                                                        uuid: sip_device.uuid,
-                                                        crmStatus: user.params.status,
-                                                        telcoStatus: sip_device.status,
-                                                        updated_at: sip_device.updated_at,
+                                                        uuid: sip_device ? sip_device.uuid: null,
+                                                        crmStatus: user && user.params ? user.params.status : null,
+                                                        telcoStatus:sip_device ? sip_device.status : null,
+                                                        updated_at: sip_device ? sip_device.updated_at: null,
                                                         campaign_id: campaign_id
                                                     };
                                                     appSocket.emit('agent_connection', data_agent);
@@ -191,6 +193,7 @@ class users extends baseModelbo {
                                                 });
                                                 this.db['users'].update({current_session_token: token}, {where: {user_id: user.user_id}})
                                                     .then(() => {
+                                                        console.log(data_perm.user_has_role_permission)
                                                         res.send({
                                                             message: 'Success',
                                                             user: user.toJSON(),
@@ -375,7 +378,7 @@ class users extends baseModelbo {
     getPermissionsValues = (permissions, user) => {
         return new Promise((resolve, reject) => {
             if (user && user.role_id !== null) {
-                this.PermissionUser(user).then(result => {
+                this.PermissionUser(user).then(permissions_lockups => {
                     if (permissions && permissions.length !== 0) {
                         let permissions_values = [];
                         let permissions_description = [];
@@ -394,7 +397,7 @@ class users extends baseModelbo {
                                 resolve({
                                     permissions_values: permissions_values,
                                     permissions_description: permissions_description,
-                                    user_has_role_permission: result
+                                    user_has_role_permission: permissions_lockups
                                 });
                             }
                         })
@@ -1089,17 +1092,24 @@ class users extends baseModelbo {
         return new Promise((resolve, reject) => {
             let permission = [];
             let index1 = 0;
-            user.role.permission.forEach(item => {
-                let index = item.lookups.findIndex(lookup => lookup.key === "list")
-                if (index !== -1) {
-                    permission.push(item.permission_route);
-                }
-                if (index1 < user.role.permission.length - 1) {
-                    index1++
-                } else {
-                    resolve(permission)
-                }
-            })
+            if (user && user.role && user.role.permission && user.role.permission.length !== 0) {
+                console.log(user.role.permission)
+                user.role.permission.forEach(item => {
+                    if (item && item.lookups) {
+                        let index = item.lookups.findIndex(lookup => lookup.key === "list")
+                        if (index !== -1) {
+                            permission.push(item.permission_route);
+                        }
+                    }
+                    if (index1 < user.role.permission.length - 1) {
+                        index1++
+                    } else {
+                        resolve(permission)
+                    }
+                })
+            } else {
+                resolve(permission)
+            }
         })
     }
 
