@@ -811,16 +811,25 @@ class users extends baseModelbo {
         let _this = this;
         const token = req.body.token || null;
         jwt.verify(token, config.secret, (err, data) => {
-            this.db['users'].findOne({where: {current_session_token: token, active: 'Y'}})
-                .then(dataUser => {
-                    res.send({
-                        success: !!(dataUser && !!!err),
-                        data: data,
-                        message: (err) ? 'Invalid token' : 'Token valid',
-                    });
-                }).catch(err => {
-                return _this.sendResponseError(res, ['Error.AnErrorHasOccurredGetUser', err], 1, 403);
-            })
+            if(!!!err) {
+                this.db['users'].findOne({where: {current_session_token: token, active: 'Y'}})
+                    .then(dataUser => {
+                        res.send({
+                            success: !!(dataUser && !!!err),
+                            data: data,
+                            message: (err) ? 'Invalid token' : 'Token valid',
+                        });
+                    }).catch(err => {
+                    return _this.sendResponseError(res, ['Error.AnErrorHasOccurredGetUser', err], 1, 403);
+                })
+            } else {
+                res.send({
+                    success: false,
+                    data: data,
+                    message: 'Invalid token' ,
+                });
+            }
+
         });
     }
 
