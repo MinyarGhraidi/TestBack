@@ -821,7 +821,6 @@ class users extends baseModelbo {
                     }).catch(err => {
                     return _this.sendResponseError(res, ['Error.AnErrorHasOccurredGetUser', err], 1, 403);
                 })
-
         });
     }
 

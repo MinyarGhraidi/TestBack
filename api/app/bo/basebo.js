@@ -257,7 +257,7 @@ class baseModelbo {
             const fields_changed = diff(obj_before, obj_after);
             if (Object.keys(fields_changed).length > 0) {
                 _this.getUserFromToken(req).then(users => {
-                    if (users && users.account_id > 0) {
+                    if (users && users.account_id) {
                         let entity_revision = {
                             model_id: obj_before[_this.primaryKey],
                             model_name: _this.baseModal,
