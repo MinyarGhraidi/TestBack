@@ -1,9 +1,5 @@
 const {baseModelbo} = require('./basebo');
-let sequelize = require('sequelize');
-const Op = sequelize.Op;
-let db = require('../models');
 const {default: axios} = require("axios");
-const {Sequelize} = require("sequelize");
 const usersbo = require('./usersbo');
 const agentbo = require('./agentsbo')
 const {add} = require("nodemon/lib/rules");
