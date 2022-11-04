@@ -47,6 +47,9 @@ module.exports = (sequelize, Sequelize) => {
             note: {
                 type: Sequelize.STRING
             },
+            record_url: {
+                type: Sequelize.STRING
+            },
         },
         {timestamps: false}
     );
@@ -64,7 +67,8 @@ module.exports = (sequelize, Sequelize) => {
         'dmc',
         'dmt',
         'list_call_file_id',
-        'note'
+        'note',
+        'record_url'
 
     ];
     calls_historys.associate = function (models) {
