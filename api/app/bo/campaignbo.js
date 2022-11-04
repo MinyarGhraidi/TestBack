@@ -638,7 +638,6 @@ class campaigns extends baseModelbo {
     }
 
     addToQueue(tiers, queue_uuid) {
-        console.log(queue_uuid)
         return new Promise((resolve, reject) => {
             if (tiers.tiers && tiers.tiers.length !== 0) {
                 axios
@@ -692,7 +691,6 @@ class campaigns extends baseModelbo {
     assignAgents(req, res, next) {
         let _this = this;
         let {campaign_id, queue_uuid, assignedAgents, notAssignedAgents, campaign_agents} = req.body;
-        console.log(req.body)
         if (!!!campaign_id || !!!queue_uuid || !!!assignedAgents || !!!notAssignedAgents || !!!campaign_agents) {
             return _this.sendResponseError(res, ['cannot update status of assigned agents'], 1, 403);
         }

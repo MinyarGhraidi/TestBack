@@ -41,7 +41,6 @@ class accounts extends baseModelbo {
                 if (!!!didsList.length !== 0) {
                    return resolve(true)
                 }
-                console.log(didsList)
                 didsList.forEach(data => {
                     this.db["dids"].update({
                         status: status
@@ -57,7 +56,6 @@ class accounts extends baseModelbo {
                     });
                 });
             }).catch(err => {
-                console.log(err)
                 reject(err);
             });
 

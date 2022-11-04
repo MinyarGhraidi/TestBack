@@ -149,7 +149,6 @@ class truncks extends baseModelbo {
     deleteTrunk(req, res, next) {
         let _this = this;
         let {uuid, trunk_id, dialer_uuid} = req.body;
-        console.log(dialer_uuid, uuid, trunk_id);
         this.deleteTrunkFunc(dialer_uuid, uuid, trunk_id)
             .then(result => {
                 res.send({

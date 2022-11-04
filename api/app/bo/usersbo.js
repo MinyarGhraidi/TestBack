@@ -150,7 +150,6 @@ class users extends baseModelbo {
                             });
                         } else if (user.password_hash && password && user.verifyPassword(password)) {
                             if (user.password_hash && password) {
-                                console.log(user.account.role_crm_id)
                                 this.db['has_permissions'].findAll({
                                     include: [{
                                         model: db.permissions_crms,
@@ -193,7 +192,6 @@ class users extends baseModelbo {
                                                 });
                                                 this.db['users'].update({current_session_token: token}, {where: {user_id: user.user_id}})
                                                     .then(() => {
-                                                        console.log(data_perm.user_has_role_permission)
                                                         res.send({
                                                             message: 'Success',
                                                             user: user.toJSON(),
@@ -1093,7 +1091,6 @@ class users extends baseModelbo {
             let permission = [];
             let index1 = 0;
             if (user && user.role && user.role.permission && user.role.permission.length !== 0) {
-                console.log(user.role.permission)
                 user.role.permission.forEach(item => {
                     if (item && item.lookups) {
                         let index = item.lookups.findIndex(lookup => lookup.key === "list")
