@@ -12,6 +12,7 @@ const {reject, promise} = require("bcrypt/promises");
 const moment = require("moment");
 const rabbitmq_url = appHelper.rabbitmq_url;
 const app_config = require("../helpers/app").appConfig;
+
 class callfiles extends baseModelbo {
     constructor(){
         super('callfiles', 'callfile_id');
@@ -559,6 +560,12 @@ class callfiles extends baseModelbo {
                 reject(err)
             })
         })
+    }
+    playMedia(req, res, next) {
+        let filePath = appDir + '/app/sub-apps/records/speech.wav'
+         fs.readFile(filePath,function (err,data) {
+        res.sendFile(filePath);
+        });
     }
 }
 
