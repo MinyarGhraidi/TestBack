@@ -1,5 +1,3 @@
-const {TooManyRequests} = require("http-errors")
-
 module.exports = (sequelize, Sequelize) => {
     const role = sequelize.define("roles", {
             role_id: {
@@ -49,16 +47,16 @@ module.exports = (sequelize, Sequelize) => {
         'created_at',
         'updated_at',
         'status'
-    ],
-        role.prototype.fieldsSearchMetas = [
-            'role_name',
-           'account_id',
-        ],
-        role.associate = function (models) {
-            role.belongsTo(models.accounts, {
-                foreignKey: 'account_id'
-            });
-            role.belongsToMany(models.permission_acls, {foreignKey : 'role_id', through: models.acls });
-        };
+    ]
+    role.prototype.fieldsSearchMetas = [
+        'role_name',
+        'account_id',
+    ]
+    role.associate = function (models) {
+        role.belongsTo(models.accounts, {
+            foreignKey: 'account_id'
+        });
+        role.belongsToMany(models.permission_acls, {foreignKey: 'role_id', through: models.acls});
+    };
     return role
 }
