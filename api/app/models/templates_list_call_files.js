@@ -35,7 +35,11 @@ module.exports = (sequelize, Sequelize) => {
             },
             custom_field:{
                 type: Sequelize.JSONB,
-            }
+            },
+            status: {
+                type: Sequelize.STRING,
+                defaultValue: 'Y'
+            },
         },
         {timestamps: false})
 
@@ -48,7 +52,8 @@ module.exports = (sequelize, Sequelize) => {
         'template_name',
         'active',
         'type',
-        'custom_field'
+        'custom_field',
+        'status'
     ]
     template_list_call_file.prototype.fieldsSearchMetas = [
         'templates_list_call_files_id',
@@ -59,7 +64,8 @@ module.exports = (sequelize, Sequelize) => {
         'template_name',
         'active',
         'type',
-        'custom_field'
+        'custom_field',
+        'status'
     ]
     template_list_call_file.associate = function (models) {
         template_list_call_file.belongsTo(models.accounts, {
