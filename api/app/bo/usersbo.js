@@ -815,7 +815,8 @@ class users extends baseModelbo {
                 this.db['users'].findOne({where: {current_session_token: token, active: 'Y'}})
                     .then(dataUser => {
                         res.send({
-                            success: !!(!!dataUser && !!!err),
+                           // success: !!(!!dataUser && !!!err)
+                            success:  !!!err,
                             data: data,
                             message: (err) ? 'Invalid token' : 'Token valid',
                         });
