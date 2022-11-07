@@ -28,7 +28,6 @@ module.exports = (sequelize, Sequelize) => {
                 allowNull: true,
                 type: Sequelize.DATE,
                 defaultValue: new Date()
-
             },
             type:{
                 type: Sequelize.STRING,
@@ -58,8 +57,6 @@ module.exports = (sequelize, Sequelize) => {
     template_list_call_file.prototype.fieldsSearchMetas = [
         'template_name',
         'type',
-        'custom_field',
-        'status'
     ]
     template_list_call_file.associate = function (models) {
         template_list_call_file.belongsTo(models.accounts, {
