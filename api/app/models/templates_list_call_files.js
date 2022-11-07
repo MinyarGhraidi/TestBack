@@ -56,13 +56,7 @@ module.exports = (sequelize, Sequelize) => {
         'status'
     ]
     template_list_call_file.prototype.fieldsSearchMetas = [
-        'templates_list_call_files_id',
-        'account_id',
-        'template',
-        'created_at',
-        'updated_at',
         'template_name',
-        'active',
         'type',
         'custom_field',
         'status'

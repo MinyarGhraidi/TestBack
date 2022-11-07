@@ -202,6 +202,7 @@ class baseModelbo {
     }
 
     update(req, res, next) {
+        console.log(this.baseModal)
         let _id = req.body[this.primaryKey];
         let dataRequest = req.body;
         const _this = this;
@@ -223,7 +224,9 @@ class baseModelbo {
                         }
                     });
                     obj.save().then(objSaved => {
-                        _this.saveEntityNewRevision(objSaved, obj_before, req, res);
+                        if(this.baseModal === 'callfiles') {
+                            _this.saveEntityNewRevision(objSaved, obj_before, req, res);
+                        }
                         _this.alterUpdate(obj, req, res).then(data => {
                             return res.json({
                                 data: data,
