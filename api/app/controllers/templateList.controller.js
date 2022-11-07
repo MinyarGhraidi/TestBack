@@ -13,6 +13,9 @@ module.exports ={
     },
     delete: function (req, res, next) {
         _itembo.delete(req, res, next)
+    },
+    update: function (req, res, next) {
+        _itembo.update(req, res, next)
     }
 
 }

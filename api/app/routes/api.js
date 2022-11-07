@@ -343,6 +343,7 @@ let apiRouters = function (passport) {
     router.get('/api/acc/downloadCdr/:filename', accController.downloadCdr);
 
     router.post('/api/templateList/save', passport.authenticate('jwt', {session: false}), TemplateListCallFile.save);
+    router.put('/api/templateList/update', passport.authenticate('jwt', {session: false}), TemplateListCallFile.update);
     router.post('/api/templateList/find', passport.authenticate('jwt', {session: false}), TemplateListCallFile.find);
     router.get('/api/templateList/findById/:entity_id', passport.authenticate('jwt', {session: false}), TemplateListCallFile.findById);
     router.delete('/api/templateList/delete/:params', passport.authenticate('jwt', {session: false}), TemplateListCallFile.delete);
