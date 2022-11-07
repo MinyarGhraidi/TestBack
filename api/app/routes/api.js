@@ -67,6 +67,7 @@ let apiRouters = function (passport) {
 
     // account routers
     router.post("/api/account/find", passport.authenticate('jwt', {session: false}), accountController.find);
+    router.post("/api/account/changeStatus", accountController.changeStatusByIdAcc);
     router.get("/api/account/findById/:entity_id", passport.authenticate('jwt', {session: false}), accountController.findById);
     router.put("/api/account/update", passport.authenticate('jwt', {session: false}), accountController.AddEditAccount);
     router.delete("/api/account/delete/:params", passport.authenticate('jwt', {session: false}), accountController.delete);
@@ -89,6 +90,7 @@ let apiRouters = function (passport) {
     router.post("/api/campaign/assignAgents", passport.authenticate('jwt', {session: false}), campaignController.assignAgents);
     router.post("/api/campaign/changeStatus", passport.authenticate('jwt', {session: false}), campaignController.changeStatus);
     router.post("/api/callcennter/authorize", campaignController.authorize);
+    router.post("/api/campaign/changeStatusRelatives", campaignController.changeStatusByIdCompaign);
 
     //role routers
     router.post("/api/role/find/:params?", passport.authenticate('jwt', {session: false}), rolesController.find);
@@ -204,6 +206,8 @@ let apiRouters = function (passport) {
     router.put("/api/callfile/update", passport.authenticate('jwt', {session: false}), callfileController.update);
     router.delete("/api/callfile/delete/:params", passport.authenticate('jwt', {session: false}), callfileController.delete);
     router.post("/api/callfile/save", callfileController.save);
+    router.post("/api/callfile/getEntityRevisionByModelId", callfileController.getEntityRevisionByModelId);
+    router.get("/api/callfile/play", callfileController.playMedia);
 
     // dids routers
     router.post("/api/didsgroups/find", passport.authenticate('jwt', {session: false}), didsgroupsController.find);

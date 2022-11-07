@@ -417,8 +417,6 @@ class agents extends baseModelbo {
                 axios
                     .get(`${base_url_cc_kam}api/v1/agents/${uuid}`, call_center_authorization)
                     .then(resp => {
-                        console.log('here')
-
                         let agent = {"status": telcoStatus};
                         axios
                             .put(`${base_url_cc_kam}api/v1/agents/${uuid}/status`, agent, call_center_authorization)
@@ -456,13 +454,10 @@ class agents extends baseModelbo {
                                     });
                             })
                             .catch((err) => {
-                                console.log('err', err)
-
                                 reject(err);
                             });
                     })
                     .catch((err) => {
-                        console.log('err', err)
                         reject(err);
                     });
             }

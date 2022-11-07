@@ -12,6 +12,7 @@ const {reject, promise} = require("bcrypt/promises");
 const moment = require("moment");
 const rabbitmq_url = appHelper.rabbitmq_url;
 const app_config = require("../helpers/app").appConfig;
+
 class callfiles extends baseModelbo {
     constructor(){
         super('callfiles', 'callfile_id');
@@ -389,17 +390,18 @@ class callfiles extends baseModelbo {
         const page = filter.page || 1;
         const offset = (limit * (page - 1));
         let {start_time, end_time, listCallFiles_ids, date} = filter
-        let sqlLeads = `Select * from calls_historys as calls_h
-                        left join callfiles as callF on callF.callfile_id = calls_h.call_file_id
-                        where calls_h.active = :active 
+        let sqlLeads = `Select distinct  callF.* from callfiles as callF
+                        left join calls_historys as calls_h on callF.callfile_id = calls_h.call_file_id
+                        where calls_h.active = :active
                                and callF.active = :active
-                               and  calls_h.call_file_id ='103945'
+                               and  callF.callfile_id ='103945'
                          EXTRA_WHERE 
                          LIMIT :limit
                          OFFSET :offset`
         let sqlCount = `select count(*)
                             from calls_historys as calls_h
                                 WHERE active= :active
+                                and  calls_h.call_file_id ='103945'
                                 EXTRA_WHERE`
         let extra_where_count = '';
         let extra_where = '';
@@ -494,11 +496,42 @@ class callfiles extends baseModelbo {
                 order: [['started_at', 'DESC']],
             }).then(callFileStats => {
                 let callFileInfo  = callFileData.toJSON();
-                callFileInfo.stats = callFileStats;
-                res.send({
-                    success: true,
-                    status:200,
-                    data: callFileInfo,
+                let statsData = [];
+                let idx  = 0
+                let historyPromise = new Promise((resolve, reject) => {
+                    callFileStats.forEach(item_callFile => {
+                        _this.getEntityRevisionByItem(2, 'dialplan_items').then(data_revision => {
+                            let item_callFile_json = item_callFile.toJSON();
+                            let data = [];
+                            data_revision.forEach((item_revision, idx) => {
+                                data.push({
+                                    key: idx,
+                                    before: item_revision.before,
+                                    after: item_revision.after,
+                                    changes: item_revision.changes,
+                                    date: moment(item_revision.date).format('YYYY-MM-DD HH:mm:ss'),
+                                    user: item_revision.user
+                                })
+                            });
+                            item_callFile_json.revisionData = data
+                            statsData.push(item_callFile_json)
+                            if(idx < callFileStats.length - 1) {
+                                idx++
+                            } else {
+                                resolve(statsData)
+                            }
+                        }).catch(err => {
+                            reject(err)
+                        })
+                    })
+                })
+                Promise.all([historyPromise]).then(data_stats => {
+                    callFileInfo.stats = statsData;
+                    res.send({
+                        success: true,
+                        status:200,
+                        data: callFileInfo,
+                    })
                 })
             }).catch(err => {
                 _this.sendResponseError(res, ['Error.getStats'], err)
@@ -506,6 +539,33 @@ class callfiles extends baseModelbo {
         }).catch(err => {
             _this.sendResponseError(res, ['Error.getFileData'], err)
         })
+    }
+    getEntityRevisionByItem(model_id, model_name) {
+        let _this = this;
+        return new Promise((resolve, reject) => {
+            _this.db['revisions'].findAll({
+                where: {
+                    model_id: model_id,
+                    model_name: model_name,
+                    active: 'Y'
+                },
+                order: [['date', 'DESC']],
+                include: [{
+                    model: _this.db['users']
+                }]
+
+            }).then((data) => {
+                resolve(data)
+            }).catch(err => {
+                reject(err)
+            })
+        })
+    }
+    playMedia(req, res, next) {
+        let filePath = appDir + '/app/sub-apps/records/speech.wav'
+         fs.readFile(filePath,function (err,data) {
+        res.sendFile(filePath);
+        });
     }
 }
 

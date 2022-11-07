@@ -35,4 +35,10 @@ module.exports = {
         _itembo.getHistoryCallFile(req,res,next)
     },
 
+    getEntityRevisionByModelId: function (req, res, next) {
+        _itembo.model_history(req, res, next)
+    },
+    playMedia: function (req, res, next) {
+        _itembo.playMedia(req, res, next)
+    },
 };

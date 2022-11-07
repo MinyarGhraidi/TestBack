@@ -1,9 +1,5 @@
 const {baseModelbo} = require('./basebo');
-let sequelize = require('sequelize');
-const Op = sequelize.Op;
-let db = require('../models');
 const {default: axios} = require("axios");
-const {Sequelize} = require("sequelize");
 const usersbo = require('./usersbo');
 const agentbo = require('./agentsbo')
 const {add} = require("nodemon/lib/rules");
@@ -22,6 +18,7 @@ class campaigns extends baseModelbo {
         this.baseModal = "campaigns";
         this.primaryKey = 'campaign_id';
     }
+
 
     saveCampaign(req, res, next) {
         let _this = this;
@@ -641,7 +638,6 @@ class campaigns extends baseModelbo {
     }
 
     addToQueue(tiers, queue_uuid) {
-        console.log(queue_uuid)
         return new Promise((resolve, reject) => {
             if (tiers.tiers && tiers.tiers.length !== 0) {
                 axios
@@ -695,7 +691,6 @@ class campaigns extends baseModelbo {
     assignAgents(req, res, next) {
         let _this = this;
         let {campaign_id, queue_uuid, assignedAgents, notAssignedAgents, campaign_agents} = req.body;
-        console.log(req.body)
         if (!!!campaign_id || !!!queue_uuid || !!!assignedAgents || !!!notAssignedAgents || !!!campaign_agents) {
             return _this.sendResponseError(res, ['cannot update status of assigned agents'], 1, 403);
         }
@@ -1023,6 +1018,113 @@ class campaigns extends baseModelbo {
             });
     }
 
+    changeStatus_callfilesByIdListCallFiles(listCallFiles_id, status) {
+        return new Promise((resolve, reject) => {
+            this.db["callfiles"].update({
+                status: status,
+                updated_at: new Date()
+            }, {where: {listcallfile_id: listCallFiles_id, active: 'Y'}})
+                .then(
+                    () => {
+                        resolve(true);
+                    }
+                ).catch(err => {
+                return reject(err);
+            });
+        })
+    }
+
+    changeStatus_callfiles(campaign_id, status) {
+        let indexCallFiles = 0;
+
+        return new Promise((resolve, reject) => {
+            this.db['listcallfiles'].findAll({
+                where: {
+                    campaign_id: campaign_id,
+                }
+            }).then((callFilesList) => {
+                if (!!!callFilesList.length !== 0) {
+                    return resolve(true);
+                }
+                callFilesList.forEach(data => {
+                    this.changeStatus_callfilesByIdListCallFiles(data.listcallfile_id, status).then(() => {
+                        if (indexCallFiles < callFilesList.length - 1) {
+                            indexCallFiles++;
+                        }else{
+                            resolve(true);
+                        }
+
+                    }).catch(err => {
+                        reject(err);
+                    })
+
+
+                });
+            }).catch(err => {
+                reject(err);
+            });
+
+        })
+    }
+
+    changeStatusForEntities(entities, campaign_id, status) {
+        let indexEntities = 0;
+        return new Promise((resolve, reject) => {
+            entities.map(dbs => {
+                this.db[dbs].update({status: status, updated_at: new Date()}, {
+                    where: {
+                        campaign_id: campaign_id,
+                        active: 'Y'
+                    }
+                }).then(() => {
+                    if (indexEntities < entities.length - 1) {
+                        indexEntities++;
+                    } else {
+                        resolve(true);
+                    }
+                }).catch(err => {
+                    reject(err);
+                });
+
+
+            });
+        })
+    }
+
+    changeStatusComp(compaign_id, status) {
+        return new Promise((resolve, reject) => {
+            const UpdateEntities = ['pausestatuses', 'listcallfiles', 'callstatuses'];
+            this.changeStatusForEntities(UpdateEntities, compaign_id, status).then(() => {
+                this.changeStatus_callfiles(compaign_id, status).then(() => {
+                    resolve(true);
+                }).catch(err => {
+                    return reject(err);
+                });
+            }).catch(err => {
+                return reject(err);
+            });
+
+        })
+    }
+
+    changeStatusByIdCompaign(req, res, next) {
+        let {compaign_id, status} = req.body;
+        if ((!!!compaign_id || !!!status)) {
+            return this.sendResponseError(res, ['Error.RequestDataInvalid'], 0, 403);
+        }
+        if (status !== 'N' && status !== 'Y') {
+            return this.sendResponseError(res, ['Error.StatusMustBe_Y_Or_N'], 0, 403);
+        }
+        this.changeStatusComp(compaign_id, status).then(data => {
+            res.send({
+                status: 200,
+                message: "success",
+                success: true
+            })
+        }).catch((error) => {
+            return this.sendResponseError(res, ['Error.AnErrorHasOccurredChangeStatusCompaign', error], 1, 403);
+        });
+    }
 }
 
 module.exports = campaigns;

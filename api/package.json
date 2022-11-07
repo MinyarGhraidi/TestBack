@@ -212,11 +212,6 @@
       "resolved": "https://registry.npmjs.org/lru-cache/-/lru-cache-6.0.0.tgz",
       "version": "6.0.0"
     },
-    "media-typer": {
-      "integrity": "sha1-hxDXrwqmJvj/+hzgAWhUUmMlV0g=",
-      "resolved": "https://registry.npmjs.org/media-typer/-/media-typer-0.3.0.tgz",
-      "version": "0.3.0"
-    },
     "merge-descriptors": {
       "integrity": "sha1-sAqqVW3YtEVoFQ7J0blT8/kMu2E=",
       "resolved": "https://registry.npmjs.org/merge-descriptors/-/merge-descriptors-1.0.1.tgz",
@@ -255,6 +250,7 @@
       "resolved": "https://registry.npmjs.org/negotiator/-/negotiator-0.6.2.tgz",
       "version": "0.6.2"
     },
+    "node-wav-player": "^0.2.0",
     "npm": "^8.5.1",
     "object-assign": {
       "integrity": "sha1-IQmtx5ZYh8/AXLvUQsrIv7s2CGM=",
@@ -584,7 +580,7 @@
     "test": "mocha --exit -r 'test/**/*.js'  --grep",
     "saveCalls": "NODE_ENV=development nodemon SaveCallFile ",
     "startSip": "nodemon  --unhandled-rejections=strict --experimental-modules --es-module-specifier-resolution=node  ./app/sub-apps/sipConnect.js",
-    "exportCdr" : "NODE_ENV=development nodemon app/sub-apps/exportCsv.js  "
+    "exportCdr": "NODE_ENV=development nodemon app/sub-apps/exportCsv.js  "
   },
   "devDependencies": {
     "nodemon": "^2.0.19"

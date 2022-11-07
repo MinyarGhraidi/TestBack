@@ -104,7 +104,6 @@ function start() {
                 callback(dataCallback);
             }
         }).catch(err=>{
-            console.log('errrrr', err)
         })
 
         // });
@@ -133,11 +132,9 @@ function start() {
                 })
                     .then(accounts => {
                         if (accounts && accounts.length !== 0) {
-                            console.log('rabbitmq_config.queues.exportCsv',rabbitmq_config.queues.exportCsv)
                             PromiseBB.each(accounts, (item_account) => {
                                 ch.consume(rabbitmq_config.queues.exportCsv + item_account.account_id, processMsg);
                             }).then(data_queue => {
-                                console.log("data clone is started");
                             })
                         }
                     })

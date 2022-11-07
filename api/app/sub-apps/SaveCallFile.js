@@ -42,7 +42,6 @@ function start() {
             amqpConn = conn;
 
             conn.createChannel(function (error1, channel) {
-                console.log('error1', error1, channel)
                 if (error1) {
                     throw error1;
                 }
@@ -50,7 +49,6 @@ function start() {
                     PromiseBB.each(accounts, (item_account) => {
                         let queueCall = rabbitmq_config.queues.addCallFiles + item_account.account_id;
                         let queueCloneCall = rabbitmq_config.queues.clone_List_CallFiles + item_account.account_id;
-                        console.log('queueCall', queueCall)
                         channel.assertQueue(queueCall, {
                             durable: true
                         });
@@ -60,7 +58,6 @@ function start() {
                         whenConnected();
                     }).then(queue_data => {
                         const queue = rabbitmq_config.queues.addCallFiles;
-                        console.log('queue',queue)
                         channel.assertQueue(queue, {
                             durable: true
                         });
@@ -68,7 +65,6 @@ function start() {
                     })
                 } else {
                     const queue = rabbitmq_config.queues.addCallFiles;
-                    console.log('queue', queue)
                     channel.assertQueue(queue, {
                         durable: true
                     });
@@ -141,12 +137,10 @@ function startReadData() {
                     break;
                 }
                 case 'clone listCallFile': {
-                    console.log(msg.content.toString())
                     const incomingDate = (new Date()).toISOString();
                     let data = JSON.parse(msg.content.toString());
                     SaveItemCallFiles(data).then(result_saveCall => {
                         console.log("Sending Ack for msg at time " + incomingDate);
-                        console.log(result_saveCall)
                         if (result_saveCall.success) {
                             appSocket.emit('refresh_clone_list_callFiles', {
                                 data: data
@@ -164,7 +158,6 @@ function startReadData() {
 }
 
 SaveCallFiles = (data) => {
-    console.log(data)
     return new Promise((resolve, reject) => {
         const options = {
             uri: "http://localhost:3001/api/saveCallFile",
@@ -187,7 +180,6 @@ SaveCallFiles = (data) => {
     })
 }
 SaveItemCallFiles = (data) => {
-    console.log(data)
     return new Promise((resolve, reject) => {
         const options = {
             uri: "http://localhost:3001/api/callfile/save",

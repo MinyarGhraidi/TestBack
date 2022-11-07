@@ -32,5 +32,8 @@ module.exports = {
     deleteAccount : function (req, res, next) {
         _itembo.deleteAccount(req, res, next)
     },
+    changeStatusByIdAcc : function (req, res, next) {
+        _itembo.changeStatusByIdAcc(req, res, next)
+    },
 };
 

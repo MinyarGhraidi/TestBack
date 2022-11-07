@@ -30,9 +30,7 @@ const userAgentOptions = {
 function SipConnect() {
     const userAgent = new UserAgent(userAgentOptions);
     userAgent.start().then(conn => {
-        console.log(userAgent.isConnected())
     }).catch(err => {
-        console.log('error', err)
     })
 }
 
