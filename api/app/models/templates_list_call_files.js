@@ -30,6 +30,12 @@ module.exports = (sequelize, Sequelize) => {
                 defaultValue: new Date()
 
             },
+            type:{
+                type: Sequelize.STRING,
+            },
+            custom_field:{
+                type: Sequelize.JSONB,
+            }
         },
         {timestamps: false})
 
@@ -40,7 +46,9 @@ module.exports = (sequelize, Sequelize) => {
         'created_at',
         'updated_at',
         'template_name',
-        'active'
+        'active',
+        'type',
+        'custom_field'
     ]
     template_list_call_file.prototype.fieldsSearchMetas = [
         'templates_list_call_files_id',
@@ -49,7 +57,9 @@ module.exports = (sequelize, Sequelize) => {
         'created_at',
         'updated_at',
         'template_name',
-        'active'
+        'active',
+        'type',
+        'custom_field'
     ]
     template_list_call_file.associate = function (models) {
         template_list_call_file.belongsTo(models.accounts, {

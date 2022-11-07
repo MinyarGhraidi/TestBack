@@ -11,5 +11,8 @@ module.exports ={
     findById: function (req, res, next) {
         _itembo.findById(req, res, next);
     },
+    delete: function (req, res, next) {
+        _itembo.delete(req, res, next)
+    }
 
 }
