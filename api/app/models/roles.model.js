@@ -21,6 +21,11 @@ module.exports = (sequelize, Sequelize) => {
                 type: Sequelize.STRING,
                 defaultValue: 'Y'
             },
+            status: {
+                allowNull: true,
+                type: Sequelize.STRING,
+                defaultValue: 'Y'
+            },
             created_at: {
                 allowNull: true,
                 type: Sequelize.DATE,
@@ -42,10 +47,10 @@ module.exports = (sequelize, Sequelize) => {
         'permission',
         "active",
         'created_at',
-        'updated_at'
+        'updated_at',
+        'status'
     ],
         role.prototype.fieldsSearchMetas = [
-            'role_id',
             'role_name',
            'account_id',
         ],
