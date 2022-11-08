@@ -34,18 +34,14 @@ module.exports = {
     getHistoryCallFile :function (req, res, next){
         _itembo.getHistoryCallFile(req,res,next)
     },
-
-<<<<<<< HEAD
     getEntityRevisionByModelId: function (req, res, next) {
         _itembo.model_history(req, res, next)
     },
     playMedia: function (req, res, next) {
         _itembo.playMedia(req, res, next)
     },
-=======
     getCustomFields : function (req,res,next){
         _itembo.getCustomFields(req,res,next)
     }
 
->>>>>>> 4e766a7 (get custom fields by camp)
 };
