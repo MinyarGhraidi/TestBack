@@ -586,19 +586,22 @@ class callfiles extends baseModelbo {
             return
         }
         let sql = `select distinct customfields  from callfiles where listcallfile_id in (
-                    SELECT listcallfile_id FROM public.listcallfiles WHERE campaign_id = :camp_id and active='Y'
+                    SELECT listcallfile_id FROM public.listcallfiles WHERE campaign_id = :camp_id and active= :active
                     ) and customfields <>'{}'`;
         db.sequelize['crm-app'].query(sql, {
             type: db.sequelize['crm-app'].QueryTypes.SELECT,
-            replacement: {
-                camp_id: campaign_id
+            replacements: {
+                camp_id: campaign_id,
+                active: 'Y'
             }
         }).then(customFields => {
+            let AllFields = [];
+            const Fields = ['first_name', 'last_name','phone_number','address1','city','postal_code','email','country_code'];
             if (customFields.length === 0) {
                 res.send({
                     success: true,
                     status: 200,
-                    customFields: []
+                    customFields: Fields
                 })
                 return
             }
@@ -606,10 +609,11 @@ class callfiles extends baseModelbo {
                 resCustomFields.push(field.customfields);
             })
             let result = Object.keys(Object.assign({}, ...resCustomFields));
+            AllFields = Fields.concat(result);
             res.send({
                 success: true,
                 status: 200,
-                customFields: result
+                customFields: AllFields
             })
         }).catch(err => {
             this.sendResponseError(res, ['Error Cannot get CustomFields'], err)
