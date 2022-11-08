@@ -1,8 +1,8 @@
 const usersDao = require('../bo/usersbo');
-let _itembo = new usersDao ; 
+let _itembo = new usersDao;
 
 module.exports = {
-    update : function (req, res, next) {
+    update: function (req, res, next) {
         _itembo.update(req, res, next)
     },
     find: function (req, res, next) {

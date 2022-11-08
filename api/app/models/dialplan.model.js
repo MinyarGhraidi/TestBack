@@ -13,6 +13,16 @@ module.exports = (sequelize, Sequelize) => {
                 type: Sequelize.STRING,
                 defaultValue: 'Y'
             },
+            created_at: {
+                allowNull: true,
+                type: Sequelize.DATE,
+                defaultValue: new Date()
+            },
+            updated_at: {
+                allowNull: true,
+                type: Sequelize.DATE,
+                defaultValue: new Date()
+            },
         },
         {timestamps: false,}
     );
@@ -20,7 +30,9 @@ module.exports = (sequelize, Sequelize) => {
     dialplans.prototype.fields = [
         'dialplan_id',
         'name',
-        'active'
+        'active',
+        'created_at',
+        'updated_at',
        
     ];
 

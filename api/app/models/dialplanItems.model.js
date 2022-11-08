@@ -34,6 +34,16 @@ module.exports = (sequelize, Sequelize) => {
                 type: Sequelize.BOOLEAN,
                 defaultValue: true
             },
+            created_at: {
+                allowNull: true,
+                type: Sequelize.DATE,
+                defaultValue: new Date()
+            },
+            updated_at: {
+                allowNull: true,
+                type: Sequelize.DATE,
+                defaultValue: new Date()
+            },
         },
         {timestamps: false,}
     );
@@ -49,7 +59,9 @@ module.exports = (sequelize, Sequelize) => {
         'cps',
         'trunck_id',
         'pai',
-        "status"
+        "status",
+        'created_at',
+        'updated_at',
 
     ];
 

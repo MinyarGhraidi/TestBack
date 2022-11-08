@@ -224,9 +224,9 @@ class baseModelbo {
                         }
                     });
                     obj.save().then(objSaved => {
-                        if(this.baseModal === 'callfiles') {
+                        //if(this.baseModal === 'callfiles') {
                             _this.saveEntityNewRevision(objSaved, obj_before, req, res);
-                        }
+                        //}
                         _this.alterUpdate(obj, req, res).then(data => {
                             return res.json({
                                 data: data,

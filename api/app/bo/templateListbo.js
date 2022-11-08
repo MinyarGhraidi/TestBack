@@ -6,12 +6,6 @@ class TemplateListbo extends baseModelbo{
         this.baseModal = 'templates_list_call_files';
         this.primaryKey = 'templates_list_call_files_id'
     }
-
-
-
-
-
-
 }
 
 module.exports = TemplateListbo
