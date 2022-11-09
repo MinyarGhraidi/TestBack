@@ -716,7 +716,7 @@ class campaigns extends baseModelbo {
                                     .then(() => {
                                         this.updateIsAssignedStatus(notAssignedAgents, null, false, campaign_agents)
                                             .then(() => {
-                                                this.UpdateCampaign(assignedAgents,notAssignedAgents,campaign_id).then(()=>{
+                                                this.UpdateCampaign(assignedAgents, notAssignedAgents, campaign_id).then(() => {
                                                     this.deleteAgentsMeetings(notAssignedAgents)
                                                         .then(() => {
                                                             res.send({
@@ -753,37 +753,38 @@ class campaigns extends baseModelbo {
             });
     }
 
-    UpdateCampaign(assignedAgents, NotAssignedAgents,campaign_id){
-        return new Promise ((resolve, reject)=>{
-            const Assign =  new Promise((resolve, reject) => {
-                assignedAgents.forEach((agent) =>{
+    UpdateCampaign(assignedAgents, NotAssignedAgents, campaign_id) {
+        return new Promise((resolve, reject) => {
+            const Assign = new Promise((resolve, reject) => {
+                assignedAgents.forEach((agent) => {
                     appSocket.emit('campaign_updated', {
-                        campaign_id : campaign_id,
-                        user_id : agent.user_id
+                        campaign_id: campaign_id,
+                        user_id: agent.user_id
                     });
-                }).then(()=>{
+                }).then(() => {
                     resolve(true);
-                }).catch((err)=>{
+                }).catch((err) => {
                     reject(err);
                 })
             });
-            const UnAssign =  new Promise((resolve, reject) => {
-                NotAssignedAgents.forEach((agent) =>{
+            const UnAssign = new Promise((resolve, reject) => {
+                NotAssignedAgents.forEach((agent) => {
                     appSocket.emit('campaign_updated', {
-                        campaign_id : null,
-                        user_id : agent.user_id
+                        campaign_id: null,
+                        user_id: agent.user_id
                     });
-                }).then(()=>{
+                }).then(() => {
                     resolve(true);
-                }).catch((err)=>{
+                }).catch((err) => {
                     reject(err);
                 })
             });
-            Promise.all([Assign,UnAssign]).then(()=>{
+            Promise.all([Assign, UnAssign]).then(() => {
                 resolve(true);
-            }).catch((err)=> reject(err));
+            }).catch((err) => reject(err));
         })
     }
+
     isUniqueQueueName(queue_name) {
         let _this = this;
         return new Promise((resolve, reject) => {
@@ -955,47 +956,39 @@ class campaigns extends baseModelbo {
 
     changeStatus(req, res, next) {
         let _this = this;
-        let {campaign_id} = req.body;
+        let {campaign_id, status} = req.body;
         this.db['campaigns'].findOne({where: {campaign_id: campaign_id, active: 'Y'}})
             .then(campaign => {
-                if (Object.keys(campaign) && Object.keys(campaign).length !== 0) {
+                if (campaign) {
                     let agents = campaign.agents;
-                    let isActivate = campaign.status === 'N';
-                    if (isActivate) {
-                        this.db['campaigns'].update({status: 'Y'}, {where: {campaign_id: campaign_id}})
-                            .then(() => {
-                                        res.send({
-                                            status: 200,
-                                            message: "success"
-                                        })
-                            })
-                            .catch((err) => {
-                                return _this.sendResponseError(res, ['cannot change the campaign status', err], 1, 403);
-                            });
-                    } else {
-                        _this.changeAGentsStatus(agents)
-                            .then(() => {
-                                this.db['campaigns'].update({status: 'N'}, {where: {campaign_id: campaign_id}})
-                                    .then(() => {
-                                        this.changeStatusCampaignFiles(campaign_id, 'N')
-                                            .then(() => {
-                                                res.send({
-                                                    status: 200,
-                                                    message: "success"
-                                                })
-                                            })
-                                            .catch((err) => {
-                                                return _this.sendResponseError(res, ['cannot change the campaign status', err], 1, 403);
-                                            });
+                    let isActivate = status === 'Y';
+                    this.db['campaigns'].update({status: status}, {where: {campaign_id: campaign_id}})
+                        .then(() => {
+                            this.changeStatusComp(campaign_id, status).then(() => {
+                                if (isActivate) {
+                                    res.send({
+                                        status: 200,
+                                        message: "success"
                                     })
-                                    .catch((err) => {
-                                        return _this.sendResponseError(res, ['cannot change the campaign status', err], 1, 403);
+                                    return
+                                } else {
+                                    _this.changeAGentsStatus(agents)
+                                        .then(() => {
+                                            res.send({
+                                                status: 200,
+                                                message: "success"
+                                            })
+                                        }).catch((err) => {
+                                        return _this.sendResponseError(res, ['cannot change agent status3', err], 1, 403);
                                     });
+                                }
+                            }).catch((err) => {
+                                return _this.sendResponseError(res, ['cannot change the campaign status1', err], 1, 403);
                             })
-                            .catch((err) => {
-                                return _this.sendResponseError(res, ['cannot change agent status', err], 1, 403);
-                            });
-                    }
+
+                        }).catch((err) => {
+                        return _this.sendResponseError(res, ['cannot change the campaign status2', err], 1, 403);
+                    });
                 } else {
                     return _this.sendResponseError(res, ['Campaign not found'], 1, 403);
                 }
@@ -1082,7 +1075,7 @@ class campaigns extends baseModelbo {
                     this.changeStatus_callfilesByIdListCallFiles(data.listcallfile_id, status).then(() => {
                         if (indexCallFiles < callFilesList.length - 1) {
                             indexCallFiles++;
-                        }else{
+                        } else {
                             resolve(true);
                         }
 
