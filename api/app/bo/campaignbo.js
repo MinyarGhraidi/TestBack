@@ -5,6 +5,8 @@ const agentbo = require('./agentsbo')
 const {add} = require("nodemon/lib/rules");
 const call_center_token = require(__dirname + '/../config/config.json')["call_center_token"];
 const base_url_cc_kam = require(__dirname + '/../config/config.json')["base_url_cc_kam"];
+const appSocket = new (require("../providers/AppSocket"))();
+
 const call_center_authorization = {
     headers: {Authorization: call_center_token}
 };
@@ -714,6 +716,7 @@ class campaigns extends baseModelbo {
                                     .then(() => {
                                         this.updateIsAssignedStatus(notAssignedAgents, null, false, campaign_agents)
                                             .then(() => {
+                                                this.UpdateCampaign(assignedAgents,notAssignedAgents,campaign_id);
                                                 this.deleteAgentsMeetings(notAssignedAgents)
                                                     .then(() => {
                                                         res.send({
@@ -746,6 +749,34 @@ class campaigns extends baseModelbo {
             });
     }
 
+    UpdateCampaign(assignedAgents, NotAssignedAgents,campaign_id){
+        const Assign =  new Promise((resolve, reject) => {
+            assignedAgents.forEach((agent) =>{
+                appSocket.emit('campaign_updated', {
+                    campaign_id : campaign_id,
+                    user_id : agent.user_id
+                });
+            }).then(()=>{
+                resolve(true);
+            }).catch((err)=>{
+                reject(err);
+            })
+        });
+        const UnAssign =  new Promise((resolve, reject) => {
+            NotAssignedAgents.forEach((agent) =>{
+                appSocket.emit('campaign_updated', {
+                    campaign_id : null,
+                    user_id : agent.user_id
+                });
+            }).then(()=>{
+                resolve(true);
+            }).catch((err)=>{
+                reject(err);
+            })
+        });
+        return Promise.all([Assign,UnAssign]);
+
+    }
     isUniqueQueueName(queue_name) {
         let _this = this;
         return new Promise((resolve, reject) => {
