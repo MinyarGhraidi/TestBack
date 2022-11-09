@@ -129,6 +129,8 @@ class baseModelbo {
     save(req, res, next) {
         const preFormData = req.body;
         this.preSave(preFormData).then(formData => {
+            formData.created_at = new Date()
+            formData.updated_at = new Date()
             let modalObj = this.db[this.baseModal].build(formData);
             modalObj.save().then(result => {
                 let whereQuery = {};
