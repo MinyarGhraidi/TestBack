@@ -964,16 +964,10 @@ class campaigns extends baseModelbo {
                     if (isActivate) {
                         this.db['campaigns'].update({status: 'Y'}, {where: {campaign_id: campaign_id}})
                             .then(() => {
-                                // this.changeStatusCampaignFiles(campaign_id, 'Y')
-                                //     .then(() => {
                                         res.send({
                                             status: 200,
                                             message: "success"
                                         })
-                                    // })
-                                    // .catch((err) => {
-                                    //     return _this.sendResponseError(res, ['cannot change the campaign status', err], 1, 403);
-                                    // });
                             })
                             .catch((err) => {
                                 return _this.sendResponseError(res, ['cannot change the campaign status', err], 1, 403);
