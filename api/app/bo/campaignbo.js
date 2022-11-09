@@ -716,17 +716,21 @@ class campaigns extends baseModelbo {
                                     .then(() => {
                                         this.updateIsAssignedStatus(notAssignedAgents, null, false, campaign_agents)
                                             .then(() => {
-                                                this.UpdateCampaign(assignedAgents,notAssignedAgents,campaign_id);
-                                                this.deleteAgentsMeetings(notAssignedAgents)
-                                                    .then(() => {
-                                                        res.send({
-                                                            status: 200,
-                                                            message: 'success'
+                                                this.UpdateCampaign(assignedAgents,notAssignedAgents,campaign_id).then(()=>{
+                                                    this.deleteAgentsMeetings(notAssignedAgents)
+                                                        .then(() => {
+                                                            res.send({
+                                                                status: 200,
+                                                                message: 'success'
+                                                            })
                                                         })
-                                                    })
-                                                    .catch((err) => {
-                                                        return _this.sendResponseError(res, ['cannot delete agent meetings', err], 1, 403);
-                                                    });
+                                                        .catch((err) => {
+                                                            return _this.sendResponseError(res, ['cannot delete agent meetings', err], 1, 403);
+                                                        });
+                                                }).catch((err) => {
+                                                    return _this.sendResponseError(res, ['cannot update Assigned/UnAssigned Agents', err], 1, 403);
+                                                })
+
                                             })
                                             .catch((err) => {
                                                 return _this.sendResponseError(res, ['cannot update status of unassigned agents', err], 1, 403);
@@ -750,32 +754,35 @@ class campaigns extends baseModelbo {
     }
 
     UpdateCampaign(assignedAgents, NotAssignedAgents,campaign_id){
-        const Assign =  new Promise((resolve, reject) => {
-            assignedAgents.forEach((agent) =>{
-                appSocket.emit('campaign_updated', {
-                    campaign_id : campaign_id,
-                    user_id : agent.user_id
-                });
-            }).then(()=>{
+        return new Promise ((resolve, reject)=>{
+            const Assign =  new Promise((resolve, reject) => {
+                assignedAgents.forEach((agent) =>{
+                    appSocket.emit('campaign_updated', {
+                        campaign_id : campaign_id,
+                        user_id : agent.user_id
+                    });
+                }).then(()=>{
+                    resolve(true);
+                }).catch((err)=>{
+                    reject(err);
+                })
+            });
+            const UnAssign =  new Promise((resolve, reject) => {
+                NotAssignedAgents.forEach((agent) =>{
+                    appSocket.emit('campaign_updated', {
+                        campaign_id : null,
+                        user_id : agent.user_id
+                    });
+                }).then(()=>{
+                    resolve(true);
+                }).catch((err)=>{
+                    reject(err);
+                })
+            });
+            Promise.all([Assign,UnAssign]).then(()=>{
                 resolve(true);
-            }).catch((err)=>{
-                reject(err);
-            })
-        });
-        const UnAssign =  new Promise((resolve, reject) => {
-            NotAssignedAgents.forEach((agent) =>{
-                appSocket.emit('campaign_updated', {
-                    campaign_id : null,
-                    user_id : agent.user_id
-                });
-            }).then(()=>{
-                resolve(true);
-            }).catch((err)=>{
-                reject(err);
-            })
-        });
-        return Promise.all([Assign,UnAssign]);
-
+            }).catch((err)=> reject(err));
+        })
     }
     isUniqueQueueName(queue_name) {
         let _this = this;
