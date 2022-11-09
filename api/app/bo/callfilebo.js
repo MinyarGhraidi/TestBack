@@ -601,7 +601,7 @@ class callfiles extends baseModelbo {
                 res.send({
                     success: true,
                     status: 200,
-                    customFields: Fields
+                    data: Fields
                 })
                 return
             }
@@ -613,7 +613,7 @@ class callfiles extends baseModelbo {
             res.send({
                 success: true,
                 status: 200,
-                customFields: AllFields
+                data: AllFields
             })
         }).catch(err => {
             this.sendResponseError(res, ['Error Cannot get CustomFields'], err)

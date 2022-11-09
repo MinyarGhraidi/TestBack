@@ -712,7 +712,7 @@ class campaigns extends baseModelbo {
                             .then(() => {
                                 this.updateIsAssignedStatus(assignedAgents, campaign_id, true, campaign_agents)
                                     .then(() => {
-                                        this.updateIsAssignedStatus(notAssignedAgents, 0, false, campaign_agents)
+                                        this.updateIsAssignedStatus(notAssignedAgents, null, false, campaign_agents)
                                             .then(() => {
                                                 this.deleteAgentsMeetings(notAssignedAgents)
                                                     .then(() => {
