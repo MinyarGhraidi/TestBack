@@ -957,6 +957,12 @@ class campaigns extends baseModelbo {
     changeStatus(req, res, next) {
         let _this = this;
         let {campaign_id, status} = req.body;
+        if ((!!!campaign_id || !!!status)) {
+            return this.sendResponseError(res, ['Error.RequestDataInvalid'], 0, 403);
+        }
+        if (status !== 'N' && status !== 'Y') {
+            return this.sendResponseError(res, ['Error.StatusMustBe_Y_Or_N'], 0, 403);
+        }
         this.db['campaigns'].findOne({where: {campaign_id: campaign_id, active: 'Y'}})
             .then(campaign => {
                 if (campaign) {
@@ -1132,24 +1138,6 @@ class campaigns extends baseModelbo {
         })
     }
 
-    changeStatusByIdCompaign(req, res, next) {
-        let {compaign_id, status} = req.body;
-        if ((!!!compaign_id || !!!status)) {
-            return this.sendResponseError(res, ['Error.RequestDataInvalid'], 0, 403);
-        }
-        if (status !== 'N' && status !== 'Y') {
-            return this.sendResponseError(res, ['Error.StatusMustBe_Y_Or_N'], 0, 403);
-        }
-        this.changeStatusComp(compaign_id, status).then(data => {
-            res.send({
-                status: 200,
-                message: "success",
-                success: true
-            })
-        }).catch((error) => {
-            return this.sendResponseError(res, ['Error.AnErrorHasOccurredChangeStatusCompaign', error], 1, 403);
-        });
-    }
 }
 
 module.exports = campaigns;
