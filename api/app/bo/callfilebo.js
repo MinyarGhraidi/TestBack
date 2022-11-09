@@ -529,14 +529,7 @@ class callfiles extends baseModelbo {
                     })
                 })
                 Promise.all([historyPromise]).then(data_stats => {
-                    callFileInfo.stats = statsData;
-                    res.send({
-                        success: true,
-                        status: 200,
-                        data: callFileInfo,
-                    })
-                    let callFileInfo = callFileData.toJSON();
-                    callFileInfo.stats = callFileStats;
+                   callFileInfo.stats = statsData;
                     res.send({
                         success: true,
                         status: 200,
