@@ -525,9 +525,11 @@ class campaigns extends baseModelbo {
             } else {
                 if (queue_agents.length > db_agents.length) {
                     let agents_not_assigned = queue_agents.filter(el => !db_agents.includes(el));
+                    console.log(agents_not_assigned, queue_uuid)
                     axios
                         .post(`${base_url_cc_kam}api/v1/queues/${queue_uuid}/tiers/delete`, {agents: agents_not_assigned}, call_center_authorization)
                         .then(resp => {
+                            console.log('here')
                             resolve(campaign);
                         })
                         .catch(err => {
@@ -565,7 +567,7 @@ class campaigns extends baseModelbo {
                         role_crm_id: 3,
                         active: 'Y',
                         account_id: account_id,
-                        $or: [{campaign_id: {$eq: campaign_id}}, {campaign_id: {$eq: 0}}],
+                        $or: [{campaign_id: {$eq: campaign_id}}, {campaign_id: {$eq: null}}],
                     }
                 })
                     .then(agents => {
@@ -576,6 +578,7 @@ class campaigns extends baseModelbo {
                                     .then(allAgents => {
                                         let queue_agents = data.data.result.map(el => el.agent_uuid);
                                         let db_agents = (allAgents && allAgents.length !== 0) ? allAgents.map(el => el.sip_device.uuid) : [];
+                                        console.log(queue_agents, db_agents)
                                         this.fixConsistency(queue_uuid, allAgents, queue_agents, db_agents, campaign_id, campaign)
                                             .then(camp => {
                                                 let campAgents = camp.agents ? camp.agents : [];
