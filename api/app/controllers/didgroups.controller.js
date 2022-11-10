@@ -20,4 +20,10 @@ module.exports = {
     affectDidsGpToCamp: function (req, res, next) {
         didsDaoGroupsInst.affectDidsGpToCamp(req, res, next);
     },
+    changeStatus: function (req, res, next) {
+        didsDaoGroupsInst.changeStatus(req, res, next);
+    },
+    deleteCascade: function (req, res, next) {
+        didsDaoGroupsInst.deleteCascade(req, res, next);
+    },
 }

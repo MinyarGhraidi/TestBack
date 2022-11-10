@@ -23,6 +23,10 @@ module.exports = (sequelize, Sequelize) => {
                 type: Sequelize.DATE,
                 defaultValue: new Date()
             },
+        status: {
+            type: Sequelize.STRING,
+            defaultValue: 'Y'
+        }
         },
         {timestamps: false,}
     );

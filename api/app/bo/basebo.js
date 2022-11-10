@@ -203,8 +203,136 @@ class baseModelbo {
 
     }
 
+    deleteWithChild(parent, child, parent_id, childParent_id, id) {
+        return new Promise((resolve, reject) => {
+            const ParentEntity = new Promise((resolve, reject) => {
+                let whereQuery = {}
+                whereQuery[parent_id] = id;
+                this.db[parent].update({active: 'N'}, {
+                    where: whereQuery
+                }).then(() => {
+                    resolve(true);
+                }).catch(err => {
+                    reject(err);
+                });
+            });
+            const ChildEntity = new Promise((resolve, reject) => {
+                let whereQuery = {}
+                whereQuery[childParent_id] = id;
+                this.db[child].update({active: 'N'}, {
+                    where: whereQuery
+                }).then(() => {
+                    resolve(true);
+                }).catch(err => {
+                    reject(err);
+                });
+            });
+            Promise.all([ParentEntity, ChildEntity]).then(() => {
+                resolve(true);
+            }).catch((err) => {
+                reject(err);
+            })
+        })
+    }
+    deleteRoleCascade(role_id){
+        return new Promise((resolve, reject)=> {
+            this.db['roles'].findOne({where: {role_id: role_id, active: 'Y'}})
+                .then(role => {
+                    if (role) {
+                        let roles_name = ['sales','user'];
+                        const roles_ids = [];
+                        this.db['roles_crms'].findAll({
+                            where: {
+                                active: 'Y',
+                                value: {
+                                    in: roles_name
+                                }
+                            }
+                        }).then((roles_crm) => {
+                            roles_crm.map((role)=>{
+                                roles_ids.push(role.id);
+                            });
+                            this.db['users'].update({status: 'N', role_id : null}, {
+                                where: {
+                                    role_crm_id: {
+                                        in : roles_ids
+                                    },
+                                    role_id: role.role_id,
+                                    active: 'Y'
+                                }
+                            }).then(() => {
+                                this.db['roles'].update({active: 'N'}, {
+                                    where: {
+                                        role_id: role_id,
+                                    }
+                                }).then(() => {
+                                   resolve(true);
+                                }).catch(err => {
+                                    reject(err);
+                                })
+                            })
+                        }).catch(err => {
+                            reject(err);
+                        });
+                    }
+                }).catch(err => {
+                reject(err);
+            })
+        })
+
+    }
+
+    deleteCascade(req, res, next) {
+        let _id = req.params.params;
+        switch (this.baseModal) {
+            case 'didsgroups' :
+                this.deleteWithChild('didsgroups', 'dids', 'did_id', 'did_group_id', _id).then(() => {
+                    res.json({
+                        success: true,
+                        messages: 'deleted'
+                    })
+                }).catch((err) => {
+                    res.json({
+                        success: false,
+                        messages: 'Cant delete'
+                    })
+                })
+                break
+            case 'dialplans' :
+                this.deleteWithChild('dialplans', 'dialplan_items', 'dialplan_id', 'dialplan_id', _id).then(() => {
+                    res.json({
+                        success: true,
+                        messages: 'deleted'
+                    })
+                }).catch((err) => {
+                    res.json({
+                        success: false,
+                        messages: 'Cant delete'
+                    })
+                })
+                break
+            case 'roles' :
+                this.deleteRoleCascade(_id).then(()=>{
+                    res.json({
+                        success: true,
+                        messages: 'deleted'
+                    })
+                }).catch((err) => {
+                    res.json({
+                        success: false,
+                        messages: 'Cant delete'
+                    })
+                })
+                break
+            default  :
+                res.json({
+                    success: false,
+                    messages: 'Something wrong contact the admin'
+                })
+        }
+    }
+
     update(req, res, next) {
-        console.log(this.baseModal)
         let _id = req.body[this.primaryKey];
         let dataRequest = req.body;
         const _this = this;
@@ -227,7 +355,7 @@ class baseModelbo {
                     });
                     obj.save().then(objSaved => {
                         //if(this.baseModal === 'callfiles') {
-                            _this.saveEntityNewRevision(objSaved, obj_before, req, res);
+                        _this.saveEntityNewRevision(objSaved, obj_before, req, res);
                         //}
                         _this.alterUpdate(obj, req, res).then(data => {
                             return res.json({
