@@ -3,6 +3,7 @@ const {default: axios} = require("axios");
 const usersbo = require('./usersbo');
 const agentbo = require('./agentsbo')
 const {add} = require("nodemon/lib/rules");
+const {reject} = require("bcrypt/promises");
 const call_center_token = require(__dirname + '/../config/config.json')["call_center_token"];
 const base_url_cc_kam = require(__dirname + '/../config/config.json')["base_url_cc_kam"];
 const appSocket = new (require("../providers/AppSocket"))();
@@ -839,7 +840,7 @@ class campaigns extends baseModelbo {
                 agents.forEach(user_id => {
                     this.db['users'].findOne({where: {user_id: user_id, active: 'Y'}})
                         .then(agent => {
-                            if (Object.keys(agents) && Object.keys(agents).length !== 0) {
+                            if (agent) {
                                 let uuid = agent.sip_device.uuid;
                                 _agentsbo.onConnectFunc(user_id, uuid, "logged-out", "logged-out")
                                     .then(() => {
@@ -968,31 +969,35 @@ class campaigns extends baseModelbo {
                 if (campaign) {
                     let agents = campaign.agents;
                     let isActivate = status === 'Y';
-                    this.db['campaigns'].update({status: status}, {where: {campaign_id: campaign_id}})
-                        .then(() => {
-                            this.changeStatusComp(campaign_id, status).then(() => {
-                                if (isActivate) {
-                                    res.send({
-                                        status: 200,
-                                        message: "success"
-                                    })
-                                    return
-                                } else {
-                                    _this.changeAGentsStatus(agents)
-                                        .then(() => {
-                                            res.send({
-                                                status: 200,
-                                                message: "success"
-                                            })
-                                        }).catch((err) => {
-                                        return _this.sendResponseError(res, ['cannot change agent status3', err], 1, 403);
-                                    });
-                                }
-                            }).catch((err) => {
-                                return _this.sendResponseError(res, ['cannot change the campaign status1', err], 1, 403);
-                            })
 
-                        }).catch((err) => {
+                    let promiseTelco = new Promise((resolve, reject) => {
+                        if (!isActivate) {
+                            _this.changeAGentsStatus(agents).then(() => {
+                                resolve(true)
+                            }).catch(err => {
+                                reject(err);
+                            })
+                        } else {
+                            resolve(true)
+                        }
+                    })
+                    Promise.all([promiseTelco]).then(data_telco => {
+                        this.db['campaigns'].update({status: status}, {where: {campaign_id: campaign_id}})
+                            .then(() => {
+                                this.changeStatusComp(campaign_id, status).then(() => {
+                                    if (isActivate) {
+                                        res.send({
+                                            status: 200,
+                                            message: "success"
+                                        })
+                                    }
+                                }).catch((err) => {
+                                    return _this.sendResponseError(res, ['cannot change the campaign status1', err], 1, 403);
+                                })
+                            }).catch((err) => {
+                            return _this.sendResponseError(res, ['cannot change the campaign status2', err], 1, 403);
+                        });
+                    }).catch((err) => {
                         return _this.sendResponseError(res, ['cannot change the campaign status2', err], 1, 403);
                     });
                 } else {
