@@ -56,7 +56,6 @@ class dialplanbo extends baseModelbo {
         }
         this.db['dialplans'].findOne({where: {dialplan_id: dialplan_id, active: 'Y'}})
             .then(dialPlan => {
-                console.log(dialPlan)
                 if (dialPlan) {
                     this.changeStatusDialPlan(dialplan_id, status).then(() => {
                         res.send({
