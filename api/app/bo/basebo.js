@@ -340,6 +340,7 @@ class baseModelbo {
         where_[this.primaryKey] = _id;
         let modalObj = this.db[this.baseModal].build();
         _this.beforeUpdate(req, res).then(() => {
+
             _this.db[this.baseModal].findOne({
                 where: where_
             }).then(obj => {
