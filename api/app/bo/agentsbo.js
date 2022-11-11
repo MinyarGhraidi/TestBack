@@ -414,52 +414,58 @@ class agents extends baseModelbo {
                         reject(err);
                     });
             } else {
-                axios
-                    .get(`${base_url_cc_kam}api/v1/agents/${uuid}`, call_center_authorization)
-                    .then(resp => {
-                        let agent = {"status": telcoStatus};
-                        axios
-                            .put(`${base_url_cc_kam}api/v1/agents/${uuid}/status`, agent, call_center_authorization)
-                            .then(() => {
-                                this.db["users"].findOne({where: {user_id: user_id}})
-                                    .then(user => {
-                                        if (user) {
-                                            let params = user.params;
-                                            agent.updated_at = moment(new Date());
-                                            this.updateAgentStatus(user_id, agent, crmStatus, created_at, params)
-                                                .then(agent => {
-                                                    if (agent.success) {
-                                                        resolve({
-                                                            success: true,
-                                                            agent: agent
-                                                        });
-                                                    } else {
-                                                        resolve({
-                                                            success: false,
-                                                        });
-                                                    }
+                if (uuid) {
+                    axios
+                        .get(`${base_url_cc_kam}api/v1/agents/${uuid}`, call_center_authorization)
+                        .then(resp => {
+                            console.log(resp)
+                            let agent = {"status": telcoStatus};
+                            axios
+                                .put(`${base_url_cc_kam}api/v1/agents/${uuid}/status`, agent, call_center_authorization)
+                                .then(() => {
+                                    this.db["users"].findOne({where: {user_id: user_id}})
+                                        .then(user => {
+                                            if (user) {
+                                                let params = user.params;
+                                                agent.updated_at = moment(new Date());
+                                                this.updateAgentStatus(user_id, agent, crmStatus, created_at, params)
+                                                    .then(agent => {
+                                                        if (agent.success) {
+                                                            resolve({
+                                                                success: true,
+                                                                agent: agent
+                                                            });
+                                                        } else {
+                                                            resolve({
+                                                                success: false,
+                                                            });
+                                                        }
+                                                    })
+                                                    .catch((err) => {
+                                                        reject(err);
+                                                    });
+                                            } else {
+                                                resolve({
+                                                    success: false
                                                 })
-                                                .catch((err) => {
-                                                    reject(err);
-                                                });
-                                        } else {
-                                            resolve({
-                                                success: false
-                                            })
-                                        }
+                                            }
 
-                                    })
-                                    .catch((err) => {
-                                        reject(err);
-                                    });
-                            })
-                            .catch((err) => {
-                                reject(err);
-                            });
-                    })
-                    .catch((err) => {
-                        reject(err);
-                    });
+                                        })
+                                        .catch((err) => {
+                                            reject(err);
+                                        });
+                                })
+                                .catch((err) => {
+                                    reject(err);
+                                });
+                        })
+                        .catch((err) => {
+                            reject(err);
+                        });
+                } else {
+                    reject(false)
+                }
+
             }
 
         })
@@ -816,11 +822,16 @@ class agents extends baseModelbo {
             )
 
             if (date !== current_Date) {
-                let sqlCount = `select ac.agent , count(*) , SUM(CAST (ac.durationsec AS INTEGER)) /60 as total,
-                   SUM(CAST (ac.durationsec AS INTEGER) + CAST (ac.durationmsec AS INTEGER) /1000) /60 /count(*) as moy
-                            from cdrs_:date as ac
-                            WHERE agent in (:uuid) AND CAST((string_to_array("custom_vars", ':'))[3] AS INTEGER) in (:calls)
-                                EXTRA_WHERE
+                let sqlCount = `select ac.agent,
+                                       count(*),
+                                       SUM(CAST(ac.durationsec AS INTEGER)) / 60 as total,
+                                       SUM(CAST(ac.durationsec AS INTEGER) + CAST(ac.durationmsec AS INTEGER) / 1000) /
+                                       60 / count(*)                             as moy
+                                from cdrs_:date as ac
+                                WHERE agent in (:uuid)
+                                  AND CAST ((string_to_array("custom_vars"
+                                    , ':'))[3] AS INTEGER) in (:calls)
+                                    EXTRA_WHERE
                                 GROUP BY ac.agent`
                 let extra_where_count = '';
                 if (start_time && start_time !== '') {
@@ -845,11 +856,15 @@ class agents extends baseModelbo {
                     reject(err)
                 })
             } else {
-                let sqlCount = `select ac.agent , count(*) , SUM(CAST (ac.durationsec AS INTEGER) ) /60 as total,
-                                SUM(CAST (ac.durationsec AS INTEGER) + CAST (ac.durationmsec AS INTEGER) /1000) /60 /count(*) as moy
-                            from acc_cdrs as ac
-                            WHERE agent in (:uuid) AND CAST((string_to_array("custom_vars", ':'))[3] AS INTEGER) in (:calls)
-                                EXTRA_WHERE
+                let sqlCount = `select ac.agent,
+                                       count(*),
+                                       SUM(CAST(ac.durationsec AS INTEGER)) / 60 as total,
+                                       SUM(CAST(ac.durationsec AS INTEGER) + CAST(ac.durationmsec AS INTEGER) / 1000) /
+                                       60 / count(*)                             as moy
+                                from acc_cdrs as ac
+                                WHERE agent in (:uuid)
+                                  AND CAST((string_to_array("custom_vars", ':'))[3] AS INTEGER) in (:calls)
+                                    EXTRA_WHERE
                                 GROUP BY ac.agent`
 
                 let extra_where_count = '';
@@ -881,11 +896,13 @@ class agents extends baseModelbo {
     DataActionAgents(agents, start_time, end_time) {
         return new Promise((resolve, reject) => {
             let agent_id = agents.map(item => item.user_id)
-            let sql = `select agent_log.user_id , agent_log.action_name,SUM (agent_log.finish_at-agent_log.start_at) 
-                       from agent_log_events as agent_log 
-                       where agent_log.user_id in (:agent_id) AND (agent_log.action_name = 'on-break' OR agent_log.action_name = 'waiting-call') AND
-                       agent_log.start_at >= :start_at AND agent_log.finish_at <= :finish_at
-                        GROUP BY agent_log.action_name ,agent_log.user_id `
+            let sql = `select agent_log.user_id, agent_log.action_name, SUM(agent_log.finish_at - agent_log.start_at)
+                       from agent_log_events as agent_log
+                       where agent_log.user_id in (:agent_id)
+                         AND (agent_log.action_name = 'on-break' OR agent_log.action_name = 'waiting-call')
+                         AND agent_log.start_at >= :start_at
+                         AND agent_log.finish_at <= :finish_at
+                       GROUP BY agent_log.action_name, agent_log.user_id `
             db.sequelize['crm-app'].query(sql, {
                 type: db.sequelize['crm-app'].QueryTypes.SELECT,
                 replacements: {
@@ -1005,10 +1022,12 @@ class agents extends baseModelbo {
         Promise.all([promiseParams]).then(data_params => {
             if (date !== current_Date) {
                 let sqlCount = `select count(*)
-                            from cdrs_:date
-                            WHERE SUBSTRING("custom_vars", 0 , POSITION(':' in "custom_vars") ) = :account_code
-                            AND agent IS NOT NULL
-                                EXTRA_WHERE`
+                                from cdrs_:date
+                                WHERE SUBSTRING ("custom_vars"
+                                    , 0
+                                    , POSITION (':' in "custom_vars") ) = :account_code
+                                  AND agent IS NOT NULL
+                                    EXTRA_WHERE`
                 let extra_where_count = '';
                 if (start_time && start_time !== '') {
                     extra_where_count += ' AND start_time >= :start_time';
@@ -1044,20 +1063,22 @@ class agents extends baseModelbo {
                         return
                     }
                     let pages = Math.ceil(countAll[0].count / params.limit);
-                    let sql = ` select count(*) as total_appel,
-                                       sum(durationsec::int)/60 AS talk_duration , 
-                                       cast(cast((sum(durationsec::int)/60) AS float)/count(*) AS DECIMAL(5,3)) as avg_talking,
+                    let sql = ` select count(*)                                                                      as total_appel,
+                                       sum(durationsec::int) / 60                                                    AS talk_duration,
+                                       cast(cast((sum(durationsec::int) / 60) AS float) / count(*) AS DECIMAL(5, 3)) as avg_talking,
                                        agent
-                                       from cdrs_:date
-                                       WHERE id >= (select id from cdrs_:date WHERE SUBSTRING("custom_vars", 0 , POSITION(':' in "custom_vars") ) = :account_code
-                                       AND agent IS NOT NULL
-                                           EXTRA_WHERE
-                                           ORDER BY id DESC
-                                           LIMIT 1
-                                           OFFSET :offset)
-                                           EXTRA_WHERE-PARAMS
-                                            group by agent
-                                           LIMIT :limit`
+                                from cdrs_:date
+                                WHERE id >= (select id from cdrs_: date WHERE SUBSTRING ("custom_vars"
+                                    , 0
+                                    , POSITION (':' in "custom_vars") ) = :account_code
+                                  AND agent IS NOT NULL
+                                    EXTRA_WHERE
+                                    ORDER BY id DESC
+                                    LIMIT 1
+                                    OFFSET : offset)
+                                    EXTRA_WHERE-PARAMS
+                                group by agent
+                                    LIMIT :limit`
                     let extra_where = '';
                     if (start_time && start_time !== '') {
                         extra_where += ' AND start_time >= :start_time';
@@ -1128,10 +1149,10 @@ class agents extends baseModelbo {
                 })
             } else {
                 let sqlCount = `select count(*)
-                            from acc_cdrs
-                            WHERE SUBSTRING("custom_vars", 0 , POSITION(':' in "custom_vars") ) = :account_code 
-                            AND agent IS NOT NULL
-                 EXTRA_WHERE`
+                                from acc_cdrs
+                                WHERE SUBSTRING("custom_vars", 0, POSITION(':' in "custom_vars")) = :account_code
+                                  AND agent IS NOT NULL
+                                    EXTRA_WHERE`
                 let extra_where_countCurrenDate = '';
                 if (start_time && start_time !== '') {
                     extra_where_countCurrenDate += ' AND start_time >= :start_time';
@@ -1167,21 +1188,22 @@ class agents extends baseModelbo {
                         return
                     }
                     let pages = Math.ceil(countAll[0].count / params.limit);
-                    let sqlData = ` select count(*) as total_appel,
-                                           sum(durationsec::int)/60 AS talk_duration , 
-                                           cast(cast((sum(durationsec::int)/60) AS float)/count(*) AS DECIMAL(5,3)) as avg_talking,
+                    let sqlData = ` select count(*)                                                                      as total_appel,
+                                           sum(durationsec::int) / 60                                                    AS talk_duration,
+                                           cast(cast((sum(durationsec::int) / 60) AS float) / count(*) AS DECIMAL(5, 3)) as avg_talking,
                                            agent
-                                           from acc_cdrs
-                                           WHERE SUBSTRING("custom_vars", 0 , POSITION(':' in "custom_vars") ) = :account_code 
-                                           AND agent IS NOT NULL
-                                           AND id >= ( select id  from acc_cdrs where SUBSTRING("custom_vars", 0 , POSITION(':' in "custom_vars") ) = '703596960803' 
-                                           EXTRA_WHERE
-                                            LIMIT 1
-                                           OFFSET :offset
-                                           )
-                                           EXTRA_WHERE_PARAMS
-                                           group by agent
-                                            LIMIT :limit`
+                                    from acc_cdrs
+                                    WHERE SUBSTRING("custom_vars", 0, POSITION(':' in "custom_vars")) = :account_code
+                                      AND agent IS NOT NULL
+                                      AND id >= (select id
+                                                 from acc_cdrs
+                                                 where SUBSTRING("custom_vars", 0, POSITION(':' in "custom_vars")) =
+                                                       '703596960803'
+                                        EXTRA_WHERE
+                                        LIMIT 1
+                                    OFFSET :offset ) EXTRA_WHERE_PARAMS
+                                    group by agent
+                                        LIMIT :limit`
                     let extra_where_currentDate = '';
                     if (start_time && start_time !== '') {
                         extra_where_currentDate += ' AND start_time >= :start_time';
@@ -1341,24 +1363,27 @@ class agents extends baseModelbo {
         })
         Promise.all([promiseParams]).then(data_params => {
             let sqlCallsStats = `
-                        select  call_s.callstatus_id, call_s.code,  call_s.label, 
-                        case 
-                            WHEN stats.total is null THEN 0
-                            ELSE stats.total
-                        END
-                        from callstatuses call_s
-                        left join (
-                                select callS.callstatus_id, callS.code, count(*) as total from callstatuses as callS
-                                left join callfiles as callF On callF.call_status = callS.code 
-                                left join calls_historys as callH On callH.call_file_id = callF.callfile_id
-                                where 
-                                1=1
-                                EXTRA_WHERE
-                                group by callS.code, callS.callstatus_id )
-                                as stats On stats.callstatus_id = call_s.callstatus_id
-                                where (EXTRA_WHERE_CAMP  or call_s.is_system='Y') and call_s.active='Y' EXTRA_WHERE_STATUS 
-                                order by total desc
-                                `
+                select call_s.callstatus_id,
+                       call_s.code,
+                       call_s.label,
+                       case
+                           WHEN stats.total is null THEN 0
+                           ELSE stats.total
+                           END
+                from callstatuses call_s
+                         left join (
+                    select callS.callstatus_id, callS.code, count(*) as total
+                    from callstatuses as callS
+                             left join callfiles as callF On callF.call_status = callS.code
+                             left join calls_historys as callH On callH.call_file_id = callF.callfile_id
+                    where 1 = 1
+                        EXTRA_WHERE
+                    group by callS.code, callS.callstatus_id)
+                    as stats On stats.callstatus_id = call_s.callstatus_id
+                where (EXTRA_WHERE_CAMP or call_s.is_system = 'Y')
+                  and call_s.active = 'Y' EXTRA_WHERE_STATUS
+                order by total desc
+            `
             let extra_where = '';
             let extra_where_camp = '';
             let extra_where_status = '';

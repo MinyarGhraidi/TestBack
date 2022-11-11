@@ -3,8 +3,11 @@ const {default: axios} = require("axios");
 const usersbo = require('./usersbo');
 const agentbo = require('./agentsbo')
 const {add} = require("nodemon/lib/rules");
+const {reject} = require("bcrypt/promises");
 const call_center_token = require(__dirname + '/../config/config.json')["call_center_token"];
 const base_url_cc_kam = require(__dirname + '/../config/config.json')["base_url_cc_kam"];
+const appSocket = new (require("../providers/AppSocket"))();
+
 const call_center_authorization = {
     headers: {Authorization: call_center_token}
 };
@@ -522,9 +525,11 @@ class campaigns extends baseModelbo {
             } else {
                 if (queue_agents.length > db_agents.length) {
                     let agents_not_assigned = queue_agents.filter(el => !db_agents.includes(el));
+                    console.log(agents_not_assigned, queue_uuid)
                     axios
                         .post(`${base_url_cc_kam}api/v1/queues/${queue_uuid}/tiers/delete`, {agents: agents_not_assigned}, call_center_authorization)
                         .then(resp => {
+                            console.log('here')
                             resolve(campaign);
                         })
                         .catch(err => {
@@ -562,7 +567,7 @@ class campaigns extends baseModelbo {
                         role_crm_id: 3,
                         active: 'Y',
                         account_id: account_id,
-                        $or: [{campaign_id: {$eq: campaign_id}}, {campaign_id: {$eq: 0}}],
+                        $or: [{campaign_id: {$eq: campaign_id}}, {campaign_id: {$eq: null}}],
                     }
                 })
                     .then(agents => {
@@ -573,6 +578,7 @@ class campaigns extends baseModelbo {
                                     .then(allAgents => {
                                         let queue_agents = data.data.result.map(el => el.agent_uuid);
                                         let db_agents = (allAgents && allAgents.length !== 0) ? allAgents.map(el => el.sip_device.uuid) : [];
+                                        console.log(queue_agents, db_agents)
                                         this.fixConsistency(queue_uuid, allAgents, queue_agents, db_agents, campaign_id, campaign)
                                             .then(camp => {
                                                 let campAgents = camp.agents ? camp.agents : [];
@@ -712,18 +718,23 @@ class campaigns extends baseModelbo {
                             .then(() => {
                                 this.updateIsAssignedStatus(assignedAgents, campaign_id, true, campaign_agents)
                                     .then(() => {
-                                        this.updateIsAssignedStatus(notAssignedAgents, 0, false, campaign_agents)
+                                        this.updateIsAssignedStatus(notAssignedAgents, null, false, campaign_agents)
                                             .then(() => {
-                                                this.deleteAgentsMeetings(notAssignedAgents)
-                                                    .then(() => {
-                                                        res.send({
-                                                            status: 200,
-                                                            message: 'success'
+                                                this.UpdateCampaign(assignedAgents, notAssignedAgents, campaign_id).then(() => {
+                                                    this.deleteAgentsMeetings(notAssignedAgents)
+                                                        .then(() => {
+                                                            res.send({
+                                                                status: 200,
+                                                                message: 'success'
+                                                            })
                                                         })
-                                                    })
-                                                    .catch((err) => {
-                                                        return _this.sendResponseError(res, ['cannot delete agent meetings', err], 1, 403);
-                                                    });
+                                                        .catch((err) => {
+                                                            return _this.sendResponseError(res, ['cannot delete agent meetings', err], 1, 403);
+                                                        });
+                                                }).catch((err) => {
+                                                    return _this.sendResponseError(res, ['cannot update Assigned/UnAssigned Agents', err], 1, 403);
+                                                })
+
                                             })
                                             .catch((err) => {
                                                 return _this.sendResponseError(res, ['cannot update status of unassigned agents', err], 1, 403);
@@ -744,6 +755,38 @@ class campaigns extends baseModelbo {
             .catch((err) => {
                 return _this.sendResponseError(res, ['cannot delete from queue in kamailio', err], 1, 403);
             });
+    }
+
+    UpdateCampaign(assignedAgents, NotAssignedAgents, campaign_id) {
+        return new Promise((resolve, reject) => {
+            const Assign = new Promise((resolve, reject) => {
+                assignedAgents.forEach((agent) => {
+                    appSocket.emit('campaign_updated', {
+                        campaign_id: campaign_id,
+                        user_id: agent.user_id
+                    });
+                }).then(() => {
+                    resolve(true);
+                }).catch((err) => {
+                    reject(err);
+                })
+            });
+            const UnAssign = new Promise((resolve, reject) => {
+                NotAssignedAgents.forEach((agent) => {
+                    appSocket.emit('campaign_updated', {
+                        campaign_id: null,
+                        user_id: agent.user_id
+                    });
+                }).then(() => {
+                    resolve(true);
+                }).catch((err) => {
+                    reject(err);
+                })
+            });
+            Promise.all([Assign, UnAssign]).then(() => {
+                resolve(true);
+            }).catch((err) => reject(err));
+        })
     }
 
     isUniqueQueueName(queue_name) {
@@ -800,7 +843,7 @@ class campaigns extends baseModelbo {
                 agents.forEach(user_id => {
                     this.db['users'].findOne({where: {user_id: user_id, active: 'Y'}})
                         .then(agent => {
-                            if (Object.keys(agents) && Object.keys(agents).length !== 0) {
+                            if (agent) {
                                 let uuid = agent.sip_device.uuid;
                                 _agentsbo.onConnectFunc(user_id, uuid, "logged-out", "logged-out")
                                     .then(() => {
@@ -917,53 +960,49 @@ class campaigns extends baseModelbo {
 
     changeStatus(req, res, next) {
         let _this = this;
-        let {campaign_id} = req.body;
+        let {campaign_id, status} = req.body;
+        if ((!!!campaign_id || !!!status)) {
+            return this.sendResponseError(res, ['Error.RequestDataInvalid'], 0, 403);
+        }
+        if (status !== 'N' && status !== 'Y') {
+            return this.sendResponseError(res, ['Error.StatusMustBe_Y_Or_N'], 0, 403);
+        }
         this.db['campaigns'].findOne({where: {campaign_id: campaign_id, active: 'Y'}})
             .then(campaign => {
-                if (Object.keys(campaign) && Object.keys(campaign).length !== 0) {
+                if (campaign) {
                     let agents = campaign.agents;
-                    let isActivate = campaign.status === 'N';
-                    if (isActivate) {
-                        this.db['campaigns'].update({status: 'Y'}, {where: {campaign_id: campaign_id}})
+                    let isActivate = status === 'Y';
+
+                    let promiseTelco = new Promise((resolve, reject) => {
+                        if (!isActivate) {
+                            _this.changeAGentsStatus(agents).then(() => {
+                                resolve(true)
+                            }).catch(err => {
+                                reject(err);
+                            })
+                        } else {
+                            resolve(true)
+                        }
+                    })
+                    Promise.all([promiseTelco]).then(data_telco => {
+                        this.db['campaigns'].update({status: status}, {where: {campaign_id: campaign_id}})
                             .then(() => {
-                                this.changeStatusCampaignFiles(campaign_id, 'Y')
-                                    .then(() => {
+                                this.changeStatusComp(campaign_id, status).then(() => {
+                                    if (isActivate) {
                                         res.send({
                                             status: 200,
                                             message: "success"
                                         })
-                                    })
-                                    .catch((err) => {
-                                        return _this.sendResponseError(res, ['cannot change the campaign status', err], 1, 403);
-                                    });
-                            })
-                            .catch((err) => {
-                                return _this.sendResponseError(res, ['cannot change the campaign status', err], 1, 403);
-                            });
-                    } else {
-                        _this.changeAGentsStatus(agents)
-                            .then(() => {
-                                this.db['campaigns'].update({status: 'N'}, {where: {campaign_id: campaign_id}})
-                                    .then(() => {
-                                        this.changeStatusCampaignFiles(campaign_id, 'N')
-                                            .then(() => {
-                                                res.send({
-                                                    status: 200,
-                                                    message: "success"
-                                                })
-                                            })
-                                            .catch((err) => {
-                                                return _this.sendResponseError(res, ['cannot change the campaign status', err], 1, 403);
-                                            });
-                                    })
-                                    .catch((err) => {
-                                        return _this.sendResponseError(res, ['cannot change the campaign status', err], 1, 403);
-                                    });
-                            })
-                            .catch((err) => {
-                                return _this.sendResponseError(res, ['cannot change agent status', err], 1, 403);
-                            });
-                    }
+                                    }
+                                }).catch((err) => {
+                                    return _this.sendResponseError(res, ['cannot change the campaign status1', err], 1, 403);
+                                })
+                            }).catch((err) => {
+                            return _this.sendResponseError(res, ['cannot change the campaign status2', err], 1, 403);
+                        });
+                    }).catch((err) => {
+                        return _this.sendResponseError(res, ['cannot change the campaign status2', err], 1, 403);
+                    });
                 } else {
                     return _this.sendResponseError(res, ['Campaign not found'], 1, 403);
                 }
@@ -1050,7 +1089,7 @@ class campaigns extends baseModelbo {
                     this.changeStatus_callfilesByIdListCallFiles(data.listcallfile_id, status).then(() => {
                         if (indexCallFiles < callFilesList.length - 1) {
                             indexCallFiles++;
-                        }else{
+                        } else {
                             resolve(true);
                         }
 
@@ -1107,24 +1146,6 @@ class campaigns extends baseModelbo {
         })
     }
 
-    changeStatusByIdCompaign(req, res, next) {
-        let {compaign_id, status} = req.body;
-        if ((!!!compaign_id || !!!status)) {
-            return this.sendResponseError(res, ['Error.RequestDataInvalid'], 0, 403);
-        }
-        if (status !== 'N' && status !== 'Y') {
-            return this.sendResponseError(res, ['Error.StatusMustBe_Y_Or_N'], 0, 403);
-        }
-        this.changeStatusComp(compaign_id, status).then(data => {
-            res.send({
-                status: 200,
-                message: "success",
-                success: true
-            })
-        }).catch((error) => {
-            return this.sendResponseError(res, ['Error.AnErrorHasOccurredChangeStatusCompaign', error], 1, 403);
-        });
-    }
 }
 
 module.exports = campaigns;

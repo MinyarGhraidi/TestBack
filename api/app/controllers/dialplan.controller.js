@@ -20,6 +20,12 @@ module.exports = {
     delete: function (req, res, next) {
         _itemDialplanBo.delete(req, res, next);
     },
+    changeStatus: function (req, res, next) {
+        _itemDialplanBo.changeStatus(req, res, next);
+    },
+    deleteCascade: function (req, res, next) {
+        _itemDialplanBo.deleteCascade(req, res, next);
+    },
    
 
 };

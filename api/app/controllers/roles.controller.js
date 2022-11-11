@@ -22,5 +22,11 @@ module.exports = {
     },
     deleteRole : function (req, res, next) {
         rolesDaoInst.deleteRole(req, res, next)
-    }
+    },
+    changeStatus: function (req, res, next) {
+        rolesDaoInst.changeStatus(req, res, next);
+    },
+    deleteCascade: function (req, res, next) {
+        rolesDaoInst.deleteCascade(req, res, next);
+    },
 }

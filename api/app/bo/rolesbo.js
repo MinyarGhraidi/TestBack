@@ -49,6 +49,63 @@ class roles extends baseModelbo {
         })
     }
 
+    changeStatus(req, res, next) {
+        let _this = this;
+        let {role_id, status} = req.body;
+        if ((!!!role_id || !!!status)) {
+            return this.sendResponseError(res, ['Error.RequestDataInvalid'], 0, 403);
+        }
+        if (status !== 'N' && status !== 'Y') {
+            return this.sendResponseError(res, ['Error.StatusMustBe_Y_Or_N'], 0, 403);
+        }
+        this.db['roles'].findOne({where: {role_id: role_id, active: 'Y'}})
+            .then(role => {
+                if (role) {
+
+                    let roles_name = ['sales','user'];
+                    const roles_ids = [];
+                    this.db['roles_crms'].findAll({
+                        where: {
+                            active: 'Y',
+                            value: {
+                                in: roles_name
+                            }
+                        }
+                    }).then((roles_crm) => {
+                        roles_crm.map((role)=>{
+                            roles_ids.push(role.id);
+                        });
+                                this.db['users'].update({status: status}, {
+                                    where: {
+                                        role_crm_id: {
+                                            in : roles_ids
+                                        },
+                                        role_id: role.role_id,
+                                        active: 'Y'
+                                    }
+                                }).then(() => {
+                                    this.db['roles'].update({status: status}, {
+                                        where: {
+                                            role_id: role_id,
+                                        }
+                                    }).then(() => {
+                                        res.send({
+                                            status: 200,
+                                            message: "success"
+                                        })
+                                    }).catch(err => {
+                                        return _this.sendResponseError(res, ['cannot find role', err], 1, 403);
+                                    })
+                                })
+                            });
+                }
+            }).catch(err => {
+            return _this.sendResponseError(res, ['cannot find role', err], 1, 403);
+        })
+
+
+    }
+
     saveRole(req, res, next) {
         let _this = this;
         let {role_name, account_id, role_id} = req.body;

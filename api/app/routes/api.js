@@ -90,7 +90,6 @@ let apiRouters = function (passport) {
     router.post("/api/campaign/assignAgents", passport.authenticate('jwt', {session: false}), campaignController.assignAgents);
     router.post("/api/campaign/changeStatus", passport.authenticate('jwt', {session: false}), campaignController.changeStatus);
     router.post("/api/callcennter/authorize", campaignController.authorize);
-    router.post("/api/campaign/changeStatusRelatives", campaignController.changeStatusByIdCompaign);
 
     //role routers
     router.post("/api/role/find/:params?", passport.authenticate('jwt', {session: false}), rolesController.find);
@@ -100,6 +99,8 @@ let apiRouters = function (passport) {
     router.post("/api/role/save", passport.authenticate('jwt', {session: false}), rolesController.save);
     router.post("/api/role/saveRole", passport.authenticate('jwt', {session: false}), rolesController.saveRole);
     router.delete("/api/role/deleteRole/:params", passport.authenticate('jwt', {session: false}), rolesController.deleteRole)
+    router.delete("/api/role/deleteCascade/:params", passport.authenticate('jwt', {session: false}), rolesController.deleteCascade);
+    router.post("/api/role/changeStatus", passport.authenticate('jwt', {session: false}), rolesController.changeStatus)
 
     //user routers
     router.post("/api/user/find/:params?", passport.authenticate('jwt', {session: false}), usersController.find);
@@ -214,8 +215,10 @@ let apiRouters = function (passport) {
     router.get("/api/didsgroups/findById/:entity_id", passport.authenticate('jwt', {session: false}), didsgroupsController.findById);
     router.put("/api/didsgroups/update", passport.authenticate('jwt', {session: false}), didsgroupsController.update);
     router.delete("/api/didsgroups/delete/:params", passport.authenticate('jwt', {session: false}), didsgroupsController.delete);
+    router.delete("/api/didsgroups/deleteCascade/:params", passport.authenticate('jwt', {session: false}), didsgroupsController.deleteCascade);
     router.post("/api/didsgroups/save", passport.authenticate('jwt', {session: false}), didsgroupsController.save);
     router.post("/api/didsgroups/affectDidsGpToCamp", passport.authenticate('jwt', {session: false}), didsgroupsController.affectDidsGpToCamp);
+    router.post('/api/didsgroups/changeStatus', passport.authenticate('jwt', {session: false}), didsgroupsController.changeStatus);
 
 
     router.post("/api/callBlunding/find", passport.authenticate('jwt', {session: false}), callBlundingController.find);
@@ -299,6 +302,7 @@ let apiRouters = function (passport) {
     router.post('/api/callfile/UpdateCall', passport.authenticate('jwt', {session: false}), callfileController.updateCallFileQualification)
     router.post('/api/callfile/leadsStats', passport.authenticate('jwt', {session: false}), callfileController.leadsStats)
     router.post('/api/callfile/getHistoryCallFile', passport.authenticate('jwt', {session: false}), callfileController.getHistoryCallFile)
+    router.post('/api/callfile/getCustomFields', passport.authenticate('jwt', {session: false}), callfileController.getCustomFields)
 
 
     router.post('/api/message/save', passport.authenticate('jwt', {session: false}), MessageController.save);
@@ -326,7 +330,9 @@ let apiRouters = function (passport) {
     router.get('/api/dialplan/findById/:entity_id', passport.authenticate('jwt', {session: false}), dialpansController.findById);
     router.put('/api/dialplan/update', passport.authenticate('jwt', {session: false}), dialpansController.update);
     router.delete('/api/dialplan/delete/:params', passport.authenticate('jwt', {session: false}), dialpansController.delete);
+    router.delete("/api/dialplan/deleteCascade/:params", passport.authenticate('jwt', {session: false}), dialpansController.deleteCascade);
     router.post('/api/dialplan/save', passport.authenticate('jwt', {session: false}), dialpansController.save);
+    router.post('/api/dialplan/changeStatus', passport.authenticate('jwt', {session: false}), dialpansController.changeStatus);
 
 
     router.post('/api/dialplanItems/find/:params?', passport.authenticate('jwt', {session: false}), dialpanItemsController.find);
