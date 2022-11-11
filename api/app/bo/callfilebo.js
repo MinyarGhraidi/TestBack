@@ -47,6 +47,7 @@ class callfiles extends baseModelbo {
         let indexMapping = 0;
         let key =0
         let dataMapping = {}
+        let custom_field =[]
         let PromiseMapping = new Promise((resolve, reject) => {
             if(listCallFileItem.templates_id) {
                 db['templates_list_call_files'].findOne({
@@ -57,18 +58,22 @@ class callfiles extends baseModelbo {
                 }).then(result=>{
                     if (result){
                         dataMapping = result.template
-                        resolve(dataMapping)
+                        custom_field = result.custom_field
+                        resolve({dataMapping:dataMapping,
+                            custom_field:custom_field})
                     }
                 })
             } else {
                 dataMapping = listCallFileItem.mapping;
-                resolve(dataMapping)
+                resolve({dataMapping:dataMapping,
+                    custom_field:custom_field})
             }
         })
 
         Promise.all([PromiseMapping]).then(dataMapping => {
-            this.CreateCallFileItem(dataMapping[0], listCallFileItem, basic_fields, callFile, item_callFile, indexMapping).then(callFile => {
+            this.CreateCallFileItem(dataMapping[0].dataMapping, listCallFileItem, basic_fields, callFile, item_callFile, indexMapping).then(callFile => {
                 key++;
+                callFile.customfields = dataMapping[0].custom_field ? dataMapping[0].custom_field :[]
                 this.db['callfiles'].build(callFile).save().then(result => {
 
                     let item_toUpdate = listcallfile_item_to_update;
