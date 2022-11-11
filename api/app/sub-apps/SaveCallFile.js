@@ -126,7 +126,8 @@ function startReadData() {
 
                         if (result_saveCall.success) {
                             appSocket.emit('refresh_list_callFiles', {
-                                data: data
+                                data: data,
+                                user_id: data.user_id
                             });
                             ch.ack(msg);
                         } else {

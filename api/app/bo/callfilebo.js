@@ -151,10 +151,12 @@ class callfiles extends baseModelbo {
     }
 
     saveListCallFile = (req, res, next) => {
+        let user_id = req.body.user_id
         let CallFile = req.body;
+        delete CallFile.user_id;
 
         this.db['listcallfiles'].build(CallFile).save().then(save_list => {
-            this.LoadCallFile(save_list.listcallfile_id).then(result => {
+            this.LoadCallFile(save_list.listcallfile_id, user_id).then(result => {
                 if (result.success) {
                     res.send({
                         success: true
@@ -173,7 +175,7 @@ class callfiles extends baseModelbo {
         })
     }
 
-    LoadCallFile = (listcallfile_id) => {
+    LoadCallFile = (listcallfile_id, user_id) => {
         return new PromiseBB((resolve, reject) => {
             let _this = this;
             let params = {};
@@ -195,7 +197,7 @@ class callfiles extends baseModelbo {
                 },
             }).then(res_listCallFile => {
                 if (res_listCallFile && res_listCallFile.length !== 0) {
-                    _this.CallFilesInfo(res_listCallFile, params).then(callFilesMapping => {
+                    _this.CallFilesInfo(res_listCallFile, params, user_id).then(callFilesMapping => {
                         if (callFilesMapping.success) {
                             resolve({
                                 success: true,
@@ -214,7 +216,7 @@ class callfiles extends baseModelbo {
 
     }
 
-    CallFilesInfo = (res_listCallFile, params) => {
+    CallFilesInfo = (res_listCallFile, params, user_id) => {
         let _this = this;
         return new Promise((resolve, reject) => {
             let data_listCallFileItem = res_listCallFile.toJSON();
@@ -262,7 +264,7 @@ class callfiles extends baseModelbo {
                                     campaign_id: result[1].campaign_id
                                 }
                             }).then(campaign => {
-                                this.sendDataToQueue(callFiles, campaign, data_listCallFileItem, listcallfile_item_to_update).then(send_callFile => {
+                                this.sendDataToQueue(callFiles, campaign, data_listCallFileItem, listcallfile_item_to_update, user_id).then(send_callFile => {
                                     resolve({
                                         send_callFile: send_callFile,
                                         success: true
@@ -328,7 +330,7 @@ class callfiles extends baseModelbo {
         })
     }
 
-    sendDataToQueue(callFiles, campaign, data_listCallFileItem, listcallfile_item_to_update) {
+    sendDataToQueue(callFiles, campaign, data_listCallFileItem, listcallfile_item_to_update, user_id) {
         return new Promise((resolve, reject) => {
             console.log('rabbitmq_url', rabbitmq_url)
             amqp.connect(rabbitmq_url, function (error0, connection) {
@@ -358,6 +360,7 @@ class callfiles extends baseModelbo {
                         data_call.index = index;
                         data_call.progress = progress;
                         data_call.finish = callFiles.length === index;
+                        data_call.user_id = user_id;
                         channel.sendToQueue(queue, Buffer.from(JSON.stringify(data_call)), {type: 'save call file'});
                     }).then((all_r) => {
                         resolve({
