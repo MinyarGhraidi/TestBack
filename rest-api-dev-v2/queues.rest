@@ -1,0 +1,136 @@
+#GET ALL QUEUES
+GET https://sip-crm.oxilog-telecom.net:1443/api/v1/queues
+Content-Type: application/json
+Authorization: Bearer BomjNx8kFfZTdCFx4kH3hGECO78yS0C0KS7pgO0BUe8COxcved
+
+###
+#GET QUEUE BY ID
+GET https://sip-crm.oxilog-telecom.net:1443/api/v1/queues/41ee100d-086f-49dc-afa1-6b74f7221653
+Content-Type: application/json
+Authorization: Bearer BomjNx8kFfZTdCFx4kH3hGECO78yS0C0KS7pgO0BUe8COxcved
+
+###
+#CREATE NEW QUEUE
+
+POST https://sip-crm.oxilog-telecom.net:1443/api/v1/queues
+Content-Type: application/json
+Authorization: Bearer BomjNx8kFfZTdCFx4kH3hGECO78yS0C0KS7pgO0BUe8COxcved
+
+{
+    "name": "Q1",
+    "extension": "1111",
+	"domain_uuid": "97b42577-13c7-41cc-be10-f36989a4ce10",
+    "strategy": "ring-all",
+    "greetings": [],
+    "hold_music": [],
+    "record": true,
+    "options": {
+        "time_base_score": "queue",
+        "tier_rules_apply": "false",
+        "tier_rule_wait_second": 300,
+        "tier_rule_wait_multiply_level": "false",
+        "tier_rule_no_agent_no_wait": "true",
+        "discard_abandoned_after": 900,
+        "abandoned_resume_allowed": "true",
+        "max_wait_time": 0,
+        "max_wait_time_with_no_agent": 120,
+        "max_wait_time_with_no_agent_time_reached": 5,
+        "ring_progressively_delay": 10,
+		"skip_agents_with_external_calls": "false",
+		"agent_no_answer_status": "on-break"
+    }
+}
+
+
+###
+#UPDATE QUEUE
+
+PUT https://sip-crm.oxilog-telecom.net:1443/api/v1/queues/ecb6d249-436e-44c4-82bd-36cde3f5b0a4
+Content-Type: application/json
+Authorization: Bearer BomjNx8kFfZTdCFx4kH3hGECO78yS0C0KS7pgO0BUe8COxcved
+
+{
+    "name": "Q1",
+    "extension": "1111",
+	"domain_uuid": "97b42577-13c7-41cc-be10-f36989a4ce10",
+    "strategy": "ring-all",
+    "greetings": ["https://voxnode.fra1.digitaloceanspaces.com/audio/files/confirm_appel.wav"],
+    "hold_music": ["https://voxnode.fra1.digitaloceanspaces.com/audio/files/attente-longue.wav"],
+    "record": true,
+    "enabled": true,
+    "options": {
+        "time_base_score": "queue",
+        "tier_rules_apply": "false",
+        "tier_rule_wait_second": 300,
+        "tier_rule_wait_multiply_level": "false",
+        "tier_rule_no_agent_no_wait": "true",
+        "discard_abandoned_after": 900,
+        "abandoned_resume_allowed": "true",
+        "max_wait_time": 0,
+        "max_wait_time_with_no_agent": 120,
+        "max_wait_time_with_no_agent_time_reached": 5,
+        "ring_progressively_delay": 10,
+		"skip_agents_with_external_calls": "true",
+		"agent_no_answer_status": "on-break"
+    }
+}
+
+
+###
+#DELETE QUEUE
+
+DELETE https://sip-crm.oxilog-telecom.net:1443/api/v1/queues/a07824be-fc31-4495-bed6-ba5ba7bb1734
+Content-Type: application/json
+Authorization: Bearer BomjNx8kFfZTdCFx4kH3hGECO78yS0C0KS7pgO0BUe8COxcved
+
+
+###
+#GET QUEUE TIERS
+
+GET https://sip-crm.oxilog-telecom.net:1443/api/v1/queues/41ee100d-086f-49dc-afa1-6b74f7221653/tiers
+Content-Type: application/json
+Authorization: Bearer BomjNx8kFfZTdCFx4kH3hGECO78yS0C0KS7pgO0BUe8COxcved
+
+
+###
+#ADD/UPDATE QUEUE TIERS
+
+POST https://sip-crm.oxilog-telecom.net:1443/api/v1/queues/deaa7ce4-9078-47b7-aee3-d15bc21e3870/tiers
+Content-Type: application/json
+Authorization: Bearer BomjNx8kFfZTdCFx4kH3hGECO78yS0C0KS7pgO0BUe8COxcved
+
+{
+    "tiers": [
+        {
+            "agent_uuid": "97b2c235-2898-45d7-8060-36f7041110e2",
+            "tier_level": 2,
+            "tier_position": 2
+        }
+    ]
+}
+
+###
+#DELETE QUEUE TIERS
+
+POST https://sip-crm.oxilog-telecom.net:1443/api/v1/queues/41ee100d-086f-49dc-afa1-6b74f7221653/tiers/delete
+Content-Type: application/json
+Authorization: Bearer BomjNx8kFfZTdCFx4kH3hGECO78yS0C0KS7pgO0BUe8COxcved
+
+{
+    "agents": ["97b2c235-2898-45d7-8060-36f7041110e2", "c426c0e5-dd20-4fd1-8297-a6e078f9d505"]
+}
+
+
+###
+#DELETE ALL QUEUE TIERS AT ONCE
+
+POST https://sip-crm.oxilog-telecom.net:1443/api/v1/queues/deaa7ce4-9078-47b7-aee3-d15bc21e3870/tiers/delete
+Content-Type: application/json
+Authorization: Bearer BomjNx8kFfZTdCFx4kH3hGECO78yS0C0KS7pgO0BUe8COxcved
+
+{
+    "agents": ["*"]
+}
+
+
+

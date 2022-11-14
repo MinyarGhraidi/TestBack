@@ -1,0 +1,53 @@
+#GET ALL SUBSCRIBERS
+GET https://sip-crm.oxilog-telecom.net:1443/api/v1/subscribers
+Content-Type: application/json
+Authorization: Bearer BomjNx8kFfZTdCFx4kH3hGECO78yS0C0KS7pgO0BUe8COxcved
+
+###
+#GET SUBSCRIBER BY ID
+GET https://sip-crm.oxilog-telecom.net:1443/api/v1/subscribers/97b28d30-d7c3-432b-b376-53d2b13c0166
+Content-Type: application/json
+Authorization: Bearer BomjNx8kFfZTdCFx4kH3hGECO78yS0C0KS7pgO0BUe8COxcved
+###
+
+#GET SUBSCRIBER BY USERNAME
+GET https://sip-crm.oxilog-telecom.net:1443/api/v1/subscribers/username/anis
+Content-Type: application/json
+Authorization: Bearer BomjNx8kFfZTdCFx4kH3hGECO78yS0C0KS7pgO0BUe8COxcved
+
+###
+#GET SUBSCRIBER STATUS
+GET https://sip-crm.oxilog-telecom.net:1443/api/v1/subscribers/97b28d30-d7c3-432b-b376-53d2b13c0166/status
+Content-Type: application/json
+Authorization: Bearer BomjNx8kFfZTdCFx4kH3hGECO78yS0C0KS7pgO0BUe8COxcved
+
+###
+#CREATE SUBSCRIBER WITH Username/Password Auth
+POST https://sip-crm.oxilog-telecom.net:1443/api/v1/subscribers
+Content-Type: application/json
+Authorization: Bearer BomjNx8kFfZTdCFx4kH3hGECO78yS0C0KS7pgO0BUe8COxcved
+
+{
+    "username":"anis",
+    "domain":"sip-crm.oxilog-telecom.net",
+    "password":"pwdpwdpwd"
+}
+
+###
+#UPDATE SUBSCRIBER
+PUT https://sip-crm.oxilog-telecom.net:1443/api/v1/subscribers/97b28d30-d7c3-432b-b376-53d2b13c0166
+Content-Type: application/json
+Authorization: Bearer BomjNx8kFfZTdCFx4kH3hGECO78yS0C0KS7pgO0BUe8COxcved
+
+{
+    "username":"anis",
+    "domain":"sip-crm.oxilog-telecom.net",
+    "password":"pwdpwdpwd",
+    "enabled": true
+}
+
+###
+#DELETE SUBSCRIBER BY ID
+DELETE https://sip-crm.oxilog-telecom.net:1443/api/v1/subscribers/97b28d30-d7c3-432b-b376-53d2b13c0166
+Content-Type: application/json
+Authorization: Bearer BomjNx8kFfZTdCFx4kH3hGECO78yS0C0KS7pgO0BUe8COxcved

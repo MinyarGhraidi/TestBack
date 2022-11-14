@@ -1,0 +1,40 @@
+
+GET https://sip-crm.oxilog-telecom.net:1443/api/v1/domains
+Content-Type: application/json
+Authorization: Bearer BomjNx8kFfZTdCFx4kH3hGECO78yS0C0KS7pgO0BUe8COxcved
+
+###
+#GET DOMAIN BY ID
+GET https://sip-crm.oxilog-telecom.net:1443/api/v1/domains/97b0cd67-a126-42d4-ae86-e35b4cd339a8
+Content-Type: application/json
+Authorization: Bearer BomjNx8kFfZTdCFx4kH3hGECO78yS0C0KS7pgO0BUe8COxcved
+###
+
+###
+#CREATE DOMAIN
+POST https://sip-crm.oxilog-telecom.net:1443/api/v1/domains
+Content-Type: application/json
+Authorization: Bearer BomjNx8kFfZTdCFx4kH3hGECO78yS0C0KS7pgO0BUe8COxcved
+
+{
+    "domain_name":"sip-crm.oxilog-telecom.net",
+    "description":"Main tenant"
+}
+
+###
+#UPDATE DOMAIN
+PUT https://sip-crm.oxilog-telecom.net:1443/api/v1/domains/97b0cfcd-c21e-4524-b066-0cc8d3c821a0
+Content-Type: application/json
+Authorization: Bearer BomjNx8kFfZTdCFx4kH3hGECO78yS0C0KS7pgO0BUe8COxcved
+
+{
+    "domain_name":"sip-crm.oxilog-telecom.net",
+    "description":"dummy",
+    "enabled": false
+}
+
+###
+#DELETE DOMAIN BY ID
+DELETE https://sip-crm.oxilog-telecom.net:1443/api/v1/domains/2
+Content-Type: application/json
+Authorization: Bearer BomjNx8kFfZTdCFx4kH3hGECO78yS0C0KS7pgO0BUe8COxcved

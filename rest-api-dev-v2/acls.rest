@@ -1,0 +1,86 @@
+#GET Acls
+GET https://sip-crm.oxilog-telecom.net:1443/api/v1/acls
+Content-Type: application/json
+Authorization: Bearer BomjNx8kFfZTdCFx4kH3hGECO78yS0C0KS7pgO0BUe8COxcved
+
+###
+
+#Get Acl By Id
+GET https://sip-crm.oxilog-telecom.net:1443/api/v1/acls/97b288bd-0bb0-4277-9b65-07ae0ee5fb01
+Content-Type: application/json
+Authorization: Bearer BomjNx8kFfZTdCFx4kH3hGECO78yS0C0KS7pgO0BUe8COxcved
+
+###
+
+#Get Acl Nodes By Id
+GET https://sip-crm.oxilog-telecom.net:1443/api/v1/acls/97b288bd-0bb0-4277-9b65-07ae0ee5fb01/nodes
+Content-Type: application/json
+Authorization: Bearer BomjNx8kFfZTdCFx4kH3hGECO78yS0C0KS7pgO0BUe8COxcved
+
+
+###
+
+#Create Acl
+POST https://sip-crm.oxilog-telecom.net:1443/api/v1/acls
+Content-Type: application/json
+Authorization: Bearer BomjNx8kFfZTdCFx4kH3hGECO78yS0C0KS7pgO0BUe8COxcved
+
+{
+    "name": "providers",
+    "default": "deny",
+    "description": "inbound-carriers"
+}
+
+###
+
+#Create Acl Node
+POST https://sip-crm.oxilog-telecom.net:1443/api/v1/acls/dccd1c86-6c89-47e6-8b65-2ec497a26ce5/nodes
+Content-Type: application/json
+Authorization: Bearer BomjNx8kFfZTdCFx4kH3hGECO78yS0C0KS7pgO0BUe8COxcved
+
+{
+    "type": "allow",
+    "cidr": "13.37.134.64/32"
+}
+
+###
+
+#Update Acl
+PUT https://sip-crm.oxilog-telecom.net:1443/api/v1/acls/97b288bd-0bb0-4277-9b65-07ae0ee5fb01
+Content-Type: application/json
+Authorization: Bearer BomjNx8kFfZTdCFx4kH3hGECO78yS0C0KS7pgO0BUe8COxcved
+
+{
+    "name": "providers-list",
+    "default": "allow",
+    "description": "inbound-carriers-list"
+}
+
+###
+
+#Update Acl node
+PUT https://sip-crm.oxilog-telecom.net:1443/api/v1/acls/97b288bd-0bb0-4277-9b65-07ae0ee5fb01/nodes/97b288fe-ebac-4de4-b2cd-f9b00bb8fe0b
+Content-Type: application/json
+Authorization: Bearer BomjNx8kFfZTdCFx4kH3hGECO78yS0C0KS7pgO0BUe8COxcved
+
+{
+    "type": "allow",
+    "cidr": "1.1.1.3/32",
+    "description": "ip2"
+}
+
+###
+
+#Delete Acl
+DELETE https://sip-crm.oxilog-telecom.net:1443/api/v1/acls/97b288bd-0bb0-4277-9b65-07ae0ee5fb01
+Content-Type: application/json
+Authorization: Bearer BomjNx8kFfZTdCFx4kH3hGECO78yS0C0KS7pgO0BUe8COxcved
+
+###
+
+#Delete Acl Node
+DELETE https://sip-crm.oxilog-telecom.net:1443/api/v1/acls/dccd1c86-6c89-47e6-8b65-2ec497a26ce5/nodes/97b4a344-2acf-4573-ad04-8ec85f0fec5b
+Content-Type: application/json
+Authorization: Bearer BomjNx8kFfZTdCFx4kH3hGECO78yS0C0KS7pgO0BUe8COxcved
+
+

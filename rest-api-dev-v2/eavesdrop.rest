@@ -1,0 +1,28 @@
+POST https://sip-crm.oxilog-telecom.net:1443/api/v1/commands/eavesdrop
+Content-Type: application/json
+Authorization: Bearer BomjNx8kFfZTdCFx4kH3hGECO78yS0C0KS7pgO0BUe8COxcved
+
+{
+	"channelUuid": "f74f3881-6785-41af-98a6-1185432385df",
+	"supervisorSipUri": "supervisor@sip-crm.oxilog-telecom.net",
+	"callerIdNumber": "+33999999999"
+}
+
+#X-Call-Type: eavesdrop
+
+###
+{
+	"eventName":"call-answered",
+	"timestamp":"1613301024556674",
+	"sipCallId":"352b1qoa9ij3lmec1sne",
+	"sipFromUri":"sip:+33211199993@sip-crm.oxilog-telecom.net",
+	"sipToUri":"sip:+33184039137@occ.oxilog.net",
+	"callDirection":"outbound",
+	"callState":"answered",
+	"startTime":"1613301021056659",
+	"answerTime":"1613301024536672",
+	"accountcode":"1",
+	"username":"test-1",
+	"serverIP":"51.254.83.130",
+	"eavesdropCallId":"e0006d2c-acbe-4ea0-96f2-1d084ed2b36d"
+}
