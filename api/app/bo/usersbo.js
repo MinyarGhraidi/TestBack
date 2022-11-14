@@ -985,7 +985,7 @@ class users extends baseModelbo {
                             res.send({
                                 status: 200,
                                 message: 'success',
-                                data: {campaign_id, isActiveCampaign}
+                                data: {campaign_id, isActiveCampaign, script : campaign.script}
                             })
                         })
                         .catch(err => {
