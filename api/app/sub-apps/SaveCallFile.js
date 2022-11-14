@@ -121,9 +121,8 @@ function startReadData() {
                 case 'save call file': {
                     const incomingDate = (new Date()).toISOString();
                     let data = JSON.parse(msg.content.toString());
-                    SaveCallFiles(data).then(result_saveCall => {
+                    SaveCallFiles(data).then(result_saveCall => {z
                         console.log("Sending Ack for msg at time " + incomingDate);
-
                         if (result_saveCall.success) {
                             appSocket.emit('refresh_list_callFiles', {
                                 data: data,
@@ -133,7 +132,6 @@ function startReadData() {
                         } else {
                             ch.reject(msg, true);
                         }
-
                     });
                     break;
                 }
