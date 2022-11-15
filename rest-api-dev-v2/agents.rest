@@ -17,8 +17,8 @@ Authorization: Bearer BomjNx8kFfZTdCFx4kH3hGECO78yS0C0KS7pgO0BUe8COxcved
 
 {
     "name": "Anis",
-	"domain_uuid": "97b42577-13c7-41cc-be10-f36989a4ce10",
-    "subscriber_uuid": "97b427f6-0f31-485d-b85e-91f15ee0b088",
+	"domain_uuid": "97c0468b-59b9-42b8-adc8-aa9749f1f8c8",
+    "subscriber_uuid": "97c04930-5743-40cf-af78-c2f69358b4b3",
     "options": {
         "call_timeout": 60,
         "max_no_answer": 0,
@@ -60,14 +60,14 @@ Authorization: Bearer BomjNx8kFfZTdCFx4kH3hGECO78yS0C0KS7pgO0BUe8COxcved
 
 ###
 #UPDATE AGENT
-PUT https://sip-crm.oxilog-telecom.net:1443/api/v1/agents/afb594fe-44e4-4328-9f67-ba68d0440b88
+PUT https://sip-crm.oxilog-telecom.net:1443/api/v1/agents/28379d77-96a5-4b81-969e-1109fe7e7893
 Content-Type: application/json
 Authorization: Bearer BomjNx8kFfZTdCFx4kH3hGECO78yS0C0KS7pgO0BUe8COxcved
 
 {
     "name": "Anis",
-	"domain_uuid": "97b42577-13c7-41cc-be10-f36989a4ce10",
-    "subscriber_uuid": "97b427f6-0f31-485d-b85e-91f15ee0b088",
+	"domain_uuid": "97c0468b-59b9-42b8-adc8-aa9749f1f8c8",
+    "subscriber_uuid": "97c04930-5743-40cf-af78-c2f69358b4b3",
     "status": "available",
     "enabled": true,
     "options": {

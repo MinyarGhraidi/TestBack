@@ -21,7 +21,7 @@ Authorization: Bearer BomjNx8kFfZTdCFx4kH3hGECO78yS0C0KS7pgO0BUe8COxcved
 
 {
 	"name":"oxilog",
-	"domain_uuid": "97b42577-13c7-41cc-be10-f36989a4ce10",
+	"domain_uuid": "97c0468b-59b9-42b8-adc8-aa9749f1f8c8",
 	"username":"115093553888",
     "password": "MtN97zcl8D76XoURYInbkmLr",
 	"proxy":"sip2.oxilog.net",
