@@ -1,16 +1,19 @@
 module.exports = (sequelize, Sequelize) => {
-    const acls = sequelize.define(
-        "acls",
+    const acl_nodes = sequelize.define(
+        "acl_nodes",
         {
-            acl_id: {
+            acl_node_id: {
                 primaryKey: true,
                 autoIncrement: true,
                 type: Sequelize.INTEGER,
             },
-            name: {
+            type: {
                 type: Sequelize.STRING,
             },
-            default: {
+            cidr: {
+                type: Sequelize.STRING,
+            },
+            domain: {
                 type: Sequelize.STRING,
             },
             description: {
@@ -31,6 +34,9 @@ module.exports = (sequelize, Sequelize) => {
                 type: Sequelize.DATE,
                 defaultValue: new Date(),
             },
+            acl_id : {
+                type: Sequelize.INTEGER
+            },
             params: {
                 type: Sequelize.JSONB
             },
@@ -38,20 +44,28 @@ module.exports = (sequelize, Sequelize) => {
         {timestamps: false}
     );
 
-    acls.prototype.fields = [
-        "acl_id",
-        "name",
-        "default",
+    acl_nodes.prototype.fields = [
+        "acl_node_id",
+        "type",
+        "cidr",
+        "domain",
         "description",
         "created_at",
         "updated_at",
-        "active"
+        "active",
+        "acl_id"
     ];
 
-    acls.prototype.fieldsSearchMetas = [
+    acl_nodes.prototype.fieldsSearchMetas = [
         "name",
         "description",
-        "default"
+        "default",
     ];
-    return acls;
+
+    acl_nodes.associate = function (models) {
+        acl_nodes.belongsTo(models.acls, {
+            foreignKey: 'acl_id'
+        });
+    };
+    return acl_nodes;
 };

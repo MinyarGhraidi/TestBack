@@ -56,6 +56,7 @@ dialpanItemsController = require('../controllers/dialplanItems.controller');
 accController = require('../controllers/acc.controller');
 TemplateListCallFile = require('../controllers/templateList.controller');
 DomainController = require('../controllers/domain.controller');
+AclController = require('../controllers/acl.controller');
 
 
 let apiRouters = function (passport) {
@@ -365,7 +366,12 @@ let apiRouters = function (passport) {
     router.get('/api/domain/findById/:domain_id',passport.authenticate('jwt', {session: false}), DomainController.findByIdDomain);
     router.delete('/api/domain/delete/:domain_id',passport.authenticate('jwt', {session: false}), DomainController.deleteDomain);
 
-
+//-------------------> ACL API
+    router.post('/api/acls/save',passport.authenticate('jwt', {session: false}), AclController.saveAcl);
+    router.post('/api/acls/find',passport.authenticate('jwt', {session: false}), AclController.find);
+    router.put('/api/acls/update',passport.authenticate('jwt', {session: false}), AclController.updateAcl);
+    router.get('/api/acls/findById/:acl_id',passport.authenticate('jwt', {session: false}), AclController.findByIdAcl);
+    router.delete('/api/acls/delete/:acl_id',passport.authenticate('jwt', {session: false}), AclController.deleteAcl);
 
     return router;
 

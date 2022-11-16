@@ -35,7 +35,7 @@ module.exports = (sequelize, Sequelize) => {
     ];
 
     permission_acls.associate = function (models) {
-        permission_acls.belongsToMany(models.roles, {through: models.acls , foreignKey : 'permission_acl_id',})
+        permission_acls.belongsToMany(models.roles, {through: models.acls_v , foreignKey : 'permission_acl_id',})
     }
 
 

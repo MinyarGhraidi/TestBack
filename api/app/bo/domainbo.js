@@ -1,7 +1,5 @@
 const {baseModelbo} = require('./basebo');
 const db = require("../models");
-const moment = require("moment-timezone");
-const pg = require("pg/lib/query");
 const {default: axios} = require("axios");
 const domainURL = 'https://sip-crm.oxilog-telecom.net:1443/api/v1/domains';
 const domainAuth = {
