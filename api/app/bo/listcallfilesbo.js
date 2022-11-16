@@ -22,11 +22,16 @@ class listcallfiles extends baseModelbo {
 
     getStatsListCallFiles(req, res, next) {
         let _this = this;
-        let sqlStats = `SELECT listCallf.listcallfile_id as id,count(callf.*) as total, count(case when callf.to_treat = 'Y' then 1 else null end) as total_called, count(case when callf.to_treat = 'N' then 1 else null end)  as total_available    from  public.listcallfiles as listCallf
-                        LEFT JOIN callfiles as callf on callf.listcallfile_id = listCallf.listcallfile_id and callf.active='Y' 
-                        WHERE listCallf.active= 'Y' 
-                          GROUP  by listCallf.listcallfile_id 
-                          ORDER by listCallf.listcallfile_id desc`
+        let sqlStats = `SELECT listCallf.listcallfile_id                                  as id,
+                               count(callf.*)                                             as total,
+                               count(case when callf.to_treat = 'Y' then 1 else null end) as total_called,
+                               count(case when callf.to_treat = 'N' then 1 else null end) as total_available
+                        from public.listcallfiles as listCallf
+                                 LEFT JOIN callfiles as callf
+                                           on callf.listcallfile_id = listCallf.listcallfile_id and callf.active = 'Y'
+                        WHERE listCallf.active = 'Y'
+                        GROUP by listCallf.listcallfile_id
+                        ORDER by listCallf.listcallfile_id desc`
         db.sequelize['crm-app'].query(sqlStats,
             {
                 type: db.sequelize['crm-app'].QueryTypes.SELECT,
@@ -68,20 +73,27 @@ class listcallfiles extends baseModelbo {
             return
         }
 
-        let sql_stats = `select callstatuses.code, 
-                              CASE all_s.count_call_status 
-                               WHEN null THEN 0
-                               ELSE all_s.count_call_status
-                              END
-                            from callstatuses left join (
-                               SELECT code,
+        let sql_stats = `select callstatuses.code,
+                                CASE all_s.count_call_status
+                                    WHEN null THEN 0
+                                    ELSE all_s.count_call_status
+                                    END
+                         from callstatuses
+                                  left join (
+                             SELECT code,
                                     count(call_f.*) as count_call_status
-                                    FROM callstatuses as call_s
-                            LEFT JOIN callfiles as call_f on call_f.call_status = call_s.code and call_f.to_treat = :active and call_f.active= :active  
-                            LEFT JOIN listcallfiles as list_call_f on list_call_f.listcallfile_id = call_f.listcallfile_id and list_call_f.active = 'Y' and call_f.active= :active
-                            LEFT JOIN campaigns as camp on camp.campaign_id = list_call_f.campaign_id and camp.active = :active 
-                            WHERE call_s.active = 'Y' and camp.campaign_id= :campaign_id
-                            GROUP by code) as all_s on all_s.code  = callstatuses.code`
+                             FROM callstatuses as call_s
+                                      LEFT JOIN callfiles as call_f
+                                                on call_f.call_status = call_s.code and call_f.to_treat = :active and
+                                                   call_f.active = :active
+                                      LEFT JOIN listcallfiles as list_call_f
+                                                on list_call_f.listcallfile_id = call_f.listcallfile_id and
+                                                   list_call_f.active = 'Y' and call_f.active = :active
+                                      LEFT JOIN campaigns as camp
+                                                on camp.campaign_id = list_call_f.campaign_id and camp.active = :active
+                             WHERE call_s.active = 'Y'
+                               and camp.campaign_id = :campaign_id
+                             GROUP by code) as all_s on all_s.code = callstatuses.code`
         db.sequelize['crm-app'].query(sql_stats,
             {
                 type: db.sequelize['crm-app'].QueryTypes.SELECT,
@@ -103,10 +115,12 @@ class listcallfiles extends baseModelbo {
     getStatsCallStatusByLisCallFile(listCallfile_id) {
         return new Promise((resolve, reject) => {
             let sqlStats = `SELECT code, count(call_f.*) as count_call_status
-                        FROM callstatuses as call_s
-                        LEFT JOIN callfiles as call_f on call_f.call_status = call_s.code and call_f.to_treat = :active and call_f.active= :active  and call_f.listcallfile_id = :listCallfile_id
-                        WHERE call_s.active = :active   
-                        GROUP by code`
+                            FROM callstatuses as call_s
+                                     LEFT JOIN callfiles as call_f
+                                               on call_f.call_status = call_s.code and call_f.to_treat = :active and
+                                                  call_f.active = :active and call_f.listcallfile_id = :listCallfile_id
+                            WHERE call_s.active = :active
+                            GROUP by code`
             db.sequelize['crm-app'].query(sqlStats,
                 {
                     type: db.sequelize['crm-app'].QueryTypes.SELECT,
@@ -224,6 +238,15 @@ class listcallfiles extends baseModelbo {
                                 success: true,
                                 data: items
                             })
+                        }).catch(err => {
+                            this.db["listcallfiles"].update({
+                                active: 'N'
+                            }, {where: {listcallfile_id: list_CallFile_saved.listcallfile_id}})
+                                .then(() => {
+                                    _this.sendResponseError(res, ['Error To clone ListCallFile'])
+                                }).catch(err => {
+                                _this.sendResponseError(res, ['Error To clone ListCallFile'])
+                            })
                         })
                     }).catch(err => {
                         _this.sendResponseError(res, err)
@@ -256,7 +279,6 @@ class listcallfiles extends baseModelbo {
                             throw error1;
                         }
                         const queue = app_config.rabbitmq.queues.clone_List_CallFiles + account_id;
-                        ;
                         channel.assertQueue(queue, {
                             durable: true
                         });
