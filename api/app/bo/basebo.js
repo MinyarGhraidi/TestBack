@@ -75,11 +75,11 @@ class baseModelbo {
                         });
                     });
                 })
-            }).catch(err => {
-                res.status(500).json(err)
-            }
-        )
-    }
+                }).catch(err => {
+                    res.status(500).json(err)
+                }
+            )
+        }
 
     findByEncodeId(req, res, next) {
         let params = req.params.params;

@@ -54,7 +54,8 @@ UserDataIndexController = require('../controllers/user_indexs.controller');
 dialpansController = require('../controllers/dialplan.controller')
 dialpanItemsController = require('../controllers/dialplanItems.controller');
 accController = require('../controllers/acc.controller');
-TemplateListCallFile = require('../controllers/templateList.controller')
+TemplateListCallFile = require('../controllers/templateList.controller');
+DomainController = require('../controllers/domain.controller');
 
 
 let apiRouters = function (passport) {
@@ -356,6 +357,13 @@ let apiRouters = function (passport) {
     router.put('/api/templateList/update', passport.authenticate('jwt', {session: false}), TemplateListCallFile.update);
 
     router.post('/api/agent/agentReports', passport.authenticate('jwt', {session: false}),  agentsController.agentDetailsReports);
+
+//-------------------> Domain API
+    router.post('/api/domain/save',passport.authenticate('jwt', {session: false}), DomainController.saveDomain);
+    router.post('/api/domain/find',passport.authenticate('jwt', {session: false}), DomainController.find);
+    router.put('/api/domain/update',passport.authenticate('jwt', {session: false}), DomainController.updateDomain);
+    router.get('/api/domain/findById/:domain_id',passport.authenticate('jwt', {session: false}), DomainController.findByIdDomain);
+    router.delete('/api/domain/delete/:domain_id',passport.authenticate('jwt', {session: false}), DomainController.deleteDomain);
 
 
 
