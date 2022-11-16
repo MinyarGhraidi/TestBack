@@ -1,13 +1,16 @@
 module.exports = (sequelize, Sequelize) => {
     const dialplans = sequelize.define("dialplans", {
             dialplan_id: {
-            primaryKey: true,
-            autoIncrement: true,
-            type: Sequelize.INTEGER
-          },
-          name: {
-            type: Sequelize.STRING
-          },
+                primaryKey: true,
+                autoIncrement: true,
+                type: Sequelize.INTEGER
+            },
+            name: {
+                type: Sequelize.STRING
+            },
+            account_id: {
+                type: Sequelize.STRING
+            },
 
             active: {
                 type: Sequelize.STRING,
@@ -23,10 +26,10 @@ module.exports = (sequelize, Sequelize) => {
                 type: Sequelize.DATE,
                 defaultValue: new Date()
             },
-        status: {
-            type: Sequelize.STRING,
-            defaultValue: 'Y'
-        }
+            status: {
+                type: Sequelize.STRING,
+                defaultValue: 'Y'
+            }
         },
         {timestamps: false,}
     );
@@ -37,13 +40,15 @@ module.exports = (sequelize, Sequelize) => {
         'active',
         'created_at',
         'updated_at',
-       
+        'account_id'
+
     ];
 
     dialplans.prototype.fieldsSearchMetas = [
         'dialplan_id',
         'name',
-        'active'
+        'active',
+        'account_id'
     ];
 
     return dialplans;
