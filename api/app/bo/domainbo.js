@@ -36,7 +36,6 @@ class domains extends baseModelbo {
                     message: 'Domain created with success!'
                 });
             }).catch((error) => {
-                console.log(error)
                 return this.sendResponseError(res, ['Error.AnErrorHasOccurredSaveDomain'], 1, 403);
             });
         }).catch((err) => {
@@ -50,7 +49,6 @@ class domains extends baseModelbo {
 
     updateDomain(req, res, next) {
         let data = req.body
-        console.log(data)
         let domain_id = data.domain_id;
         delete data.domain_id;
 
@@ -71,14 +69,11 @@ class domains extends baseModelbo {
                 }
                 axios
                     .get(`${domainURL}/${uuid}`, domainAuth).then((resp) => {
-                    let dataTelco = resp.data.result;
                     let dataToUpdate = data;
                     dataToUpdate.updatedAt = new Date();
                     if ("enabled" in data) {
                         dataToUpdate.status = data.enabled;
                     }
-                    console.log(dataToUpdate)
-                    console.log(uuid)
                     axios
                         .put(`${domainURL}/${uuid}`, dataToUpdate, domainAuth).then((resp) => {
                         this.db.domains.update(dataToUpdate, {
@@ -91,11 +86,9 @@ class domains extends baseModelbo {
                                 success: true
                             })
                         }).catch(err => {
-                            console.log(err)
                             return this.sendResponseError(res, ['Error', err], 1, 403);
                         })
                     }).catch((err) => {
-                        console.log(err.response.data)
                         res.send({
                             success : false,
                             message :err.response.data.errors.domain_name[0]
@@ -104,11 +97,9 @@ class domains extends baseModelbo {
                     })
 
                 }).catch((err) => {
-                    console.log(err)
                     return this.sendResponseError(res, ['Error.uuidNotFoundCannotUpdateDomain'], 1, 403);
                 })
             }).catch(err => {
-            console.log(err)
             res.status(500).json(err)
             }
         )

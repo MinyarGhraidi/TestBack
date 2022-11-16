@@ -50,13 +50,8 @@ module.exports = (sequelize, Sequelize) => {
     ];
 
     domain.prototype.fieldsSearchMetas = [
-        "domain_id",
         "domain_name",
         "description",
-        "active",
-        "status",
-        "created_at",
-        "updated_at"
     ];
 
 
