@@ -208,8 +208,8 @@ class listcallfiles extends baseModelbo {
                 let data_listCallFile_gp = listcallfile.toJSON();
                 data_listCallFile_gp.name = listCallFile_name;
                 data_listCallFile_gp.campaign_id = campaign_id;
-                data_listCallFile_gp.createdAt = moment.unix(moment().unix()).format("YYYY-MM-DD HH:mm:ss");
-                data_listCallFile_gp.updatedAt = null
+                data_listCallFile_gp.created_at = new Date();
+                data_listCallFile_gp.updated_at = new Date();
                 delete data_listCallFile_gp['listcallfile_id'];
                 const ListCallFileModel = db['listcallfiles'];
                 let list_CallFile = ListCallFileModel.build(data_listCallFile_gp);
@@ -235,7 +235,7 @@ class listcallfiles extends baseModelbo {
                 res.send({
                     success: true,
                     data: [],
-                    message: 'rate group not found'
+                    message: 'list CallFile  not found'
                 })
             }
 
