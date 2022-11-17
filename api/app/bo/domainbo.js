@@ -103,28 +103,6 @@ class domains extends baseModelbo {
         )
     }
 
-    findByIdDomain(req, res, next) {
-        const {domain_id} = req.params;
-        if (!!!domain_id) {
-            return this.sendResponseError(res, ['Error.Empty'], 1, 403);
-        }
-        this.db.domains.findOne({where: {domain_id: domain_id, active: 'Y'}})
-            .then(result => {
-                if (!!!result) {
-                    return this.sendResponseError(res, ['Error.DomainIdNotFound'], 1, 403);
-                }
-                res.json({
-                    message: 'success',
-                    data: result,
-                    status: 1,
-                });
-            }).catch(err => {
-                res.status(500).json(err)
-            }
-        )
-
-    }
-
     deleteDomain(req, res, next) {
         const {domain_id} = req.params;
         if (!!!domain_id) {

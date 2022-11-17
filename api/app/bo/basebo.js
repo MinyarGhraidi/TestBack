@@ -505,7 +505,6 @@ class baseModelbo {
                 }
             });
         }
-
         if (whereQueryFilters) {
             let defaultOperator = (params && params.filter && params.filter.length && typeof params.filter[0].operator !== "undefined") ? params.filter[0].operator : 'and';
             whereQuery[Op [defaultOperator]] = [whereQueryFilters];

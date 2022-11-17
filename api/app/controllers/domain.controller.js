@@ -12,9 +12,6 @@ module.exports = {
     updateDomain: function (req, res, next) {
         _domainsDao.updateDomain(req, res, next);
     },
-    findByIdDomain: function (req, res, next) {
-        _domainsDao.findByIdDomain(req, res, next);
-    },
     deleteDomain: function (req, res, next) {
         _domainsDao.deleteDomain(req, res, next);
     }

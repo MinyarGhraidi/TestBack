@@ -57,9 +57,10 @@ module.exports = (sequelize, Sequelize) => {
     ];
 
     acl_nodes.prototype.fieldsSearchMetas = [
-        "name",
-        "description",
-        "default",
+        "type",
+        "cidr",
+        "domain",
+        "description"
     ];
 
     acl_nodes.associate = function (models) {

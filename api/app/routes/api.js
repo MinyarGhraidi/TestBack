@@ -57,7 +57,7 @@ accController = require('../controllers/acc.controller');
 TemplateListCallFile = require('../controllers/templateList.controller');
 DomainController = require('../controllers/domain.controller');
 AclController = require('../controllers/acl.controller');
-
+AclNodesController = require('../controllers/acl_nodes.controller');
 
 let apiRouters = function (passport) {
 
@@ -363,16 +363,19 @@ let apiRouters = function (passport) {
     router.post('/api/domain/save',passport.authenticate('jwt', {session: false}), DomainController.saveDomain);
     router.post('/api/domain/find',passport.authenticate('jwt', {session: false}), DomainController.find);
     router.put('/api/domain/update',passport.authenticate('jwt', {session: false}), DomainController.updateDomain);
-    router.get('/api/domain/findById/:domain_id',passport.authenticate('jwt', {session: false}), DomainController.findByIdDomain);
     router.delete('/api/domain/delete/:domain_id',passport.authenticate('jwt', {session: false}), DomainController.deleteDomain);
 
 //-------------------> ACL API
     router.post('/api/acls/save',passport.authenticate('jwt', {session: false}), AclController.saveAcl);
     router.post('/api/acls/find',passport.authenticate('jwt', {session: false}), AclController.find);
     router.put('/api/acls/update',passport.authenticate('jwt', {session: false}), AclController.updateAcl);
-    router.get('/api/acls/findById/:acl_id',passport.authenticate('jwt', {session: false}), AclController.findByIdAcl);
     router.delete('/api/acls/delete/:acl_id',passport.authenticate('jwt', {session: false}), AclController.deleteAcl);
 
+//-------------------> ACL NODES API
+    router.post('/api/acl_nodes/save',passport.authenticate('jwt', {session: false}), AclNodesController.saveAclNode);
+    router.post('/api/acl_nodes/find',passport.authenticate('jwt', {session: false}), AclNodesController.find);
+    router.put('/api/acl_nodes/update',passport.authenticate('jwt', {session: false}), AclNodesController.updateAclNode);
+    router.delete('/api/acl_nodes/delete/:acl_node_id',passport.authenticate('jwt', {session: false}), AclNodesController.deleteAclNode);
     return router;
 
 

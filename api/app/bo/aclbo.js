@@ -33,7 +33,6 @@ class acls extends baseModelbo {
                     message: 'Domain created with success!'
                 });
             }).catch((error) => {
-                console.log(error)
                 return this.sendResponseError(res, ['Error.AnErrorHasOccurredSaveAcl'], 1, 403);
             });
         }).catch((err) => {
@@ -99,8 +98,6 @@ class acls extends baseModelbo {
         )
     }
 
-    findByIdAcl(req, res, next) {}
-
     deleteAcl(req, res, next) {
 
         const {acl_id} = req.params;
@@ -131,12 +128,21 @@ class acls extends baseModelbo {
                             active: 'Y'
                         }
                     }).then(result => {
-                        res.send({
-                            success: true,
-                            message : "Acl Deleted !"
+                        this.db.acl_nodes.update(toUpdate, {
+                            where: {
+                                acl_id: acl_id,
+                                active: 'Y'
+                            }
+                        }).then(result => {
+                            res.send({
+                                success: true,
+                                message : "Acl Deleted !"
+                            })
+                        }).catch(err => {
+                            return this.sendResponseError(res, ['Error.CannotDeleteAclNodes', err], 1, 403);
                         })
                     }).catch(err => {
-                        return this.sendResponseError(res, ['Error', err], 1, 403);
+                        return this.sendResponseError(res, ['Error.CannotDeleteAcl', err], 1, 403);
                     })
                 }).catch((err)=>{
                     return this.sendResponseError(res, ['Error.CannotDeleteTelco'], 1, 403);

@@ -12,9 +12,6 @@ module.exports = {
     updateAcl: function (req, res, next) {
         _aclsDao.updateAcl(req, res, next);
     },
-    findByIdAcl: function (req, res, next) {
-        _aclsDao.findByIdAcl(req, res, next);
-    },
     deleteAcl: function (req, res, next) {
         _aclsDao.deleteAcl(req, res, next);
     }
