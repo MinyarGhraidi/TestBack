@@ -35,5 +35,8 @@ module.exports = {
     changeStatusByIdAcc : function (req, res, next) {
         _itembo.changeStatusByIdAcc(req, res, next)
     },
+    AffectAccountToDomain: function(req, res, next){
+        _itembo.AffectAccountToDomain(req, res, next)
+    }
 };
 

@@ -86,6 +86,9 @@ module.exports = (sequelize, Sequelize) => {
             code: {
                 type: Sequelize.STRING,
             },
+            domain_id: {
+                type: Sequelize.INTEGER,
+            }
         },
         {timestamps: false}
     );

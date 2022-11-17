@@ -77,6 +77,7 @@ let apiRouters = function (passport) {
     router.post("/api/account/deleteAccount", passport.authenticate('jwt', {session: false}), accountController.deleteAccount);
     router.post("/api/account/signin", passport.authenticate('jwt', {session: false}), accountController.signIn);
     router.post("/api/account/getAccountByToken", passport.authenticate("jwt", {session: false}), accountController.getAccountByToken);
+    router.post("/api/account/affectDomain", passport.authenticate("jwt", {session: false}), accountController.AffectAccountToDomain);
     // campaigns routers
     router.post("/api/campaign/find", passport.authenticate('jwt', {session: false}), campaignController.find);
     router.get("/api/campaign/findById/:entity_id", passport.authenticate('jwt', {session: false}), campaignController.findById);
