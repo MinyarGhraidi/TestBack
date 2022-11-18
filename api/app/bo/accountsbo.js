@@ -222,6 +222,7 @@ class accounts extends baseModelbo {
 
     signIn(req, res, next) {
         if ((!req.body.username || !req.body.password)) {
+
             return this.sendResponseError(res, ['Error.RequestDataInvalid'], 0, 403);
         } else {
             const {username, password} = req.body;
@@ -664,41 +665,92 @@ class accounts extends baseModelbo {
         })
     }
 
+    getUnaffectedDomains() {
+        return new Promise((resolve, reject) => {
+            this.db.domains.findAll({
+                where: {active: 'Y'}
+            }).then((domains) => {
+                if (!!!domains) {
+                    resolve({
+                        success : true,
+                        domains : []
+                    });
+                }
+                let allDomains = [];
+                domains.map((domain) => {
+                    allDomains.push({
+                        id : domain.domain_id,
+                        name : domain.domain_name
+                    });
+                })
+                this.db['accounts'].findAll({
+                    where: {active: 'Y', domain_id: {[Op.not]: null}}
+                }).then((users) => {
+                    if (!!!users) {
+                        resolve({
+                            success : true,
+                            domains : allDomains
+                        });
+                    } else {
+                        let domains_affected = [];
+                        users.map((user) => {
+                            domains_affected.push(user.dataValues.domain_id);
+                        });
+                        const domains_affectedSet = new Set(domains_affected);
+
+
+                        const domains_not_affected = allDomains.filter(function deleteAffected(obj) {
+                            return !domains_affectedSet.has(obj.id)
+                        });
+                        resolve({
+                            success : true,
+                            domains : domains_not_affected
+                        })
+                    }
+                }).catch((err)=>{
+                    reject(err)
+                })
+
+            }).catch((err) => {
+                reject(err);
+            })
+        })
+    }
+
+    getAllUnaffectedDomains(req, res, next){
+        this.getUnaffectedDomains().then((result)=>{
+            if(result.success){
+                res.send({
+                    status: 200,
+                    data : result.domains
+                });
+            }else{
+                return this.sendResponseError(res, 'Error.CannotGetDomains');
+            }
+        }).catch((err)=>{
+            return this.sendResponseError(res, 'Error.CannotGetDomains');
+        })
+    }
+
     couldAffectDomain(domain_id) {
         return new Promise((resolve, reject) => {
-            this.db['accounts'].findAll({
-                where: {active: 'Y', domain_id: {[Op.not]: null}}
-            }).then((users) => {
-                if (!!!users) {
-                    resolve(true);
-                } else {
-                    let domains_affected = [];
-                    users.map((user) => {
-                        domains_affected.push(user.dataValues.domain_id);
-                    });
-                    this.db.domains.findAll({
-                        where: {active: 'Y'}
-                    }).then((domains) => {
-                        if (!!!domains) {
-                            resolve(false);
-                        }
-                        let domain_ids = [];
-                        domains.map((domain) => {
-                            domain_ids.push(domain.domain_id);
-                        })
-                        const domains_affectedSet = new Set(domains_affected);
-                        const domain_ids_not_affected = domain_ids.filter(x => !domains_affectedSet.has(x));
-                        if (domain_ids_not_affected.includes(domain_id)) {
-                            console.log("done")
+            this.getUnaffectedDomains().then((result)=>{
+                if(result.success){
+                    if(result.domains && result.domains.length){
+                        let domains = result.domains;
+                        const checkIdDomain = obj => obj.id === domain_id;
+                        if(domains.some(checkIdDomain)){
                             resolve(true);
-                        } else {
+                        }else{
                             resolve(false);
                         }
-                    }).catch((err) => {
-                        reject(err);
-                    })
+                    }else{
+                        resolve(false);
+                    }
+                }else {
+                    resolve(false);
                 }
-            }).catch((err) => {
+            }).catch((err)=>{
                 reject(err);
             })
         })
@@ -709,30 +761,50 @@ class accounts extends baseModelbo {
         if (!!!domain_id || !!!account_id) {
             return this.sendResponseError(res, 'Error.InvalidData');
         }
-        this.couldAffectDomain(domain_id).then((result) => {
-            console.log(result)
-            if (result) {
-                let dataToUpdate = {
-                    domain_id: domain_id,
-                    updated_at: new Date()
-                }
-                this.db['accounts'].update(dataToUpdate, {
-                    where: {
-                        account_id: account_id,
-                        active: 'Y'
-                    }
-                }).then((result) => {
-                    res.send({
-                        status: 200,
-                        message: 'account updated !'
-                    });
-                }).catch((err) => {
-                    return this.sendResponseError(res, ['Cannot affect domain to account', err], 1, 403);
-                })
-            } else {
-                return this.sendResponseError(res, ['Cannot affect domain to account'], 1, 403);
+        this.db['accounts'].findOne({
+            where: {
+                account_id: account_id,
+                active : 'Y'
             }
+        }).then(user => {
+            if(!!!user){
+                return this.sendResponseError(res, ['Error.UserNotFound'], 1, 403);
+            }
+            if(user.dataValues.domain_id === domain_id){
+                res.send({
+                    status: 200,
+                    message: 'account updated !'
+                });
+            }else{
+                this.couldAffectDomain(domain_id).then((result) => {
+                    if (result) {
+                        let dataToUpdate = {
+                            domain_id: domain_id,
+                            updated_at: new Date()
+                        }
+                        this.db['accounts'].update(dataToUpdate, {
+                            where: {
+                                account_id: account_id,
+                                active: 'Y'
+                            }
+                        }).then((result) => {
+                            res.send({
+                                status: 200,
+                                message: 'account updated !'
+                            });
+                        }).catch((err) => {
+                            return this.sendResponseError(res, ['Cannot update Account', err], 1, 403);
+                        })
+                    } else {
+                        return this.sendResponseError(res, ['Cannot affect domain to account'], 1, 403);
+                    }
+                })
+            }
+
+        }).catch((err)=>{
+            return this.sendResponseError(res, ['Error.UserNotFound'], 1, 403);
         })
+
     }
 }
 

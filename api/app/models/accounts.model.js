@@ -52,7 +52,7 @@ module.exports = (sequelize, Sequelize) => {
             white_label_app_name: {
                 type: Sequelize.STRING,
             },
-            domain: {
+            domain_sip: {
                 type: Sequelize.STRING,
             },
             active: {
@@ -110,7 +110,7 @@ module.exports = (sequelize, Sequelize) => {
         "white_label",
         "log",
         "white_label_app_name",
-        "domain",
+        "domain_sip",
         "active",
         "created_at",
         "updated_at",
@@ -118,7 +118,8 @@ module.exports = (sequelize, Sequelize) => {
         "role_crm_id",
         "user_id",
         "lang",
-        "code"
+        "code",
+        "domain_id"
     ];
 
     account.prototype.fieldsSearchMetas = [
@@ -138,7 +139,7 @@ module.exports = (sequelize, Sequelize) => {
         "white_label",
         "log",
         "white_label_app_name",
-        "domain",
+        "domain_sip",
         "active",
         "created_at",
         "updated_at",
@@ -146,21 +147,25 @@ module.exports = (sequelize, Sequelize) => {
         "role_crm_id",
         "user_id",
         "lang",
-        "code"
+        "code",
+        "domain_id"
+
     ];
 
     account.prototype.getModelIncludes = function () {
-        return ['users', 'roles_crms'];
+        return ['users', 'roles_crms','domains'];
     };
 
     account.associate = function (models) {
         account.belongsTo(models.roles_crms, {
             foreignKey: 'role_crm_id'
         });
+        account.belongsTo(models.domains, {
+            foreignKey: 'domain_id'
+        });
         account.belongsTo(models.users, {
             foreignKey: 'user_id'
         });
     }
-
     return account;
 };

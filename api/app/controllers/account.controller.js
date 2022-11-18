@@ -37,6 +37,9 @@ module.exports = {
     },
     AffectAccountToDomain: function(req, res, next){
         _itembo.AffectAccountToDomain(req, res, next)
+    },
+    getAllUnaffectedDomains : function (req, res, next){
+        _itembo.getAllUnaffectedDomains(req, res, next);
     }
 };
 
