@@ -46,7 +46,7 @@ Authorization: Bearer BomjNx8kFfZTdCFx4kH3hGECO78yS0C0KS7pgO0BUe8COxcved
 ###
 
 #Update Acl
-PUT https://sip-crm.oxilog-telecom.net:1443/api/v1/acls/97b288bd-0bb0-4277-9b65-07ae0ee5fb01
+PUT https://sip-crm.oxilog-telecom.net:1443/api/v1/acls/97c45670-5b6d-4389-9ce4-f4af45710e36
 Content-Type: application/json
 Authorization: Bearer BomjNx8kFfZTdCFx4kH3hGECO78yS0C0KS7pgO0BUe8COxcved
 
@@ -72,7 +72,7 @@ Authorization: Bearer BomjNx8kFfZTdCFx4kH3hGECO78yS0C0KS7pgO0BUe8COxcved
 ###
 
 #Delete Acl
-DELETE https://sip-crm.oxilog-telecom.net:1443/api/v1/acls/97b288bd-0bb0-4277-9b65-07ae0ee5fb01
+DELETE https://sip-crm.oxilog-telecom.net:1443/api/v1/acls/97c45670-5b6d-4389-9ce4-f4af45710e36
 Content-Type: application/json
 Authorization: Bearer BomjNx8kFfZTdCFx4kH3hGECO78yS0C0KS7pgO0BUe8COxcved
 
