@@ -272,134 +272,229 @@ class accounts extends baseModelbo {
     AddEditAccount(req, res, next) {
         let _this = this;
         let newAccount = req.body;
-        let {domain, account_id} = newAccount;
+        let {first_name, last_name} = newAccount;
+        let data_account = {
+            account_code: newAccount.account_code,
+            first_name: newAccount.first_name,
+            last_name: newAccount.last_name,
+            company: newAccount.company,
+            adresse: newAccount.adresse,
+            country: newAccount.country,
+            city: newAccount.city,
+            zip_code: newAccount.zip_code,
+            tel: newAccount.tel,
+            mobile: newAccount.mobile,
+            email: newAccount.email,
+            nbr_account: null,
+            white_label: null,
+            log: null,
+            white_label_app_name: null,
+            domain_sip: newAccount.sip_device.domain,
+            role_crm_id: newAccount.role_crm_id[0],
+            lang: newAccount.lang,
+            code: newAccount.code,
+            domain_id: newAccount.domain.value,
+        }
         if (!!!newAccount
             || !!!newAccount.user
             || !!!newAccount.role_crm_id) {
             return _this.sendResponseError(res, 'Error.InvalidData');
         }
-        let {accountcode} = newAccount.user.sip_device;
-
         let sip_device = JSON.parse(JSON.stringify(newAccount.user.sip_device));
+        let domain = JSON.parse(JSON.stringify(newAccount.domain));
         let {username, password, options, status, enabled, subscriber_id} = sip_device;
-        this.isUniqueDomain(domain, account_id)
-            .then(isUniqueDomain => {
-                if (isUniqueDomain) {
-                    if (newAccount.account_id) {
-                        let data_update = {
-                            username,
-                            password,
-                            domain,
-                            options,
-                            accountcode,
-                            status,
-                            enabled,
-                            subscriber_id
-                        }
-                        axios
-                            .put(`${base_url_cc_kam}api/v1/agents/${sip_device.uuid}`,
-                                data_update,
-                                call_center_authorization)
-                            .then((resp) => {
-                                let uuid = resp.data.agent.uuid || null;
-                                let username = resp.data.agent.username || null;
-                                newAccount.user.sip_device.uuid = uuid;
-                                newAccount.user.sip_device.username = username;
-                                this.db['accounts'].update(
-                                    newAccount,
-                                    {
-                                        where: {
-                                            account_id: newAccount.account_id
-                                        },
-                                        returning: true,
-                                        plain: true
-                                    }).then(account => {
-                                    _usersbo.saveUserFunction(newAccount.user, {where: {user_id: account.user_id}})
-                                        .then(user => {
-                                            res.send({
-                                                status: 200,
-                                                message: 'success',
-                                                success: true,
-                                                data: user
+        if (newAccount.account_id) {
+            this.db['accounts'].findOne({
+                where: {
+                    account_id: newAccount.account_id,
+                    active: 'Y'
+                },
+                include: [db.domains]
+            }).then(account => {
+                if (!!!account) {
+                    return this.sendResponseError(res, ['Error.UserNotFound'], 1, 403);
+                }
+                this.couldAffectDomain(domain.value).then((resultAffection) => {
+                    if (resultAffection || account.dataValues.domain_id === domain.value) {
+                        this.db['users'].findOne({
+                            where: {
+                                user_id: account.dataValues.user_id
+                            }
+                        }).then((user) => {
+                            let userData = user.dataValues;
+                            let {username} = userData.sip_device
+                            axios
+                                .get(`${base_url_cc_kam}api/v1/subscribers/username/${username}`,
+                                    call_center_authorization)
+                                .then((resp) => {
+                                    let {uuid ,username} = resp.data.result;
+                                    let update_subscriber = {
+                                        domain: newAccount.domain.label,
+                                        password: newAccount.sip_device.password,
+                                        updated_at: new Date(),
+                                        username : username,
+                                    }
+                                    axios
+                                        .put(`${base_url_cc_kam}api/v1/subscribers/${uuid}`,
+                                            update_subscriber,
+                                            call_center_authorization)
+                                        .then((resp) => {
+                                            let dataSub = resp.data.subscriber
+                                            let update_Agent = {
+                                                name: newAccount.first_name + " " + newAccount.last_name,
+                                                domain_uuid: dataSub.domain_uuid,
+                                                subscriber_uuid: dataSub.uuid,
+                                                options: newAccount.sip_device.options,
+                                                updated_at: new Date()
+                                            }
+                                            let uuid_Agent = userData.sip_device.uuid
+                                            axios
+                                                .put(`${base_url_cc_kam}api/v1/agents/${uuid_Agent}`, update_Agent, call_center_authorization).then((resp) => {
+                                                let update_account = newAccount;
+                                                let resultAgent = resp.data.agent;
+                                                update_account.domain_sip = newAccount.sip_device.domain;
+                                                update_account.updated_at = new Date();
+                                                update_account.role_crm_id = newAccount.role_crm_id[0];
+                                                update_account.domain_id = newAccount.domain.value;
+                                                this.db['accounts'].update(update_account, {
+                                                    where: {
+                                                        account_id: newAccount.account_id
+                                                    },
+                                                    returning: true,
+                                                    plain: true
+                                                }).then((account) => {
+                                                    let update_user = newAccount.user;
+                                                    update_user.sip_device.uuid = resultAgent.uuid;
+                                                    update_user.sip_device.updated_at = resultAgent.updated_at;
+                                                    update_user.account_id = newAccount.account_id;
+                                                    _usersbo.saveUserFunction(update_user, {where: {user_id: account.user_id}})
+                                                        .then(user => {
+                                                            res.send({
+                                                                status: 200,
+                                                                message: 'success',
+                                                                success: true,
+                                                                data: user
+                                                            })
+                                                        }).catch((err) => {
+                                                        return _this.sendResponseError(res, ['Error.CannotUpdateUser'], 1, 403);
+                                                    })
+                                                }).catch((err) => {
+                                                    return _this.sendResponseError(res, ['Error.CannotUpdateAccount'], 1, 403);
+                                                })
+                                            }).catch((err) => {
+                                                return _this.sendResponseError(res, ['Error.CannotUpdateAgent'], 1, 403);
                                             })
-                                        })
-                                        .catch(err => {
-                                            return _this.sendResponseError(res, ['Error.AnErrorHasOccurredUser', err], 1, 403);
-                                        })
-                                }).catch(err => {
-                                    return _this.sendResponseError(res, ['Error.AnErrorHasOccurredUser', err], 1, 403);
-                                })
-                            }).catch(err => {
-                            return _this.sendResponseError(res, ['Error.AnErrorHasOccurredUser', err], 1, 403);
+                                        }).catch((err) => {
+                                        return _this.sendResponseError(res, ['Error.CannotUpdateSubscriber'], 1, 403);
+                                    })
+                                }).catch((err) => {
+                                return _this.sendResponseError(res, ['Error.CannotFindSubscriber'], 1, 403);
+                            })
+                        }).catch((err) => {
+                            return _this.sendResponseError(res, ['Error.CannotFindUser'], 1, 403);
                         })
                     } else {
-                        let dataAccount = {
-                            username,
-                            password,
-                            domain,
-                            options,
-                            accountcode,
-                            status,
-                            enabled,
-                            subscriber_id
-                        };
-                        axios
-                            .post(`${base_url_cc_kam}api/v1/agents`, dataAccount, call_center_authorization)
-                            .then((resp) => {
-                                let uuid = resp.data.result.agent.uuid || null;
-                                let username = resp.data.result.agent.username || null;
-                                newAccount.user.sip_device.uuid = uuid;
-                                newAccount.user.sip_device.username = username;
-                                let modalObj = this.db['accounts'].build(newAccount);
-                                modalObj.save().then(new_account => {
-                                    if (new_account) {
-                                        newAccount.user.account_id = new_account.account_id;
-                                        _usersbo.saveUserFunction(newAccount.user).then(new_user => {
-                                            this.db['accounts'].update({
-                                                user_id: new_user.user_id
-                                            }, {
-                                                where: {
-                                                    account_id: new_account.account_id
-                                                },
-                                                returning: true,
-                                                plain: true
-                                            }).then(update_account => {
-                                                res.send({
-                                                    status: 200,
-                                                    message: 'success',
-                                                    success: true,
-                                                    data: new_user
+                        return _this.sendResponseError(res, ['Error.CannotAffectDomain'], 1, 403);
+                    }
+                }).catch((err) => {
+                    return _this.sendResponseError(res, ['Error.CannotAffectDomain'], 1, 403);
+                })
+            }).catch((err) => {
+                return _this.sendResponseError(res, ['Error.CannotFindAccount'], 1, 403);
+            })
+        } else {
+            this.couldAffectDomain(domain.value).then((resultAffection) => {
+                if (resultAffection) {
+                    let data_subscriber = {
+                        username,
+                        domain: domain.label,
+                        password
+                    }
+                    axios
+                        .post(`${base_url_cc_kam}api/v1/subscribers`,
+                            data_subscriber,
+                            call_center_authorization)
+                        .then((resp) => {
+                            let result = resp.data.result;
+                            let data_agent = {
+                                name: first_name + " " + last_name,
+                                domain_uuid: result.domain_uuid,
+                                subscriber_uuid: result.uuid,
+                                options,
+                                status
+                            };
+                            axios
+                                .post(`${base_url_cc_kam}api/v1/agents`, data_agent, call_center_authorization)
+                                .then((resp) => {
+                                    let resultAgent = resp.data.result;
+                                    let modalObj = this.db['accounts'].build(data_account);
+                                    modalObj.save().then(new_account => {
+                                        if (new_account) {
+                                            data_account.user = newAccount.user;
+                                            data_account.user.sip_device.uuid = resultAgent.uuid;
+                                            data_account.user.sip_device.created_at = resultAgent.created_at;
+                                            data_account.user.sip_device.updated_at = resultAgent.updated_at;
+                                            data_account.user.account_id = new_account.dataValues.account_id;
+
+                                            _usersbo.saveUserFunction(data_account.user).then(new_user => {
+                                                this.db['accounts'].update({
+                                                    user_id: new_user.user_id
+                                                }, {
+                                                    where: {
+                                                        account_id: new_account.dataValues.account_id
+                                                    },
+                                                    returning: true,
+                                                    plain: true
+                                                }).then(update_account => {
+                                                    res.send({
+                                                        status: 200,
+                                                        message: 'success',
+                                                        success: true,
+                                                        data: new_user
+                                                    })
                                                 })
+                                                    .catch(err => {
+                                                        return _this.sendResponseError(res, ['Error.AnErrorHasOccurredUser', err], 1, 403);
+                                                    })
                                             })
                                                 .catch(err => {
                                                     return _this.sendResponseError(res, ['Error.AnErrorHasOccurredUser', err], 1, 403);
                                                 })
-                                        })
-                                            .catch(err => {
-                                                return _this.sendResponseError(res, ['Error.AnErrorHasOccurredUser', err], 1, 403);
-                                            })
-                                    } else {
-                                        return _this.sendResponseError(res, ['Error.AnErrorHasOccurredSaveAccount'], 1, 403);
-                                    }
+                                        } else {
+                                            return _this.sendResponseError(res, ['Error.AnErrorHasOccurredSaveAccount'], 1, 403);
+                                        }
 
+                                    }).catch(err => {
+                                        return _this.sendResponseError(res, ['Error.AnErrorHasOccurredUser', err], 1, 403);
+                                    })
                                 }).catch(err => {
-                                    return _this.sendResponseError(res, ['Error.AnErrorHasOccurredUser', err], 1, 403);
+                                res.send({
+                                    success: false,
+                                    message: err.response.data
                                 })
-                            }).catch(err => {
-                            return _this.sendResponseError(res, ['Error.AnErrorHasOccurredUser', err], 1, 403);
+                            })
+                        }).catch((err) => {
+                        res.send({
+                            success: false,
+                            message: err.response.data
                         })
-                    }
+                    })
                 } else {
                     res.send({
-                        status: 200,
                         success: false,
-                        message: 'This domain is already taken'
+                        message: "domain already affected to another account"
                     })
                 }
+            }).catch((err) => {
+                res.send({
+                    success: false,
+                    message: err.response.data
+                })
             })
-            .catch(err => {
-                return _this.sendResponseError(res, ['Cannot check the domain unicity', err], 1, 403);
-            })
+
+
+        }
+
     }
 
     deleteAgents(agents) {
@@ -672,24 +767,17 @@ class accounts extends baseModelbo {
             }).then((domains) => {
                 if (!!!domains) {
                     resolve({
-                        success : true,
-                        domains : []
+                        success: true,
+                        domains: []
                     });
                 }
-                let allDomains = [];
-                domains.map((domain) => {
-                    allDomains.push({
-                        id : domain.domain_id,
-                        name : domain.domain_name
-                    });
-                })
                 this.db['accounts'].findAll({
                     where: {active: 'Y', domain_id: {[Op.not]: null}}
                 }).then((users) => {
                     if (!!!users) {
                         resolve({
-                            success : true,
-                            domains : allDomains
+                            success: true,
+                            domains: domains
                         });
                     } else {
                         let domains_affected = [];
@@ -699,15 +787,15 @@ class accounts extends baseModelbo {
                         const domains_affectedSet = new Set(domains_affected);
 
 
-                        const domains_not_affected = allDomains.filter(function deleteAffected(obj) {
-                            return !domains_affectedSet.has(obj.id)
+                        const domains_not_affected = domains.filter(function deleteAffected(obj) {
+                            return !domains_affectedSet.has(obj.domain_id)
                         });
                         resolve({
-                            success : true,
-                            domains : domains_not_affected
+                            success: true,
+                            domains: domains_not_affected
                         })
                     }
-                }).catch((err)=>{
+                }).catch((err) => {
                     reject(err)
                 })
 
@@ -717,40 +805,40 @@ class accounts extends baseModelbo {
         })
     }
 
-    getAllUnaffectedDomains(req, res, next){
-        this.getUnaffectedDomains().then((result)=>{
-            if(result.success){
+    getAllUnaffectedDomains(req, res, next) {
+        this.getUnaffectedDomains().then((result) => {
+            if (result.success) {
                 res.send({
                     status: 200,
-                    data : result.domains
+                    data: result.domains
                 });
-            }else{
+            } else {
                 return this.sendResponseError(res, 'Error.CannotGetDomains');
             }
-        }).catch((err)=>{
+        }).catch((err) => {
             return this.sendResponseError(res, 'Error.CannotGetDomains');
         })
     }
 
     couldAffectDomain(domain_id) {
         return new Promise((resolve, reject) => {
-            this.getUnaffectedDomains().then((result)=>{
-                if(result.success){
-                    if(result.domains && result.domains.length){
+            this.getUnaffectedDomains().then((result) => {
+                if (result.success) {
+                    if (result.domains && result.domains.length) {
                         let domains = result.domains;
-                        const checkIdDomain = obj => obj.id === domain_id;
-                        if(domains.some(checkIdDomain)){
+                        const checkIdDomain = obj => obj.domain_id === domain_id;
+                        if (domains.some(checkIdDomain)) {
                             resolve(true);
-                        }else{
+                        } else {
                             resolve(false);
                         }
-                    }else{
+                    } else {
                         resolve(false);
                     }
-                }else {
+                } else {
                     resolve(false);
                 }
-            }).catch((err)=>{
+            }).catch((err) => {
                 reject(err);
             })
         })
@@ -764,18 +852,18 @@ class accounts extends baseModelbo {
         this.db['accounts'].findOne({
             where: {
                 account_id: account_id,
-                active : 'Y'
+                active: 'Y'
             }
         }).then(user => {
-            if(!!!user){
+            if (!!!user) {
                 return this.sendResponseError(res, ['Error.UserNotFound'], 1, 403);
             }
-            if(user.dataValues.domain_id === domain_id){
+            if (user.dataValues.domain_id === domain_id) {
                 res.send({
                     status: 200,
                     message: 'account updated !'
                 });
-            }else{
+            } else {
                 this.couldAffectDomain(domain_id).then((result) => {
                     if (result) {
                         let dataToUpdate = {
@@ -801,7 +889,7 @@ class accounts extends baseModelbo {
                 })
             }
 
-        }).catch((err)=>{
+        }).catch((err) => {
             return this.sendResponseError(res, ['Error.UserNotFound'], 1, 403);
         })
 
