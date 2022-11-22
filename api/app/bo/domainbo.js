@@ -1,9 +1,10 @@
 const {baseModelbo} = require('./basebo');
 const db = require("../models");
 const {default: axios} = require("axios");
-const domainURL = 'https://sip-crm.oxilog-telecom.net:1443/api/v1/domains';
-const domainAuth = {
-    headers: {Authorization: 'Bearer BomjNx8kFfZTdCFx4kH3hGECO78yS0C0KS7pgO0BUe8COxcved'}
+const call_center_token = require(__dirname + '/../config/config.json')["call_center_token"];
+const base_url_cc_kam = require(__dirname + '/../config/config.json')["base_url_cc_kam"];
+const call_center_authorization = {
+    headers: {Authorization: call_center_token}
 };
 
 class domains extends baseModelbo {
@@ -21,7 +22,7 @@ class domains extends baseModelbo {
         }
 
         axios
-            .post(`${domainURL}`, formData, domainAuth).then((resp) => {
+            .post(`${base_url_cc_kam}api/v1/domains`, formData, call_center_authorization).then((resp) => {
             let params = resp.data.result;
             const domain = db.domains.build();
             domain.domain_name = formData.domain_name;
@@ -38,8 +39,8 @@ class domains extends baseModelbo {
             });
         }).catch((err) => {
             res.send({
-                success : false,
-                message :err.response.data.errors.domain_name[0]
+                success: false,
+                message: err.response.data.errors.domain_name[0]
             })
         })
 
@@ -66,14 +67,14 @@ class domains extends baseModelbo {
                     return this.sendResponseError(res, ['Error.uuidNotFound'], 1, 403);
                 }
                 axios
-                    .get(`${domainURL}/${uuid}`, domainAuth).then((resp) => {
+                    .get(`${base_url_cc_kam}api/v1/domains/${uuid}`, call_center_authorization).then((resp) => {
                     let dataToUpdate = data;
                     dataToUpdate.updatedAt = new Date();
                     if ("enabled" in data) {
                         dataToUpdate.status = data.enabled;
                     }
                     axios
-                        .put(`${domainURL}/${uuid}`, dataToUpdate, domainAuth).then((resp) => {
+                        .put(`${base_url_cc_kam}api/v1/domains/${uuid}`, dataToUpdate, call_center_authorization).then((resp) => {
                         this.db.domains.update(dataToUpdate, {
                             where: {
                                 domain_id: domain_id,
@@ -88,17 +89,16 @@ class domains extends baseModelbo {
                         })
                     }).catch((err) => {
                         res.send({
-                            success : false,
-                            message :err.response.data.errors.domain_name[0]
+                            success: false,
+                            message: err.response.data.errors.domain_name[0]
                         })
-                        //return this.sendResponseError(res, ['Error.CannotUpdateDomainTelco'], 1, 403);
                     })
 
                 }).catch((err) => {
                     return this.sendResponseError(res, ['Error.uuidNotFoundCannotUpdateDomain'], 1, 403);
                 })
             }).catch(err => {
-            res.status(500).json(err)
+                res.status(500).json(err)
             }
         )
     }
@@ -121,11 +121,11 @@ class domains extends baseModelbo {
                     return this.sendResponseError(res, ['Error.uuidNotFound'], 1, 403);
                 }
                 axios
-                    .delete(`${domainURL}/${uuid}`, domainAuth).then((resp) => {
-                        let toUpdate = {
-                            updatedAt : new Date(),
-                            active : 'N'
-                        }
+                    .delete(`${base_url_cc_kam}api/v1/domains/${uuid}`, call_center_authorization).then((resp) => {
+                    let toUpdate = {
+                        updatedAt: new Date(),
+                        active: 'N'
+                    }
                     this.db.domains.update(toUpdate, {
                         where: {
                             domain_id: domain_id,
@@ -134,15 +134,15 @@ class domains extends baseModelbo {
                     }).then(result => {
                         res.send({
                             success: true,
-                            message : "Domain Deleted !"
+                            message: "Domain Deleted !"
                         })
                     }).catch(err => {
                         return this.sendResponseError(res, ['Error', err], 1, 403);
                     })
-                }).catch((err)=>{
+                }).catch((err) => {
                     return this.sendResponseError(res, ['Error.CannotDeleteTelco'], 1, 403);
                 })
-            }).catch((err)=>{
+            }).catch((err) => {
             return this.sendResponseError(res, ['Error.DomainNotFound'], 1, 403);
         })
     }

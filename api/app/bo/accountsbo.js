@@ -15,7 +15,6 @@ let _usersbo = new usersbo();
 let _agentsbo = new agentsbo();
 let _campaignsbo = new campaignsbo();
 let _trunksbo = new trunksbo();
-const appSocket = new (require('../providers/AppSocket'))();
 const call_center_token = require(__dirname + '/../config/config.json')["call_center_token"];
 const base_url_cc_kam = require(__dirname + '/../config/config.json')["base_url_cc_kam"];
 const call_center_authorization = {
@@ -29,6 +28,7 @@ class accounts extends baseModelbo {
         this.primaryKey = 'account_id';
     }
 
+    // -------------------> Change Status <-------------------
     changeStatus_dids(account_id, status) {
         let indexDid_group = 0;
 
@@ -159,7 +159,7 @@ class accounts extends baseModelbo {
 
         return new Promise((resolve, reject) => {
             const entities = [
-                'didsgroups', 'truncks', 'roles', 'templates_list_call_files', 'dialplans'
+                'didsgroups', 'truncks', 'roles', 'templates_list_call_files', 'dialplans', 'accounts'
             ]
             this.changeStatusForEntities(entities, account_id, status).then(() => {
                 this.changeStatusUsers(account_id, status).then(() => {
@@ -185,24 +185,58 @@ class accounts extends baseModelbo {
 
     changeStatusByIdAcc(req, res, next) {
         let {account_id, status} = req.body;
+        console.log(account_id, status)
         if ((!!!account_id || !!!status)) {
             return this.sendResponseError(res, ['Error.RequestDataInvalid'], 0, 403);
         }
         if (status !== 'N' && status !== 'Y') {
             return this.sendResponseError(res, ['Error.StatusMustBe_Y_Or_N'], 0, 403);
         }
-        this.changeStatus(account_id, status).then(data => {
-            res.send({
-                status: 200,
-                message: "success",
-                success: true
+        this.db['accounts'].findOne({
+            where: {
+                account_id: account_id,
+                active: 'Y'
+            },
+        }).then(account => {
+            this.db['users'].findOne({
+                where: {
+                    user_id: account.dataValues.user_id
+                }
+            }).then((user) => {
+                let {uuid} = user.dataValues.sip_device;
+                axios
+                    .get(`${base_url_cc_kam}api/v1/agents/${uuid}`, call_center_authorization).then((resp_agent) => {
+                    let data_update = resp_agent.data.result;
+                    data_update.enabled = status === 'Y';
+                    data_update.updated_at = new Date();
+                    axios
+                        .put(`${base_url_cc_kam}api/v1/agents/${uuid}`, data_update, call_center_authorization).then((resp) => {
+                        this.changeStatus(account_id, status).then(data => {
+                            res.send({
+                                status: 200,
+                                message: "success",
+                                success: true
+                            })
+                        }).catch((error) => {
+                            return this.sendResponseError(res, ['Error.AnErrorHasOccurredChangeStatus', error], 1, 403);
+                        });
+                    }).catch((err) => {
+                        return this.sendResponseError(res, ['Error.CannotUpdateTelcoAgent'], 0, 403);
+                    })
+                }).catch((err) => {
+                    return this.sendResponseError(res, ['Error.CannotFindAgentTelco'], 0, 403);
+                })
+            }).catch((err) => {
+                return this.sendResponseError(res, ['Error.CannotFindUser'], 0, 403);
             })
-        }).catch((error) => {
-            return this.sendResponseError(res, ['Error.AnErrorHasOccurredChangeStatus', error], 1, 403);
-        });
+        }).catch((err) => {
+            return this.sendResponseError(res, ['Error.CannotFindAccount'], 0, 403);
+        })
 
     }
 
+
+    // -------------------> Auth <-------------------------------
     getAccountByToken(req, res, next) {
         jwt.verify(req.headers.authorization.replace('Bearer ', ''), config.secret, (err, decodedToken) => {
             if (err) {
@@ -269,6 +303,8 @@ class accounts extends baseModelbo {
         }
     }
 
+
+    // ------------------> Add / Edit Account <---------------------
     AddEditAccount(req, res, next) {
         let _this = this;
         let newAccount = req.body;
@@ -327,12 +363,12 @@ class accounts extends baseModelbo {
                                 .get(`${base_url_cc_kam}api/v1/subscribers/username/${username}`,
                                     call_center_authorization)
                                 .then((resp) => {
-                                    let {uuid ,username} = resp.data.result;
+                                    let {uuid, username} = resp.data.result;
                                     let update_subscriber = {
                                         domain: newAccount.domain.label,
                                         password: newAccount.sip_device.password,
                                         updated_at: new Date(),
-                                        username : username,
+                                        username: username,
                                     }
                                     axios
                                         .put(`${base_url_cc_kam}api/v1/subscribers/${uuid}`,
@@ -407,8 +443,9 @@ class accounts extends baseModelbo {
                 if (resultAffection) {
                     let data_subscriber = {
                         username,
-                        domain: domain.label,
-                        password
+                        domain_uuid: domain.uuid,
+                        password,
+                        domain: domain.label
                     }
                     axios
                         .post(`${base_url_cc_kam}api/v1/subscribers`,
@@ -416,6 +453,7 @@ class accounts extends baseModelbo {
                             call_center_authorization)
                         .then((resp) => {
                             let result = resp.data.result;
+                            console.log(result)
                             let data_agent = {
                                 name: first_name + " " + last_name,
                                 domain_uuid: result.domain_uuid,
@@ -497,6 +535,8 @@ class accounts extends baseModelbo {
 
     }
 
+
+    //--------------------> Delete Account <--------------------------
     deleteAgents(agents) {
         let index = 0;
         return new Promise((resolve, reject) => {
@@ -692,74 +732,94 @@ class accounts extends baseModelbo {
     deleteAccount(req, res, next) {
         let _this = this;
         let account_id = req.body.account_id;
-        this.deleteAllRelativeTrunks(account_id)
-            .then(() => {
-                this.deleteAllRelativeAgents(account_id)
-                    .then(() => {
-                        this.deleteAllRelativeUsers(account_id)
-                            .then(() => {
-                                this.deleteAllRelativeCampaigns(account_id)
-                                    .then(() => {
-                                        this.db['accounts']
-                                            .update({active: 'N'}, {where: {account_id: account_id}})
-                                            .then(() => {
-                                                res.send({
-                                                    status: 200,
-                                                    message: 'account deleted with success'
+        this.deleteAgentAndSubscriber(account_id).then((result) => {
+            this.deleteAllRelativeTrunks(account_id)
+                .then(() => {
+                    this.deleteAllRelativeAgents(account_id)
+                        .then(() => {
+                            this.deleteAllRelativeUsers(account_id)
+                                .then(() => {
+                                    this.deleteAllRelativeCampaigns(account_id)
+                                        .then(() => {
+                                            this.db['accounts']
+                                                .update({active: 'N'}, {where: {account_id: account_id}})
+                                                .then(() => {
+                                                    res.send({
+                                                        status: 200,
+                                                        message: 'account deleted with success'
+                                                    })
                                                 })
-                                            })
-                                            .catch(err => {
-                                                return _this.sendResponseError(res, ['Error.AnErrorHasOccurredUser', err], 1, 403);
-                                            })
-                                    })
-                                    .catch(err => {
-                                        return _this.sendResponseError(res, ['Error.AnErrorHasOccurredUser', err], 1, 403);
-                                    })
-                            })
-                            .catch(err => {
-                                return _this.sendResponseError(res, ['Error.AnErrorHasOccurredUser', err], 1, 403);
-                            })
-                    })
-                    .catch(err => {
-                        return _this.sendResponseError(res, ['Error.AnErrorHasOccurredUser', err], 1, 403);
-                    })
-            })
-            .catch(err => {
-                return _this.sendResponseError(res, ['Error.AnErrorHasOccurredUser', err], 1, 403);
-            })
-    }
-
-    isUniqueDomain(domain, account_id) {
-        return new Promise((resolve, reject) => {
-            if (domain) {
-                this.db['accounts'].findAll({
-                    where: {
-                        active: 'Y',
-                        domain: {
-                            [Sequelize.Op.iLike]: domain
-                        }
-                    }
+                                                .catch(err => {
+                                                    return _this.sendResponseError(res, ['Error.AnErrorHasOccurredUser', err], 1, 403);
+                                                })
+                                        })
+                                        .catch(err => {
+                                            return _this.sendResponseError(res, ['Error.AnErrorHasOccurredUser', err], 1, 403);
+                                        })
+                                })
+                                .catch(err => {
+                                    return _this.sendResponseError(res, ['Error.AnErrorHasOccurredUser', err], 1, 403);
+                                })
+                        })
+                        .catch(err => {
+                            return _this.sendResponseError(res, ['Error.AnErrorHasOccurredUser', err], 1, 403);
+                        })
                 })
-                    .then(accounts => {
-                        if (accounts && accounts.length !== 0) {
-                            if (domain === accounts[0].domain && parseInt(account_id) === accounts[0].account_id) {
-                                resolve(true);
-                            } else {
-                                resolve(false);
-                            }
-                        } else {
-                            resolve(true);
-                        }
-                    })
-                    .catch(err => {
-                        reject(err);
-                    })
-            } else {
-                resolve(true);
-            }
+                .catch(err => {
+                    return _this.sendResponseError(res, ['Error.AnErrorHasOccurredUser', err], 1, 403);
+                })
+        }).catch((err) => {
+            return _this.sendResponseError(res, ['Error.CannotDeleteAgent/SubscriberTelco', err], 1, 403);
         })
     }
 
+    deleteAgentAndSubscriber(account_id) {
+        return new Promise((resolve, reject) => {
+            this.db['accounts'].findOne({
+                where: {
+                    account_id: account_id,
+                    active: 'Y'
+                },
+            }).then(account => {
+                this.db['users'].findOne({
+                    where: {
+                        user_id: account.dataValues.user_id
+                    }
+                }).then((user) => {
+                    let {uuid} = user.dataValues.sip_device;
+                    axios
+                        .get(`${base_url_cc_kam}api/v1/agents/${uuid}`, call_center_authorization).then((resp_agent) => {
+                        let {subscriber_uuid} = resp_agent.data.result;
+                        axios
+                            .delete(`${base_url_cc_kam}api/v1/agents/${uuid}`, call_center_authorization).then((resp) => {
+                            axios
+                                .get(`${base_url_cc_kam}api/v1/subscribers/${subscriber_uuid}`, call_center_authorization).then((resp_sub) => {
+                                axios
+                                    .delete(`${base_url_cc_kam}api/v1/subscribers/${subscriber_uuid}`, call_center_authorization).then((resp) => {
+                                    resolve(true);
+                                }).catch((err) => {
+                                    reject(err);
+                                })
+                            }).catch((err) => {
+                                reject(err);
+                            })
+                        }).catch((err) => {
+                            reject(err);
+                        })
+                    }).catch((err) => {
+                        reject(err);
+                    })
+                }).catch((err) => {
+                    reject(err);
+                })
+            }).catch((err) => {
+                reject(err);
+            })
+        })
+    }
+
+
+    //----------------------------> Affect Domain <-------------------
     getUnaffectedDomains() {
         return new Promise((resolve, reject) => {
             this.db.domains.findAll({
@@ -894,6 +954,40 @@ class accounts extends baseModelbo {
         })
 
     }
+
+
+    //-------------------------------------------------------------------
+    isUniqueDomain(domain, account_id) {
+        return new Promise((resolve, reject) => {
+            if (domain) {
+                this.db['accounts'].findAll({
+                    where: {
+                        active: 'Y',
+                        domain: {
+                            [Sequelize.Op.iLike]: domain
+                        }
+                    }
+                })
+                    .then(accounts => {
+                        if (accounts && accounts.length !== 0) {
+                            if (domain === accounts[0].domain && parseInt(account_id) === accounts[0].account_id) {
+                                resolve(true);
+                            } else {
+                                resolve(false);
+                            }
+                        } else {
+                            resolve(true);
+                        }
+                    })
+                    .catch(err => {
+                        reject(err);
+                    })
+            } else {
+                resolve(true);
+            }
+        })
+    }
+
 }
 
 module.exports = accounts;

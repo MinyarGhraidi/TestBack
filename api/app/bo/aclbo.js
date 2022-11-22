@@ -1,16 +1,19 @@
 const {baseModelbo} = require("./basebo");
 const {default: axios} = require("axios");
 const db = require("../models");
-const aclURL = 'https://sip-crm.oxilog-telecom.net:1443/api/v1/acls';
-const aclAuth = {
-    headers: {Authorization: 'Bearer BomjNx8kFfZTdCFx4kH3hGECO78yS0C0KS7pgO0BUe8COxcved'}
+const call_center_token = require(__dirname + '/../config/config.json')["call_center_token"];
+const base_url_cc_kam = require(__dirname + '/../config/config.json')["base_url_cc_kam"];
+const call_center_authorization = {
+    headers: {Authorization: call_center_token}
 };
+
 class acls extends baseModelbo {
     constructor() {
         super('acls', 'acl_id');
         this.baseModal = 'acls';
         this.primaryKey = 'acl_id'
     }
+
     saveAcl(req, res, next) {
         const formData = req.body;
 
@@ -19,7 +22,7 @@ class acls extends baseModelbo {
         }
 
         axios
-            .post(`${aclURL}`, formData, aclAuth).then((resp) => {
+            .post(`${base_url_cc_kam}api/v1/acls`, formData, call_center_authorization).then((resp) => {
             let params = resp.data.result;
             const acl = db.acls.build();
             acl.name = formData.name;
@@ -37,8 +40,8 @@ class acls extends baseModelbo {
             });
         }).catch((err) => {
             res.send({
-                success : false,
-                message :err.response.data.errors
+                success: false,
+                message: err.response.data.errors
             })
         })
 
@@ -65,11 +68,11 @@ class acls extends baseModelbo {
                     return this.sendResponseError(res, ['Error.uuidNotFound'], 1, 403);
                 }
                 axios
-                    .get(`${aclURL}/${uuid}`, aclAuth).then((resp) => {
+                    .get(`${base_url_cc_kam}api/v1/acls/${uuid}`, call_center_authorization).then((resp) => {
                     let dataToUpdate = data;
                     dataToUpdate.updated_at = new Date();
                     axios
-                        .put(`${aclURL}/${uuid}`, dataToUpdate, aclAuth).then((resp) => {
+                        .put(`${base_url_cc_kam}api/v1/acls/${uuid}`, dataToUpdate, call_center_authorization).then((resp) => {
                         this.db.acls.update(dataToUpdate, {
                             where: {
                                 acl_id: acl_id,
@@ -84,8 +87,8 @@ class acls extends baseModelbo {
                         })
                     }).catch((err) => {
                         res.send({
-                            success : false,
-                            message :err.response.data.errors
+                            success: false,
+                            message: err.response.data.errors
                         })
                     })
 
@@ -117,10 +120,10 @@ class acls extends baseModelbo {
                     return this.sendResponseError(res, ['Error.uuidNotFound'], 1, 403);
                 }
                 axios
-                    .delete(`${aclURL}/${uuid}`, aclAuth).then((resp) => {
+                    .delete(`${base_url_cc_kam}api/v1/acls/${uuid}`, call_center_authorization).then((resp) => {
                     let toUpdate = {
-                        updated_at : new Date(),
-                        active : 'N'
+                        updated_at: new Date(),
+                        active: 'N'
                     }
                     this.db.acls.update(toUpdate, {
                         where: {
@@ -136,7 +139,7 @@ class acls extends baseModelbo {
                         }).then(result => {
                             res.send({
                                 success: true,
-                                message : "Acl Deleted !"
+                                message: "Acl Deleted !"
                             })
                         }).catch(err => {
                             return this.sendResponseError(res, ['Error.CannotDeleteAclNodes', err], 1, 403);
@@ -144,12 +147,13 @@ class acls extends baseModelbo {
                     }).catch(err => {
                         return this.sendResponseError(res, ['Error.CannotDeleteAcl', err], 1, 403);
                     })
-                }).catch((err)=>{
+                }).catch((err) => {
                     return this.sendResponseError(res, ['Error.CannotDeleteTelco'], 1, 403);
                 })
-            }).catch((err)=>{
+            }).catch((err) => {
             return this.sendResponseError(res, ['Error.AclNotFound'], 1, 403);
         })
     }
 }
+
 module.exports = acls;
