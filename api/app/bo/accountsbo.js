@@ -185,7 +185,6 @@ class accounts extends baseModelbo {
 
     changeStatusByIdAcc(req, res, next) {
         let {account_id, status} = req.body;
-        console.log(account_id, status)
         if ((!!!account_id || !!!status)) {
             return this.sendResponseError(res, ['Error.RequestDataInvalid'], 0, 403);
         }
@@ -453,7 +452,6 @@ class accounts extends baseModelbo {
                             call_center_authorization)
                         .then((resp) => {
                             let result = resp.data.result;
-                            console.log(result)
                             let data_agent = {
                                 name: first_name + " " + last_name,
                                 domain_uuid: result.domain_uuid,

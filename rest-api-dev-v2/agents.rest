@@ -60,15 +60,15 @@ Authorization: Bearer BomjNx8kFfZTdCFx4kH3hGECO78yS0C0KS7pgO0BUe8COxcved
 
 ###
 #UPDATE AGENT
-PUT https://sip-crm.oxilog-telecom.net:1443/api/v1/agents/28379d77-96a5-4b81-969e-1109fe7e7893
+PUT https://sip-crm.oxilog-telecom.net:1443/api/v1/agents/e4abeac9-a27a-4849-a443-0a85da9ce27d
 Content-Type: application/json
 Authorization: Bearer BomjNx8kFfZTdCFx4kH3hGECO78yS0C0KS7pgO0BUe8COxcved
 
 {
-    "name": "Anis",
-	"domain_uuid": "97c0468b-59b9-42b8-adc8-aa9749f1f8c8",
-    "subscriber_uuid": "97c04930-5743-40cf-af78-c2f69358b4b3",
-    "status": "available",
+  "domain_uuid": "97c1bd03-a4fc-4af8-b778-1bf6828caf35",
+  "subscriber_uuid": "97d0421b-a653-4d84-b5cd-3f0f27320c58",
+  "name": "Mostapha Ghribi",
+  "status": "logged-out",
     "enabled": true,
     "options": {
         "call_timeout": 60,
@@ -116,7 +116,7 @@ Authorization: Bearer BomjNx8kFfZTdCFx4kH3hGECO78yS0C0KS7pgO0BUe8COxcved
 
 ###
 #DELETE AGENT
-DELETE https://sip-crm.oxilog-telecom.net:1443/api/v1/agents/1
+DELETE https://sip-crm.oxilog-telecom.net:1443/api/v1/agents/be8dfed1-fa0f-47ef-bf3d-48fb1c6a0e14
 Content-Type: application/json
 Authorization: Bearer BomjNx8kFfZTdCFx4kH3hGECO78yS0C0KS7pgO0BUe8COxcved
 
