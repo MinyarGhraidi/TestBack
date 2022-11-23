@@ -365,6 +365,7 @@ let apiRouters = function (passport) {
 //-------------------> Domain API
     router.post('/api/domain/save',passport.authenticate('jwt', {session: false}), DomainController.saveDomain);
     router.post('/api/domain/find',passport.authenticate('jwt', {session: false}), DomainController.find);
+    router.get('/api/domain/findById/:entity_id', passport.authenticate('jwt', {session: false}), DomainController.findById);
     router.put('/api/domain/update',passport.authenticate('jwt', {session: false}), DomainController.updateDomain);
     router.delete('/api/domain/delete/:domain_id',passport.authenticate('jwt', {session: false}), DomainController.deleteDomain);
 
