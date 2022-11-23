@@ -42,6 +42,9 @@ module.exports = {
     },
     getCustomFields : function (req,res,next){
         _itembo.getCustomFields(req,res,next)
+    },
+    findCalleFileById: function (req, res, next){
+        _itembo.findCalleFileById(req, res, next)
     }
 
 };

@@ -620,6 +620,107 @@ class callfiles extends baseModelbo {
             this.sendResponseError(res, ['Error Cannot get CustomFields'], err)
         })
     }
+
+    findCalleFileById (req, res, next){
+        const {call_file_id} = req.params;
+        if(call_file_id){
+            this.db['callfiles'].findOne({
+                where :{
+                    callfile_id :call_file_id
+                }
+            }).then(call_file=>{
+                if(call_file){
+                    if(call_file.customfields && call_file.customfields.length !== 0){
+                        let schema = {
+                            title: 'Tell m',
+                            type: 'object',
+                            properties: {}
+                        }
+
+                        call_file.customfields.map(item => {
+                            if (item.type === 'select') {
+                                let obj = []
+                                item.options.map(element => {
+                                    obj.push(element.id)
+                                })
+                                schema.properties[item.value] = {
+                                    "enum": obj
+                                }
+                            } else if (item.type === 'checkbox') {
+                                schema.properties[item.value]={
+                                    "type": "array",
+                                    "title": item.value,
+                                    "items": {
+                                        "type": "string",
+                                        "enum": [],
+                                    },
+                                    "uniqueItems": true
+                                }
+                                item.options.map(element => {
+                                    console.log('element', element)
+                                    schema.properties[item.value].items.enum.push(element.id)
+                                })
+
+                            } else {
+                                schema.properties[item.value] = {
+                                    "title": item.value,
+                                    "type": "string"
+                                }
+                            }
+                        })
+                        const uiSchema = {
+                            'ui:field': 'layout',
+                            'ui:layout': [],
+
+                        }
+                        Object.entries(schema.properties).map((item, index,dataSchema)=>{
+                            let index1 = index === 0 ? index : index * 2
+                            let index2 = index1 + 1
+                            let obj={}
+                            if(dataSchema[index1] && dataSchema[index2]){
+                                obj[dataSchema[index1][0]] = {sm:6}
+                                obj[dataSchema[index2][0]] = {sm:6}
+                                uiSchema["ui:layout"].push(obj)
+                            }else if(dataSchema[index1]){
+                                obj[dataSchema[index1][0]] = {sm:6}
+                                uiSchema["ui:layout"].push(obj)
+                            }
+
+                            if(dataSchema[index1] && dataSchema[index1][1].type === 'array'){
+                                uiSchema[dataSchema[index1][0]] ={"ui:widget": "checkboxes"}
+                            }else if(dataSchema[index2] && dataSchema[index2][1].type === 'array'){
+                                uiSchema[dataSchema[index2][0]] ={"ui:widget": "checkboxes"}
+                            }
+
+
+                        })
+
+                        res.send({
+                            success: true,
+                            data:call_file,
+                            schema:schema,
+                            uiSchema:uiSchema
+                        })
+                    }else{
+                        res.send({
+                            success: true,
+                            data:call_file,
+                            schema:{},
+                            uiSchema:{}
+                        })
+                    }
+
+                }else{
+                    res.send({
+                        success : false,
+                        message: "call file not found"
+                    })
+                }
+            })
+        }else{
+            this.sendResponseError(res, ['Error call file id is null'])
+        }
+    }
 }
 
 module.exports = callfiles;
