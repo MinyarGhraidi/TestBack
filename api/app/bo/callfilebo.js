@@ -48,7 +48,7 @@ class callfiles extends baseModelbo {
         let indexMapping = 0;
         let key = 0
         let dataMapping = {}
-        let custom_field =[]
+        let custom_field = []
         let PromiseMapping = new Promise((resolve, reject) => {
             if (listCallFileItem.templates_id) {
                 db['templates_list_call_files'].findOne({
@@ -60,21 +60,25 @@ class callfiles extends baseModelbo {
                     if (result) {
                         dataMapping = result.template
                         custom_field = result.custom_field
-                        resolve({dataMapping:dataMapping,
-                            custom_field:custom_field})
+                        resolve({
+                            dataMapping: dataMapping,
+                            custom_field: custom_field
+                        })
                     }
                 })
             } else {
                 dataMapping = listCallFileItem.mapping;
-                resolve({dataMapping:dataMapping,
-                    custom_field:custom_field})
+                resolve({
+                    dataMapping: dataMapping,
+                    custom_field: custom_field
+                })
             }
         })
 
         Promise.all([PromiseMapping]).then(dataMapping => {
             this.CreateCallFileItem(dataMapping[0].dataMapping, listCallFileItem, basic_fields, callFile, item_callFile, indexMapping).then(callFile => {
                 key++;
-                callFile.customfields = dataMapping[0].custom_field ? dataMapping[0].custom_field :[]
+                callFile.customfields = dataMapping[0].custom_field ? dataMapping[0].custom_field : []
                 this.db['callfiles'].build(callFile).save().then(result => {
 
                     let item_toUpdate = listcallfile_item_to_update;
@@ -401,19 +405,19 @@ class callfiles extends baseModelbo {
         const page = filter.page || 1;
         const offset = (limit * (page - 1));
         let {start_time, end_time, listCallFiles_ids, date} = filter
-        let sqlLeads = `Select distinct  callF.* from callfiles as callF
-                        left join calls_historys as calls_h on callF.callfile_id = calls_h.call_file_id
+        let sqlLeads = `Select distinct callF.*
+                        from callfiles as callF
+                                 left join calls_historys as calls_h on callF.callfile_id = calls_h.call_file_id
                         where calls_h.active = :active
-                               and callF.active = :active
-                               and  callF.callfile_id ='103945'
-                         EXTRA_WHERE 
+                          and callF.active = :active
+                          and callF.callfile_id = '103945' EXTRA_WHERE 
                          LIMIT :limit
-                         OFFSET :offset`
+                        OFFSET :offset`
         let sqlCount = `select count(*)
-                            from calls_historys as calls_h
-                                WHERE active= :active
-                                and  calls_h.call_file_id ='103945'
-                                EXTRA_WHERE`
+                        from calls_historys as calls_h
+                        WHERE active = :active
+                          and calls_h.call_file_id = '103945'
+                            EXTRA_WHERE`
         let extra_where_count = '';
         let extra_where = '';
 
@@ -490,10 +494,12 @@ class callfiles extends baseModelbo {
                 })
                 return
             }
-            let sqlDetails = `select * from calls_historys  as call_h 
-                                left join users as u On u.user_id = call_h.agent_id
-                                left join callfiles as callF On callF.callfile_id = call_h.call_file_id
-                                where call_h.call_file_id =:call_file_id and call_h.active= :active`
+            let sqlDetails = `select *
+                              from calls_historys as call_h
+                                       left join users as u On u.user_id = call_h.agent_id
+                                       left join callfiles as callF On callF.callfile_id = call_h.call_file_id
+                              where call_h.call_file_id = :call_file_id
+                                and call_h.active = :active`
             _this.db['calls_historys'].findAll({
                 where: {
                     active: 'Y',
@@ -537,7 +543,7 @@ class callfiles extends baseModelbo {
                     })
                 })
                 Promise.all([historyPromise]).then(data_stats => {
-                   callFileInfo.stats = statsData;
+                    callFileInfo.stats = statsData;
                     res.send({
                         success: true,
                         status: 200,
@@ -551,6 +557,7 @@ class callfiles extends baseModelbo {
             })
         })
     }
+
     getEntityRevisionByItem(model_id, model_name) {
         let _this = this;
         return new Promise((resolve, reject) => {
@@ -572,10 +579,11 @@ class callfiles extends baseModelbo {
             })
         })
     }
+
     playMedia(req, res, next) {
         let filePath = appDir + '/app/sub-apps/records/speech.wav'
-         fs.readFile(filePath,function (err,data) {
-        res.sendFile(filePath);
+        fs.readFile(filePath, function (err, data) {
+            res.sendFile(filePath);
         });
     }
 
@@ -586,9 +594,12 @@ class callfiles extends baseModelbo {
             this.sendResponseError(res, ['Error.campaignIdRequired'])
             return
         }
-        let sql = `select distinct customfields  from callfiles where listcallfile_id in (
-                    SELECT listcallfile_id FROM public.listcallfiles WHERE campaign_id = :camp_id and active= :active
-                    ) and customfields <>'{}'`;
+        let sql = `select distinct customfields
+                   from callfiles
+                   where listcallfile_id in (
+                       SELECT listcallfile_id FROM public.listcallfiles WHERE campaign_id = :camp_id and active = :active
+                   )
+                     and customfields <> '{}'`;
         db.sequelize['crm-app'].query(sql, {
             type: db.sequelize['crm-app'].QueryTypes.SELECT,
             replacements: {
@@ -597,7 +608,7 @@ class callfiles extends baseModelbo {
             }
         }).then(customFields => {
             let AllFields = [];
-            const Fields = ['first_name', 'last_name','phone_number','address1','city','postal_code','email','country_code'];
+            const Fields = ['first_name', 'last_name', 'phone_number', 'address1', 'city', 'postal_code', 'email', 'country_code'];
             if (customFields.length === 0) {
                 res.send({
                     success: true,
@@ -621,18 +632,17 @@ class callfiles extends baseModelbo {
         })
     }
 
-    findCalleFileById (req, res, next){
+    findCalleFileById(req, res, next) {
         const {call_file_id} = req.params;
-        if(call_file_id){
+        if (call_file_id) {
             this.db['callfiles'].findOne({
-                where :{
-                    callfile_id :call_file_id
+                where: {
+                    callfile_id: call_file_id
                 }
-            }).then(call_file=>{
-                if(call_file){
-                    if(call_file.customfields && call_file.customfields.length !== 0){
+            }).then(call_file => {
+                if (call_file) {
+                    if (call_file.customfields && call_file.customfields.length !== 0) {
                         let schema = {
-                            title: 'Tell m',
                             type: 'object',
                             properties: {}
                         }
@@ -647,7 +657,7 @@ class callfiles extends baseModelbo {
                                     "enum": obj
                                 }
                             } else if (item.type === 'checkbox') {
-                                schema.properties[item.value]={
+                                schema.properties[item.value] = {
                                     "type": "array",
                                     "title": item.value,
                                     "items": {
@@ -673,23 +683,23 @@ class callfiles extends baseModelbo {
                             'ui:layout': [],
 
                         }
-                        Object.entries(schema.properties).map((item, index,dataSchema)=>{
+                        Object.entries(schema.properties).map((item, index, dataSchema) => {
                             let index1 = index === 0 ? index : index * 2
                             let index2 = index1 + 1
-                            let obj={}
-                            if(dataSchema[index1] && dataSchema[index2]){
-                                obj[dataSchema[index1][0]] = {sm:6}
-                                obj[dataSchema[index2][0]] = {sm:6}
+                            let obj = {}
+                            if (dataSchema[index1] && dataSchema[index2]) {
+                                obj[dataSchema[index1][0]] = {sm: 6}
+                                obj[dataSchema[index2][0]] = {sm: 6}
                                 uiSchema["ui:layout"].push(obj)
-                            }else if(dataSchema[index1]){
-                                obj[dataSchema[index1][0]] = {sm:6}
+                            } else if (dataSchema[index1]) {
+                                obj[dataSchema[index1][0]] = {sm: 6}
                                 uiSchema["ui:layout"].push(obj)
                             }
 
-                            if(dataSchema[index1] && dataSchema[index1][1].type === 'array'){
-                                uiSchema[dataSchema[index1][0]] ={"ui:widget": "checkboxes"}
-                            }else if(dataSchema[index2] && dataSchema[index2][1].type === 'array'){
-                                uiSchema[dataSchema[index2][0]] ={"ui:widget": "checkboxes"}
+                            if (dataSchema[index1] && dataSchema[index1][1].type === 'array') {
+                                uiSchema[dataSchema[index1][0]] = {"ui:widget": "checkboxes"}
+                            } else if (dataSchema[index2] && dataSchema[index2][1].type === 'array') {
+                                uiSchema[dataSchema[index2][0]] = {"ui:widget": "checkboxes"}
                             }
 
 
@@ -697,27 +707,27 @@ class callfiles extends baseModelbo {
 
                         res.send({
                             success: true,
-                            data:call_file,
-                            schema:schema,
-                            uiSchema:uiSchema
+                            data: call_file,
+                            schema: schema,
+                            uiSchema: uiSchema
                         })
-                    }else{
+                    } else {
                         res.send({
                             success: true,
-                            data:call_file,
-                            schema:{},
-                            uiSchema:{}
+                            data: call_file,
+                            schema: {},
+                            uiSchema: {}
                         })
                     }
 
-                }else{
+                } else {
                     res.send({
-                        success : false,
+                        success: false,
                         message: "call file not found"
                     })
                 }
             })
-        }else{
+        } else {
             this.sendResponseError(res, ['Error call file id is null'])
         }
     }
