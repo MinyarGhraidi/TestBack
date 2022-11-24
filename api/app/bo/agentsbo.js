@@ -22,13 +22,6 @@ const appSocket = new (require('../providers/AppSocket'))();
 const appHelper = require("../helpers/app");
 const app_config = appHelper.appConfig;
 
-
-
-
-
-
-
-
 class agents extends baseModelbo {
     constructor() {
         super('agents', 'user_id');
