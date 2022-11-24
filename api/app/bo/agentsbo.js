@@ -418,7 +418,6 @@ class agents extends baseModelbo {
                     axios
                         .get(`${base_url_cc_kam}api/v1/agents/${uuid}`, call_center_authorization)
                         .then(resp => {
-                            console.log(resp)
                             let agent = {"status": telcoStatus};
                             axios
                                 .put(`${base_url_cc_kam}api/v1/agents/${uuid}/status`, agent, call_center_authorization)
@@ -1445,7 +1444,7 @@ class agents extends baseModelbo {
             }).then((result) => {
                 let {uuid} = result.dataValues.sip_device;
                 if (!!!uuid) {
-                    reject(true);
+                  return   reject(false);
                 }
                 axios
                     .get(`${base_url_cc_kam}api/v1/agents/${uuid}`, call_center_authorization).then((resp_agent) => {
