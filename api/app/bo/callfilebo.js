@@ -48,7 +48,7 @@ class callfiles extends baseModelbo {
         let indexMapping = 0;
         let key = 0
         let dataMapping = {}
-        let custom_field =[]
+        let custom_field = []
         let PromiseMapping = new Promise((resolve, reject) => {
             if (listCallFileItem.templates_id) {
                 db['templates_list_call_files'].findOne({
@@ -60,21 +60,25 @@ class callfiles extends baseModelbo {
                     if (result) {
                         dataMapping = result.template
                         custom_field = result.custom_field
-                        resolve({dataMapping:dataMapping,
-                            custom_field:custom_field})
+                        resolve({
+                            dataMapping: dataMapping,
+                            custom_field: custom_field
+                        })
                     }
                 })
             } else {
                 dataMapping = listCallFileItem.mapping;
-                resolve({dataMapping:dataMapping,
-                    custom_field:custom_field})
+                resolve({
+                    dataMapping: dataMapping,
+                    custom_field: custom_field
+                })
             }
         })
 
         Promise.all([PromiseMapping]).then(dataMapping => {
             this.CreateCallFileItem(dataMapping[0].dataMapping, listCallFileItem, basic_fields, callFile, item_callFile, indexMapping).then(callFile => {
                 key++;
-                callFile.customfields = dataMapping[0].custom_field ? dataMapping[0].custom_field :[]
+                callFile.customfields = dataMapping[0].custom_field ? dataMapping[0].custom_field : []
                 this.db['callfiles'].build(callFile).save().then(result => {
 
                     let item_toUpdate = listcallfile_item_to_update;
@@ -537,7 +541,7 @@ class callfiles extends baseModelbo {
                     })
                 })
                 Promise.all([historyPromise]).then(data_stats => {
-                   callFileInfo.stats = statsData;
+                    callFileInfo.stats = statsData;
                     res.send({
                         success: true,
                         status: 200,
@@ -551,6 +555,7 @@ class callfiles extends baseModelbo {
             })
         })
     }
+
     getEntityRevisionByItem(model_id, model_name) {
         let _this = this;
         return new Promise((resolve, reject) => {
@@ -572,10 +577,11 @@ class callfiles extends baseModelbo {
             })
         })
     }
+
     playMedia(req, res, next) {
         let filePath = appDir + '/app/sub-apps/records/speech.wav'
-         fs.readFile(filePath,function (err,data) {
-        res.sendFile(filePath);
+        fs.readFile(filePath, function (err, data) {
+            res.sendFile(filePath);
         });
     }
 
@@ -597,7 +603,7 @@ class callfiles extends baseModelbo {
             }
         }).then(customFields => {
             let AllFields = [];
-            const Fields = ['first_name', 'last_name','phone_number','address1','city','postal_code','email','country_code'];
+            const Fields = ['first_name', 'last_name', 'phone_number', 'address1', 'city', 'postal_code', 'email', 'country_code'];
             if (customFields.length === 0) {
                 res.send({
                     success: true,
@@ -621,103 +627,301 @@ class callfiles extends baseModelbo {
         })
     }
 
-    findCalleFileById (req, res, next){
-        const {call_file_id} = req.params;
-        if(call_file_id){
-            this.db['callfiles'].findOne({
-                where :{
-                    callfile_id :call_file_id
+    fieldCallFile(mapping, call_file) {
+        return new Promise((resolve, reject) => {
+            let dataField = [];
+            let index = 0;
+            Object.entries(call_file.dataValues).map(item => {
+                let indexField = Object.keys(mapping).findIndex(element => element === item[0])
+                if (indexField !== -1) {
+                    dataField.push([item[0], item[1]])
                 }
-            }).then(call_file=>{
-                if(call_file){
-                    if(call_file.customfields && call_file.customfields.length !== 0){
-                        let schema = {
-                            title: 'Tell m',
-                            type: 'object',
-                            properties: {}
-                        }
+                if (index < Object.entries(call_file.dataValues).length - 1) {
+                    index++
+                } else {
+                    resolve({
+                        success: true,
+                        dataField: dataField
+                    })
+                }
+            })
+        })
+    }
 
-                        call_file.customfields.map(item => {
-                            if (item.type === 'select') {
-                                let obj = []
-                                item.options.map(element => {
-                                    obj.push(element.id)
+    creatSchema(dataField, schema) {
+        return new Promise((resolve, reject) => {
+            let index = 0;
+            dataField.map(item => {
+                if (item[0] === 'phone_number') {
+                    schema.properties[item[0]] = {
+                        type: "string",
+                        default: item[1],
+                        "readOnly": true
+                    }
+                } else {
+                    schema.properties[item[0]] = {
+                        type: "string",
+                        default: item[1],
+                    }
+                }
+
+                if (index < dataField.length - 1) {
+                    index++
+                } else {
+                    resolve({
+                        success: true,
+                        dataSchema: schema
+                    })
+                }
+            })
+        })
+    }
+
+    createSchemaCustomField(schema, callFile) {
+        return new Promise((resolve, reject) => {
+            let index = 0;
+            callFile.customfields.map(item => {
+                if (item.type === 'select') {
+                    let obj = []
+                    item.options.map(element => {
+                        obj.push(element.id)
+                    })
+                    schema.properties[item.value] = {
+                        "enum": obj
+                    }
+                } else if (item.type === 'checkbox') {
+                    schema.properties[item.value] = {
+                        "type": "array",
+                        "title": item.value,
+                        "items": {
+                            "type": "string",
+                            "enum": [],
+                        },
+                        "uniqueItems": true
+                    }
+                    item.options.map(element => {
+                        schema.properties[item.value].items.enum.push(element.id)
+                    })
+
+                } else {
+                    schema.properties[item.value] = {
+                        "title": item.value,
+                        "type": "string"
+                    }
+                }
+                if (index < callFile.customfields.length - 1) {
+                    index++
+                } else {
+                    resolve({
+                        success: true,
+                        schema: schema
+                    })
+                }
+            })
+        })
+    }
+
+    findCalleFileById(req, res, next) {
+        const {call_file_id} = req.params;
+        if (call_file_id) {
+            this.db['callfiles'].findOne({
+                include: {
+                    model: db.listcallfiles
+                },
+                where: {
+                    callfile_id: call_file_id
+                }
+            }).then(call_file => {
+                if (call_file) {
+                    let schema = {
+                        title: 'Call File',
+                        type: 'object',
+                        properties: {}
+                    }
+                    let mapping = {}
+                    if (call_file.listcallfile.templates_id !== null) {
+                        this.db['templates_list_call_files'].findOne({
+                            where: {
+                                active: 'Y',
+                                status: 'Y',
+                                templates_list_call_files_id: call_file.listcallfile.templates_id
+                            }
+                        }).then(tempCallFile => {
+                            if (tempCallFile) {
+                                mapping = tempCallFile.template
+                                this.fieldCallFile(mapping, call_file).then(result => {
+                                    if (result.success) {
+                                        this.creatSchema(result.dataField, schema).then(dataInput => {
+                                            if (dataInput.success) {
+                                                if (call_file.customfields && call_file.customfields.length !== 0) {
+                                                    this.createSchemaCustomField(schema, call_file).then(InputField => {
+                                                        if (InputField.success) {
+                                                            let uiSchema = {
+                                                                'ui:field': 'layout',
+                                                                'ui:layout': [],
+
+                                                            }
+                                                            Object.entries(schema.properties).map((item, index, dataSchema) => {
+                                                                let index1 = index === 0 ? index : index * 2
+                                                                let index2 = index1 + 1
+                                                                let obj = {}
+                                                                if (dataSchema[index1] && dataSchema[index2]) {
+                                                                    obj[dataSchema[index1][0]] = {sm: 6}
+                                                                    obj[dataSchema[index2][0]] = {sm: 6}
+                                                                    uiSchema["ui:layout"].push(obj)
+                                                                } else if (dataSchema[index1]) {
+                                                                    obj[dataSchema[index1][0]] = {sm: 6}
+                                                                    uiSchema["ui:layout"].push(obj)
+                                                                }
+
+                                                                if (dataSchema[index1] && dataSchema[index1][1].type === 'array') {
+                                                                    uiSchema[dataSchema[index1][0]] = {"ui:widget": "checkboxes"}
+                                                                } else if (dataSchema[index2] && dataSchema[index2][1].type === 'array') {
+                                                                    uiSchema[dataSchema[index2][0]] = {"ui:widget": "checkboxes"}
+                                                                }
+
+
+                                                            })
+                                                            res.send({
+                                                                success: true,
+                                                                data: call_file,
+                                                                schema: schema,
+                                                                uiSchema: uiSchema
+                                                            })
+                                                        }
+                                                    })
+                                                } else {
+                                                    let uiSchema = {
+                                                        'ui:field': 'layout',
+                                                        'ui:layout': [],
+
+                                                    }
+                                                    Object.entries(schema.properties).map((item, index, dataSchema) => {
+                                                        let index1 = index === 0 ? index : index * 2
+                                                        let index2 = index1 + 1
+                                                        let obj = {}
+                                                        if (dataSchema[index1] && dataSchema[index2]) {
+                                                            obj[dataSchema[index1][0]] = {sm: 6}
+                                                            obj[dataSchema[index2][0]] = {sm: 6}
+                                                            uiSchema["ui:layout"].push(obj)
+                                                        } else if (dataSchema[index1]) {
+                                                            obj[dataSchema[index1][0]] = {sm: 6}
+                                                            uiSchema["ui:layout"].push(obj)
+                                                        }
+
+                                                        if (dataSchema[index1] && dataSchema[index1][1].type === 'array') {
+                                                            uiSchema[dataSchema[index1][0]] = {"ui:widget": "checkboxes"}
+                                                        } else if (dataSchema[index2] && dataSchema[index2][1].type === 'array') {
+                                                            uiSchema[dataSchema[index2][0]] = {"ui:widget": "checkboxes"}
+                                                        }
+
+
+                                                    })
+                                                    res.send({
+                                                        success: true,
+                                                        data: call_file,
+                                                        schema: schema,
+                                                        uiSchema: uiSchema
+                                                    })
+                                                }
+                                            }
+
+                                        })
+                                    }
                                 })
-                                schema.properties[item.value] = {
-                                    "enum": obj
-                                }
-                            } else if (item.type === 'checkbox') {
-                                schema.properties[item.value]={
-                                    "type": "array",
-                                    "title": item.value,
-                                    "items": {
-                                        "type": "string",
-                                        "enum": [],
-                                    },
-                                    "uniqueItems": true
-                                }
-                                item.options.map(element => {
-                                    console.log('element', element)
-                                    schema.properties[item.value].items.enum.push(element.id)
+                            }
+                        })
+                    } else {
+                        mapping = call_file.listcallfile.mapping
+                        this.fieldCallFile(mapping, call_file).then(result => {
+                            if (result.success) {
+                                this.creatSchema(result.dataField, schema).then(dataInput => {
+                                    if (dataInput.success) {
+                                        if (call_file.customfields && call_file.customfields.length !== 0 && Object.keys(call_file.customfields).length !== 0) {
+                                            this.createSchemaCustomField(schema, call_file).then(InputField => {
+                                                if (InputField.success) {
+                                                    let uiSchema = {
+                                                        'ui:field': 'layout',
+                                                        'ui:layout': [],
+
+                                                    }
+                                                    Object.entries(schema.properties).map((item, index, dataSchema) => {
+                                                        let index1 = index === 0 ? index : index * 2
+                                                        let index2 = index1 + 1
+                                                        let obj = {}
+                                                        if (dataSchema[index1] && dataSchema[index2]) {
+                                                            obj[dataSchema[index1][0]] = {sm: 6}
+                                                            obj[dataSchema[index2][0]] = {sm: 6}
+                                                            uiSchema["ui:layout"].push(obj)
+                                                        } else if (dataSchema[index1]) {
+                                                            obj[dataSchema[index1][0]] = {sm: 6}
+                                                            uiSchema["ui:layout"].push(obj)
+                                                        }
+
+                                                        if (dataSchema[index1] && dataSchema[index1][1].type === 'array') {
+                                                            uiSchema[dataSchema[index1][0]] = {"ui:widget": "checkboxes"}
+                                                        } else if (dataSchema[index2] && dataSchema[index2][1].type === 'array') {
+                                                            uiSchema[dataSchema[index2][0]] = {"ui:widget": "checkboxes"}
+                                                        }
+
+
+                                                    })
+                                                    res.send({
+                                                        success: true,
+                                                        data: call_file,
+                                                        schema: schema,
+                                                        uiSchema: uiSchema
+                                                    })
+                                                }
+                                            })
+                                        } else {
+                                            let uiSchema = {
+                                                'ui:field': 'layout',
+                                                'ui:layout': [],
+
+                                            }
+                                            Object.entries(schema.properties).map((item, index, dataSchema) => {
+                                                let index1 = index === 0 ? index : index * 2
+                                                let index2 = index1 + 1
+                                                let obj = {}
+                                                if (dataSchema[index1] && dataSchema[index2]) {
+                                                    obj[dataSchema[index1][0]] = {sm: 6}
+                                                    obj[dataSchema[index2][0]] = {sm: 6}
+                                                    uiSchema["ui:layout"].push(obj)
+                                                } else if (dataSchema[index1]) {
+                                                    obj[dataSchema[index1][0]] = {sm: 6}
+                                                    uiSchema["ui:layout"].push(obj)
+                                                }
+
+                                                if (dataSchema[index1] && dataSchema[index1][1].type === 'array') {
+                                                    uiSchema[dataSchema[index1][0]] = {"ui:widget": "checkboxes"}
+                                                } else if (dataSchema[index2] && dataSchema[index2][1].type === 'array') {
+                                                    uiSchema[dataSchema[index2][0]] = {"ui:widget": "checkboxes"}
+                                                }
+
+
+                                            })
+                                            res.send({
+                                                success: true,
+                                                data: call_file,
+                                                schema: schema,
+                                                uiSchema: uiSchema
+                                            })
+                                        }
+                                    }
+
                                 })
-
-                            } else {
-                                schema.properties[item.value] = {
-                                    "title": item.value,
-                                    "type": "string"
-                                }
                             }
-                        })
-                        const uiSchema = {
-                            'ui:field': 'layout',
-                            'ui:layout': [],
-
-                        }
-                        Object.entries(schema.properties).map((item, index,dataSchema)=>{
-                            let index1 = index === 0 ? index : index * 2
-                            let index2 = index1 + 1
-                            let obj={}
-                            if(dataSchema[index1] && dataSchema[index2]){
-                                obj[dataSchema[index1][0]] = {sm:6}
-                                obj[dataSchema[index2][0]] = {sm:6}
-                                uiSchema["ui:layout"].push(obj)
-                            }else if(dataSchema[index1]){
-                                obj[dataSchema[index1][0]] = {sm:6}
-                                uiSchema["ui:layout"].push(obj)
-                            }
-
-                            if(dataSchema[index1] && dataSchema[index1][1].type === 'array'){
-                                uiSchema[dataSchema[index1][0]] ={"ui:widget": "checkboxes"}
-                            }else if(dataSchema[index2] && dataSchema[index2][1].type === 'array'){
-                                uiSchema[dataSchema[index2][0]] ={"ui:widget": "checkboxes"}
-                            }
-
-
-                        })
-
-                        res.send({
-                            success: true,
-                            data:call_file,
-                            schema:schema,
-                            uiSchema:uiSchema
-                        })
-                    }else{
-                        res.send({
-                            success: true,
-                            data:call_file,
-                            schema:{},
-                            uiSchema:{}
                         })
                     }
-
-                }else{
+                } else {
                     res.send({
-                        success : false,
+                        success: false,
                         message: "call file not found"
                     })
                 }
             })
-        }else{
+        } else {
             this.sendResponseError(res, ['Error call file id is null'])
         }
     }
