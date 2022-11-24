@@ -525,11 +525,9 @@ class campaigns extends baseModelbo {
             } else {
                 if (queue_agents.length > db_agents.length) {
                     let agents_not_assigned = queue_agents.filter(el => !db_agents.includes(el));
-                    console.log(agents_not_assigned, queue_uuid)
                     axios
                         .post(`${base_url_cc_kam}api/v1/queues/${queue_uuid}/tiers/delete`, {agents: agents_not_assigned}, call_center_authorization)
                         .then(resp => {
-                            console.log('here')
                             resolve(campaign);
                         })
                         .catch(err => {
