@@ -658,30 +658,27 @@ class callfiles extends baseModelbo {
                                 }
                             } else if (item.type === 'checkbox') {
                                 schema.properties[item.value] = {
-                                    "type": "array",
-                                    "title": item.value,
-                                    "items": {
-                                        "type": "string",
-                                        "enum": [],
+                                    type: "array",
+                                    title: item.value,
+                                    items: {
+                                        type: "string",
+                                        enum: [],
                                     },
-                                    "uniqueItems": true
+                                    uniqueItems: true
                                 }
                                 item.options.map(element => {
-                                    console.log('element', element)
                                     schema.properties[item.value].items.enum.push(element.id)
                                 })
-
                             } else {
                                 schema.properties[item.value] = {
-                                    "title": item.value,
-                                    "type": "string"
+                                    title: item.value,
+                                    type: "string"
                                 }
                             }
                         })
                         const uiSchema = {
                             'ui:field': 'layout',
                             'ui:layout': [],
-
                         }
                         Object.entries(schema.properties).map((item, index, dataSchema) => {
                             let index1 = index === 0 ? index : index * 2
@@ -701,10 +698,7 @@ class callfiles extends baseModelbo {
                             } else if (dataSchema[index2] && dataSchema[index2][1].type === 'array') {
                                 uiSchema[dataSchema[index2][0]] = {"ui:widget": "checkboxes"}
                             }
-
-
                         })
-
                         res.send({
                             success: true,
                             data: call_file,
