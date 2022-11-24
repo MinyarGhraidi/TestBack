@@ -47,6 +47,7 @@ class users extends baseModelbo {
                         status: 'Y'
                     }
                 }).then((user) => {
+                    console.log(user)
                     if (!user) {
                         this.sendResponseError(res, ['Error.UserNotFound'], 0, 403);
                     } else {
@@ -175,10 +176,10 @@ class users extends baseModelbo {
                                                         user_id: user_id,
                                                         first_name: first_name,
                                                         last_name: last_name,
-                                                        uuid: sip_device ? sip_device.uuid: null,
+                                                        uuid: sip_device ? sip_device.uuid : null,
                                                         crmStatus: user && user.params ? user.params.status : null,
-                                                        telcoStatus:sip_device ? sip_device.status : null,
-                                                        updated_at: sip_device ? sip_device.updated_at: null,
+                                                        telcoStatus: sip_device ? sip_device.status : null,
+                                                        updated_at: sip_device ? sip_device.updated_at : null,
                                                         campaign_id: campaign_id
                                                     };
                                                     appSocket.emit('agent_connection', data_agent);
@@ -661,7 +662,7 @@ class users extends baseModelbo {
             })
     }
 
-    saveUserFunction(user, is_agent) {
+    saveUserFunction(user, is_agent, bulkNum) {
         let _this = this;
         return new Promise((resolve, reject) => {
             if (user.user_id) {
@@ -685,7 +686,7 @@ class users extends baseModelbo {
                     .then(data => {
                         _this.generateUniqueUsernameFunction().then(username => {
                             let {newAccount, email_item} = data;
-                            if (is_agent) {
+                            if (bulkNum.length > 1 && is_agent) {
                                 newAccount.first_name = 'agent_'.concat(Math.floor(Math.random() * (999 - 100 + 1) + 100))
                             }
                             newAccount.username = username;
@@ -812,17 +813,17 @@ class users extends baseModelbo {
         let _this = this;
         const token = req.body.token || null;
         jwt.verify(token, config.secret, (err, data) => {
-                this.db['users'].findOne({where: {current_session_token: token, active: 'Y'}})
-                    .then(dataUser => {
-                        res.send({
-                           // success: !!(!!dataUser && !!!err)
-                            success:  !!!err,
-                            data: data,
-                            message: (err) ? 'Invalid token' : 'Token valid',
-                        });
-                    }).catch(err => {
-                    return _this.sendResponseError(res, ['Error.AnErrorHasOccurredGetUser', err], 1, 403);
-                })
+            this.db['users'].findOne({where: {current_session_token: token, active: 'Y'}})
+                .then(dataUser => {
+                    res.send({
+                        // success: !!(!!dataUser && !!!err)
+                        success: !!!err,
+                        data: data,
+                        message: (err) ? 'Invalid token' : 'Token valid',
+                    });
+                }).catch(err => {
+                return _this.sendResponseError(res, ['Error.AnErrorHasOccurredGetUser', err], 1, 403);
+            })
         });
     }
 
@@ -985,7 +986,7 @@ class users extends baseModelbo {
                             res.send({
                                 status: 200,
                                 message: 'success',
-                                data: {campaign_id, isActiveCampaign, script : campaign.script}
+                                data: {campaign_id, isActiveCampaign, script: campaign.script}
                             })
                         })
                         .catch(err => {
