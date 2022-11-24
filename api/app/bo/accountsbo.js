@@ -329,6 +329,7 @@ class accounts extends baseModelbo {
             lang: newAccount.lang,
             code: newAccount.code,
             domain_id: newAccount.domain.value,
+            web_domain: newAccount.web_domain,
         }
         if (!!!newAccount
             || !!!newAccount.user
@@ -337,7 +338,7 @@ class accounts extends baseModelbo {
         }
         let sip_device = JSON.parse(JSON.stringify(newAccount.user.sip_device));
         let domain = JSON.parse(JSON.stringify(newAccount.domain));
-        let {username, password, options, status, enabled, subscriber_id} = sip_device;
+        let {username, password, options, status} = sip_device;
         if (newAccount.account_id) {
             this.db['accounts'].findOne({
                 where: {
@@ -535,51 +536,93 @@ class accounts extends baseModelbo {
 
 
     //--------------------> Delete Account <--------------------------
-    deleteAgents(agents) {
-        let index = 0;
+    deleteEntitiesDbs(entities, account_id) {
+        let indexEntities = 0;
         return new Promise((resolve, reject) => {
-            if (agents && agents.length !== 0) {
-                agents.forEach(agent => {
-                    let uuid = agent.sip_device.uuid;
-                    let agent_id = agent.user_id;
-                    _agentsbo.deleteAgentFunc(uuid, agent_id)
-                        .then(() => {
-                            if (index < agents.length - 1) {
-                                index++;
-                            } else {
-                                resolve(true);
-                            }
-                        })
-                        .catch(err => {
-                            reject(err);
-                        })
-                })
-            } else {
-                resolve(true);
-            }
+            entities.map(dbs => {
+                this.db[dbs].update({active: 'N'}, {
+                    where: {
+                        account_id: account_id,
+                        active: 'Y'
+                    }
+                }).then(() => {
+                    if (indexEntities < entities.length - 1) {
+                        indexEntities++;
+                    } else {
+                        resolve(true);
+                    }
+                }).catch(err => {
+                    reject(err);
+                });
+
+
+            });
         })
     }
 
-    deleteUsers(users) {
-        let index = 0;
+    deleteDialplan_items(account_id) {
+        let indexDialplan = 0;
+
         return new Promise((resolve, reject) => {
-            if (users && users.length !== 0) {
-                users.forEach(user => {
-                    this.db['users'].update({active: 'N'}, {where: {user_id: user.user_id}})
-                        .then(resp => {
-                            if (index < users.length - 1) {
-                                index++;
+            this.db['dialplans'].findAll({
+                where: {
+                    account_id: account_id,
+                }
+            }).then((dialplansList) => {
+                if (!!!dialplansList.length !== 0) {
+                    return resolve(true);
+                }
+                dialplansList.forEach(data => {
+                    this.db["dialplan_items"].update({
+                        active: 'N'
+                    }, {where: {dialplan_id: data.dialplan_id, active: 'Y'}})
+                        .then(() => {
+                            if (indexDialplan < dialplansList.length - 1) {
+                                indexDialplan++;
                             } else {
                                 resolve(true);
                             }
-                        })
-                        .catch(err => {
-                            reject(err);
-                        })
-                })
-            } else {
-                resolve(true);
-            }
+                        }).catch(err => {
+                        return reject(err);
+                    });
+                });
+            }).catch(err => {
+                reject(err);
+            });
+
+        });
+    }
+
+    deleteDids(account_id) {
+        let indexDid_group = 0;
+
+        return new Promise((resolve, reject) => {
+            this.db['didsgroups'].findAll({
+                where: {
+                    account_id: account_id,
+                }
+            }).then((didsList) => {
+                if (!!!didsList.length !== 0) {
+                    return resolve(true)
+                }
+                didsList.forEach(data => {
+                    this.db["dids"].update({
+                        active: 'N'
+                    }, {where: {did_group_id: data.did_id, active: 'Y'}})
+                        .then(() => {
+                            if (indexDid_group < didsList.length - 1) {
+                                indexDid_group++;
+                            } else {
+                                resolve(true);
+                            }
+                        }).catch(err => {
+                        return reject(err);
+                    });
+                });
+            }).catch(err => {
+                reject(err);
+            });
+
         })
     }
 
@@ -613,9 +656,10 @@ class accounts extends baseModelbo {
         return new Promise((resolve, reject) => {
             if (trunks && trunks.length !== 0) {
                 trunks.forEach(trunk => {
-                    let uuid = trunk.gateways.uuid;
+                    let uuid_callCenter = trunk.gateways.callCenter.uuid;
+                    let uuid_dialer = trunk.gateways.dialer.uuid;
                     let trunk_id = trunk.campaign_id;
-                    _trunksbo.deleteTrunkFunc(uuid, trunk_id)
+                    _trunksbo.deleteTrunkFunc(uuid_dialer, uuid_callCenter, trunk_id)
                         .then(() => {
                             if (index < trunks.length - 1) {
                                 index++;
@@ -679,141 +723,100 @@ class accounts extends baseModelbo {
         })
     }
 
-    deleteAllRelativeAgents(account_id) {
+    deleteAllAccountRelative(account_id) {
         return new Promise((resolve, reject) => {
-            this.db['users'].findAll({
-                where: {
-                    account_id: account_id,
-                    role_crm_id: 3,
-                    active: 'Y'
-                }
-            })
-                .then(agents => {
-                    this.deleteAgents(agents)
-                        .then(() => {
-                            resolve(true)
-                        })
-                        .catch(err => {
-                            reject(err)
-                        })
-                })
-                .catch(err => {
-                    reject(err)
-                })
-        })
-    }
-
-    deleteAllRelativeUsers(account_id) {
-        return new Promise((resolve, reject) => {
-            this.db['users'].findAll({
-                where: {
-                    account_id: account_id,
-                    active: 'Y',
-                    [Op.or]: [{role_crm_id: 1}, {role_crm_id: 4}, {role_crm_id: 5}],
-                }
-            })
-                .then(users => {
-                    this.deleteUsers(users)
-                        .then(() => {
-                            resolve(true)
-                        })
-                        .catch(err => {
-                            reject(err)
-                        })
-                })
-                .catch(err => {
-                    reject(err)
-                })
-        })
-    }
-
-    deleteAccount(req, res, next) {
-        let _this = this;
-        let account_id = req.body.account_id;
-        this.deleteAgentAndSubscriber(account_id).then((result) => {
-            this.deleteAllRelativeTrunks(account_id)
-                .then(() => {
-                    this.deleteAllRelativeAgents(account_id)
-                        .then(() => {
-                            this.deleteAllRelativeUsers(account_id)
-                                .then(() => {
-                                    this.deleteAllRelativeCampaigns(account_id)
-                                        .then(() => {
-                                            this.db['accounts']
-                                                .update({active: 'N'}, {where: {account_id: account_id}})
-                                                .then(() => {
-                                                    res.send({
-                                                        status: 200,
-                                                        message: 'account deleted with success'
-                                                    })
-                                                })
-                                                .catch(err => {
-                                                    return _this.sendResponseError(res, ['Error.AnErrorHasOccurredUser', err], 1, 403);
-                                                })
-                                        })
-                                        .catch(err => {
-                                            return _this.sendResponseError(res, ['Error.AnErrorHasOccurredUser', err], 1, 403);
-                                        })
-                                })
-                                .catch(err => {
-                                    return _this.sendResponseError(res, ['Error.AnErrorHasOccurredUser', err], 1, 403);
-                                })
-                        })
-                        .catch(err => {
-                            return _this.sendResponseError(res, ['Error.AnErrorHasOccurredUser', err], 1, 403);
-                        })
-                })
-                .catch(err => {
-                    return _this.sendResponseError(res, ['Error.AnErrorHasOccurredUser', err], 1, 403);
-                })
-        }).catch((err) => {
-            return _this.sendResponseError(res, ['Error.CannotDeleteAgent/SubscriberTelco', err], 1, 403);
-        })
-    }
-
-    deleteAgentAndSubscriber(account_id) {
-        return new Promise((resolve, reject) => {
-            this.db['accounts'].findOne({
-                where: {
-                    account_id: account_id,
-                    active: 'Y'
-                },
-            }).then(account => {
-                this.db['users'].findOne({
-                    where: {
-                        user_id: account.dataValues.user_id
-                    }
-                }).then((user) => {
-                    let {uuid} = user.dataValues.sip_device;
-                    axios
-                        .get(`${base_url_cc_kam}api/v1/agents/${uuid}`, call_center_authorization).then((resp_agent) => {
-                        let {subscriber_uuid} = resp_agent.data.result;
-                        axios
-                            .delete(`${base_url_cc_kam}api/v1/agents/${uuid}`, call_center_authorization).then((resp) => {
-                            axios
-                                .get(`${base_url_cc_kam}api/v1/subscribers/${subscriber_uuid}`, call_center_authorization).then((resp_sub) => {
-                                axios
-                                    .delete(`${base_url_cc_kam}api/v1/subscribers/${subscriber_uuid}`, call_center_authorization).then((resp) => {
-                                    resolve(true);
-                                }).catch((err) => {
-                                    reject(err);
-                                })
-                            }).catch((err) => {
-                                reject(err);
-                            })
-                        }).catch((err) => {
-                            reject(err);
-                        })
-                    }).catch((err) => {
+            const entities = [
+                'didsgroups', 'roles', 'templates_list_call_files', 'dialplans',
+            ]
+            this.deleteEntitiesDbs(entities, account_id).then(() => {
+                this.deleteDialplan_items(account_id).then(()=>{
+                    this.deleteDids(account_id).then(()=>{
+                        resolve(true);
+                    }).catch((err)=>{
                         reject(err);
                     })
-                }).catch((err) => {
+                }).catch((err)=>{
                     reject(err);
                 })
             }).catch((err) => {
                 reject(err);
             })
         })
+
+    }
+
+    getAllUserIdsByAccountId(account_id) {
+        return new Promise((resolve, reject) => {
+            this.db['users'].findAll({where: {account_id: account_id, active: 'Y'}}).then((result) => {
+                let usersIds = [];
+                result.map((user) => {
+                    usersIds.push(user.dataValues.user_id);
+                })
+                resolve(usersIds);
+            }).catch((err) => {
+                reject(err);
+            })
+        })
+    }
+
+    deleteMultiUsers(users) {
+        let index = 0;
+        return new Promise((resolve, reject) => {
+            if (users && users.length !== 0) {
+                users.forEach(user_id => {
+                    _agentsbo.deleteAgentWithSub(user_id)
+                        .then(() => {
+                            if (index < users.length - 1) {
+                                index++;
+                            } else {
+                                resolve(true);
+                            }
+                        })
+                        .catch(err => {
+                            reject(err);
+                        })
+                })
+            } else {
+                resolve(true);
+            }
+        })
+    }
+
+    deleteAccount(req, res, next) {
+        let _this = this;
+        let account_id = req.body.account_id;
+
+        this.getAllUserIdsByAccountId(account_id).then((usersIds) => {
+            this.deleteMultiUsers(usersIds).then(() => {
+                this.deleteAllRelativeTrunks(account_id).then(() => {
+                    this.deleteAllRelativeCampaigns(account_id).then(() => {
+                        this.deleteAllAccountRelative(account_id).then(()=>{
+                            this.db['accounts']
+                                .update({active: 'N', domain_id: null}, {where: {account_id: account_id}})
+                                .then(() => {
+                                    res.send({
+                                        status: 200,
+                                        message: 'account deleted with success'
+                                    })
+                                })
+                                .catch(err => {
+                                    return _this.sendResponseError(res, ['Error.CannotDeleteAccountFromDB', err], 1, 403);
+                                })
+                        }).catch((err)=>{
+                            return _this.sendResponseError(res, ['Error.CannotDeleteEntities', err], 1, 403);
+                        })
+                    }).catch((err) => {
+                        return _this.sendResponseError(res, ['Error.CannotDeleteCampaigns', err], 1, 403);
+                    })
+                }).catch((err) => {
+                    return _this.sendResponseError(res, ['Error.CannotDeleteTrunks', err], 1, 403);
+                })
+            }).catch((err) => {
+                return _this.sendResponseError(res, ['Error.CannotDeleteUsers', err], 1, 403);
+            })
+        }).catch((err) => {
+            return _this.sendResponseError(res, ['Error.CannotGetUsersByAccount_id', err], 1, 403);
+        });
     }
 
 
@@ -953,38 +956,6 @@ class accounts extends baseModelbo {
 
     }
 
-
-    //-------------------------------------------------------------------
-    isUniqueDomain(domain, account_id) {
-        return new Promise((resolve, reject) => {
-            if (domain) {
-                this.db['accounts'].findAll({
-                    where: {
-                        active: 'Y',
-                        domain: {
-                            [Sequelize.Op.iLike]: domain
-                        }
-                    }
-                })
-                    .then(accounts => {
-                        if (accounts && accounts.length !== 0) {
-                            if (domain === accounts[0].domain && parseInt(account_id) === accounts[0].account_id) {
-                                resolve(true);
-                            } else {
-                                resolve(false);
-                            }
-                        } else {
-                            resolve(true);
-                        }
-                    })
-                    .catch(err => {
-                        reject(err);
-                    })
-            } else {
-                resolve(true);
-            }
-        })
-    }
 
 }
 

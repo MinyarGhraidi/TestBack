@@ -61,6 +61,7 @@ module.exports = (sequelize, Sequelize) => {
                 defaultValue: "Y",
             },
             status: {
+                allowNull: true,
                 type: Sequelize.STRING,
                 defaultValue: "Y",
             },
@@ -88,6 +89,9 @@ module.exports = (sequelize, Sequelize) => {
             },
             domain_id: {
                 type: Sequelize.INTEGER,
+            },
+            web_domain: {
+                type: Sequelize.STRING,
             }
         },
         {timestamps: false}
@@ -119,11 +123,11 @@ module.exports = (sequelize, Sequelize) => {
         "user_id",
         "lang",
         "code",
-        "domain_id"
+        "domain_id",
+        "web_domain"
     ];
 
     account.prototype.fieldsSearchMetas = [
-        "account_id",
         "account_code",
         "first_name",
         "last_name",
@@ -141,14 +145,13 @@ module.exports = (sequelize, Sequelize) => {
         "white_label_app_name",
         "domain_sip",
         "active",
-        "created_at",
-        "updated_at",
         "status",
         "role_crm_id",
         "user_id",
         "lang",
         "code",
-        "domain_id"
+        "domain_id",
+        "web_domain"
 
     ];
 

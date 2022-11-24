@@ -22,7 +22,6 @@ const appSocket = new (require('../providers/AppSocket'))();
 const appHelper = require("../helpers/app");
 const app_config = appHelper.appConfig;
 
-
 class agents extends baseModelbo {
     constructor() {
         super('agents', 'user_id');
@@ -418,7 +417,6 @@ class agents extends baseModelbo {
                     axios
                         .get(`${base_url_cc_kam}api/v1/agents/${uuid}`, call_center_authorization)
                         .then(resp => {
-                            console.log(resp)
                             let agent = {"status": telcoStatus};
                             axios
                                 .put(`${base_url_cc_kam}api/v1/agents/${uuid}/status`, agent, call_center_authorization)
@@ -1435,6 +1433,68 @@ class agents extends baseModelbo {
         })
     }
 
+    deleteAgentWithSub(user_id) {
+        return new Promise((resolve, reject) => {
+            this.db['users'].findOne({
+                where: {
+                    user_id: user_id,
+                    active: 'Y'
+                }
+            }).then((result) => {
+                let {uuid} = result.dataValues.sip_device;
+                if (!!!uuid) {
+                  return   reject(false);
+                }
+                axios
+                    .get(`${base_url_cc_kam}api/v1/agents/${uuid}`, call_center_authorization).then((resp_agent) => {
+                    let {subscriber_uuid} = resp_agent.data.result;
+                    axios
+                        .delete(`${base_url_cc_kam}api/v1/agents/${uuid}`, call_center_authorization).then((resp) => {
+                        axios
+                            .get(`${base_url_cc_kam}api/v1/subscribers/${subscriber_uuid}`, call_center_authorization).then((resp_sub) => {
+                            axios
+                                .delete(`${base_url_cc_kam}api/v1/subscribers/${subscriber_uuid}`, call_center_authorization).then((resp) => {
+                                this.db['users'].update({active: 'N'}, {where: {user_id: user_id}})
+                                    .then(() => {
+                                        this.db['meetings'].update({active: 'N'}, {
+                                            where: {
+                                                $or: [
+                                                    {
+                                                        agent_id: user_id
+                                                    },
+                                                    {
+                                                        sales_id: user_id
+                                                    }
+                                                ]
+                                            }
+                                        })
+                                            .then(() => {
+                                                resolve(true);
+                                            })
+                                            .catch((err) => {
+                                                reject(err);
+                                            });
+                                    })
+                                    .catch((err) => {
+                                        reject(err);
+                                    });
+                            }).catch((err) => {
+                                reject(err);
+                            })
+                        }).catch((err) => {
+                            reject(err);
+                        })
+                    }).catch((err) => {
+                        reject(err);
+                    })
+                }).catch((err) => {
+                    reject(err);
+                })
+            }).catch((err) => {
+                reject(err);
+            })
+        })
+    }
 }
 
 module.exports = agents;

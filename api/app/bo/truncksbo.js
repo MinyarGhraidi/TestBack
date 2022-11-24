@@ -122,11 +122,11 @@ class truncks extends baseModelbo {
             });
     }
 
-    deleteTrunkFunc(dialer_uuid, uuid, trunk_id) {
+    deleteTrunkFunc(dialer_uuid, callCenter_uuid, trunk_id) {
 
         return new Promise((resolve, reject) => {
             axios
-                .delete(`${base_url_cc_kam}api/v1/gateways/${uuid}`, call_center_authorization)
+                .delete(`${base_url_cc_kam}api/v1/gateways/${callCenter_uuid}`, call_center_authorization)
                 .then(resp => {
                     axios
                         .delete(`${base_url_dailer}api/v1/dialer/gateways/${dialer_uuid}`, dialer_authorization)
