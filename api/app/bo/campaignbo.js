@@ -576,7 +576,6 @@ class campaigns extends baseModelbo {
                                     .then(allAgents => {
                                         let queue_agents = data.data.result.map(el => el.agent_uuid);
                                         let db_agents = (allAgents && allAgents.length !== 0) ? allAgents.map(el => el.sip_device.uuid) : [];
-                                        console.log(queue_agents, db_agents)
                                         this.fixConsistency(queue_uuid, allAgents, queue_agents, db_agents, campaign_id, campaign)
                                             .then(camp => {
                                                 let campAgents = camp.agents ? camp.agents : [];

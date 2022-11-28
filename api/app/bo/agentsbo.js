@@ -14,9 +14,6 @@ const call_center_authorization = {
 const PromiseBB = require("bluebird");
 
 const usersbo = require('./usersbo');
-const {Sequelize} = require("sequelize");
-const Op = require("sequelize");
-const {promise, reject} = require("bcrypt/promises");
 let _usersbo = new usersbo;
 const appSocket = new (require('../providers/AppSocket'))();
 const appHelper = require("../helpers/app");
@@ -113,8 +110,6 @@ class agents extends baseModelbo {
                     }
                 }).then((user) => {
                     if (!user) {
-
-                        //this.sendResponseError(res, ['Error.EmailNotFound'], 0, 403);
                         res.send({
                             message: 'Success',
 
@@ -147,7 +142,7 @@ class agents extends baseModelbo {
         }
     }
 
-    changeStatus(req,res,next){
+    changeStatus(req, res, next) {
         let {user_id, status} = req.body;
         if ((!!!user_id || !!!status)) {
             return this.sendResponseError(res, ['Error.RequestDataInvalid'], 0, 403);
@@ -155,158 +150,183 @@ class agents extends baseModelbo {
         if (status !== 'N' && status !== 'Y') {
             return this.sendResponseError(res, ['Error.StatusMustBe_Y_Or_N'], 0, 403);
         }
-            this.db['users'].findOne({
-                where: {
-                    user_id: user_id
-                }
-            }).then((user) => {
-                let sip_device = user.dataValues.sip_device;
-                let {uuid} = sip_device;
+        this.db['users'].findOne({
+            where: {
+                user_id: user_id
+            }
+        }).then((user) => {
+            let sip_device = user.dataValues.sip_device;
+            let {uuid} = sip_device;
+            axios
+                .get(`${base_url_cc_kam}api/v1/agents/${uuid}`, call_center_authorization).then((resp_agent) => {
+                let data_update = resp_agent.data.result;
+                data_update.enabled = status === 'Y';
+                data_update.updated_at = new Date();
                 axios
-                    .get(`${base_url_cc_kam}api/v1/agents/${uuid}`, call_center_authorization).then((resp_agent) => {
-                    let data_update = resp_agent.data.result;
-                    data_update.enabled = status === 'Y';
-                    data_update.updated_at = new Date();
-                    axios
-                        .put(`${base_url_cc_kam}api/v1/agents/${uuid}`, data_update, call_center_authorization).then((resp) => {
-                        sip_device.enabled = status === 'Y';
-                        sip_device.updated_at = new Date();
-                            let updated_Status = {
-                                status : status,
-                                updated_at : new Date(),
-                                sip_device : sip_device
-                            }
-                        this.db['users'].update(updated_Status, {
-                            where: {
-                                user_id: user_id,
-                                active: 'Y'
-                            }
-                        }).then(() => {
-                            res.send({
-                                        status: 200,
-                                        message: "success",
-                                        success: true
-                                    })
-                        }).catch(err => {
-                            return this.sendResponseError(res, ['Error.CannotUpdateUserDB'], 0, 403);
-                        });
-                    }).catch((err) => {
-                        return this.sendResponseError(res, ['Error.CannotUpdateTelcoAgent'], 0, 403);
-                    })
+                    .put(`${base_url_cc_kam}api/v1/agents/${uuid}`, data_update, call_center_authorization).then((resp) => {
+                    sip_device.enabled = status === 'Y';
+                    sip_device.updated_at = new Date();
+                    let updated_Status = {
+                        status: status,
+                        updated_at: new Date(),
+                        sip_device: sip_device
+                    }
+                    this.db['users'].update(updated_Status, {
+                        where: {
+                            user_id: user_id,
+                            active: 'Y'
+                        }
+                    }).then(() => {
+                        res.send({
+                            status: 200,
+                            message: "success",
+                            success: true
+                        })
+                    }).catch(err => {
+                        return this.sendResponseError(res, ['Error.CannotUpdateUserDB'], 0, 403);
+                    });
                 }).catch((err) => {
-                    return this.sendResponseError(res, ['Error.CannotFindAgentTelco'], 0, 403);
+                    return this.sendResponseError(res, ['Error.CannotUpdateTelcoAgent'], 0, 403);
                 })
             }).catch((err) => {
-                return this.sendResponseError(res, ['Error.CannotFindUser'], 0, 403);
+                return this.sendResponseError(res, ['Error.CannotFindAgentTelco'], 0, 403);
             })
+        }).catch((err) => {
+            return this.sendResponseError(res, ['Error.CannotFindUser'], 0, 403);
+        })
+    }
+
+    saveOneAgent(user, AddedFields, isBulk) {
+        return new Promise((resolve, reject) => {
+            user.username = AddedFields.username;
+            let {password, domain, status, options} = user.sip_device;
+            let name_agent = isBulk ? AddedFields.first_name : user.first_name + " " + user.last_name;
+            _usersbo.isUniqueUsername(user.account_id, AddedFields.username, 0)
+                .then(isUnique => {
+                    if (isUnique) {
+                        let data_subscriber = {
+                            username: AddedFields.username,
+                            domain_uuid: user.domain.params.uuid,
+                            password,
+                            domain
+                        }
+                        axios
+                            .post(`${base_url_cc_kam}api/v1/subscribers`,
+                                data_subscriber,
+                                call_center_authorization)
+                            .then((resp) => {
+                                let result = resp.data.result;
+                                let agent = {
+                                    name: name_agent,
+                                    domain_uuid: result.domain_uuid,
+                                    subscriber_uuid: result.uuid,
+                                    status,
+                                    options
+                                };
+
+                                axios
+                                    .post(`${base_url_cc_kam}api/v1/agents`, agent, call_center_authorization)
+                                    .then((resp) => {
+                                        user.sip_device.uuid = resp.data.result.uuid || null;
+                                        this.saveAgentInDB(user, AddedFields, isBulk)
+                                            .then(() => {
+                                                resolve(true)
+                                            })
+                                            .catch(err => {
+                                                reject(err)
+                                            })
+                                    }).catch((err) => {
+                                    reject(err)
+                                })
+                            }).catch((err) => {
+                            reject(err)
+                        })
+                    } else {
+                        reject(true);
+                    }
+                })
+                .catch(err => {
+                    reject(err)
+                })
+        })
+    }
+
+    bulkAgents(bulkNum, account_id) {
+        return new Promise((resolve, reject) => {
+            let idx = 0;
+            let arrayUsers = [];
+            bulkNum.forEach(() => {
+                _usersbo.generateUniqueUsernameFunction(account_id).then(dataAgent => {
+                    let objAgent = {
+                        username: dataAgent.username,
+                        first_name: dataAgent.first_name,
+                    }
+                    arrayUsers.push(objAgent);
+                    if (idx < bulkNum.length - 1) {
+                        idx++
+                    } else {
+                        resolve(arrayUsers)
+                    }
+                }).catch((err) => {
+                    reject(err);
+                })
+            })
+        })
     }
 
     saveAgent(req, res, next) {
         let _this = this;
-        let {values, accountcode, bulkNum, is_agent} = req.body;
+        let idx = 0;
+        let {values, accountcode, bulkNum} = req.body;
         if (!!!bulkNum) {
             _this.sendResponseError(res, ['Error.BulkNum is required'])
-            return
-        }
-        let sip_device = JSON.parse(JSON.stringify(values.sip_device));
-        sip_device.status = 'logged-out'
-        sip_device.enabled = true
-        let AddAgent = new Promise((resolve, reject) => {
-            let idx = 0
-            bulkNum.forEach(item_ag => {
-                this.db['users'].findOne({
-                    where: {active: 'Y', role_crm_id: values.role_crm_id},
-                    order: [['user_id', 'DESC']]
-                })
-                    .then(lastAgent => {
-                        let increment = item_ag ? item_ag + 1 : 1;
-                        let lastAgentSip_device = lastAgent ? lastAgent.sip_device : values.sip_device
-                        let lastAgentKamailioUsername = lastAgent ? lastAgentSip_device.username : values.username;
-                        let username = (parseInt(lastAgentKamailioUsername) + increment).toString();
-                        let {password, domain, options, status} = sip_device;
-                        sip_device.username = username;
-                        sip_device.created_at = moment().format("YYYY-MM-DD HH:mm:ss");
-                        sip_device.updated_at = moment().format("YYYY-MM-DD HH:mm:ss");
-                        sip_device.status = "logged-out";
-                        sip_device.accountcode = accountcode;
-                        values.sip_device = sip_device;
-                        console.log(values)
-                        _usersbo.isUniqueUsername(values.username, 0)
-                            .then(isUnique => {
-                                if (isUnique) {
-                                    let data_subscriber = {
-                                        username,
-                                        domain_uuid: values.domain.params.uuid,
-                                        password,
-                                        domain: domain
-                                    }
-                                    axios
-                                        .post(`${base_url_cc_kam}api/v1/subscribers`,
-                                            data_subscriber,
-                                            call_center_authorization)
-                                        .then((resp) => {
-                                            let result = resp.data.result;
-                                            let agent = {
-                                                name: values.first_name + " " + values.last_name,
-                                                domain_uuid: result.domain_uuid,
-                                                subscriber_uuid: result.uuid,
-                                                status,
-                                                options
-                                            };
-                                            axios
-                                                .post(`${base_url_cc_kam}api/v1/agents`, agent, call_center_authorization)
-                                                .then((resp) => {
-                                                    values.sip_device.uuid = resp.data.result.uuid || null;
-                                                    this.saveAgentInDB(values, is_agent,bulkNum)
-                                                        .then(agent => {
-                                                            if (idx < bulkNum.length - 1) {
-                                                                idx++
-                                                            } else {
-                                                                resolve({message: 'success'})
-                                                            }
-                                                        })
-                                                        .catch(err => {
-                                                            reject(err)
-                                                        })
-                                                })
-                                        })
+        } else {
+            let sip_device = JSON.parse(JSON.stringify(values.sip_device));
+            sip_device.created_at = moment().format("YYYY-MM-DD HH:mm:ss");
+            sip_device.updated_at = moment().format("YYYY-MM-DD HH:mm:ss");
+            sip_device.status = "logged-out";
+            sip_device.accountcode = accountcode;
+            sip_device.enabled = true;
+            values.sip_device = sip_device;
+            this.bulkAgents(bulkNum, values.account_id).then((resultArray) => {
+                let addAgent = new Promise((resolve, reject) => {
+                    resultArray.forEach((user) => {
+                        let isBulk = bulkNum.length > 1
+                        this.saveOneAgent(values, user, isBulk)
+                            .then(() => {
+                                if (idx < resultArray.length - 1) {
+                                    idx++
                                 } else {
-                                    if (idx < bulkNum.length - 1) {
-                                        idx++
-                                    } else {
-                                        resolve({message: 'username already exist'})
-                                    }
+                                    resolve({message: 'success'})
                                 }
                             })
                             .catch(err => {
                                 reject(err)
                             })
                     })
-                    .catch(err => {
-                        reject(err)
+                })
+                Promise.all([addAgent]).then(() => {
+                    res.send({
+                        success: true,
+                        status: 200
                     })
+                }).catch(() => {
+                    return this.sendResponseError(res, ['Error.CannotAddAgents'], 0, 403);
+                })
+            }).catch(() => {
+                return this.sendResponseError(res, ['Error.CannotAddAgents'], 0, 403);
             })
-        })
-        Promise.all([AddAgent]).then(saveAgent => {
-            res.send({
-                success: true,
-                status: 200
-            })
-        }).catch(err => {
-            reject(err)
-        })
-
+        }
     }
 
     updateAgent(req, res, next) {
         let _this = this;
         let values = req.body.values;
-        let is_agent = req.body.is_agent;
         let accountcode = req.body.accountcode;
         let {sip_device} = values;
-        let {username, password, options, status, enabled, subscriber_id} = sip_device;
+        let {password, options, status, enabled, subscriber_id} = sip_device;
         let user_id = req.body.values.user_id;
-        _usersbo.isUniqueUsername(values.username, user_id)
+        _usersbo.isUniqueUsername(values.account_id, values.username, user_id)
             .then(isUnique => {
                 if (isUnique) {
                     this.db['users'].findOne({
@@ -329,7 +349,7 @@ class agents extends baseModelbo {
                                         let updateSub = {
                                             domain_uuid,
                                             domain,
-                                            username,
+                                            username: values.username,
                                             password,
                                             updated_at: new Date()
                                         }
@@ -346,27 +366,26 @@ class agents extends baseModelbo {
                                                     options: options,
                                                     updated_at: new Date()
                                                 }
-                                                console.log(update_Agent)
                                                 axios
                                                     .put(`${base_url_cc_kam}api/v1/agents/${uuid}`, update_Agent, call_center_authorization)
                                                     .then((resp) => {
-                                                    let update_user = values;
-                                                    let resultAgent = resp.data.agent;
-                                                    update_user.sip_device = {
-                                                        uuid,
-                                                        status,
-                                                        enabled,
-                                                        options,
-                                                        password,
-                                                        username,
-                                                        created_at: resultAgent.created_at,
-                                                        updated_at: new Date(),
-                                                        accountcode,
-                                                        subscriber_id
-                                                    };
-                                                    update_user.updated_at = new Date();
+                                                        let update_user = values;
+                                                        let resultAgent = resp.data.agent;
+                                                        update_user.sip_device = {
+                                                            uuid,
+                                                            status,
+                                                            enabled,
+                                                            options,
+                                                            password,
+                                                            username: values.username,
+                                                            created_at: resultAgent.created_at,
+                                                            updated_at: new Date(),
+                                                            accountcode,
+                                                            subscriber_id
+                                                        };
+                                                        update_user.updated_at = new Date();
                                                         _usersbo
-                                                            .saveUserFunction(update_user, is_agent)
+                                                            .saveUserFunction(update_user, [], false)
                                                             .then(agent => {
                                                                 res.send({
                                                                     status: 200,
@@ -378,15 +397,13 @@ class agents extends baseModelbo {
                                                             .catch(err => {
                                                                 return _this.sendResponseError(res, ['Error.CannotUpdateUserDB', err], 1, 403);
                                                             })
-                                                }).catch((err) => {
-                                                    console.log(err.response.data)
+                                                    }).catch((err) => {
                                                     return _this.sendResponseError(res, ['Error.CannotUpdateAgent'], 1, 403);
                                                 })
                                             }).catch((err) => {
                                             return _this.sendResponseError(res, ['Error.CannotUpdateSubscriber'], 1, 403);
                                         })
                                     }).catch((err) => {
-                                    console.log(err)
                                     return _this.sendResponseError(res, ['Error.CannotGetSubscriber'], 1, 403);
                                 })
                             }).catch((err) => {
@@ -395,7 +412,7 @@ class agents extends baseModelbo {
                     }).catch((err) => {
                         return _this.sendResponseError(res, ['Error.CannotFindUser'], 1, 403);
                     })
-                }else {
+                } else {
                     res.send({
                         status: 403,
                         success: false,
@@ -409,10 +426,10 @@ class agents extends baseModelbo {
 
     }
 
-    saveAgentInDB(values, is_agent,bulkNum) {
+    saveAgentInDB(values, AddedFields, isBulk) {
         return new Promise((resolve, reject) => {
             _usersbo
-                .saveUserFunction(values, is_agent,bulkNum)
+                .saveUserFunction(values, AddedFields, isBulk)
                 .then(agent => {
                     let user_id = agent.user_id;
                     let agentLog = {user_id: user_id};
@@ -432,36 +449,10 @@ class agents extends baseModelbo {
         })
     }
 
-    deleteAgentFunc(uuid, agent_id) {
-        return new Promise((resolve, reject) => {
-            axios
-                .delete(`${base_url_cc_kam}api/v1/agents/${uuid}`, call_center_authorization)
-                .then(() => {
-                    this.db['users'].update({active: 'N'}, {where: {user_id: agent_id}})
-                        .then(() => {
-                            this.db['meetings'].update({active: 'N'}, {where: {agent_id: agent_id}})
-                                .then(() => {
-                                    resolve(true);
-                                })
-                                .catch((err) => {
-                                    reject(err);
-                                });
-                        })
-                        .catch((err) => {
-                            reject(err);
-                        });
-                })
-                .catch((err) => {
-                    reject(err);
-                });
-        })
-    }
-
     deleteAgent(req, res, next) {
         let _this = this;
-        let uuid = req.body.user_uuid;
         let agent_id = req.body.user_id;
-        this.deleteAgentFunc(uuid, agent_id)
+        this.deleteAgentWithSub(agent_id)
             .then(result => {
                 res.send({
                     succes: 200,
@@ -1565,7 +1556,7 @@ class agents extends baseModelbo {
             }).then((result) => {
                 let {uuid} = result.dataValues.sip_device;
                 if (!!!uuid) {
-                  return   reject(false);
+                    reject(false);
                 }
                 axios
                     .get(`${base_url_cc_kam}api/v1/agents/${uuid}`, call_center_authorization).then((resp_agent) => {

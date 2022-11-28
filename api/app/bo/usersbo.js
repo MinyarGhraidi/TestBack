@@ -47,7 +47,6 @@ class users extends baseModelbo {
                         status: 'Y'
                     }
                 }).then((user) => {
-                    console.log(user)
                     if (!user) {
                         this.sendResponseError(res, ['Error.UserNotFound'], 0, 403);
                     } else {
@@ -297,7 +296,7 @@ class users extends baseModelbo {
         });
     }
 
-    isUniqueUsername(username, user_id) {
+    isUniqueUsername(account_id, username, user_id) {
         let _this = this;
         return new Promise((resolve, reject) => {
             this.db['users'].findAll({
@@ -305,6 +304,7 @@ class users extends baseModelbo {
                     username: {
                         [Sequelize.Op.iLike]: username
                     },
+                    account_id: account_id,
                     active: 'Y'
                 }
             })
@@ -337,17 +337,20 @@ class users extends baseModelbo {
         })
     }
 
-    generateUniqueUsernameFunction() {
-        let condition = false;
+    generateUniqueUsernameFunction(account_id) {
         return new Promise((resolve, reject) => {
+            let condition = false;
             do {
                 this.generateUsername()
                     .then(generatedUsername => {
-                        this.isUniqueUsername(generatedUsername, 0)
+                        this.isUniqueUsername(account_id, generatedUsername, 0)
                             .then(isUnique => {
                                 condition = isUnique;
                                 if (condition) {
-                                    resolve(generatedUsername)
+                                    let dataAgent = {};
+                                    dataAgent.first_name = 'agent_'.concat(Math.floor(Math.random() * (999 - 100 + 1) + 100));
+                                    dataAgent.username = generatedUsername;
+                                    resolve(dataAgent)
                                 }
                             })
                             .catch(err => {
@@ -662,8 +665,7 @@ class users extends baseModelbo {
             })
     }
 
-    saveUserFunction(user, is_agent, bulkNum) {
-        let _this = this;
+    saveUserFunction(user, AddedFields = [], isBulk = false) {
         return new Promise((resolve, reject) => {
             if (user.user_id) {
                 this.updateCredentials(user)
@@ -684,30 +686,28 @@ class users extends baseModelbo {
             } else {
                 this.saveCredentials(user)
                     .then(data => {
-                        _this.generateUniqueUsernameFunction().then(username => {
-                            let {newAccount, email_item} = data;
-                            if (bulkNum.length > 1 && is_agent) {
-                                newAccount.first_name = 'agent_'.concat(Math.floor(Math.random() * (999 - 100 + 1) + 100))
-                            }
-                            newAccount.username = username;
-                            let modalObj = this.db['users'].build(newAccount);
-                            modalObj.save()
-                                .then(user => {
-                                    this.db['emails'].update({user_id: user.user_id}, {where: {email_id: email_item.email_id}})
-                                        .then(() => {
-                                            resolve(user)
-                                        })
-                                        .catch(err => {
-                                            reject(err)
-                                        })
-                                })
-                                .catch(err => {
-                                    reject(err)
-                                })
-                        })
-                    })
-                    .catch(err => {
-                        reject(err)
+                        let {newAccount, email_item} = data;
+                        if (isBulk) {
+                            newAccount.first_name = AddedFields.first_name;
+                        }
+                        if (AddedFields.length !== 0) {
+                            newAccount.sip_device.username = AddedFields.username;
+                            newAccount.username = AddedFields.username;
+                        }
+                        let modalObj = this.db['users'].build(newAccount);
+                        modalObj.save()
+                            .then(user => {
+                                this.db['emails'].update({user_id: user.user_id}, {where: {email_id: email_item.email_id}})
+                                    .then(() => {
+                                        resolve(user)
+                                    })
+                                    .catch(err => {
+                                        reject(err)
+                                    })
+                            })
+                            .catch(err => {
+                                reject(err)
+                            })
                     })
             }
         })
@@ -814,9 +814,8 @@ class users extends baseModelbo {
         const token = req.body.token || null;
         jwt.verify(token, config.secret, (err, data) => {
             this.db['users'].findOne({where: {current_session_token: token, active: 'Y'}})
-                .then(dataUser => {
+                .then(() => {
                     res.send({
-                        // success: !!(!!dataUser && !!!err)
                         success: !!!err,
                         data: data,
                         message: (err) ? 'Invalid token' : 'Token valid',
