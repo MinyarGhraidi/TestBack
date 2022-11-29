@@ -201,7 +201,7 @@ class agents extends baseModelbo {
             user.username = AddedFields.username;
             let {password, domain, status, options} = user.sip_device;
             let name_agent = isBulk ? AddedFields.first_name : user.first_name + " " + user.last_name;
-            _usersbo.isUniqueUsername(user.account_id, AddedFields.username, 0)
+            _usersbo.isUniqueUsername(AddedFields.username, 0)
                 .then(isUnique => {
                     if (isUnique) {
                         let data_subscriber = {
@@ -251,26 +251,41 @@ class agents extends baseModelbo {
         })
     }
 
-    bulkAgents(bulkNum, account_id) {
+    bulkAgents(bulkNum, account_id, username) {
         return new Promise((resolve, reject) => {
             let idx = 0;
             let arrayUsers = [];
-            bulkNum.forEach(() => {
-                _usersbo.generateUniqueUsernameFunction(account_id).then(dataAgent => {
-                    let objAgent = {
-                        username: dataAgent.username,
-                        first_name: dataAgent.first_name,
+            if(bulkNum.length === 1){
+                _usersbo.isUniqueUsername(username,0).then(isUnique =>{
+                    if(!isUnique){
+                        _usersbo.generateUniqueUsernameFunction().then(dataAgent =>{
+                            resolve([{username : dataAgent.username}]);
+                        })
+                    }else{
+                        resolve([{username : username}]);
                     }
-                    arrayUsers.push(objAgent);
-                    if (idx < bulkNum.length - 1) {
-                        idx++
-                    } else {
-                        resolve(arrayUsers)
-                    }
-                }).catch((err) => {
+                }).catch((err)=>{
                     reject(err);
                 })
-            })
+            }else{
+                bulkNum.forEach(() => {
+                    _usersbo.generateUniqueUsernameFunction().then(dataAgent => {
+                        let objAgent = {
+                            username: dataAgent.username,
+                            first_name: dataAgent.first_name,
+                        }
+                        arrayUsers.push(objAgent);
+                        if (idx < bulkNum.length - 1) {
+                            idx++
+                        } else {
+                            resolve(arrayUsers)
+                        }
+                    }).catch((err) => {
+                        reject(err);
+                    })
+                })
+            }
+
         })
     }
 
@@ -288,7 +303,7 @@ class agents extends baseModelbo {
             sip_device.accountcode = accountcode;
             sip_device.enabled = true;
             values.sip_device = sip_device;
-            this.bulkAgents(bulkNum, values.account_id).then((resultArray) => {
+            this.bulkAgents(bulkNum, values.account_id, values.username).then((resultArray) => {
                 let addAgent = new Promise((resolve, reject) => {
                     resultArray.forEach((user) => {
                         let isBulk = bulkNum.length > 1
@@ -301,6 +316,7 @@ class agents extends baseModelbo {
                                 }
                             })
                             .catch(err => {
+                                console.log(err)
                                 reject(err)
                             })
                     })
@@ -310,10 +326,10 @@ class agents extends baseModelbo {
                         success: true,
                         status: 200
                     })
-                }).catch(() => {
+                }).catch((err) => {
                     return this.sendResponseError(res, ['Error.CannotAddAgents'], 0, 403);
                 })
-            }).catch(() => {
+            }).catch((err) => {
                 return this.sendResponseError(res, ['Error.CannotAddAgents'], 0, 403);
             })
         }
@@ -326,7 +342,7 @@ class agents extends baseModelbo {
         let {sip_device} = values;
         let {password, options, status, enabled, subscriber_id} = sip_device;
         let user_id = req.body.values.user_id;
-        _usersbo.isUniqueUsername(values.account_id, values.username, user_id)
+        _usersbo.isUniqueUsername(values.username, user_id)
             .then(isUnique => {
                 if (isUnique) {
                     this.db['users'].findOne({
@@ -460,6 +476,7 @@ class agents extends baseModelbo {
                 })
             })
             .catch((err) => {
+                console.log(err)
                 return _this.sendResponseError(res, ['Error.AnErrorHasOccurredUser', err], 1, 403);
             });
     }
