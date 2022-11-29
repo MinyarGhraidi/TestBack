@@ -26,6 +26,10 @@ class callfiles extends baseModelbo {
         let listcallfile_item_to_update = req.body.callFiles_options.listcallfile_item_to_update;
         let listCallFileItem = req.body.callFiles_options.data_listCallFileItem;
         let item_callFile = req.body.item_callFile
+        let campaign_id = req.body.callFiles_options.data_listCallFileItem.campaign_id;
+        let check_duplication = req.body.callFiles_options.data_listCallFileItem.check_duplication
+        let attribute_phone_number = req.body.attribute_phone_number
+        let list_call_file_id = listCallFileItem.listcallfile_id;
         let callFile = {};
         callFile.listcallfile_id = listCallFileItem.listcallfile_id;
         callFile.status = 0;
@@ -79,36 +83,44 @@ class callfiles extends baseModelbo {
             this.CreateCallFileItem(dataMapping[0].dataMapping, listCallFileItem, basic_fields, callFile, item_callFile, indexMapping).then(callFile => {
                 key++;
                 callFile.customfields = dataMapping[0].custom_field ? dataMapping[0].custom_field : []
-                this.db['callfiles'].build(callFile).save().then(result => {
+                this.checkDuplicationListCallFile(item_callFile, check_duplication, campaign_id, attribute_phone_number, list_call_file_id).then(check_duplication => {
+                    if (check_duplication) {
+                        this.db['callfiles'].build(callFile).save().then(result => {
+                            let item_toUpdate = listcallfile_item_to_update;
+                            item_toUpdate.processing_status = {
+                                nbr_callfiles: nbr_callFiles,
+                                nbr_uploaded_callfiles: key,
+                                nbr_duplicated_callfiles: 0
+                            };
 
-                    let item_toUpdate = listcallfile_item_to_update;
-                    item_toUpdate.processing_status = {
-                        nbr_callfiles: nbr_callFiles,
-                        nbr_uploaded_callfiles: key,
-                        nbr_duplicated_callfiles: 0
-                    };
-
-                    this.db['listcallfiles'].update(item_toUpdate, {
-                        where: {
-                            listcallfile_id: listCallFileItem.listcallfile_id
-                        }
-                    }).then(result_list => {
+                            this.db['listcallfiles'].update(item_toUpdate, {
+                                where: {
+                                    listcallfile_id: listCallFileItem.listcallfile_id
+                                }
+                            }).then(result_list => {
+                                res.send({
+                                    success: true,
+                                    data: result,
+                                })
+                            }).catch(err => {
+                                res.send(err);
+                            });
+                        }).catch(err => {
+                            res.send(err);
+                        });
+                    } else {
                         res.send({
                             success: true,
-                            data: result,
+                            message: 'phone number exist',
                         })
-                    }).catch(err => {
-                        res.send(err);
-                    });
+                    }
                 }).catch(err => {
                     res.send(err);
-                });
+                })
             }).catch(err => {
                 res.send(err);
             });
         })
-
-
     }
 
     CreateCallFileItem = (dataMapping, listCallFileItem, basic_fields, callFile, item_callFile, indexMapping) => {
@@ -155,12 +167,13 @@ class callfiles extends baseModelbo {
     }
 
     saveListCallFile = (req, res, next) => {
-        let user_id = req.body.user_id
+        let user_id = req.body.user_id;
+        let attribute_phone_number = req.body.phone_number
         let CallFile = req.body;
+        delete CallFile.phone_number;
         delete CallFile.user_id;
-
         this.db['listcallfiles'].build(CallFile).save().then(save_list => {
-            this.LoadCallFile(save_list.listcallfile_id, user_id).then(result => {
+            this.LoadCallFile(save_list.listcallfile_id, user_id, attribute_phone_number).then(result => {
                 if (result.success) {
                     res.send({
                         success: true
@@ -179,7 +192,7 @@ class callfiles extends baseModelbo {
         })
     }
 
-    LoadCallFile = (listcallfile_id, user_id) => {
+    LoadCallFile = (listcallfile_id, user_id, attribute_phone_number) => {
         return new PromiseBB((resolve, reject) => {
             let _this = this;
             let params = {};
@@ -201,7 +214,7 @@ class callfiles extends baseModelbo {
                 },
             }).then(res_listCallFile => {
                 if (res_listCallFile && res_listCallFile.length !== 0) {
-                    _this.CallFilesInfo(res_listCallFile, params, user_id).then(callFilesMapping => {
+                    _this.CallFilesInfo(res_listCallFile, params, user_id, attribute_phone_number).then(callFilesMapping => {
                         if (callFilesMapping.success) {
                             resolve({
                                 success: true,
@@ -220,7 +233,7 @@ class callfiles extends baseModelbo {
 
     }
 
-    CallFilesInfo = (res_listCallFile, params, user_id) => {
+    CallFilesInfo = (res_listCallFile, params, user_id, attribute_phone_number) => {
         let _this = this;
         return new Promise((resolve, reject) => {
             let data_listCallFileItem = res_listCallFile.toJSON();
@@ -268,7 +281,7 @@ class callfiles extends baseModelbo {
                                     campaign_id: result[1].campaign_id
                                 }
                             }).then(campaign => {
-                                this.sendDataToQueue(callFiles, campaign, data_listCallFileItem, listcallfile_item_to_update, user_id).then(send_callFile => {
+                                this.sendDataToQueue(callFiles, campaign, data_listCallFileItem, listcallfile_item_to_update, user_id, attribute_phone_number).then(send_callFile => {
                                     resolve({
                                         send_callFile: send_callFile,
                                         success: true
@@ -334,7 +347,7 @@ class callfiles extends baseModelbo {
         })
     }
 
-    sendDataToQueue(callFiles, campaign, data_listCallFileItem, listcallfile_item_to_update, user_id) {
+    sendDataToQueue(callFiles, campaign, data_listCallFileItem, listcallfile_item_to_update, user_id, attribute_phone_number) {
         return new Promise((resolve, reject) => {
             console.log('rabbitmq_url', rabbitmq_url)
             amqp.connect(rabbitmq_url, function (error0, connection) {
@@ -351,7 +364,6 @@ class callfiles extends baseModelbo {
                     });
                     let data_call = {};
                     let index = 0;
-
                     PromiseBB.each(callFiles, item => {
                         index++;
                         let progress = Math.round((100 * index) / callFiles.length)
@@ -365,6 +377,8 @@ class callfiles extends baseModelbo {
                         data_call.progress = progress;
                         data_call.finish = callFiles.length === index;
                         data_call.user_id = user_id;
+                        data_call.attribute_phone_number = attribute_phone_number;
+
                         channel.sendToQueue(queue, Buffer.from(JSON.stringify(data_call)), {type: 'save call file'});
                     }).then((all_r) => {
                         resolve({
@@ -728,7 +742,7 @@ class callfiles extends baseModelbo {
 
     updateSchemaUischema(schema, uiSchema) {
         return new Promise((resolve, reject) => {
-            let index_map =0
+            let index_map = 0
             Object.entries(schema.properties).map((item, index, dataSchema) => {
                 let index1 = index === 0 ? index : index * 2
                 let index2 = index1 + 1
@@ -747,9 +761,9 @@ class callfiles extends baseModelbo {
                 } else if (dataSchema[index2] && dataSchema[index2][1].type === 'array') {
                     uiSchema[dataSchema[index2][0]] = {"ui:widget": "checkboxes"}
                 }
-                if(index_map < Object.entries(schema.properties).length -1){
+                if (index_map < Object.entries(schema.properties).length - 1) {
                     index_map++;
-                }else{
+                } else {
                     resolve({
                         schema: schema,
                         uiSchema: uiSchema
@@ -791,12 +805,12 @@ class callfiles extends baseModelbo {
                                                             schema: uischema_data.schema,
                                                             uiSchema: uischema_data.uiSchema
                                                         })
-                                                    }).catch(err=>{
+                                                    }).catch(err => {
                                                         reject(err)
                                                     })
 
                                                 }
-                                            }).catch(err=>{
+                                            }).catch(err => {
                                                 reject(err)
                                             })
                                         } else {
@@ -811,17 +825,17 @@ class callfiles extends baseModelbo {
                                                     schema: uischema_data.schema,
                                                     uiSchema: uischema_data.uiSchema
                                                 })
-                                            }).catch(err=>{
+                                            }).catch(err => {
                                                 reject(err)
                                             })
                                         }
                                     }
 
-                                }).catch(err=>{
+                                }).catch(err => {
                                     reject(err)
                                 })
                             }
-                        }).catch(err=>{
+                        }).catch(err => {
                             reject(err)
                         })
                     } else {
@@ -830,7 +844,7 @@ class callfiles extends baseModelbo {
                             message: "Template call file not found"
                         })
                     }
-                }).catch(err=>{
+                }).catch(err => {
                     reject(err)
                 })
             } else {
@@ -853,7 +867,7 @@ class callfiles extends baseModelbo {
                                                     schema: uischema_data.schema,
                                                     uiSchema: uischema_data.uiSchema
                                                 })
-                                            }).catch(err=>{
+                                            }).catch(err => {
                                                 reject(err)
                                             })
                                         }
@@ -870,16 +884,16 @@ class callfiles extends baseModelbo {
                                             schema: uischema_data.schema,
                                             uiSchema: uischema_data.uiSchema
                                         })
-                                    }).catch(err=>{
+                                    }).catch(err => {
                                         reject(err)
                                     })
                                 }
                             }
-                        }).catch(err=>{
+                        }).catch(err => {
                             reject(err)
                         })
                     }
-                }).catch(err=>{
+                }).catch(err => {
                     reject(err)
                 })
             }
@@ -913,21 +927,120 @@ class callfiles extends baseModelbo {
             }
             let mapping = {}
             this.createSchemaUischema(call_file, mapping, schema).then(result => {
-                if (result.success){
+                if (result.success) {
                     res.send({
                         success: true,
                         data: call_file,
                         schema: result.schema,
                         uiSchema: result.uiSchema
                     })
-                }else{
+                } else {
                     res.send({
                         success: false,
                         message: result.message
                     })
                 }
-            }).catch(err=>{
-                return this.sendResponseError(res, ['Error '],err)
+            }).catch(err => {
+                return this.sendResponseError(res, ['Error '], err)
+            })
+        })
+    }
+
+    checkDuplicationListCallFile(callFile, check_duplication, campaign_id, attribute_phone, list_call_file_id) {
+        return new Promise((resolve, reject) => {
+            let phone_number = callFile[attribute_phone]
+            if (phone_number) {
+                switch (check_duplication) {
+                    case  0: {
+                        resolve(true)
+                        break;
+                    }
+                    case 1: {
+                        this.Check_in_campaign_call_files(campaign_id, phone_number, list_call_file_id).then(result => {
+                            if (result) {
+                                resolve(true)
+                            } else {
+                                resolve(false)
+                            }
+                        }).catch(err => {
+                            reject(err)
+                        })
+                        break;
+                    }
+                    case 2: {
+                        this.Check_in_list_call_file(list_call_file_id, phone_number).then(result => {
+                            if (result) {
+                                resolve(true)
+                            } else {
+                                resolve(false)
+                            }
+                        }).catch(err => {
+                            reject(err)
+                        })
+                        break;
+                    }
+                }
+            } else {
+                resolve(false)
+            }
+        })
+    }
+
+    Check_in_campaign_call_files(campaign_id, phone_number, list_call_file_id) {
+        return new Promise((resolve, reject) => {
+            this.db['listcallfiles'].findAll({
+                where: {
+                    active: 'Y',
+                    status: 'Y',
+                    campaign_id: campaign_id,
+                    listcallfile_id: {[Op.ne]: list_call_file_id}
+                }
+            }).then(list_call_files => {
+                if (list_call_files && list_call_files.length !== 0) {
+                    let data_id = [];
+                    list_call_files.map(item => {
+                        data_id.push(item.listcallfile_id)
+                    })
+                    this.db['callfiles'].findOne({
+                        where: {
+                            listcallfile_id: {[Op.in]: data_id},
+                            phone_number: phone_number,
+                            active: 'Y'
+                        }
+                    }).then(call_file => {
+                        if (call_file) {
+                            resolve(false)
+                        } else {
+                            resolve(true)
+                        }
+                    }).catch(err => {
+                        reject(err)
+                    })
+                } else {
+                    resolve(true)
+                }
+            }).catch(err => {
+                reject(err)
+            })
+        })
+    }
+
+    Check_in_list_call_file(list_call_file_id, phone_number) {
+        return new Promise((resolve, reject) => {
+            this.db['callfiles'].findOne({
+                where: {
+                    listcallfile_id: list_call_file_id,
+                    phone_number: phone_number,
+                    active: 'Y'
+                }
+            }).then(call_file => {
+                if (call_file) {
+                    resolve(false)
+                } else {
+                    resolve(true)
+                }
+            }).catch(err => {
+                reject(err)
             })
         })
     }
