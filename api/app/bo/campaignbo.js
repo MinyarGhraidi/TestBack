@@ -35,10 +35,11 @@ class campaigns extends baseModelbo {
         this.generateUniqueUsernameFunction()
             .then(queueName => {
                 queue.name = queueName;
+                queue.domain_uuid = values.domain.params.uuid;
                 axios
                     .post(`${base_url_cc_kam}api/v1/queues`, queue, call_center_authorization)
                     .then((result) => {
-                        let {uuid} = result.data.queue;
+                        let {uuid} = result.data.result;
                         queue.uuid = uuid;
                         queue.greetings = greetings;
                         queue.hold_music = hold_music;
@@ -65,6 +66,8 @@ class campaigns extends baseModelbo {
                             });
                     })
                     .catch((err) => {
+                        console.log(err)
+                        console.log(err.response.data)
                         return _this.sendResponseError(res, ['Cannot save campaign in Kamailio', err], 1, 403);
                     });
             })
@@ -557,18 +560,19 @@ class campaigns extends baseModelbo {
 
     getAssignedAgents(req, res, next) {
         let _this = this;
-        let {campaign_id, account_id, queue_uuid, camp_agents} = req.body;
+        let {campaign_id, account_id, queue_uuid, camp_agents,roleCrmAgent} = req.body;
         this.db['campaigns'].findOne({where: {campaign_id: campaign_id}})
             .then(campaign => {
                 this.db['users'].findAll({
                     where: {
-                        role_crm_id: 3,
+                        role_crm_id: roleCrmAgent,
                         active: 'Y',
                         account_id: account_id,
                         $or: [{campaign_id: {$eq: campaign_id}}, {campaign_id: {$eq: null}}],
                     }
                 })
                     .then(agents => {
+                        console.log(agents)
                         axios
                             .get(`${base_url_cc_kam}api/v1/queues/${queue_uuid}/tiers`, call_center_authorization)
                             .then(data => {
@@ -967,37 +971,18 @@ class campaigns extends baseModelbo {
         this.db['campaigns'].findOne({where: {campaign_id: campaign_id, active: 'Y'}})
             .then(campaign => {
                 if (campaign) {
-                    let agents = campaign.agents;
-                    let isActivate = status === 'Y';
-
-                    let promiseTelco = new Promise((resolve, reject) => {
-                        if (!isActivate) {
-                            _this.changeAGentsStatus(agents).then(() => {
-                                resolve(true)
-                            }).catch(err => {
-                                reject(err);
-                            })
-                        } else {
-                            resolve(true)
-                        }
-                    })
-                    Promise.all([promiseTelco]).then(data_telco => {
-                        this.db['campaigns'].update({status: status}, {where: {campaign_id: campaign_id}})
-                            .then(() => {
-                                this.changeStatusComp(campaign_id, status).then(() => {
-                                    if (isActivate) {
-                                        res.send({
-                                            status: 200,
-                                            message: "success"
-                                        })
-                                    }
-                                }).catch((err) => {
-                                    return _this.sendResponseError(res, ['cannot change the campaign status1', err], 1, 403);
+                    this.db['campaigns'].update({status: status}, {where: {campaign_id: campaign_id}})
+                        .then(() => {
+                            this.changeStatusComp(campaign_id, status).then(() => {
+                                res.send({
+                                    status: 200,
+                                    message: "success"
                                 })
+
                             }).catch((err) => {
-                            return _this.sendResponseError(res, ['cannot change the campaign status2', err], 1, 403);
-                        });
-                    }).catch((err) => {
+                                return _this.sendResponseError(res, ['cannot change the campaign status1', err], 1, 403);
+                            })
+                        }).catch((err) => {
                         return _this.sendResponseError(res, ['cannot change the campaign status2', err], 1, 403);
                     });
                 } else {
