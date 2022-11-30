@@ -663,7 +663,7 @@ class users extends baseModelbo {
             })
     }
 
-    saveUserFunction(user, AddedFields = [], isBulk = false) {
+    saveUserFunction(user, AddedFields = [], isBulk = false,uuidAgent = null) {
         return new Promise((resolve, reject) => {
             if (user.user_id) {
                 this.updateCredentials(user)
@@ -692,6 +692,7 @@ class users extends baseModelbo {
                             newAccount.sip_device.username = AddedFields.username;
                             newAccount.username = AddedFields.username;
                         }
+                        newAccount.sip_device.uuid = uuidAgent;
                         let modalObj = this.db['users'].build(newAccount);
                         modalObj.save()
                             .then(user => {

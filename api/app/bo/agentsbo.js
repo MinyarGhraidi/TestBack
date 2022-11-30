@@ -227,8 +227,8 @@ class agents extends baseModelbo {
                                 axios
                                     .post(`${base_url_cc_kam}api/v1/agents`, agent, call_center_authorization)
                                     .then((resp) => {
-                                        user.sip_device.uuid = resp.data.result.uuid || null;
-                                        this.saveAgentInDB(user, AddedFields, isBulk)
+                                        let uuidAgent = resp.data.result.uuid || null;
+                                        this.saveAgentInDB(user, AddedFields, isBulk,uuidAgent)
                                             .then(() => {
                                                 resolve(true)
                                             })
@@ -316,7 +316,6 @@ class agents extends baseModelbo {
                                 }
                             })
                             .catch(err => {
-                                console.log(err)
                                 reject(err)
                             })
                     })
@@ -442,10 +441,10 @@ class agents extends baseModelbo {
 
     }
 
-    saveAgentInDB(values, AddedFields, isBulk) {
+    saveAgentInDB(values, AddedFields, isBulk,uuidAgent) {
         return new Promise((resolve, reject) => {
             _usersbo
-                .saveUserFunction(values, AddedFields, isBulk)
+                .saveUserFunction(values, AddedFields, isBulk,uuidAgent)
                 .then(agent => {
                     let user_id = agent.user_id;
                     let agentLog = {user_id: user_id};
@@ -476,7 +475,6 @@ class agents extends baseModelbo {
                 })
             })
             .catch((err) => {
-                console.log(err)
                 return _this.sendResponseError(res, ['Error.AnErrorHasOccurredUser', err], 1, 403);
             });
     }
