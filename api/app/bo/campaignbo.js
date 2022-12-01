@@ -35,10 +35,11 @@ class campaigns extends baseModelbo {
         this.generateUniqueUsernameFunction()
             .then(queueName => {
                 queue.name = queueName;
+                queue.domain_uuid = values.domain.params.uuid;
                 axios
                     .post(`${base_url_cc_kam}api/v1/queues`, queue, call_center_authorization)
                     .then((result) => {
-                        let {uuid} = result.data.queue;
+                        let {uuid} = result.data.result;
                         queue.uuid = uuid;
                         queue.greetings = greetings;
                         queue.hold_music = hold_music;
@@ -75,24 +76,52 @@ class campaigns extends baseModelbo {
 
     updateCampaignFunc(values, uuid) {
         return new Promise((resolve, reject) => {
-            let {hold_music, greetings, accountcode, name, record, strategy, options, extension} = values.params.queue;
-            let queue_ = {hold_music, greetings, accountcode, name, record, strategy, options, extension}
-            queue_.greetings = ["http://myTestServer/IVRS/" + greetings];
-            queue_.hold_music = ["http://myTestServer/IVRS/" + hold_music];
+            let {accountcode, record, strategy, options} = values.params.queue;
+            let {hold_music, greetings} = values.params.queue.options;
             axios
-                .put(`${base_url_cc_kam}api/v1/queues/${uuid}`, queue_, call_center_authorization)
-                .then(response => {
-                    this.db['campaigns'].update(values, {where: {campaign_id: values.campaign_id}})
+                .get(`${base_url_cc_kam}api/v1/queues/${uuid}`, call_center_authorization)
+                .then(resp => {
+                    let {name, extension, domain_uuid} = resp.data.result;
+                    let queue_ = {
+                        hold_music,
+                        greetings,
+                        accountcode,
+                        name,
+                        record,
+                        strategy,
+                        options,
+                        extension,
+                        domain_uuid
+                    }
+                    queue_.greetings = ["http://myTestServer/IVRS/" + greetings];
+                    queue_.hold_music = ["http://myTestServer/IVRS/" + hold_music];
+                    axios
+                        .put(`${base_url_cc_kam}api/v1/queues/${uuid}`, queue_, call_center_authorization)
                         .then(response => {
-                            resolve(true);
+                            let campaign_Updated = {
+                                params: {
+                                    queue: {
+                                        name, uuid, record, strategy, extension, accountcode, domain_uuid,
+                                        options: queue_.options
+                                    }
+                                },
+                                updated_at: new Date()
+                            }
+                            this.db['campaigns'].update(campaign_Updated, {where: {campaign_id: values.campaign_id}})
+                                .then(response => {
+                                    resolve(true);
+                                })
+                                .catch((err) => {
+                                    reject(err);
+                                });
                         })
                         .catch((err) => {
                             reject(err);
                         });
-                })
-                .catch((err) => {
-                    reject(err);
-                });
+                }).catch((err) => {
+                reject(err);
+            })
+
         })
     }
 
@@ -104,7 +133,7 @@ class campaigns extends baseModelbo {
             .then(resp => {
                 res.send({
                     status: 200,
-                    message: "succes"
+                    message: "success"
                 })
             })
             .catch((err) => {
@@ -115,7 +144,7 @@ class campaigns extends baseModelbo {
     dissociateAgent(agents) {
         return new Promise((resolve, reject) => {
             if (agents && agents.length !== 0) {
-                this.db['users'].update({campaign_id: null}, {where: {user_id: agents}})
+                this.db['users'].update({campaign_id: null, isAssigned: false}, {where: {user_id: agents}})
                     .then(() => {
                         resolve(true);
                     })
@@ -425,10 +454,11 @@ class campaigns extends baseModelbo {
                     .then(queueName => {
                         queue.name = queueName;
                         queue.extension = queueName;
+                        queue.domain_uuid = params.queue.domain_uuid;
                         axios
                             .post(`${base_url_cc_kam}api/v1/queues`, queue, call_center_authorization)
                             .then((result) => {
-                                let {uuid} = result.data.queue;
+                                let {uuid} = result.data.result;
                                 queue.uuid = uuid;
                                 queue.greetings = greetings;
                                 queue.hold_music = hold_music;
@@ -469,17 +499,16 @@ class campaigns extends baseModelbo {
                                                                                 message: "success clone campaign"
                                                                             })
                                                                         }
-                                                                    })
-                                                                    .catch((err) => {
-                                                                        return _this.sendResponseError(res, ['cannot save pause status', err], 1, 403);
-                                                                    });
-                                                            })
+                                                                    }).catch(err => {
+                                                                    _this.sendResponseError(res, ['cannot save pause status', err, 403]);
+                                                                });
+                                                        })
                                                             .catch((err) => {
-                                                                return _this.sendResponseError(res, ['cannot fetch list call status', err], 1, 403);
+                                                                return _this.sendResponseError(res, ['cannot save pause status', err], 1, 403);
                                                             });
                                                     })
                                                     .catch((err) => {
-                                                        return _this.sendResponseError(res, ['cannot save campaign', err], 1, 403);
+                                                        return _this.sendResponseError(res, ['cannot fetch list call status', err], 1, 403);
                                                     });
                                             })
                                             .catch((err) => {
@@ -487,15 +516,16 @@ class campaigns extends baseModelbo {
                                             });
                                     })
                                     .catch((err) => {
-                                        return _this.sendResponseError(res, ['cannot save campaign in kamailio', err], 1, 403);
+                                        return _this.sendResponseError(res, ['cannot save campaign', err], 1, 403);
                                     });
                             })
                             .catch((err) => {
-                                return _this.sendResponseError(res, ['error in generate unique name', err], 1, 403);
+                                return _this.sendResponseError(res, ['cannot save campaign in kamailio', err], 1, 403);
                             });
-                    }).catch(err => {
-                    _this.sendResponseError(res, ['cannot save pause status', err, 403]);
-                })
+                    })
+                    .catch((err) => {
+                        return _this.sendResponseError(res, ['error in generate unique name', err], 1, 403);
+                    });
             })
             .catch((err) => {
                 return _this.sendResponseError(res, ['cannot fetch campaign', err], 1, 403);
@@ -557,12 +587,12 @@ class campaigns extends baseModelbo {
 
     getAssignedAgents(req, res, next) {
         let _this = this;
-        let {campaign_id, account_id, queue_uuid, camp_agents} = req.body;
+        let {campaign_id, account_id, queue_uuid, camp_agents, roleCrmAgent} = req.body;
         this.db['campaigns'].findOne({where: {campaign_id: campaign_id}})
             .then(campaign => {
                 this.db['users'].findAll({
                     where: {
-                        role_crm_id: 3,
+                        role_crm_id: roleCrmAgent,
                         active: 'Y',
                         account_id: account_id,
                         $or: [{campaign_id: {$eq: campaign_id}}, {campaign_id: {$eq: null}}],
@@ -576,7 +606,6 @@ class campaigns extends baseModelbo {
                                     .then(allAgents => {
                                         let queue_agents = data.data.result.map(el => el.agent_uuid);
                                         let db_agents = (allAgents && allAgents.length !== 0) ? allAgents.map(el => el.sip_device.uuid) : [];
-                                        console.log(queue_agents, db_agents)
                                         this.fixConsistency(queue_uuid, allAgents, queue_agents, db_agents, campaign_id, campaign)
                                             .then(camp => {
                                                 let campAgents = camp.agents ? camp.agents : [];
@@ -758,28 +787,42 @@ class campaigns extends baseModelbo {
     UpdateCampaign(assignedAgents, NotAssignedAgents, campaign_id) {
         return new Promise((resolve, reject) => {
             const Assign = new Promise((resolve, reject) => {
-                assignedAgents.forEach((agent) => {
-                    appSocket.emit('campaign_updated', {
-                        campaign_id: campaign_id,
-                        user_id: agent.user_id
-                    });
-                }).then(() => {
+                if (assignedAgents && assignedAgents.length !== 0) {
+                    let idxAssign = 0;
+                    assignedAgents.forEach((agent) => {
+                        appSocket.emit('campaign_updated', {
+                            campaign_id: campaign_id,
+                            user_id: agent.user_id
+                        });
+                        if (idxAssign < assignedAgents.length - 1) {
+                            idxAssign++
+                        } else {
+                            resolve(true)
+                        }
+                    })
+                } else {
                     resolve(true);
-                }).catch((err) => {
-                    reject(err);
-                })
+                }
+
             });
             const UnAssign = new Promise((resolve, reject) => {
-                NotAssignedAgents.forEach((agent) => {
-                    appSocket.emit('campaign_updated', {
-                        campaign_id: null,
-                        user_id: agent.user_id
-                    });
-                }).then(() => {
+                if (NotAssignedAgents && NotAssignedAgents.length !== 0) {
+                    let idxUnAssign = 0;
+                    NotAssignedAgents.forEach((agent) => {
+                        appSocket.emit('campaign_updated', {
+                            campaign_id: null,
+                            user_id: agent.user_id
+                        });
+                        if (idxUnAssign < NotAssignedAgents.length - 1) {
+                            idxUnAssign++
+                        } else {
+                            resolve(true)
+                        }
+                    })
+                } else {
                     resolve(true);
-                }).catch((err) => {
-                    reject(err);
-                })
+                }
+
             });
             Promise.all([Assign, UnAssign]).then(() => {
                 resolve(true);
@@ -968,37 +1011,18 @@ class campaigns extends baseModelbo {
         this.db['campaigns'].findOne({where: {campaign_id: campaign_id, active: 'Y'}})
             .then(campaign => {
                 if (campaign) {
-                    let agents = campaign.agents;
-                    let isActivate = status === 'Y';
-
-                    let promiseTelco = new Promise((resolve, reject) => {
-                        if (!isActivate) {
-                            _this.changeAGentsStatus(agents).then(() => {
-                                resolve(true)
-                            }).catch(err => {
-                                reject(err);
-                            })
-                        } else {
-                            resolve(true)
-                        }
-                    })
-                    Promise.all([promiseTelco]).then(data_telco => {
-                        this.db['campaigns'].update({status: status}, {where: {campaign_id: campaign_id}})
-                            .then(() => {
-                                this.changeStatusComp(campaign_id, status).then(() => {
-                                    if (isActivate) {
-                                        res.send({
-                                            status: 200,
-                                            message: "success"
-                                        })
-                                    }
-                                }).catch((err) => {
-                                    return _this.sendResponseError(res, ['cannot change the campaign status1', err], 1, 403);
+                    this.db['campaigns'].update({status: status}, {where: {campaign_id: campaign_id}})
+                        .then(() => {
+                            this.changeStatusComp(campaign_id, status).then(() => {
+                                res.send({
+                                    status: 200,
+                                    message: "success"
                                 })
+
                             }).catch((err) => {
-                            return _this.sendResponseError(res, ['cannot change the campaign status2', err], 1, 403);
-                        });
-                    }).catch((err) => {
+                                return _this.sendResponseError(res, ['cannot change the campaign status1', err], 1, 403);
+                            })
+                        }).catch((err) => {
                         return _this.sendResponseError(res, ['cannot change the campaign status2', err], 1, 403);
                     });
                 } else {

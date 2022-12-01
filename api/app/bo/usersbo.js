@@ -8,7 +8,6 @@ const bcrypt = require("bcrypt");
 const {Sequelize} = require("sequelize");
 const moment = require("moment");
 const {default: axios} = require("axios");
-const {json} = require("mocha/lib/reporters");
 const appSocket = new (require('../providers/AppSocket'))();
 const call_center_token = require(__dirname + '/../config/config.json')["call_center_token"];
 const base_url_cc_kam = require(__dirname + '/../config/config.json')["base_url_cc_kam"];
@@ -175,10 +174,10 @@ class users extends baseModelbo {
                                                         user_id: user_id,
                                                         first_name: first_name,
                                                         last_name: last_name,
-                                                        uuid: sip_device ? sip_device.uuid: null,
+                                                        uuid: sip_device ? sip_device.uuid : null,
                                                         crmStatus: user && user.params ? user.params.status : null,
-                                                        telcoStatus:sip_device ? sip_device.status : null,
-                                                        updated_at: sip_device ? sip_device.updated_at: null,
+                                                        telcoStatus: sip_device ? sip_device.status : null,
+                                                        updated_at: sip_device ? sip_device.updated_at : null,
                                                         campaign_id: campaign_id
                                                     };
                                                     appSocket.emit('agent_connection', data_agent);
@@ -337,8 +336,8 @@ class users extends baseModelbo {
     }
 
     generateUniqueUsernameFunction() {
-        let condition = false;
         return new Promise((resolve, reject) => {
+            let condition = false;
             do {
                 this.generateUsername()
                     .then(generatedUsername => {
@@ -346,7 +345,10 @@ class users extends baseModelbo {
                             .then(isUnique => {
                                 condition = isUnique;
                                 if (condition) {
-                                    resolve(generatedUsername)
+                                    let dataAgent = {};
+                                    dataAgent.first_name = 'agent_'.concat(Math.floor(Math.random() * (999 - 100 + 1) + 100));
+                                    dataAgent.username = generatedUsername;
+                                    resolve(dataAgent)
                                 }
                             })
                             .catch(err => {
@@ -661,8 +663,7 @@ class users extends baseModelbo {
             })
     }
 
-    saveUserFunction(user, is_agent) {
-        let _this = this;
+    saveUserFunction(user, AddedFields = [], isBulk = false,uuidAgent = null) {
         return new Promise((resolve, reject) => {
             if (user.user_id) {
                 this.updateCredentials(user)
@@ -683,30 +684,29 @@ class users extends baseModelbo {
             } else {
                 this.saveCredentials(user)
                     .then(data => {
-                        _this.generateUniqueUsernameFunction().then(username => {
-                            let {newAccount, email_item} = data;
-                            if (is_agent) {
-                                newAccount.first_name = 'agent_'.concat(Math.floor(Math.random() * (999 - 100 + 1) + 100))
-                            }
-                            newAccount.username = username;
-                            let modalObj = this.db['users'].build(newAccount);
-                            modalObj.save()
-                                .then(user => {
-                                    this.db['emails'].update({user_id: user.user_id}, {where: {email_id: email_item.email_id}})
-                                        .then(() => {
-                                            resolve(user)
-                                        })
-                                        .catch(err => {
-                                            reject(err)
-                                        })
-                                })
-                                .catch(err => {
-                                    reject(err)
-                                })
-                        })
-                    })
-                    .catch(err => {
-                        reject(err)
+                        let {newAccount, email_item} = data;
+                        if (isBulk) {
+                            newAccount.first_name = AddedFields.first_name;
+                        }
+                        if (AddedFields.length !== 0) {
+                            newAccount.sip_device.username = AddedFields.username;
+                            newAccount.username = AddedFields.username;
+                        }
+                        newAccount.sip_device.uuid = uuidAgent;
+                        let modalObj = this.db['users'].build(newAccount);
+                        modalObj.save()
+                            .then(user => {
+                                this.db['emails'].update({user_id: user.user_id}, {where: {email_id: email_item.email_id}})
+                                    .then(() => {
+                                        resolve(user)
+                                    })
+                                    .catch(err => {
+                                        reject(err)
+                                    })
+                            })
+                            .catch(err => {
+                                reject(err)
+                            })
                     })
             }
         })
@@ -812,17 +812,16 @@ class users extends baseModelbo {
         let _this = this;
         const token = req.body.token || null;
         jwt.verify(token, config.secret, (err, data) => {
-                this.db['users'].findOne({where: {current_session_token: token, active: 'Y'}})
-                    .then(dataUser => {
-                        res.send({
-                           // success: !!(!!dataUser && !!!err)
-                            success:  !!!err,
-                            data: data,
-                            message: (err) ? 'Invalid token' : 'Token valid',
-                        });
-                    }).catch(err => {
-                    return _this.sendResponseError(res, ['Error.AnErrorHasOccurredGetUser', err], 1, 403);
-                })
+            this.db['users'].findOne({where: {current_session_token: token, active: 'Y'}})
+                .then(() => {
+                    res.send({
+                        success: !!!err,
+                        data: data,
+                        message: (err) ? 'Invalid token' : 'Token valid',
+                    });
+                }).catch(err => {
+                return _this.sendResponseError(res, ['Error.AnErrorHasOccurredGetUser', err], 1, 403);
+            })
         });
     }
 
@@ -985,7 +984,7 @@ class users extends baseModelbo {
                             res.send({
                                 status: 200,
                                 message: 'success',
-                                data: {campaign_id, isActiveCampaign, script : campaign.script}
+                                data: {campaign_id, isActiveCampaign, script: campaign.script}
                             })
                         })
                         .catch(err => {
