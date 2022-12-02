@@ -503,7 +503,6 @@ class agents extends baseModelbo {
                 })
             })
             .catch((err) => {
-                console.log(err)
                 return _this.sendResponseError(res, ['Error.AnErrorHasOccurredUser', err], 1, 403);
             });
     }
@@ -554,7 +553,6 @@ class agents extends baseModelbo {
                                 .then(() => {
                                     this.db["users"].findOne({where: {user_id: user_id}})
                                         .then(user => {
-                                            console.log(user)
                                             if (user) {
                                                 let params = user.params;
                                                 user.updated_at = moment(new Date());
@@ -606,7 +604,6 @@ class agents extends baseModelbo {
         return new Promise((resolve, reject) => {
             let agent;
             let sip_device = agent_.sip_device;
-            console.log(agent_)
             sip_device.status = crmStatus;
             agent = {user_id: user_id, sip_device: sip_device, params: params};
             agent.params.status = crmStatus;
