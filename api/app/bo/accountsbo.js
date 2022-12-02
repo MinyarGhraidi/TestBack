@@ -5,7 +5,7 @@ let db = require('../models');
 const {appSecret} = require("../helpers/app");
 const jwt = require('jsonwebtoken');
 const config = require('../config/config.json');
-const usersbo = require('../bo/usersbo');
+const usersbo = require('./usersbo');
 const agentsbo = require('../bo/agentsbo');
 const campaignsbo = require('../bo/campaignbo');
 const trunksbo = require('../bo/truncksbo');
@@ -729,13 +729,13 @@ class accounts extends baseModelbo {
                 'didsgroups', 'roles', 'templates_list_call_files', 'dialplans',
             ]
             this.deleteEntitiesDbs(entities, account_id).then(() => {
-                this.deleteDialplan_items(account_id).then(()=>{
-                    this.deleteDids(account_id).then(()=>{
+                this.deleteDialplan_items(account_id).then(() => {
+                    this.deleteDids(account_id).then(() => {
                         resolve(true);
-                    }).catch((err)=>{
+                    }).catch((err) => {
                         reject(err);
                     })
-                }).catch((err)=>{
+                }).catch((err) => {
                     reject(err);
                 })
             }).catch((err) => {
@@ -790,7 +790,7 @@ class accounts extends baseModelbo {
             this.deleteMultiUsers(usersIds).then(() => {
                 this.deleteAllRelativeTrunks(account_id).then(() => {
                     this.deleteAllRelativeCampaigns(account_id).then(() => {
-                        this.deleteAllAccountRelative(account_id).then(()=>{
+                        this.deleteAllAccountRelative(account_id).then(() => {
                             this.db['accounts']
                                 .update({active: 'N', domain_id: null}, {where: {account_id: account_id}})
                                 .then(() => {
@@ -802,7 +802,7 @@ class accounts extends baseModelbo {
                                 .catch(err => {
                                     return _this.sendResponseError(res, ['Error.CannotDeleteAccountFromDB', err], 1, 403);
                                 })
-                        }).catch((err)=>{
+                        }).catch((err) => {
                             return _this.sendResponseError(res, ['Error.CannotDeleteEntities', err], 1, 403);
                         })
                     }).catch((err) => {

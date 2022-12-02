@@ -46,5 +46,8 @@ module.exports = {
     authorize: function (req, res, next) {
         _itembo.authorize(req, res, next);
     },
+    switchCampaignAgent: function (req, res, next) {
+        _itembo.switchCampaignAgent(req, res, next)
+    },
 
 };
