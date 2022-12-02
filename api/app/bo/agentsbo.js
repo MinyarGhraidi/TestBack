@@ -396,7 +396,8 @@ class agents extends baseModelbo {
                                                             created_at: resultAgent.created_at,
                                                             updated_at: new Date(),
                                                             accountcode,
-                                                            subscriber_id
+                                                            subscriber_id,
+                                                            domain : values.sip_device.domain
                                                         };
                                                         update_user.updated_at = new Date();
                                                         _usersbo
@@ -484,7 +485,7 @@ class agents extends baseModelbo {
         let {user_id, uuid, crmStatus, telcoStatus} = req.body;
         this.onConnectFunc(user_id, uuid, crmStatus, telcoStatus)
             .then((user) => {
-                let {sip_device, first_name, last_name, user_id} = user.agent.user;
+                let {sip_device, first_name, last_name, user_id, campaign_id} = user.agent.user;
                 let data_agent = {
                     user_id: user_id,
                     first_name: first_name,
@@ -492,7 +493,8 @@ class agents extends baseModelbo {
                     uuid: sip_device.uuid,
                     crmStatus: user.agent.user.params.status,
                     telcoStatus: sip_device.status,
-                    updated_at: sip_device.updated_at
+                    updated_at: sip_device.updated_at,
+                    campaign_id : campaign_id
                 };
                 appSocket.emit('agent_connection', data_agent);
                 res.send({
@@ -501,6 +503,7 @@ class agents extends baseModelbo {
                 })
             })
             .catch((err) => {
+                console.log(err)
                 return _this.sendResponseError(res, ['Error.AnErrorHasOccurredUser', err], 1, 403);
             });
     }
@@ -551,10 +554,11 @@ class agents extends baseModelbo {
                                 .then(() => {
                                     this.db["users"].findOne({where: {user_id: user_id}})
                                         .then(user => {
+                                            console.log(user)
                                             if (user) {
                                                 let params = user.params;
-                                                agent.updated_at = moment(new Date());
-                                                this.updateAgentStatus(user_id, agent, crmStatus, created_at, params)
+                                                user.updated_at = moment(new Date());
+                                                this.updateAgentStatus(user_id, user, crmStatus, created_at, params)
                                                     .then(agent => {
                                                         if (agent.success) {
                                                             resolve({
@@ -601,7 +605,10 @@ class agents extends baseModelbo {
         let updatedAt_tz = moment(created_at).format("YYYY-MM-DD HH:mm:ss");
         return new Promise((resolve, reject) => {
             let agent;
-            agent = {user_id: user_id, sip_device: agent_, params: params};
+            let sip_device = agent_.sip_device;
+            console.log(agent_)
+            sip_device.status = crmStatus;
+            agent = {user_id: user_id, sip_device: sip_device, params: params};
             agent.params.status = crmStatus;
             this.db['users'].update(agent, {
                 where: {user_id: user_id},
@@ -715,10 +722,10 @@ class agents extends baseModelbo {
 
     getConnectedAgents(req, res, next) {
         let _this = this;
-        let {account_id} = req.body;
+        let {account_id, roleCrmAgent} = req.body;
         this.getCampaigns_ids()
             .then(campaigns_ids => {
-                let where = {active: 'Y', account_id: account_id, user_type: "agent", campaign_id: campaigns_ids}
+                let where = {active: 'Y', account_id: account_id, role_crm_id: roleCrmAgent, campaign_id: campaigns_ids}
 
                 this.db['users'].findAll({where: where})
                     .then(agents => {
@@ -754,8 +761,8 @@ class agents extends baseModelbo {
 
     filterDashboard(req, res, next) {
         let _this = this;
-        let {account_id, campaign_id, agent_id, status} = req.body;
-        let where = {active: 'Y', account_id: account_id, user_type: "agent"}
+        let {account_id, campaign_id, agent_id, status, roleCrmAgent} = req.body;
+        let where = {active: 'Y', account_id: account_id, role_crm_id: roleCrmAgent}
 
         if (campaign_id) {
             where.campaign_id = campaign_id;

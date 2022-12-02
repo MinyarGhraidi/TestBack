@@ -1,18 +1,16 @@
 const {baseModelbo} = require('./basebo');
 const {default: axios} = require("axios");
-const usersbo = require('./usersbo');
 const agentbo = require('./agentsbo')
 const {add} = require("nodemon/lib/rules");
 const {reject} = require("bcrypt/promises");
 const call_center_token = require(__dirname + '/../config/config.json')["call_center_token"];
 const base_url_cc_kam = require(__dirname + '/../config/config.json')["base_url_cc_kam"];
 const appSocket = new (require("../providers/AppSocket"))();
-
+const helpers = require('../helpers/helpers')
 const call_center_authorization = {
     headers: {Authorization: call_center_token}
 };
 
-let _usersbo = new usersbo;
 let _agentsbo = new agentbo;
 
 class campaigns extends baseModelbo {
@@ -31,7 +29,6 @@ class campaigns extends baseModelbo {
         let {greetings, hold_music} = queue.options;
         queue.greetings = ["http://myTestServer/IVRS/" + greetings];
         queue.hold_music = ["http://myTestServer/IVRS/" + hold_music];
-
         this.generateUniqueUsernameFunction()
             .then(queueName => {
                 queue.name = queueName;
@@ -502,7 +499,7 @@ class campaigns extends baseModelbo {
                                                                     }).catch(err => {
                                                                     _this.sendResponseError(res, ['cannot save pause status', err, 403]);
                                                                 });
-                                                        })
+                                                            })
                                                             .catch((err) => {
                                                                 return _this.sendResponseError(res, ['cannot save pause status', err], 1, 403);
                                                             });
@@ -599,10 +596,16 @@ class campaigns extends baseModelbo {
                     }
                 })
                     .then(agents => {
+                        let AgentsIds = [];
+                        if (camp_agents && camp_agents.length !== 0) {
+                            camp_agents.forEach(user => {
+                                AgentsIds.push(user.user_id);
+                            })
+                        }
                         axios
                             .get(`${base_url_cc_kam}api/v1/queues/${queue_uuid}/tiers`, call_center_authorization)
                             .then(data => {
-                                this.db['users'].findAll({where: {user_id: camp_agents, active: 'Y'}})
+                                this.db['users'].findAll({where: {user_id: AgentsIds, active: 'Y'}})
                                     .then(allAgents => {
                                         let queue_agents = data.data.result.map(el => el.agent_uuid);
                                         let db_agents = (allAgents && allAgents.length !== 0) ? allAgents.map(el => el.sip_device.uuid) : [];
@@ -634,6 +637,7 @@ class campaigns extends baseModelbo {
                                             })
                                     })
                                     .catch(err => {
+
                                         return _this.sendResponseError(res, ['cannot get list of users', err], 1, 403);
                                     })
                             })
@@ -684,6 +688,19 @@ class campaigns extends baseModelbo {
             } else {
                 resolve(true)
             }
+        })
+    }
+
+    getTiersByQueue(queue_uuid) {
+        return new Promise((resolve, reject) => {
+            axios
+                .get(`${base_url_cc_kam}api/v1/queues/${queue_uuid}/tiers`, call_center_authorization)
+                .then(resp => {
+                    resolve(resp.data.result)
+                })
+                .catch(err => {
+                    reject(err);
+                })
         })
     }
 
@@ -856,7 +873,7 @@ class campaigns extends baseModelbo {
         let condition = false;
         return new Promise((resolve, reject) => {
             do {
-                _usersbo.generateUsername()
+                helpers.generateUsername()
                     .then(generatedQueueName => {
                         this.isUniqueQueueName(generatedQueueName)
                             .then(isUnique => {
@@ -1168,6 +1185,87 @@ class campaigns extends baseModelbo {
         })
     }
 
+    switchCampaignAgent(req, res, next) {
+        let {user_id, campaign_id, updated_at} = req.body;
+        this.db.users.findOne({where : {user_id: user_id}}).then((response) => {
+            let user = response.dataValues;
+            let oldUuidAgent = user.sip_device.uuid;
+            let oldCampaignId = user.campaign_id;
+            this.db.campaigns.findOne({where :{campaign_id: campaign_id}}).then((response) => {
+                let NewCampaign = response.dataValues;
+                let agents = NewCampaign.agents;
+                let NewCampaignUUidQueue = NewCampaign.params.queue.uuid;
+                let _agents = (agents ? agents : []);
+                _agents.push(user_id)
+                let tiers = {tiers: [{
+                        agent_uuid: oldUuidAgent,
+                        tier_level: 1,
+                        tier_position: 1
+                    }]};
+                    this.addToQueue(tiers, NewCampaignUUidQueue).then(() => {
+                        this.db['users'].update({isAssigned: true, campaign_id: campaign_id, updated_at : updated_at}, {
+                            where: {
+                                user_id: user_id,
+                                active: 'Y'
+                            }
+                        }).then(() => {
+                            this.db.campaigns.update({agents: _agents, updated_at : updated_at}, {
+                                where: {
+                                    active: 'Y',
+                                    campaign_id: campaign_id
+                                }
+                            }).then(() => {
+                                if (oldCampaignId) {
+                                    this.db.campaigns.findOne({where : {campaign_id: oldCampaignId}}).then((response) => {
+                                        let oldCampaign = response.dataValues;
+                                        let oldCampaignUuidQueue = oldCampaign.params.queue.uuid;
+                                        let oldAgentsCamp = oldCampaign.agents;
+                                        this.deleteAgentsFromQueue(oldAgentsCamp, oldCampaignUuidQueue, {agents: [oldUuidAgent]}).then(() => {
+                                            let index = oldAgentsCamp.indexOf(user_id);
+                                            if(index !== -1){
+                                                oldAgentsCamp.splice(index,1);
+                                            }
+                                            this.db.campaigns.update({agents: oldAgentsCamp, updated_at : updated_at}, {
+                                                where: {
+                                                    active: 'Y',
+                                                    campaign_id: oldCampaign.campaign_id
+                                                }
+                                            }).then(() => {
+                                                res.send({
+                                                    status: 200,
+                                                    message: "success"
+                                                })
+                                            }).catch((err) => {
+                                                this.sendResponseError(res, ['Error.CannotUpdateOldCampaign'], 0, 403);
+                                            })
+                                        }).catch((err) => {
+                                            this.sendResponseError(res, ['Error.CannotdeleteAgentFromQueue'], 0, 403);
+                                        })
+                                    }).catch((err) => {
+                                        this.sendResponseError(res, ['Error.CannotFindOldCampaign'], 0, 403);
+                                    })
+                                } else {
+                                    res.send({
+                                        status: 200,
+                                        message: "success"
+                                    })
+                                }
+                            }).catch((err) => {
+                                this.sendResponseError(res, ['Error.CannotUpdateNewCampaign'], 0, 403);
+                            })
+                        }).catch((err) => {
+                            this.sendResponseError(res, ['Error.CannotUpdateUser'], 0, 403);
+                        })
+                    }).catch((err) => {
+                        this.sendResponseError(res, ['Error.CannotAddAgentToQueue'], 0, 403);
+                    })
+            }).catch((err) => {
+                this.sendResponseError(res, ['Error.CannotFindNewCampaign'], 0, 403);
+            })
+        }).catch((err) => {
+            this.sendResponseError(res, ['Error.CannotFindUser'], 0, 403);
+        })
+    }
 }
 
 module.exports = campaigns;

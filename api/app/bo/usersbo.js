@@ -14,7 +14,7 @@ const base_url_cc_kam = require(__dirname + '/../config/config.json')["base_url_
 const call_center_authorization = {
     headers: {Authorization: call_center_token}
 };
-
+const helpers=  require('../helpers/helpers')
 class users extends baseModelbo {
     constructor() {
         super('users', 'user_id');
@@ -323,23 +323,13 @@ class users extends baseModelbo {
         })
     }
 
-    generateUsername() {
-        return new Promise((resolve, reject) => {
-            let result = '';
-            let characters = '0123456789';
-            let charactersLength = characters.length;
-            for (let i = 0; i < 12; i++) {
-                result += characters.charAt(Math.floor(Math.random() * charactersLength));
-            }
-            resolve(result)
-        })
-    }
+
 
     generateUniqueUsernameFunction() {
         return new Promise((resolve, reject) => {
             let condition = false;
             do {
-                this.generateUsername()
+                helpers.generateUsername()
                     .then(generatedUsername => {
                         this.isUniqueUsername(generatedUsername, 0)
                             .then(isUnique => {
@@ -663,7 +653,7 @@ class users extends baseModelbo {
             })
     }
 
-    saveUserFunction(user, AddedFields = [], isBulk = false,uuidAgent = null) {
+    saveUserFunction(user, AddedFields = [], isBulk = false, uuidAgent = null) {
         return new Promise((resolve, reject) => {
             if (user.user_id) {
                 this.updateCredentials(user)
@@ -1109,6 +1099,7 @@ class users extends baseModelbo {
             }
         })
     }
+
 
 }
 
