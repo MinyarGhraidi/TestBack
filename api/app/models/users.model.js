@@ -57,7 +57,7 @@ module.exports = (sequelize, Sequelize) => {
             },
             campaign_id: {
                 type: Sequelize.INTEGER,
-                defaultValue: 0
+                defaultValue: null
             },
             created_at: {
                 allowNull: true,
