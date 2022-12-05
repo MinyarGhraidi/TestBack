@@ -664,6 +664,7 @@ class users extends baseModelbo {
                 this.updateCredentials(user)
                     .then(newAccount => {
                         newAccount['current_session_token'] = null;
+                        newAccount.updated_at = moment().format("YYYY-MM-DD HH:mm:ss");
                         db['users'].update(newAccount, {where: {user_id: newAccount.user_id}})
                             .then(user => {
                                 appSocket.emit('reload.Permission', {user_id: newAccount.user_id});
@@ -688,6 +689,8 @@ class users extends baseModelbo {
                             newAccount.username = AddedFields.username;
                         }
                         newAccount.sip_device.uuid = uuidAgent;
+                        newAccount.created_at = moment().format("YYYY-MM-DD HH:mm:ss");
+                        newAccount.updated_at = moment().format("YYYY-MM-DD HH:mm:ss");
                         let modalObj = this.db['users'].build(newAccount);
                         modalObj.save()
                             .then(user => {
