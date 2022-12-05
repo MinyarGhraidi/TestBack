@@ -418,7 +418,7 @@ class callfiles extends baseModelbo {
         const limit = parseInt(filter.limit) > 0 ? filter.limit : 1000;
         const page = filter.page || 1;
         const offset = (limit * (page - 1));
-        let {start_time, end_time, listCallFiles_ids, date} = filter
+        let {start_time, end_time, date} = filter
         let sqlListCallFileByAccount = `select listcallfile_id from listcallfiles
                                        where campaign_id in (select campaign_id from campaigns
                                                               where account_id = :account_id and active = 'Y' and status = 'Y') and active = 'Y' and status = 'Y'`
@@ -428,13 +428,13 @@ class callfiles extends baseModelbo {
                                  left join calls_historys as calls_h on callF.callfile_id = calls_h.call_file_id
                         where calls_h.active = :active
                           and callF.active = :active
-                          and callF.callfile_id = '103945' EXTRA_WHERE 
+                           EXTRA_WHERE 
                          LIMIT :limit
                         OFFSET :offset`
         let sqlCount = `select count(*)
                         from calls_historys as calls_h
                         WHERE active = :active
-                          and calls_h.call_file_id = '103945'
+                    
                             EXTRA_WHERE`
         let extra_where_count = '';
         let extra_where = '';
@@ -447,10 +447,7 @@ class callfiles extends baseModelbo {
             extra_where_count += ' AND finished_at <=  :end_time';
             extra_where += ' AND finished_at <=  :end_time';
         }
-        if (listCallFiles_ids && listCallFiles_ids.length !== 0) {
-            extra_where_count += ' AND list_call_file_id in (:listCallFiles_ids)';
-            extra_where += ' AND list_call_file_id in (:listCallFiles_ids)';
-        }
+
         sqlCount = sqlCount.replace('EXTRA_WHERE', extra_where_count);
         sqlLeads = sqlLeads.replace('EXTRA_WHERE', extra_where);
         db.sequelize['crm-app'].query(sqlListCallFileByAccount,{
