@@ -419,6 +419,10 @@ class callfiles extends baseModelbo {
         const page = filter.page || 1;
         const offset = (limit * (page - 1));
         let {start_time, end_time, listCallFiles_ids, date} = filter
+        let sqlListCallFileByAccount = `select listcallfile_id from listcallfiles
+                                       where campaign_id in (select campaign_id from campaigns
+                                                              where account_id = :account_id and active = 'Y' and status = 'Y') and active = 'Y' and status = 'Y'`
+
         let sqlLeads = `Select distinct callF.*
                         from callfiles as callF
                                  left join calls_historys as calls_h on callF.callfile_id = calls_h.call_file_id
@@ -449,41 +453,61 @@ class callfiles extends baseModelbo {
         }
         sqlCount = sqlCount.replace('EXTRA_WHERE', extra_where_count);
         sqlLeads = sqlLeads.replace('EXTRA_WHERE', extra_where);
-        db.sequelize['crm-app'].query(sqlCount, {
+        db.sequelize['crm-app'].query(sqlListCallFileByAccount,{
             type: db.sequelize['crm-app'].QueryTypes.SELECT,
             replacements: {
-                date: parseInt(date),
-                start_time: moment(date).format('YYYY-MM-DD').concat(' ', start_time),
-                end_time: moment(date).format('YYYY-MM-DD').concat(' ', end_time),
-                listCallFiles_ids: listCallFiles_ids,
-                active: 'Y'
+                account_id: filter.account_id
             }
-        }).then(countAll => {
-            let pages = Math.ceil(countAll[0].count / filter.limit);
-            db.sequelize['crm-app'].query(sqlLeads, {
-                type: db.sequelize['crm-app'].QueryTypes.SELECT,
-                replacements: {
-                    date: parseInt(date),
-                    start_time: moment(date).format('YYYY-MM-DD').concat(' ', start_time),
-                    end_time: moment(date).format('YYYY-MM-DD').concat(' ', end_time),
-                    listCallFiles_ids: listCallFiles_ids,
-                    active: 'Y',
-                    limit: limit,
-                    offset: offset
-                }
-            }).then(dataLeads => {
+        }).then(list_call_file_by_account=>{
+            if(list_call_file_by_account && list_call_file_by_account.length){
+
+                db.sequelize['crm-app'].query(sqlCount, {
+                    type: db.sequelize['crm-app'].QueryTypes.SELECT,
+                    replacements: {
+                        date: parseInt(date),
+                        start_time: moment(date).format('YYYY-MM-DD').concat(' ', start_time),
+                        end_time: moment(date).format('YYYY-MM-DD').concat(' ', end_time),
+                        listCallFiles_ids: list_call_file_by_account,
+                        active: 'Y'
+                    }
+                }).then(countAll => {
+                    let pages = Math.ceil(countAll[0].count / filter.limit);
+                    db.sequelize['crm-app'].query(sqlLeads, {
+                        type: db.sequelize['crm-app'].QueryTypes.SELECT,
+                        replacements: {
+                            date: parseInt(date),
+                            start_time: moment(date).format('YYYY-MM-DD').concat(' ', start_time),
+                            end_time: moment(date).format('YYYY-MM-DD').concat(' ', end_time),
+                            listCallFiles_ids: list_call_file_by_account,
+                            active: 'Y',
+                            limit: limit,
+                            offset: offset
+                        }
+                    }).then(dataLeads => {
+                        res.send({
+                            success: true,
+                            status: 200,
+                            data: dataLeads,
+                            pages: pages
+                        })
+                    }).catch(err => {
+                        _this.sendResponseError(res, ['Error stats'], err)
+                    })
+                }).catch(err => {
+                    _this.sendResponseError(res, ['Error stats'], err)
+                })
+            }else{
                 res.send({
                     success: true,
                     status: 200,
-                    data: dataLeads,
-                    pages: pages
+                    data: [],
+                    message: 'no call file history'
                 })
-            }).catch(err => {
-                _this.sendResponseError(res, ['Error stats'], err)
-            })
+            }
         }).catch(err => {
             _this.sendResponseError(res, ['Error stats'], err)
         })
+
     }
 
     getHistoryCallFile(req, res, next) {
@@ -796,7 +820,6 @@ class callfiles extends baseModelbo {
                                                     let uiSchema = {
                                                         'ui:field': 'layout',
                                                         'ui:layout': [],
-
                                                     }
                                                     this.updateSchemaUischema(schema, uiSchema).then(uischema_data => {
                                                         resolve({
@@ -921,7 +944,6 @@ class callfiles extends baseModelbo {
                 })
             }
             let schema = {
-                title: 'Call File',
                 type: 'object',
                 properties: {}
             }
@@ -1041,6 +1063,30 @@ class callfiles extends baseModelbo {
                 }
             }).catch(err => {
                 reject(err)
+            })
+        })
+    }
+
+    listCallFileByAccount(account_id) {
+        return new Promise((resolve, reject) => {
+            this.db['listcallfiles'].findAll({
+                where: {
+                    active: 'Y',
+                    status: 'Y'
+                },
+                include: [
+                    {
+                        model: db.campaigns,
+                        include: [{
+                            model: db.accounts,
+                            where: {
+                                account_id: account_id
+                            }
+                        }]
+                    }
+                ]
+            }).then(result => {
+                console.log('result', result)
             })
         })
     }
