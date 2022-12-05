@@ -1,18 +1,16 @@
 const {baseModelbo} = require('./basebo');
 const {default: axios} = require("axios");
-const usersbo = require('./usersbo');
 const agentbo = require('./agentsbo')
 const {add} = require("nodemon/lib/rules");
 const {reject} = require("bcrypt/promises");
 const call_center_token = require(__dirname + '/../config/config.json')["call_center_token"];
 const base_url_cc_kam = require(__dirname + '/../config/config.json')["base_url_cc_kam"];
 const appSocket = new (require("../providers/AppSocket"))();
-
+const helpers = require('../helpers/helpers')
 const call_center_authorization = {
     headers: {Authorization: call_center_token}
 };
 
-let _usersbo = new usersbo;
 let _agentsbo = new agentbo;
 
 class campaigns extends baseModelbo {
@@ -31,14 +29,14 @@ class campaigns extends baseModelbo {
         let {greetings, hold_music} = queue.options;
         queue.greetings = ["http://myTestServer/IVRS/" + greetings];
         queue.hold_music = ["http://myTestServer/IVRS/" + hold_music];
-
         this.generateUniqueUsernameFunction()
             .then(queueName => {
                 queue.name = queueName;
+                queue.domain_uuid = values.domain.params.uuid;
                 axios
                     .post(`${base_url_cc_kam}api/v1/queues`, queue, call_center_authorization)
                     .then((result) => {
-                        let {uuid} = result.data.queue;
+                        let {uuid} = result.data.result;
                         queue.uuid = uuid;
                         queue.greetings = greetings;
                         queue.hold_music = hold_music;
@@ -75,24 +73,52 @@ class campaigns extends baseModelbo {
 
     updateCampaignFunc(values, uuid) {
         return new Promise((resolve, reject) => {
-            let {hold_music, greetings, accountcode, name, record, strategy, options, extension} = values.params.queue;
-            let queue_ = {hold_music, greetings, accountcode, name, record, strategy, options, extension}
-            queue_.greetings = ["http://myTestServer/IVRS/" + greetings];
-            queue_.hold_music = ["http://myTestServer/IVRS/" + hold_music];
+            let {accountcode, record, strategy, options} = values.params.queue;
+            let {hold_music, greetings} = values.params.queue.options;
             axios
-                .put(`${base_url_cc_kam}api/v1/queues/${uuid}`, queue_, call_center_authorization)
-                .then(response => {
-                    this.db['campaigns'].update(values, {where: {campaign_id: values.campaign_id}})
+                .get(`${base_url_cc_kam}api/v1/queues/${uuid}`, call_center_authorization)
+                .then(resp => {
+                    let {name, extension, domain_uuid} = resp.data.result;
+                    let queue_ = {
+                        hold_music,
+                        greetings,
+                        accountcode,
+                        name,
+                        record,
+                        strategy,
+                        options,
+                        extension,
+                        domain_uuid
+                    }
+                    queue_.greetings = ["http://myTestServer/IVRS/" + greetings];
+                    queue_.hold_music = ["http://myTestServer/IVRS/" + hold_music];
+                    axios
+                        .put(`${base_url_cc_kam}api/v1/queues/${uuid}`, queue_, call_center_authorization)
                         .then(response => {
-                            resolve(true);
+                            let campaign_Updated = {
+                                params: {
+                                    queue: {
+                                        name, uuid, record, strategy, extension, accountcode, domain_uuid,
+                                        options: queue_.options
+                                    }
+                                },
+                                updated_at: new Date()
+                            }
+                            this.db['campaigns'].update(campaign_Updated, {where: {campaign_id: values.campaign_id}})
+                                .then(response => {
+                                    resolve(true);
+                                })
+                                .catch((err) => {
+                                    reject(err);
+                                });
                         })
                         .catch((err) => {
                             reject(err);
                         });
-                })
-                .catch((err) => {
-                    reject(err);
-                });
+                }).catch((err) => {
+                reject(err);
+            })
+
         })
     }
 
@@ -104,7 +130,7 @@ class campaigns extends baseModelbo {
             .then(resp => {
                 res.send({
                     status: 200,
-                    message: "succes"
+                    message: "success"
                 })
             })
             .catch((err) => {
@@ -115,7 +141,7 @@ class campaigns extends baseModelbo {
     dissociateAgent(agents) {
         return new Promise((resolve, reject) => {
             if (agents && agents.length !== 0) {
-                this.db['users'].update({campaign_id: null}, {where: {user_id: agents}})
+                this.db['users'].update({campaign_id: null, isAssigned: false}, {where: {user_id: agents}})
                     .then(() => {
                         resolve(true);
                     })
@@ -425,10 +451,11 @@ class campaigns extends baseModelbo {
                     .then(queueName => {
                         queue.name = queueName;
                         queue.extension = queueName;
+                        queue.domain_uuid = params.queue.domain_uuid;
                         axios
                             .post(`${base_url_cc_kam}api/v1/queues`, queue, call_center_authorization)
                             .then((result) => {
-                                let {uuid} = result.data.queue;
+                                let {uuid} = result.data.result;
                                 queue.uuid = uuid;
                                 queue.greetings = greetings;
                                 queue.hold_music = hold_music;
@@ -469,17 +496,16 @@ class campaigns extends baseModelbo {
                                                                                 message: "success clone campaign"
                                                                             })
                                                                         }
-                                                                    })
-                                                                    .catch((err) => {
-                                                                        return _this.sendResponseError(res, ['cannot save pause status', err], 1, 403);
-                                                                    });
+                                                                    }).catch(err => {
+                                                                    _this.sendResponseError(res, ['cannot save pause status', err, 403]);
+                                                                });
                                                             })
                                                             .catch((err) => {
-                                                                return _this.sendResponseError(res, ['cannot fetch list call status', err], 1, 403);
+                                                                return _this.sendResponseError(res, ['cannot save pause status', err], 1, 403);
                                                             });
                                                     })
                                                     .catch((err) => {
-                                                        return _this.sendResponseError(res, ['cannot save campaign', err], 1, 403);
+                                                        return _this.sendResponseError(res, ['cannot fetch list call status', err], 1, 403);
                                                     });
                                             })
                                             .catch((err) => {
@@ -487,15 +513,16 @@ class campaigns extends baseModelbo {
                                             });
                                     })
                                     .catch((err) => {
-                                        return _this.sendResponseError(res, ['cannot save campaign in kamailio', err], 1, 403);
+                                        return _this.sendResponseError(res, ['cannot save campaign', err], 1, 403);
                                     });
                             })
                             .catch((err) => {
-                                return _this.sendResponseError(res, ['error in generate unique name', err], 1, 403);
+                                return _this.sendResponseError(res, ['cannot save campaign in kamailio', err], 1, 403);
                             });
-                    }).catch(err => {
-                    _this.sendResponseError(res, ['cannot save pause status', err, 403]);
-                })
+                    })
+                    .catch((err) => {
+                        return _this.sendResponseError(res, ['error in generate unique name', err], 1, 403);
+                    });
             })
             .catch((err) => {
                 return _this.sendResponseError(res, ['cannot fetch campaign', err], 1, 403);
@@ -557,26 +584,31 @@ class campaigns extends baseModelbo {
 
     getAssignedAgents(req, res, next) {
         let _this = this;
-        let {campaign_id, account_id, queue_uuid, camp_agents} = req.body;
+        let {campaign_id, account_id, queue_uuid, camp_agents, roleCrmAgent} = req.body;
         this.db['campaigns'].findOne({where: {campaign_id: campaign_id}})
             .then(campaign => {
                 this.db['users'].findAll({
                     where: {
-                        role_crm_id: 3,
+                        role_crm_id: roleCrmAgent,
                         active: 'Y',
                         account_id: account_id,
                         $or: [{campaign_id: {$eq: campaign_id}}, {campaign_id: {$eq: null}}],
                     }
                 })
                     .then(agents => {
+                        let AgentsIds = [];
+                        if (camp_agents && camp_agents.length !== 0) {
+                            camp_agents.forEach(user => {
+                                AgentsIds.push(user.user_id);
+                            })
+                        }
                         axios
                             .get(`${base_url_cc_kam}api/v1/queues/${queue_uuid}/tiers`, call_center_authorization)
                             .then(data => {
-                                this.db['users'].findAll({where: {user_id: camp_agents, active: 'Y'}})
+                                this.db['users'].findAll({where: {user_id: AgentsIds, active: 'Y'}})
                                     .then(allAgents => {
                                         let queue_agents = data.data.result.map(el => el.agent_uuid);
                                         let db_agents = (allAgents && allAgents.length !== 0) ? allAgents.map(el => el.sip_device.uuid) : [];
-                                        console.log(queue_agents, db_agents)
                                         this.fixConsistency(queue_uuid, allAgents, queue_agents, db_agents, campaign_id, campaign)
                                             .then(camp => {
                                                 let campAgents = camp.agents ? camp.agents : [];
@@ -605,6 +637,7 @@ class campaigns extends baseModelbo {
                                             })
                                     })
                                     .catch(err => {
+
                                         return _this.sendResponseError(res, ['cannot get list of users', err], 1, 403);
                                     })
                             })
@@ -655,6 +688,19 @@ class campaigns extends baseModelbo {
             } else {
                 resolve(true)
             }
+        })
+    }
+
+    getTiersByQueue(queue_uuid) {
+        return new Promise((resolve, reject) => {
+            axios
+                .get(`${base_url_cc_kam}api/v1/queues/${queue_uuid}/tiers`, call_center_authorization)
+                .then(resp => {
+                    resolve(resp.data.result)
+                })
+                .catch(err => {
+                    reject(err);
+                })
         })
     }
 
@@ -758,28 +804,42 @@ class campaigns extends baseModelbo {
     UpdateCampaign(assignedAgents, NotAssignedAgents, campaign_id) {
         return new Promise((resolve, reject) => {
             const Assign = new Promise((resolve, reject) => {
-                assignedAgents.forEach((agent) => {
-                    appSocket.emit('campaign_updated', {
-                        campaign_id: campaign_id,
-                        user_id: agent.user_id
-                    });
-                }).then(() => {
+                if (assignedAgents && assignedAgents.length !== 0) {
+                    let idxAssign = 0;
+                    assignedAgents.forEach((agent) => {
+                        appSocket.emit('campaign_updated', {
+                            campaign_id: campaign_id,
+                            user_id: agent.user_id
+                        });
+                        if (idxAssign < assignedAgents.length - 1) {
+                            idxAssign++
+                        } else {
+                            resolve(true)
+                        }
+                    })
+                } else {
                     resolve(true);
-                }).catch((err) => {
-                    reject(err);
-                })
+                }
+
             });
             const UnAssign = new Promise((resolve, reject) => {
-                NotAssignedAgents.forEach((agent) => {
-                    appSocket.emit('campaign_updated', {
-                        campaign_id: null,
-                        user_id: agent.user_id
-                    });
-                }).then(() => {
+                if (NotAssignedAgents && NotAssignedAgents.length !== 0) {
+                    let idxUnAssign = 0;
+                    NotAssignedAgents.forEach((agent) => {
+                        appSocket.emit('campaign_updated', {
+                            campaign_id: null,
+                            user_id: agent.user_id
+                        });
+                        if (idxUnAssign < NotAssignedAgents.length - 1) {
+                            idxUnAssign++
+                        } else {
+                            resolve(true)
+                        }
+                    })
+                } else {
                     resolve(true);
-                }).catch((err) => {
-                    reject(err);
-                })
+                }
+
             });
             Promise.all([Assign, UnAssign]).then(() => {
                 resolve(true);
@@ -813,7 +873,7 @@ class campaigns extends baseModelbo {
         let condition = false;
         return new Promise((resolve, reject) => {
             do {
-                _usersbo.generateUsername()
+                helpers.generateUsername()
                     .then(generatedQueueName => {
                         this.isUniqueQueueName(generatedQueueName)
                             .then(isUnique => {
@@ -968,37 +1028,18 @@ class campaigns extends baseModelbo {
         this.db['campaigns'].findOne({where: {campaign_id: campaign_id, active: 'Y'}})
             .then(campaign => {
                 if (campaign) {
-                    let agents = campaign.agents;
-                    let isActivate = status === 'Y';
-
-                    let promiseTelco = new Promise((resolve, reject) => {
-                        if (!isActivate) {
-                            _this.changeAGentsStatus(agents).then(() => {
-                                resolve(true)
-                            }).catch(err => {
-                                reject(err);
-                            })
-                        } else {
-                            resolve(true)
-                        }
-                    })
-                    Promise.all([promiseTelco]).then(data_telco => {
-                        this.db['campaigns'].update({status: status}, {where: {campaign_id: campaign_id}})
-                            .then(() => {
-                                this.changeStatusComp(campaign_id, status).then(() => {
-                                    if (isActivate) {
-                                        res.send({
-                                            status: 200,
-                                            message: "success"
-                                        })
-                                    }
-                                }).catch((err) => {
-                                    return _this.sendResponseError(res, ['cannot change the campaign status1', err], 1, 403);
+                    this.db['campaigns'].update({status: status}, {where: {campaign_id: campaign_id}})
+                        .then(() => {
+                            this.changeStatusComp(campaign_id, status).then(() => {
+                                res.send({
+                                    status: 200,
+                                    message: "success"
                                 })
+
                             }).catch((err) => {
-                            return _this.sendResponseError(res, ['cannot change the campaign status2', err], 1, 403);
-                        });
-                    }).catch((err) => {
+                                return _this.sendResponseError(res, ['cannot change the campaign status1', err], 1, 403);
+                            })
+                        }).catch((err) => {
                         return _this.sendResponseError(res, ['cannot change the campaign status2', err], 1, 403);
                     });
                 } else {
@@ -1144,6 +1185,87 @@ class campaigns extends baseModelbo {
         })
     }
 
+    switchCampaignAgent(req, res, next) {
+        let {user_id, campaign_id, updated_at} = req.body;
+        this.db.users.findOne({where : {user_id: user_id}}).then((response) => {
+            let user = response.dataValues;
+            let oldUuidAgent = user.sip_device.uuid;
+            let oldCampaignId = user.campaign_id;
+            this.db.campaigns.findOne({where :{campaign_id: campaign_id}}).then((response) => {
+                let NewCampaign = response.dataValues;
+                let agents = NewCampaign.agents;
+                let NewCampaignUUidQueue = NewCampaign.params.queue.uuid;
+                let _agents = (agents ? agents : []);
+                _agents.push(user_id)
+                let tiers = {tiers: [{
+                        agent_uuid: oldUuidAgent,
+                        tier_level: 1,
+                        tier_position: 1
+                    }]};
+                    this.addToQueue(tiers, NewCampaignUUidQueue).then(() => {
+                        this.db['users'].update({isAssigned: true, campaign_id: campaign_id, updated_at : updated_at}, {
+                            where: {
+                                user_id: user_id,
+                                active: 'Y'
+                            }
+                        }).then(() => {
+                            this.db.campaigns.update({agents: _agents, updated_at : updated_at}, {
+                                where: {
+                                    active: 'Y',
+                                    campaign_id: campaign_id
+                                }
+                            }).then(() => {
+                                if (oldCampaignId) {
+                                    this.db.campaigns.findOne({where : {campaign_id: oldCampaignId}}).then((response) => {
+                                        let oldCampaign = response.dataValues;
+                                        let oldCampaignUuidQueue = oldCampaign.params.queue.uuid;
+                                        let oldAgentsCamp = oldCampaign.agents;
+                                        this.deleteAgentsFromQueue(oldAgentsCamp, oldCampaignUuidQueue, {agents: [oldUuidAgent]}).then(() => {
+                                            let index = oldAgentsCamp.indexOf(user_id);
+                                            if(index !== -1){
+                                                oldAgentsCamp.splice(index,1);
+                                            }
+                                            this.db.campaigns.update({agents: oldAgentsCamp, updated_at : updated_at}, {
+                                                where: {
+                                                    active: 'Y',
+                                                    campaign_id: oldCampaign.campaign_id
+                                                }
+                                            }).then(() => {
+                                                res.send({
+                                                    status: 200,
+                                                    message: "success"
+                                                })
+                                            }).catch((err) => {
+                                                this.sendResponseError(res, ['Error.CannotUpdateOldCampaign'], 0, 403);
+                                            })
+                                        }).catch((err) => {
+                                            this.sendResponseError(res, ['Error.CannotdeleteAgentFromQueue'], 0, 403);
+                                        })
+                                    }).catch((err) => {
+                                        this.sendResponseError(res, ['Error.CannotFindOldCampaign'], 0, 403);
+                                    })
+                                } else {
+                                    res.send({
+                                        status: 200,
+                                        message: "success"
+                                    })
+                                }
+                            }).catch((err) => {
+                                this.sendResponseError(res, ['Error.CannotUpdateNewCampaign'], 0, 403);
+                            })
+                        }).catch((err) => {
+                            this.sendResponseError(res, ['Error.CannotUpdateUser'], 0, 403);
+                        })
+                    }).catch((err) => {
+                        this.sendResponseError(res, ['Error.CannotAddAgentToQueue'], 0, 403);
+                    })
+            }).catch((err) => {
+                this.sendResponseError(res, ['Error.CannotFindNewCampaign'], 0, 403);
+            })
+        }).catch((err) => {
+            this.sendResponseError(res, ['Error.CannotFindUser'], 0, 403);
+        })
+    }
 }
 
 module.exports = campaigns;

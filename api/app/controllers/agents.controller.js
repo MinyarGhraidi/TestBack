@@ -26,6 +26,9 @@ module.exports = {
     saveAgent: function (req, res, next) {
         agentsDaoInst.saveAgent(req, res, next)
     },
+    changeStatus: function(req,res,next){
+        agentsDaoInst.changeStatus(req,res,next)
+    },
     updateAgent: function (req, res, next) {
         agentsDaoInst.updateAgent(req, res, next)
     },

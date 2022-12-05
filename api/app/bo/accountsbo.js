@@ -5,7 +5,7 @@ let db = require('../models');
 const {appSecret} = require("../helpers/app");
 const jwt = require('jsonwebtoken');
 const config = require('../config/config.json');
-const usersbo = require('../bo/usersbo');
+const usersbo = require('./usersbo');
 const agentsbo = require('../bo/agentsbo');
 const campaignsbo = require('../bo/campaignbo');
 const trunksbo = require('../bo/truncksbo');
@@ -324,7 +324,6 @@ class accounts extends baseModelbo {
             white_label: null,
             log: null,
             white_label_app_name: null,
-            domain_sip: newAccount.sip_device.domain,
             role_crm_id: newAccount.role_crm_id[0],
             lang: newAccount.lang,
             code: newAccount.code,
@@ -338,7 +337,8 @@ class accounts extends baseModelbo {
         }
         let sip_device = JSON.parse(JSON.stringify(newAccount.user.sip_device));
         let domain = JSON.parse(JSON.stringify(newAccount.domain));
-        let {username, password, options, status} = sip_device;
+        let { password, options, status} = sip_device;
+        let username = sip_device.username.username;
         if (newAccount.account_id) {
             this.db['accounts'].findOne({
                 where: {
@@ -388,7 +388,6 @@ class accounts extends baseModelbo {
                                                 .put(`${base_url_cc_kam}api/v1/agents/${uuid_Agent}`, update_Agent, call_center_authorization).then((resp) => {
                                                 let update_account = newAccount;
                                                 let resultAgent = resp.data.agent;
-                                                update_account.domain_sip = newAccount.sip_device.domain;
                                                 update_account.updated_at = new Date();
                                                 update_account.role_crm_id = newAccount.role_crm_id[0];
                                                 update_account.domain_id = newAccount.domain.value;
@@ -403,7 +402,8 @@ class accounts extends baseModelbo {
                                                     update_user.sip_device.uuid = resultAgent.uuid;
                                                     update_user.sip_device.updated_at = resultAgent.updated_at;
                                                     update_user.account_id = newAccount.account_id;
-                                                    _usersbo.saveUserFunction(update_user, {where: {user_id: account.user_id}})
+                                                    update_user.username = username
+                                                    _usersbo.saveUserFunction(update_user, [], false, resultAgent.uuid)
                                                         .then(user => {
                                                             res.send({
                                                                 status: 200,
@@ -442,7 +442,7 @@ class accounts extends baseModelbo {
             this.couldAffectDomain(domain.value).then((resultAffection) => {
                 if (resultAffection) {
                     let data_subscriber = {
-                        username,
+                        username : username,
                         domain_uuid: domain.uuid,
                         password,
                         domain: domain.label
@@ -472,8 +472,9 @@ class accounts extends baseModelbo {
                                             data_account.user.sip_device.created_at = resultAgent.created_at;
                                             data_account.user.sip_device.updated_at = resultAgent.updated_at;
                                             data_account.user.account_id = new_account.dataValues.account_id;
+                                            data_account.user.sip_device.username = username;
 
-                                            _usersbo.saveUserFunction(data_account.user).then(new_user => {
+                                            _usersbo.saveUserFunction(data_account.user, [], false, resultAgent.uuid).then(new_user => {
                                                 this.db['accounts'].update({
                                                     user_id: new_user.user_id
                                                 }, {
@@ -729,13 +730,13 @@ class accounts extends baseModelbo {
                 'didsgroups', 'roles', 'templates_list_call_files', 'dialplans',
             ]
             this.deleteEntitiesDbs(entities, account_id).then(() => {
-                this.deleteDialplan_items(account_id).then(()=>{
-                    this.deleteDids(account_id).then(()=>{
+                this.deleteDialplan_items(account_id).then(() => {
+                    this.deleteDids(account_id).then(() => {
                         resolve(true);
-                    }).catch((err)=>{
+                    }).catch((err) => {
                         reject(err);
                     })
-                }).catch((err)=>{
+                }).catch((err) => {
                     reject(err);
                 })
             }).catch((err) => {
@@ -790,7 +791,7 @@ class accounts extends baseModelbo {
             this.deleteMultiUsers(usersIds).then(() => {
                 this.deleteAllRelativeTrunks(account_id).then(() => {
                     this.deleteAllRelativeCampaigns(account_id).then(() => {
-                        this.deleteAllAccountRelative(account_id).then(()=>{
+                        this.deleteAllAccountRelative(account_id).then(() => {
                             this.db['accounts']
                                 .update({active: 'N', domain_id: null}, {where: {account_id: account_id}})
                                 .then(() => {
@@ -802,7 +803,7 @@ class accounts extends baseModelbo {
                                 .catch(err => {
                                     return _this.sendResponseError(res, ['Error.CannotDeleteAccountFromDB', err], 1, 403);
                                 })
-                        }).catch((err)=>{
+                        }).catch((err) => {
                             return _this.sendResponseError(res, ['Error.CannotDeleteEntities', err], 1, 403);
                         })
                     }).catch((err) => {
