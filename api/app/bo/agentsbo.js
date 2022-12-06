@@ -510,7 +510,7 @@ class agents extends baseModelbo {
     onConnectFunc(user_id, uuid, crmStatus, telcoStatus) {
         let created_at = moment().format("YYYY-MM-DD HH:mm:ss")
         return new Promise((resolve, reject) => {
-            if (crmStatus === "in_call" || crmStatus === "in_qualification" || crmStatus === "waiting-call" || crmStatus === "on-break" || crmStatus === "connected") {
+            if (crmStatus === "in_call" || crmStatus === "in_qualification" ) {
                 this.db["users"].findOne({where: {user_id: user_id}})
                     .then(user => {
                         if (user) {
@@ -605,6 +605,7 @@ class agents extends baseModelbo {
             let agent;
             let sip_device = agent_.sip_device;
             sip_device.status = crmStatus;
+            sip_device.updated_at = updatedAt_tz;
             agent = {user_id: user_id, sip_device: sip_device, params: params};
             agent.params.status = crmStatus;
             this.db['users'].update(agent, {
