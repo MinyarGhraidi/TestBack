@@ -744,61 +744,82 @@ class campaigns extends baseModelbo {
         if (!!!campaign_id || !!!queue_uuid || !!!assignedAgents || !!!notAssignedAgents || !!!campaign_agents) {
             return _this.sendResponseError(res, ['cannot update status of assigned agents'], 1, 403);
         }
-        let _agents = (assignedAgents && assignedAgents.length !== 0) ? assignedAgents.map(el => el.user_id) : [];
-        let agents_arr = ['*'];
-        let agents_kam = {agents: agents_arr};
-        this.deleteAgentsFromQueue(campaign_agents, queue_uuid, agents_kam)
-            .then(() => {
-                let tiers_array = (assignedAgents && assignedAgents.length !== 0) ?
-                    assignedAgents.map(el => ({
-                        agent_uuid: el.sip_device.uuid,
-                        tier_level: 1,
-                        tier_position: 1
-                    })) : [];
-                let tiers = {tiers: tiers_array};
-                this.addToQueue(tiers, queue_uuid)
-                    .then(() => {
-                        this.db['campaigns'].update({agents: _agents}, {where: {active: 'Y', campaign_id: campaign_id}})
-                            .then(() => {
-                                this.updateIsAssignedStatus(assignedAgents, campaign_id, true, campaign_agents)
-                                    .then(() => {
-                                        this.updateIsAssignedStatus(notAssignedAgents, null, false, campaign_agents)
-                                            .then(() => {
-                                                this.UpdateCampaign(assignedAgents, notAssignedAgents, campaign_id).then(() => {
-                                                    this.deleteAgentsMeetings(notAssignedAgents)
-                                                        .then(() => {
-                                                            res.send({
-                                                                status: 200,
-                                                                message: 'success'
-                                                            })
-                                                        })
-                                                        .catch((err) => {
-                                                            return _this.sendResponseError(res, ['cannot delete agent meetings', err], 1, 403);
-                                                        });
-                                                }).catch((err) => {
-                                                    return _this.sendResponseError(res, ['cannot update Assigned/UnAssigned Agents', err], 1, 403);
-                                                })
+        let AssignIds = (assignedAgents && assignedAgents.length !== 0) ? assignedAgents.map(el => el.user_id) : [];
+        let UnassignIds = (notAssignedAgents && notAssignedAgents.length !== 0) ? notAssignedAgents.map(el => el.user_id) : [];
+            this.db.users.findAll({ where : {user_id : UnassignIds}}).then((users_unassign)=>{
 
+                let UnassignAgents = [];
+                let ToReAssign = [];
+                if(notAssignedAgents && notAssignedAgents.length !== 0){
+                    UnassignAgents = users_unassign.filter((agent)=> agent.sip_device.status !== 'waiting-call' && agent.sip_device.status !== 'in_call')
+                    ToReAssign = users_unassign.filter((agent)=> agent.sip_device.status === 'waiting-call' || agent.sip_device.status === 'in_call')
+                }
+                let AssignAgents = assignedAgents.concat(ToReAssign);
+                let _agents = (AssignAgents && AssignAgents.length !== 0) ? AssignAgents.map(el => el.user_id) : [];
+                let agents_arr = ['*'];
+                let agents_kam = {agents: agents_arr};
+
+                this.deleteAgentsFromQueue(campaign_agents, queue_uuid, agents_kam)
+                    .then(() => {
+                        let tiers_array = (AssignAgents && AssignAgents.length !== 0) ?
+                            AssignAgents.map(el => ({
+                                agent_uuid: el.sip_device.uuid,
+                                tier_level: 1,
+                                tier_position: 1
+                            })) : [];
+                        let tiers = {tiers: tiers_array};
+                        this.addToQueue(tiers, queue_uuid)
+                            .then(() => {
+                                this.db['campaigns'].update({agents: _agents}, {where: {active: 'Y', campaign_id: campaign_id}})
+                                    .then(() => {
+                                        this.updateIsAssignedStatus(AssignAgents, campaign_id, true, campaign_agents)
+                                            .then(() => {
+                                                this.updateIsAssignedStatus(UnassignAgents, null, false, campaign_agents)
+                                                    .then(() => {
+                                                        this.UpdateCampaign(AssignAgents, UnassignAgents, campaign_id).then(() => {
+                                                            this.changeAGentsStatus(UnassignAgents).then(()=>{
+                                                                this.deleteAgentsMeetings(UnassignAgents)
+                                                                    .then(() => {
+                                                                        res.send({
+                                                                            status: 200,
+                                                                            message: 'success',
+                                                                            cannot_unassign : ToReAssign
+                                                                        })
+                                                                    })
+                                                                    .catch((err) => {
+                                                                        return _this.sendResponseError(res, ['cannot delete agent meetings', err], 1, 403);
+                                                                    });
+                                                            }).catch((err)=>{
+                                                                return _this.sendResponseError(res, ['cannot change Status Telco Agent', err], 1, 403);
+                                                            })
+
+                                                        }).catch((err) => {
+                                                            return _this.sendResponseError(res, ['cannot update Assigned/UnAssigned Agents', err], 1, 403);
+                                                        })
+
+                                                    })
+                                                    .catch((err) => {
+                                                        return _this.sendResponseError(res, ['cannot update status of unassigned agents', err], 1, 403);
+                                                    });
                                             })
                                             .catch((err) => {
-                                                return _this.sendResponseError(res, ['cannot update status of unassigned agents', err], 1, 403);
+                                                return _this.sendResponseError(res, ['cannot update status of assigned agents', err], 1, 403);
                                             });
                                     })
                                     .catch((err) => {
-                                        return _this.sendResponseError(res, ['cannot update status of assigned agents', err], 1, 403);
+                                        return _this.sendResponseError(res, ['cannot update campaign', err], 1, 403);
                                     });
                             })
                             .catch((err) => {
-                                return _this.sendResponseError(res, ['cannot update campaign', err], 1, 403);
+                                return _this.sendResponseError(res, ['cannot add to queue in kamailio', err], 1, 403);
                             });
                     })
                     .catch((err) => {
-                        return _this.sendResponseError(res, ['cannot add to queue in kamailio', err], 1, 403);
+                        return _this.sendResponseError(res, ['cannot delete from queue in kamailio', err], 1, 403);
                     });
+            }).catch((err)=>{
+                return _this.sendResponseError(res, ['cannot get Unassigned Agents', err], 1, 403);
             })
-            .catch((err) => {
-                return _this.sendResponseError(res, ['cannot delete from queue in kamailio', err], 1, 403);
-            });
     }
 
     UpdateCampaign(assignedAgents, NotAssignedAgents, campaign_id) {
@@ -898,12 +919,12 @@ class campaigns extends baseModelbo {
         let index = 0;
         return new Promise((resolve, reject) => {
             if (agents && agents.length !== 0) {
-                agents.forEach(user_id => {
-                    this.db['users'].findOne({where: {user_id: user_id, active: 'Y'}})
+                agents.forEach(agent_forEach => {
+                    this.db['users'].findOne({where: {user_id: agent_forEach.user_id, active: 'Y'}})
                         .then(agent => {
                             if (agent) {
                                 let uuid = agent.sip_device.uuid;
-                                _agentsbo.onConnectFunc(user_id, uuid, "logged-out", "logged-out")
+                                _agentsbo.onConnectFunc(agent_forEach.user_id, uuid, "connected", "logged-out")
                                     .then(() => {
                                         if (index < agents.length - 1) {
                                             index++;
@@ -1186,7 +1207,8 @@ class campaigns extends baseModelbo {
     }
 
     switchCampaignAgent(req, res, next) {
-        let {user_id, campaign_id, updated_at} = req.body;
+        let {user_id, campaign_id} = req.body;
+        let updated_at = new Date();
         this.db.users.findOne({where : {user_id: user_id}}).then((response) => {
             let user = response.dataValues;
             let oldUuidAgent = user.sip_device.uuid;
