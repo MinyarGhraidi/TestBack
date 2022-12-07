@@ -751,8 +751,8 @@ class campaigns extends baseModelbo {
                 let UnassignAgents = [];
                 let ToReAssign = [];
                 if(notAssignedAgents && notAssignedAgents.length !== 0){
-                    UnassignAgents = users_unassign.filter((agent)=> agent.sip_device.status !== 'waiting-call' && agent.sip_device.status !== 'in_call')
-                    ToReAssign = users_unassign.filter((agent)=> agent.sip_device.status === 'waiting-call' || agent.sip_device.status === 'in_call')
+                    UnassignAgents = users_unassign.filter((agent)=> agent.params.status !== 'waiting-call' && agent.params.status !== 'in_call')
+                    ToReAssign = users_unassign.filter((agent)=> agent.params.status === 'waiting-call' || agent.params.status === 'in_call')
                 }
                 let AssignAgents = assignedAgents.concat(ToReAssign);
                 let _agents = (AssignAgents && AssignAgents.length !== 0) ? AssignAgents.map(el => el.user_id) : [];

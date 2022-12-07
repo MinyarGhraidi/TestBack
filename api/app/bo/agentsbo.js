@@ -485,7 +485,7 @@ class agents extends baseModelbo {
         let {user_id, uuid, crmStatus, telcoStatus} = req.body;
         this.onConnectFunc(user_id, uuid, crmStatus, telcoStatus)
             .then((user) => {
-                let {sip_device, first_name, last_name, user_id, campaign_id} = user.agent.user;
+                let {sip_device, first_name, last_name, user_id, campaign_id, account_id} = user.agent.user;
                 let data_agent = {
                     user_id: user_id,
                     first_name: first_name,
@@ -494,7 +494,8 @@ class agents extends baseModelbo {
                     crmStatus: user.agent.user.params.status,
                     telcoStatus: sip_device.status,
                     updated_at: sip_device.updated_at,
-                    campaign_id : campaign_id
+                    campaign_id : campaign_id,
+                    account_id :account_id
                 };
                 appSocket.emit('agent_connection', data_agent);
                 res.send({
@@ -516,7 +517,7 @@ class agents extends baseModelbo {
                         if (user) {
                             let params = user.params;
                             user.updated_at = moment(new Date());
-                            this.updateAgentStatus(user_id, user, crmStatus, created_at, params)
+                            this.updateAgentStatus(user_id, user, telcoStatus,crmStatus, created_at, params)
                                 .then((agent) => {
                                     if (agent.success) {
                                         resolve({
@@ -556,7 +557,7 @@ class agents extends baseModelbo {
                                             if (user) {
                                                 let params = user.params;
                                                 user.updated_at = moment(new Date());
-                                                this.updateAgentStatus(user_id, user, crmStatus, created_at, params)
+                                                this.updateAgentStatus(user_id, user,telcoStatus, crmStatus, created_at, params)
                                                     .then(agent => {
                                                         if (agent.success) {
                                                             resolve({
@@ -599,12 +600,12 @@ class agents extends baseModelbo {
         })
     }
 
-    updateAgentStatus(user_id, agent_, crmStatus, created_at, params) {
+    updateAgentStatus(user_id, agent_, telcoStatus,crmStatus, created_at, params) {
         let updatedAt_tz = moment(created_at).format("YYYY-MM-DD HH:mm:ss");
         return new Promise((resolve, reject) => {
             let agent;
             let sip_device = agent_.sip_device;
-            sip_device.status = crmStatus;
+            sip_device.status = telcoStatus;
             sip_device.updated_at = updatedAt_tz;
             agent = {user_id: user_id, sip_device: sip_device, params: params};
             agent.params.status = crmStatus;
@@ -727,8 +728,7 @@ class agents extends baseModelbo {
 
                 this.db['users'].findAll({where: where})
                     .then(agents => {
-                        let loggedAgents = agents.filter(el => el.sip_device.status !== "logged-out");
-                        let formattedData = loggedAgents.map(user => {
+                        let formattedData = agents.map(user => {
                             let {sip_device, first_name, last_name, user_id, campaign_id} = user;
                             return {
                                 user_id: user_id,
@@ -777,8 +777,7 @@ class agents extends baseModelbo {
 
         this.db['users'].findAll({where: where})
             .then(agents => {
-                let loggedAgents = agents.filter(el => el.sip_device.status !== "logged-out");
-                let formattedData = loggedAgents.map(user => {
+                let formattedData = agents.map(user => {
                     let {sip_device, first_name, last_name, user_id, campaign_id} = user;
                     return {
                         user_id: user_id,
@@ -804,18 +803,20 @@ class agents extends baseModelbo {
 
     onDisconnect(item) {
         return new Promise((resolve, reject) => {
-            this.onConnectFunc(item.user_id, item.uuid, 'connected', 'on-break')
+            this.onConnectFunc(item.user_id, item.uuid, 'connected', 'logged-out')
                 .then((user) => {
-                    let {sip_device, first_name, last_name, user_id} = user.agent.user;
-                    let data_agent = {
-                        user_id: user_id,
-                        first_name: first_name,
-                        last_name: last_name,
-                        uuid: sip_device.uuid,
-                        crmStatus: user.agent.user.params.status,
-                        telcoStatus: sip_device.status,
-                        updated_at: sip_device.updated_at
-                    };
+                    let {sip_device, first_name, last_name, user_id,account_id,campaign_id} = user.agent.user;
+                        let data_agent = {
+                            user_id: user_id,
+                            first_name: first_name,
+                            last_name: last_name,
+                            uuid: sip_device.uuid,
+                            crmStatus: user.agent.user.params.status,
+                            telcoStatus: sip_device.status,
+                            updated_at: sip_device.updated_at,
+                            account_id : account_id,
+                            campaign_id : campaign_id
+                        };
                     appSocket.emit('agent_connection', data_agent);
                     resolve(true)
                 }).catch((err) => {
@@ -831,31 +832,39 @@ class agents extends baseModelbo {
             return this.sendResponseError(res, ['Error.AnErrorHasOccurredUser'], 1, 403);
         }
         const promiseDisconnect = new Promise((resolve, reject) => {
-            data_agent.forEach(item => {
-                this.onDisconnect(item).then(result => {
-                    if (result) {
-                        if (i < data_agent.length - 1) {
-                            i++;
+            let couldDisc = data_agent.filter((agent)=>agent.crmStatus !== 'waiting-call' && agent.crmStatus !== 'in_call') || [];
+            let cannotDisc = data_agent.filter((agent)=>agent.crmStatus === 'waiting-call' || agent.crmStatus === 'in_call') || [];
+            if(couldDisc && couldDisc.length !== 0){
+                couldDisc.forEach(item => {
+                    this.onDisconnect(item).then(result => {
+                        if (result) {
+                            if (i < data_agent.length - 1) {
+                                i++;
+                            } else {
+                                resolve({
+                                    success: true,
+                                    data : cannotDisc
+                                })
+                            }
                         } else {
-                            resolve({
-                                success: true,
-
+                            reject({
+                                success: false
                             })
                         }
-                    } else {
-                        reject({
-                            success: false
-                        })
-                    }
-                })
+                    })
 
-            })
+                })
+            }else{
+                resolve({success : true , data : cannotDisc})
+            }
+
         })
         Promise.all([promiseDisconnect]).then(result => {
             if (result) {
                 res.send({
                     status: 200,
-                    message: 'success'
+                    message: 'success',
+                    data : result[0].data
                 })
             } else {
                 return this.sendResponseError(res, ['Error.cannot fetch list agents'], 1, 403);
