@@ -23,7 +23,7 @@ Authorization: Bearer LucH6JQhHjpXVhP8K6buVmGFrrYrQ9jR56Zx5Ftcq2X93fXcxRfFwrQU2K
   "name":"SBC002",
   "username":"",
   "accountcode":"010",
-  "proxy":"92.222.227.223",
+  "proxy":"92.222.227.222",
   "register":false,
   "caller_id_in_from":true,
   "extension":"SBC",

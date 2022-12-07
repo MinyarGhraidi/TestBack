@@ -25,7 +25,6 @@ class truncks extends baseModelbo {
     saveTrunk(req, res, next) {
         let _this = this;
         let trunk_kam = req.body.values;
-        trunk_kam.domain_uuid = "97b42577-13c7-41cc-be10-f36989a4ce10"
             let data_db = req.body.db_values;
         axios
             .post(`${base_url_cc_kam}api/v1/gateways`, trunk_kam, call_center_authorization)
