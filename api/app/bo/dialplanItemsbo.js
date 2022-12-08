@@ -1,9 +1,4 @@
 const {baseModelbo} = require('./basebo');
-let sequelize = require('sequelize');
-const Op = sequelize.Op;
-let db = require('../models');
-const {appSecret} = require("../helpers/app");
-const jwt = require('jsonwebtoken');
 
 class dialplanItemsbo extends baseModelbo {
     constructor() {

@@ -26,6 +26,7 @@ class agents extends baseModelbo {
         this.primaryKey = 'user_id'
     }
 
+    //------------------ > AUTH <----------------
     signUp(req, res, next) {
         const formData = req.body;
 
@@ -87,7 +88,6 @@ class agents extends baseModelbo {
             return this.sendResponseError(res, ['Error.AnErrorHasOccurredUser'], 1, 403);
         });
     }
-
     signIn(req, res, next) {
 
         if ((!req.body.email || !req.body.password)) {
@@ -142,60 +142,89 @@ class agents extends baseModelbo {
         }
     }
 
-    changeStatus(req, res, next) {
-        let {user_id, status} = req.body;
-        if ((!!!user_id || !!!status)) {
-            return this.sendResponseError(res, ['Error.RequestDataInvalid'], 0, 403);
-        }
-        if (status !== 'N' && status !== 'Y') {
-            return this.sendResponseError(res, ['Error.StatusMustBe_Y_Or_N'], 0, 403);
-        }
-        this.db['users'].findOne({
-            where: {
-                user_id: user_id
-            }
-        }).then((user) => {
-            let sip_device = user.dataValues.sip_device;
-            let {uuid} = sip_device;
-            axios
-                .get(`${base_url_cc_kam}api/v1/agents/${uuid}`, call_center_authorization).then((resp_agent) => {
-                let data_update = resp_agent.data.result;
-                data_update.enabled = status === 'Y';
-                data_update.updated_at = new Date();
-                axios
-                    .put(`${base_url_cc_kam}api/v1/agents/${uuid}`, data_update, call_center_authorization).then((resp) => {
-                    sip_device.enabled = status === 'Y';
-                    sip_device.updated_at = new Date();
-                    let updated_Status = {
-                        status: status,
-                        updated_at: new Date(),
-                        sip_device: sip_device
-                    }
-                    this.db['users'].update(updated_Status, {
-                        where: {
-                            user_id: user_id,
-                            active: 'Y'
-                        }
-                    }).then(() => {
-                        res.send({
-                            status: 200,
-                            message: "success",
-                            success: true
-                        })
-                    }).catch(err => {
-                        return this.sendResponseError(res, ['Error.CannotUpdateUserDB'], 0, 403);
-                    });
+
+    //----------------> Add Agent <------------------
+    saveAgent(req, res, next) {
+        let _this = this;
+        let idx = 0;
+        let {values, accountcode, bulkNum} = req.body;
+        if (!!!bulkNum) {
+            _this.sendResponseError(res, ['Error.BulkNum is required'])
+        } else {
+            let sip_device = JSON.parse(JSON.stringify(values.sip_device));
+            sip_device.created_at = moment().format("YYYY-MM-DD HH:mm:ss");
+            sip_device.updated_at = moment().format("YYYY-MM-DD HH:mm:ss");
+            sip_device.status = "logged-out";
+            sip_device.accountcode = accountcode;
+            sip_device.enabled = true;
+            values.sip_device = sip_device;
+            this.bulkAgents(bulkNum, values.account_id, values.username).then((resultArray) => {
+                let addAgent = new Promise((resolve, reject) => {
+                    resultArray.forEach((user) => {
+                        let isBulk = bulkNum.length > 1
+                        this.saveOneAgent(values, user, isBulk)
+                            .then(() => {
+                                if (idx < resultArray.length - 1) {
+                                    idx++
+                                } else {
+                                    resolve({message: 'success'})
+                                }
+                            })
+                            .catch(err => {
+                                reject(err)
+                            })
+                    })
+                })
+                Promise.all([addAgent]).then(() => {
+                    res.send({
+                        success: true,
+                        status: 200
+                    })
                 }).catch((err) => {
-                    return this.sendResponseError(res, ['Error.CannotUpdateTelcoAgent'], 0, 403);
+                    return this.sendResponseError(res, ['Error.CannotAddAgents'], 0, 403);
                 })
             }).catch((err) => {
-                return this.sendResponseError(res, ['Error.CannotFindAgentTelco'], 0, 403);
+                return this.sendResponseError(res, ['Error.CannotAddAgents'], 0, 403);
             })
-        }).catch((err) => {
-            return this.sendResponseError(res, ['Error.CannotFindUser'], 0, 403);
+        }
+    }
+    bulkAgents(bulkNum, account_id, username) {
+        return new Promise((resolve, reject) => {
+            let idx = 0;
+            let arrayUsers = [];
+            if(bulkNum.length === 1){
+                _usersbo.isUniqueUsername(username,0).then(isUnique =>{
+                    if(!isUnique){
+                        _usersbo.generateUniqueUsernameFunction().then(dataAgent =>{
+                            resolve([{username : dataAgent.username}]);
+                        })
+                    }else{
+                        resolve([{username : username}]);
+                    }
+                }).catch((err)=>{
+                    reject(err);
+                })
+            }else{
+                bulkNum.forEach(() => {
+                    _usersbo.generateUniqueUsernameFunction().then(dataAgent => {
+                        let objAgent = {
+                            username: dataAgent.username,
+                            first_name: dataAgent.first_name,
+                        }
+                        arrayUsers.push(objAgent);
+                        if (idx < bulkNum.length - 1) {
+                            idx++
+                        } else {
+                            resolve(arrayUsers)
+                        }
+                    }).catch((err) => {
+                        reject(err);
+                    })
+                })
+            }
+
         })
     }
-
     saveOneAgent(user, AddedFields, isBulk) {
         return new Promise((resolve, reject) => {
             user.username = AddedFields.username;
@@ -250,90 +279,30 @@ class agents extends baseModelbo {
                 })
         })
     }
-
-    bulkAgents(bulkNum, account_id, username) {
+    saveAgentInDB(values, AddedFields, isBulk,uuidAgent) {
         return new Promise((resolve, reject) => {
-            let idx = 0;
-            let arrayUsers = [];
-            if(bulkNum.length === 1){
-                _usersbo.isUniqueUsername(username,0).then(isUnique =>{
-                    if(!isUnique){
-                        _usersbo.generateUniqueUsernameFunction().then(dataAgent =>{
-                            resolve([{username : dataAgent.username}]);
+            _usersbo
+                .saveUserFunction(values, AddedFields, isBulk,uuidAgent)
+                .then(agent => {
+                    let user_id = agent.user_id;
+                    let agentLog = {user_id: user_id};
+                    let modalObj = this.db['agent_log_events'].build(agentLog)
+                    modalObj
+                        .save()
+                        .then(agent => {
+                            resolve(agent)
                         })
-                    }else{
-                        resolve([{username : username}]);
-                    }
-                }).catch((err)=>{
-                    reject(err);
+                        .catch(err => {
+                            reject(err)
+                        })
                 })
-            }else{
-                bulkNum.forEach(() => {
-                    _usersbo.generateUniqueUsernameFunction().then(dataAgent => {
-                        let objAgent = {
-                            username: dataAgent.username,
-                            first_name: dataAgent.first_name,
-                        }
-                        arrayUsers.push(objAgent);
-                        if (idx < bulkNum.length - 1) {
-                            idx++
-                        } else {
-                            resolve(arrayUsers)
-                        }
-                    }).catch((err) => {
-                        reject(err);
-                    })
+                .catch(err => {
+                    reject(err)
                 })
-            }
-
         })
     }
 
-    saveAgent(req, res, next) {
-        let _this = this;
-        let idx = 0;
-        let {values, accountcode, bulkNum} = req.body;
-        if (!!!bulkNum) {
-            _this.sendResponseError(res, ['Error.BulkNum is required'])
-        } else {
-            let sip_device = JSON.parse(JSON.stringify(values.sip_device));
-            sip_device.created_at = moment().format("YYYY-MM-DD HH:mm:ss");
-            sip_device.updated_at = moment().format("YYYY-MM-DD HH:mm:ss");
-            sip_device.status = "logged-out";
-            sip_device.accountcode = accountcode;
-            sip_device.enabled = true;
-            values.sip_device = sip_device;
-            this.bulkAgents(bulkNum, values.account_id, values.username).then((resultArray) => {
-                let addAgent = new Promise((resolve, reject) => {
-                    resultArray.forEach((user) => {
-                        let isBulk = bulkNum.length > 1
-                        this.saveOneAgent(values, user, isBulk)
-                            .then(() => {
-                                if (idx < resultArray.length - 1) {
-                                    idx++
-                                } else {
-                                    resolve({message: 'success'})
-                                }
-                            })
-                            .catch(err => {
-                                reject(err)
-                            })
-                    })
-                })
-                Promise.all([addAgent]).then(() => {
-                    res.send({
-                        success: true,
-                        status: 200
-                    })
-                }).catch((err) => {
-                    return this.sendResponseError(res, ['Error.CannotAddAgents'], 0, 403);
-                })
-            }).catch((err) => {
-                return this.sendResponseError(res, ['Error.CannotAddAgents'], 0, 403);
-            })
-        }
-    }
-
+    //---------------> Update Agent <----------------------
     updateAgent(req, res, next) {
         let _this = this;
         let values = req.body.values;
@@ -442,29 +411,7 @@ class agents extends baseModelbo {
 
     }
 
-    saveAgentInDB(values, AddedFields, isBulk,uuidAgent) {
-        return new Promise((resolve, reject) => {
-            _usersbo
-                .saveUserFunction(values, AddedFields, isBulk,uuidAgent)
-                .then(agent => {
-                    let user_id = agent.user_id;
-                    let agentLog = {user_id: user_id};
-                    let modalObj = this.db['agent_log_events'].build(agentLog)
-                    modalObj
-                        .save()
-                        .then(agent => {
-                            resolve(agent)
-                        })
-                        .catch(err => {
-                            reject(err)
-                        })
-                })
-                .catch(err => {
-                    reject(err)
-                })
-        })
-    }
-
+    //----------------> Delete Agent <-------------------------
     deleteAgent(req, res, next) {
         let _this = this;
         let agent_id = req.body.user_id;
@@ -479,6 +426,125 @@ class agents extends baseModelbo {
                 return _this.sendResponseError(res, ['Error.AnErrorHasOccurredUser', err], 1, 403);
             });
     }
+    deleteAgentWithSub(user_id) {
+        return new Promise((resolve, reject) => {
+            this.db['users'].findOne({
+                where: {
+                    user_id: user_id,
+                    active: 'Y'
+                }
+            }).then((result) => {
+                let {uuid} = result.dataValues.sip_device;
+                if (!!!uuid) {
+                    reject(false);
+                }
+                axios
+                    .get(`${base_url_cc_kam}api/v1/agents/${uuid}`, call_center_authorization).then((resp_agent) => {
+                    let {subscriber_uuid} = resp_agent.data.result;
+                    axios
+                        .delete(`${base_url_cc_kam}api/v1/agents/${uuid}`, call_center_authorization).then((resp) => {
+                        axios
+                            .get(`${base_url_cc_kam}api/v1/subscribers/${subscriber_uuid}`, call_center_authorization).then((resp_sub) => {
+                            axios
+                                .delete(`${base_url_cc_kam}api/v1/subscribers/${subscriber_uuid}`, call_center_authorization).then((resp) => {
+                                this.db['users'].update({active: 'N'}, {where: {user_id: user_id}})
+                                    .then(() => {
+                                        this.db['meetings'].update({active: 'N'}, {
+                                            where: {
+                                                $or: [
+                                                    {
+                                                        agent_id: user_id
+                                                    },
+                                                    {
+                                                        sales_id: user_id
+                                                    }
+                                                ]
+                                            }
+                                        })
+                                            .then(() => {
+                                                resolve(true);
+                                            })
+                                            .catch((err) => {
+                                                reject(err);
+                                            });
+                                    })
+                                    .catch((err) => {
+                                        reject(err);
+                                    });
+                            }).catch((err) => {
+                                reject(err);
+                            })
+                        }).catch((err) => {
+                            reject(err);
+                        })
+                    }).catch((err) => {
+                        reject(err);
+                    })
+                }).catch((err) => {
+                    reject(err);
+                })
+            }).catch((err) => {
+                reject(err);
+            })
+        })
+    }
+
+    //-----------------> change Status <-----------------------------
+    changeStatus(req, res, next) {
+        let {user_id, status} = req.body;
+        if ((!!!user_id || !!!status)) {
+            return this.sendResponseError(res, ['Error.RequestDataInvalid'], 0, 403);
+        }
+        if (status !== 'N' && status !== 'Y') {
+            return this.sendResponseError(res, ['Error.StatusMustBe_Y_Or_N'], 0, 403);
+        }
+        this.db['users'].findOne({
+            where: {
+                user_id: user_id
+            }
+        }).then((user) => {
+            let sip_device = user.dataValues.sip_device;
+            let {uuid} = sip_device;
+            axios
+                .get(`${base_url_cc_kam}api/v1/agents/${uuid}`, call_center_authorization).then((resp_agent) => {
+                let data_update = resp_agent.data.result;
+                data_update.enabled = status === 'Y';
+                data_update.updated_at = new Date();
+                axios
+                    .put(`${base_url_cc_kam}api/v1/agents/${uuid}`, data_update, call_center_authorization).then((resp) => {
+                    sip_device.enabled = status === 'Y';
+                    sip_device.updated_at = new Date();
+                    let updated_Status = {
+                        status: status,
+                        updated_at: new Date(),
+                        sip_device: sip_device
+                    }
+                    this.db['users'].update(updated_Status, {
+                        where: {
+                            user_id: user_id,
+                            active: 'Y'
+                        }
+                    }).then(() => {
+                        res.send({
+                            status: 200,
+                            message: "success",
+                            success: true
+                        })
+                    }).catch(err => {
+                        return this.sendResponseError(res, ['Error.CannotUpdateUserDB'], 0, 403);
+                    });
+                }).catch((err) => {
+                    return this.sendResponseError(res, ['Error.CannotUpdateTelcoAgent'], 0, 403);
+                })
+            }).catch((err) => {
+                return this.sendResponseError(res, ['Error.CannotFindAgentTelco'], 0, 403);
+            })
+        }).catch((err) => {
+            return this.sendResponseError(res, ['Error.CannotFindUser'], 0, 403);
+        })
+    }
+
+    //-----------------> Telco Agent <------------------------
 
     onConnect(req, res, next) {
         let _this = this;
@@ -507,7 +573,6 @@ class agents extends baseModelbo {
                 return _this.sendResponseError(res, ['Error.AnErrorHasOccurredUser', err], 1, 403);
             });
     }
-
     onConnectFunc(user_id, uuid, crmStatus, telcoStatus) {
         let created_at = moment().format("YYYY-MM-DD HH:mm:ss")
         return new Promise((resolve, reject) => {
@@ -599,7 +664,6 @@ class agents extends baseModelbo {
 
         })
     }
-
     updateAgentStatus(user_id, agent_, telcoStatus,crmStatus, created_at, params) {
         let updatedAt_tz = moment(created_at).format("YYYY-MM-DD HH:mm:ss");
         return new Promise((resolve, reject) => {
@@ -702,23 +766,8 @@ class agents extends baseModelbo {
         })
     }
 
-    getCampaigns_ids() {
-        return new Promise((resolve, reject) => {
-            this.db['campaigns'].findAll({
-                where: {
-                    active: 'Y',
-                }
-            })
-                .then(campaigns => {
-                    let campaigns_ids = campaigns.map(el => el.campaign_id);
-                    resolve(campaigns_ids);
-                })
-                .catch(err => {
-                    reject(err);
-                })
-        })
-    }
 
+    //----------------> Dashboard Admin <------------------------------
     getConnectedAgents(req, res, next) {
         let _this = this;
         let {account_id, roleCrmAgent} = req.body;
@@ -756,7 +805,6 @@ class agents extends baseModelbo {
                 return _this.sendResponseError(res, ['Error.cannot fetch list agents', err], 1, 403);
             })
     }
-
     filterDashboard(req, res, next) {
         let _this = this;
         let {account_id, campaign_id, agent_id, status, roleCrmAgent} = req.body;
@@ -800,7 +848,22 @@ class agents extends baseModelbo {
                 return _this.sendResponseError(res, ['Error.cannot fetch list agents', err], 1, 403);
             })
     }
-
+    getCampaigns_ids() {
+        return new Promise((resolve, reject) => {
+            this.db['campaigns'].findAll({
+                where: {
+                    active: 'Y',
+                }
+            })
+                .then(campaigns => {
+                    let campaigns_ids = campaigns.map(el => el.campaign_id);
+                    resolve(campaigns_ids);
+                })
+                .catch(err => {
+                    reject(err);
+                })
+        })
+    }
     onDisconnect(item) {
         return new Promise((resolve, reject) => {
             this.onConnectFunc(item.user_id, item.uuid, 'connected', 'logged-out')
@@ -824,7 +887,6 @@ class agents extends baseModelbo {
             });
         })
     }
-
     onDisconnectAgents(req, res, next) {
         let data_agent = req.body.data
         let i = 0;
@@ -872,6 +934,7 @@ class agents extends baseModelbo {
         })
     }
 
+    //---------------> Report <---------------------
     agentDetailsReports(req, res, next) {
         const filter = req.body || null;
 
@@ -919,7 +982,6 @@ class agents extends baseModelbo {
         })
 
     }
-
     ListCallFile(campaign_id, listcallfile_id) {
         return new Promise((resolve, reject) => {
             let where = {};
@@ -949,7 +1011,6 @@ class agents extends baseModelbo {
             })
         })
     }
-
     DataCallsAgents(agents, list_Call, start_time, end_time, date) {
         return new Promise((resolve, reject) => {
             let current_Date = moment(new Date()).tz(app_config.TZ).format('YYYYMMDD');
@@ -1032,7 +1093,6 @@ class agents extends baseModelbo {
             }
         })
     }
-
     DataActionAgents(agents, start_time, end_time) {
         return new Promise((resolve, reject) => {
             let agent_id = agents.map(item => item.user_id)
@@ -1057,7 +1117,6 @@ class agents extends baseModelbo {
             })
         })
     }
-
     filterData(campaign_id, agents, listcallfile_id) {
         return new Promise((resolve, reject) => {
             if (campaign_id && campaign_id.length !== 0) {
@@ -1111,7 +1170,6 @@ class agents extends baseModelbo {
             }
         })
     }
-
     agentCallReports(req, res, next) {
         let _this = this;
         const params = req.body;
@@ -1414,7 +1472,6 @@ class agents extends baseModelbo {
         })
 
     }
-
     listCallFileReports(req, res, next) {
         let _this = this;
         const params = req.body;
@@ -1575,68 +1632,7 @@ class agents extends baseModelbo {
         })
     }
 
-    deleteAgentWithSub(user_id) {
-        return new Promise((resolve, reject) => {
-            this.db['users'].findOne({
-                where: {
-                    user_id: user_id,
-                    active: 'Y'
-                }
-            }).then((result) => {
-                let {uuid} = result.dataValues.sip_device;
-                if (!!!uuid) {
-                    reject(false);
-                }
-                axios
-                    .get(`${base_url_cc_kam}api/v1/agents/${uuid}`, call_center_authorization).then((resp_agent) => {
-                    let {subscriber_uuid} = resp_agent.data.result;
-                    axios
-                        .delete(`${base_url_cc_kam}api/v1/agents/${uuid}`, call_center_authorization).then((resp) => {
-                        axios
-                            .get(`${base_url_cc_kam}api/v1/subscribers/${subscriber_uuid}`, call_center_authorization).then((resp_sub) => {
-                            axios
-                                .delete(`${base_url_cc_kam}api/v1/subscribers/${subscriber_uuid}`, call_center_authorization).then((resp) => {
-                                this.db['users'].update({active: 'N'}, {where: {user_id: user_id}})
-                                    .then(() => {
-                                        this.db['meetings'].update({active: 'N'}, {
-                                            where: {
-                                                $or: [
-                                                    {
-                                                        agent_id: user_id
-                                                    },
-                                                    {
-                                                        sales_id: user_id
-                                                    }
-                                                ]
-                                            }
-                                        })
-                                            .then(() => {
-                                                resolve(true);
-                                            })
-                                            .catch((err) => {
-                                                reject(err);
-                                            });
-                                    })
-                                    .catch((err) => {
-                                        reject(err);
-                                    });
-                            }).catch((err) => {
-                                reject(err);
-                            })
-                        }).catch((err) => {
-                            reject(err);
-                        })
-                    }).catch((err) => {
-                        reject(err);
-                    })
-                }).catch((err) => {
-                    reject(err);
-                })
-            }).catch((err) => {
-                reject(err);
-            })
-        })
-    }
+
 }
 
 module.exports = agents;

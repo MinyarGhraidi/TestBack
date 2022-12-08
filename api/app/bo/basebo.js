@@ -298,19 +298,6 @@ class baseModelbo {
                     })
                 })
                 break
-            case 'dialplans' :
-                this.deleteWithChild('dialplans', 'dialplan_items', 'dialplan_id', 'dialplan_id', _id).then(() => {
-                    res.json({
-                        success: true,
-                        messages: 'deleted'
-                    })
-                }).catch((err) => {
-                    res.json({
-                        success: false,
-                        messages: 'Cant delete'
-                    })
-                })
-                break
             case 'roles' :
                 this.deleteRoleCascade(_id).then(()=>{
                     res.json({

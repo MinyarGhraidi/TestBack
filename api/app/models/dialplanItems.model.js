@@ -22,7 +22,7 @@ module.exports = (sequelize, Sequelize) => {
             trunck_id: {
                 type: Sequelize.INTEGER
             },
-            dialplan_id: {
+            account_id: {
                 type: Sequelize.INTEGER
             },
 
@@ -32,7 +32,7 @@ module.exports = (sequelize, Sequelize) => {
             },
             status: {
                 type: Sequelize.BOOLEAN,
-                defaultValue: true
+                defaultValue: 'Y'
             },
             created_at: {
                 allowNull: true,
@@ -50,9 +50,8 @@ module.exports = (sequelize, Sequelize) => {
 
     dialplan_item.prototype.fields = [
         'dialplan_item_id',
-        'dialplan_id',
+        'account_id',
         'channels',
-        'name',
         'active',
         'prefix',
         'priority',
@@ -66,8 +65,7 @@ module.exports = (sequelize, Sequelize) => {
     ];
 
     dialplan_item.prototype.fieldsSearchMetas = [
-        'dialplan_id',
-        'name',
+        'account_id',
         'active',
         'channels',
         'prefix',
@@ -81,8 +79,8 @@ module.exports = (sequelize, Sequelize) => {
         dialplan_item.belongsTo(models.truncks, {
             foreignKey: 'trunck_id'
         });
-        dialplan_item.belongsTo(models.dialplans, {
-            foreignKey: 'dialplan_id'
+        dialplan_item.belongsTo(models.accounts, {
+            foreignKey: 'account_id'
         })
     };
     return dialplan_item;

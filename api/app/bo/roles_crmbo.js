@@ -1,6 +1,4 @@
 const {baseModelbo} = require('./basebo');
-let sequelize = require('sequelize');
-let db = require('../models');
 
 class Roles_crm extends baseModelbo {
     constructor() {

@@ -1,6 +1,4 @@
 const {baseModelbo} = require('./basebo');
-let sequelize = require('sequelize');
-let db = require('../models');
 const appSocket = new (require('../providers/AppSocket'))();
 
 class roles extends baseModelbo {
