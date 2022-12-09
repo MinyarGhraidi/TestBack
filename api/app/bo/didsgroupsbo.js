@@ -1,4 +1,5 @@
 const {baseModelbo} = require('./basebo');
+const moment = require("moment");
 
 class didsgroups extends baseModelbo {
     constructor() {
@@ -10,8 +11,8 @@ class didsgroups extends baseModelbo {
     affectDidsGpToCamp(req, res, next) {
         let _this = this;
         let {camp_id , didsGp_ids} = req.body;
-        this.db['didsgroups'].update({campaign_id: null}, {where: {campaign_id: camp_id}}).then(data => {
-            this.db['didsgroups'].update({campaign_id: camp_id}, {where: {did_id: {in : didsGp_ids}}}).then(data => {
+        this.db['didsgroups'].update({campaign_id: null, updated_at : moment(new Date())}, {where: {campaign_id: camp_id}}).then(data => {
+            this.db['didsgroups'].update({campaign_id: camp_id,updated_at : moment(new Date())}, {where: {did_id: {in : didsGp_ids}}}).then(data => {
                 res.send({
                     success: true,
                     status: 200,
@@ -29,7 +30,7 @@ class didsgroups extends baseModelbo {
     changeStatusCascadeDID(did_id, status) {
         return new Promise((resolve, reject) => {
             const didGroup = new Promise ((resolve,reject) => {
-                this.db['didsgroups'].update({status: status, updated_at: new Date()}, {
+                this.db['didsgroups'].update({status: status, updated_at: moment(new Date())}, {
                     where: {
                         did_id: did_id,
                         active: 'Y'
@@ -41,7 +42,7 @@ class didsgroups extends baseModelbo {
                 });
             });
             const did = new Promise ((resolve,reject) => {
-                this.db['dids'].update({status: status, updated_at: new Date()}, {
+                this.db['dids'].update({status: status, updated_at: moment(new Date())}, {
                     where: {
                         did_group_id: did_id,
                         active: 'Y'

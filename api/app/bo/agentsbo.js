@@ -17,6 +17,7 @@ const usersbo = require('./usersbo');
 let _usersbo = new usersbo;
 const appSocket = new (require('../providers/AppSocket'))();
 const appHelper = require("../helpers/app");
+const Op = require("sequelize/lib/operators");
 const app_config = appHelper.appConfig;
 
 class agents extends baseModelbo {
@@ -559,7 +560,7 @@ class agents extends baseModelbo {
                     uuid: sip_device.uuid,
                     crmStatus: user.agent.user.params.status,
                     telcoStatus: sip_device.status,
-                    updated_at: sip_device.updated_at,
+                    timerStart: sip_device.updated_at,
                     campaign_id : campaign_id,
                     account_id :account_id
                 };
@@ -574,7 +575,6 @@ class agents extends baseModelbo {
             });
     }
     onConnectFunc(user_id, uuid, crmStatus, telcoStatus) {
-        let created_at = moment().format("YYYY-MM-DD HH:mm:ss")
         return new Promise((resolve, reject) => {
             if (crmStatus === "in_call" || crmStatus === "in_qualification" ) {
                 this.db["users"].findOne({where: {user_id: user_id}})
@@ -582,7 +582,7 @@ class agents extends baseModelbo {
                         if (user) {
                             let params = user.params;
                             user.updated_at = moment(new Date());
-                            this.updateAgentStatus(user_id, user, telcoStatus,crmStatus, created_at, params)
+                            this.updateAgentStatus(user_id, user, telcoStatus,crmStatus, params)
                                 .then((agent) => {
                                     if (agent.success) {
                                         resolve({
@@ -622,7 +622,7 @@ class agents extends baseModelbo {
                                             if (user) {
                                                 let params = user.params;
                                                 user.updated_at = moment(new Date());
-                                                this.updateAgentStatus(user_id, user,telcoStatus, crmStatus, created_at, params)
+                                                this.updateAgentStatus(user_id, user,telcoStatus, crmStatus, params)
                                                     .then(agent => {
                                                         if (agent.success) {
                                                             resolve({
@@ -664,8 +664,8 @@ class agents extends baseModelbo {
 
         })
     }
-    updateAgentStatus(user_id, agent_, telcoStatus,crmStatus, created_at, params) {
-        let updatedAt_tz = moment(created_at).format("YYYY-MM-DD HH:mm:ss");
+    updateAgentStatus(user_id, agent_, telcoStatus,crmStatus, params) {
+        let updatedAt_tz = moment(new Date());
         return new Promise((resolve, reject) => {
             let agent;
             let sip_device = agent_.sip_device;
@@ -771,39 +771,69 @@ class agents extends baseModelbo {
     getConnectedAgents(req, res, next) {
         let _this = this;
         let {account_id, roleCrmAgent} = req.body;
-        this.getCampaigns_ids()
-            .then(campaigns_ids => {
-                let where = {active: 'Y', account_id: account_id, role_crm_id: roleCrmAgent, campaign_id: campaigns_ids}
+                let where = {active: 'Y', account_id: account_id, role_crm_id: roleCrmAgent, current_session_token: {[Op.not]: null}}
 
                 this.db['users'].findAll({where: where})
                     .then(agents => {
-                        let formattedData = agents.map(user => {
-                            let {sip_device, first_name, last_name, user_id, campaign_id} = user;
-                            return {
-                                user_id: user_id,
-                                first_name: first_name,
-                                last_name: last_name,
-                                uuid: sip_device.uuid,
-                                crmStatus: user.params.status,
-                                telcoStatus: sip_device.status,
-                                updated_at: sip_device.updated_at,
-                                campaign_id: campaign_id
-                            };
-                        })
-                        res.send({
-                            status: "200",
-                            message: "success",
-                            data: formattedData
+                        this.verifyTokenAgents(agents).then((result)=>{
+                            res.send({
+                                status: "200",
+                                message: "success",
+                                data: result
+                            })
+                        }).catch(err=>{
+                            return _this.sendResponseError(res, ['Error.cannotVerifyToken', err], 1, 403);
                         })
                     })
                     .catch(err => {
                         return _this.sendResponseError(res, ['Error.cannot fetch list agents', err], 1, 403);
                     })
+    }
 
-            })
-            .catch(err => {
-                return _this.sendResponseError(res, ['Error.cannot fetch list agents', err], 1, 403);
-            })
+    verifyTokenAgents(agents){
+        return new Promise((resolve,reject)=>{
+            let idx = 0;
+            if(agents && agents.length !== 0){
+                let Users=[]
+                agents.forEach(user =>{
+                    _usersbo.verifyTokenParam(user.current_session_token).then((res)=>{
+                        if(res === true){
+                            let {sip_device, first_name, last_name, user_id, campaign_id} = user;
+                            this.db['agent_log_events'].findAll({where : {active: 'Y', user_id : user_id}, order: [['agent_log_event_id', 'DESC']]})
+                                .then(events => {
+                                    Users.push({
+                                        user_id: user_id,
+                                        first_name: first_name,
+                                        last_name: last_name,
+                                        uuid: sip_device.uuid,
+                                        crmStatus: user.params.status,
+                                        telcoStatus: sip_device.status,
+                                        timerStart: events[0].start_at,
+                                        campaign_id: campaign_id
+                                    });
+                                    if(idx < agents.length -1 ){
+                                        idx++;
+                                    }else{
+                                        resolve(Users);
+                                    }
+                                })
+                                .catch(err => {
+                                    reject(err)
+                                })
+                        }else{
+                            this.db['users'].update({current_session_token: null},{where : {user_id : user.user_id}}).then(()=>{
+                                idx++;
+                            }).catch(err=>{
+                                reject(err)
+                            })
+                        }
+
+                    }).catch(err => reject(err))
+                })
+            }else{
+                resolve([]);
+            }
+        })
     }
     filterDashboard(req, res, next) {
         let _this = this;
@@ -876,7 +906,7 @@ class agents extends baseModelbo {
                             uuid: sip_device.uuid,
                             crmStatus: user.agent.user.params.status,
                             telcoStatus: sip_device.status,
-                            updated_at: sip_device.updated_at,
+                            timerStart: sip_device.updated_at,
                             account_id : account_id,
                             campaign_id : campaign_id
                         };

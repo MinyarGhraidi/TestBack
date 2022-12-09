@@ -110,7 +110,7 @@ class users extends baseModelbo {
                                                                 uuid: sip_device.uuid,
                                                                 crmStatus: user.params.status,
                                                                 telcoStatus: sip_device.status,
-                                                                updated_at: sip_device.updated_at,
+                                                                timerStart: sip_device.updated_at,
                                                                 campaign_id: campaign_id
                                                             };
                                                             appSocket.emit('agent_connection', data_agent);
@@ -810,18 +810,40 @@ class users extends baseModelbo {
         let _this = this;
         const token = req.body.token || null;
         jwt.verify(token, config.secret, (err, data) => {
-            this.db['users'].findOne({where: {current_session_token: token, active: 'Y'}})
-                .then(() => {
-                    res.send({
-                        success: !!!err,
-                        data: data,
-                        message: (err) ? 'Invalid token' : 'Token valid',
-                    });
-                }).catch(err => {
-                return _this.sendResponseError(res, ['Error.AnErrorHasOccurredGetUser', err], 1, 403);
-            })
+            if(!err){
+                this.db['users'].findOne({where: {current_session_token: token, active: 'Y'}})
+                    .then((result) => {
+                        res.send({
+                            success: !!!!result,
+                            data: data,
+                            message: 'Token valid',
+                        });
+                    }).catch(err => {
+                    return _this.sendResponseError(res, ['Error.AnErrorHasOccurredGetUser', err], 1, 403);
+                })
+            }else{
+                res.send({
+                    success: false,
+                    data: [],
+                    message:'Invalid token',
+                });
+            }
+
         });
     }
+    verifyTokenParam(token) {
+        return new Promise((resolve,reject)=>{
+            jwt.verify(token, config.secret, (err, data) => {
+                if(data){
+                    resolve(true);
+                }else{
+                    resolve(false)
+                }
+            });
+        })
+
+    }
+
 
     getSalesByAgent(req, res, next) {
         let _this = this;

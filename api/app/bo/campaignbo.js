@@ -1,15 +1,18 @@
 const {baseModelbo} = require('./basebo');
 const {default: axios} = require("axios");
 const agentbo = require('./agentsbo')
+const agent_log_eventsbo = require('./agent_log_eventsbo')
 const call_center_token = require(__dirname + '/../config/config.json')["call_center_token"];
 const base_url_cc_kam = require(__dirname + '/../config/config.json')["base_url_cc_kam"];
 const appSocket = new (require("../providers/AppSocket"))();
 const helpers = require('../helpers/helpers')
+const moment = require("moment");
 const call_center_authorization = {
     headers: {Authorization: call_center_token}
 };
 
 let _agentsbo = new agentbo;
+let _agent_log_eventsbo = new agent_log_eventsbo;
 
 class campaigns extends baseModelbo {
     constructor() {
@@ -116,7 +119,7 @@ class campaigns extends baseModelbo {
                                         options: queue_.options
                                     }
                                 },
-                                updated_at: new Date()
+                                updated_at: moment(new Date())
                             }
                             this.db['campaigns'].update(campaign_Updated, {where: {campaign_id: values.campaign_id}})
                                 .then(response => {
@@ -168,25 +171,29 @@ class campaigns extends baseModelbo {
                                     let agents = campaign.agents;
                                     this.dissociateAgent(agents)
                                         .then(resp => {
-                                            this.db['campaigns'].update({active: 'N'}, {where: {campaign_id: campaign_id}})
-                                                .then(() => {
-                                                    this.db['meetings'].update({status: 0}, {where: {campaign_id: campaign_id}})
-                                                        .then(() => {
-                                                            _this.deleteCampaignFiles(campaign_id)
-                                                                .then(() => {
-                                                                    resolve(true);
-                                                                })
-                                                                .catch((err) => {
-                                                                    reject(err);
-                                                                });
-                                                        })
-                                                        .catch((err) => {
-                                                            reject(err);
-                                                        });
-                                                })
-                                                .catch((err) => {
-                                                    reject(err);
-                                                });
+                                            this.disAffectDidFromCamp(campaign_id).then(()=>{
+                                                this.db['campaigns'].update({active: 'N'}, {where: {campaign_id: campaign_id}})
+                                                    .then(() => {
+                                                        this.db['meetings'].update({status: 0, updated_at: moment(new Date())}, {where: {campaign_id: campaign_id}})
+                                                            .then(() => {
+                                                                _this.deleteCampaignFiles(campaign_id)
+                                                                    .then(() => {
+                                                                        resolve(true);
+                                                                    })
+                                                                    .catch((err) => {
+                                                                        reject(err);
+                                                                    });
+                                                            })
+                                                            .catch((err) => {
+                                                                reject(err);
+                                                            });
+                                                    })
+                                                    .catch((err) => {
+                                                        reject(err);
+                                                    });
+                                            }).catch((err)=>{
+                                                reject(err)
+                                            })
                                         })
                                         .catch(err => {
                                             reject(err);
@@ -262,8 +269,23 @@ class campaigns extends baseModelbo {
             }
         })
     }
-
-
+    disAffectDidFromCamp(campaign_id){
+        return new Promise((resolve,reject)=>{
+            this.db['didsgroups'].findOne({where : {campaign_id : campaign_id, active : 'Y'}}).then((result)=>{
+                if(result){
+                    this.db['didsgroups'].update({campaign_id : null , updated_at : moment(new Date())}, {where : {campaign_id : campaign_id, active : 'Y'}}).then(()=>{
+                        resolve(true);
+                    }).catch((err)=>{
+                        reject(err);
+                    })
+                }else{
+                    resolve(true);
+                }
+            }).catch((err)=>{
+                reject(err);
+            })
+        })
+    }
     //-----------------> Change Status Campaign <---------------------
     changeStatus(req, res, next) {
         let _this = this;
@@ -277,7 +299,7 @@ class campaigns extends baseModelbo {
         this.db['campaigns'].findOne({where: {campaign_id: campaign_id, active: 'Y'}})
             .then(campaign => {
                 if (campaign) {
-                    this.db['campaigns'].update({status: status}, {where: {campaign_id: campaign_id}})
+                    this.db['campaigns'].update({status: status , updated_at : moment(new Date())}, {where: {campaign_id: campaign_id}})
                         .then(() => {
                             this.changeStatusComp(campaign_id, status).then(() => {
                                 res.send({
@@ -318,7 +340,7 @@ class campaigns extends baseModelbo {
         let indexEntities = 0;
         return new Promise((resolve, reject) => {
             entities.map(dbs => {
-                this.db[dbs].update({status: status, updated_at: new Date()}, {
+                this.db[dbs].update({status: status, updated_at : moment(new Date())}, {
                     where: {
                         campaign_id: campaign_id,
                         active: 'Y'
@@ -373,7 +395,7 @@ class campaigns extends baseModelbo {
         return new Promise((resolve, reject) => {
             this.db["callfiles"].update({
                 status: status,
-                updated_at: new Date()
+                updated_at : moment(new Date())
             }, {where: {listcallfile_id: listCallFiles_id, active: 'Y'}})
                 .then(
                     () => {
@@ -557,6 +579,8 @@ class campaigns extends baseModelbo {
                                 params.queue = queue;
                                 delete cloned_campaign.params;
                                 cloned_campaign.params = params;
+                                cloned_campaign.updated_at = moment(new Date());
+                                cloned_campaign.created_at = moment(new Date());
                                 let modalObj = this.db['campaigns'].build(cloned_campaign)
                                 modalObj
                                     .save()
@@ -574,7 +598,7 @@ class campaigns extends baseModelbo {
                                                             .then((list_pausestatus) => {
                                                                 this.savePauseStatus(list_pausestatus, cloned_campaign_id)
                                                                     .then(result => {
-                                                                        if (campaign && campaign.didsGp_ids.length !== 0) {
+                                                                        if (campaign && campaign.didsGp_ids && campaign.didsGp_ids.length !== 0) {
                                                                             this.db['didsgroups'].update({campaign_id: data.campaign_id}, {where: {did_id: {in: campaign.didsGp_ids}}}).then(data => {
                                                                                 res.send({
                                                                                     status: 200,
@@ -853,7 +877,7 @@ class campaigns extends baseModelbo {
                                             this.updateIsAssignedStatus(UnassignAgents, null, false)
                                                 .then(() => {
                                                     this.UpdateCampaign(AssignAgents, UnassignAgents, campaign_id).then(() => {
-                                                        this.changeAGentsStatus(UnassignAgents).then(()=>{
+                                                       // this.changeAGentsStatus(UnassignAgents).then(()=>{
                                                             this.deleteAgentsMeetings(UnassignAgents)
                                                                 .then(() => {
                                                                     res.send({
@@ -865,9 +889,9 @@ class campaigns extends baseModelbo {
                                                                 .catch((err) => {
                                                                     return _this.sendResponseError(res, ['cannot delete agent meetings', err], 1, 403);
                                                                 });
-                                                        }).catch((err)=>{
-                                                            return _this.sendResponseError(res, ['cannot change Status Telco Agent', err], 1, 403);
-                                                        })
+                                                         // }).catch((err)=>{
+                                                         //     return _this.sendResponseError(res, ['cannot change Status Telco Agent', err], 1, 403);
+                                                         // })
 
                                                     }).catch((err) => {
                                                         return _this.sendResponseError(res, ['cannot update Assigned/UnAssigned Agents', err], 1, 403);
@@ -1062,7 +1086,12 @@ class campaigns extends baseModelbo {
                         tier_position: 1
                     }]};
                 this.addToQueue(tiers, NewCampaignUUidQueue).then(() => {
-                    this.db['users'].update({isAssigned: true, campaign_id: campaign_id, updated_at : updated_at}, {
+                    let dataUpdateUser = {
+                        isAssigned: true,
+                        campaign_id: campaign_id,
+                        updated_at : updated_at,
+                    }
+                    this.db['users'].update(dataUpdateUser, {
                         where: {
                             user_id: user_id,
                             active: 'Y'
@@ -1090,9 +1119,24 @@ class campaigns extends baseModelbo {
                                                 campaign_id: oldCampaign.campaign_id
                                             }
                                         }).then(() => {
-                                            res.send({
-                                                status: 200,
-                                                message: "success"
+                                            _agent_log_eventsbo.getLastEventParam(user_id).then((event)=>{
+                                                let data_agent = {
+                                                    user_id: user_id,
+                                                    first_name: user.first_name,
+                                                    last_name: user.last_name,
+                                                    uuid: user.sip_device.uuid,
+                                                    crmStatus: user.params.status,
+                                                    telcoStatus: user.sip_device.status,
+                                                    timerStart: event.start_at,
+                                                    campaign_id: campaign_id,
+                                                    account_id : user.account_id
+                                                };
+                                                appSocket.emit('agent_connection', data_agent);
+                                                appSocket.emit('campaign_updated', {user_id : user_id, campaign_id : campaign_id});
+                                                res.send({
+                                                    status: 200,
+                                                    message: "success"
+                                                })
                                             })
                                         }).catch((err) => {
                                             this.sendResponseError(res, ['Error.CannotUpdateOldCampaign'], 0, 403);
