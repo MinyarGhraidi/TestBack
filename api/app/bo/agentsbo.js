@@ -855,26 +855,17 @@ class agents extends baseModelbo {
 
         this.db['users'].findAll({where: where})
             .then(agents => {
-                let formattedData = agents.map(user => {
-                    let {sip_device, first_name, last_name, user_id, campaign_id} = user;
-                    return {
-                        user_id: user_id,
-                        first_name: first_name,
-                        last_name: last_name,
-                        uuid: sip_device.uuid,
-                        crmStatus: user.params.status,
-                        telcoStatus: sip_device.status,
-                        updated_at: sip_device.updated_at,
-                        campaign_id: campaign_id
-                    };
+                this.verifyTokenAgents(agents).then((result) => {
+                    res.send({
+                        status: "200",
+                        message: "success",
+                        data: result
+                    })
+                }).catch(err => {
+                    return _this.sendResponseError(res, ['Error.cannotVerifyToken', err], 1, 403);
                 })
-                res.send({
-                    status: "200",
-                    message: "success",
-                    data: formattedData
-                })
-            })
-            .catch(err => {
+
+            }).catch(err => {
                 return _this.sendResponseError(res, ['Error.cannot fetch list agents', err], 1, 403);
             })
     }
