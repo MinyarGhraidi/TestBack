@@ -1,4 +1,5 @@
 const {baseModelbo} = require('./basebo');
+const appSocket = new (require("../providers/AppSocket"))();
 
 class agent_log_events extends baseModelbo {
     constructor() {
@@ -22,10 +23,25 @@ class agent_log_events extends baseModelbo {
                 return _this.sendResponseError(res, ['Error.cannot Fetch data from DB', err], 1, 403);
             })
     }
-    getLastEventParam(user_id){
+    getLastEventParam(user,campaign_id){
         return new Promise((resolve,reject)=>{
-            this.db['agent_log_events'].findAll({where : {active: 'Y', user_id : user_id}, order: [['agent_log_event_id', 'DESC']]})
-                .then(events => resolve(events[0]))
+            this.db['agent_log_events'].findAll({where : {active: 'Y', user_id : user.user_id}, order: [['agent_log_event_id', 'DESC']]})
+                .then(events => {
+                    let data_agent = {
+                        user_id: user.user_id,
+                        first_name: user.first_name,
+                        last_name: user.last_name,
+                        uuid: user.sip_device.uuid,
+                        crmStatus: user.params.status,
+                        telcoStatus: user.sip_device.status,
+                        timerStart: events[0].start_at,
+                        campaign_id: campaign_id,
+                        account_id : user.account_id
+                    };
+                    appSocket.emit('agent_connection', data_agent);
+                    appSocket.emit('campaign_updated', {user_id : user.user_id, campaign_id : campaign_id});
+                    resolve(true)
+                })
                 .catch(err => reject(err))
         })
     }

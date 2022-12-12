@@ -184,6 +184,9 @@ class users extends baseModelbo {
                                                 }
                                                 let accountcode = account.account_code;
                                                 if (user_info && user_info.roles_crm && (user_info.roles_crm.value === 'admin' || user_info.roles_crm.value === 'superadmin' || user_info.roles_crm.value === 'user')) {
+                                                    if(!!!user.role_id && user_info.roles_crm.value === 'user'){
+                                                        return this.sendResponseError(res, ['Error.UserWithoutRole'], 1, 403);
+                                                    }
                                                     const token = jwt.sign({
                                                         user_id: user.user_id,
                                                         username: user.username,
@@ -327,7 +330,6 @@ class users extends baseModelbo {
                 })
         })
     }
-
 
     generateUniqueUsernameFunction() {
         return new Promise((resolve, reject) => {
@@ -601,7 +603,8 @@ class users extends baseModelbo {
                                 }).catch(err => {
                                 return _this.sendResponseError(res, ['Error.AnErrorHasOccurredSaveUser', err], 1, 403);
                             })
-                        } else {
+                        }
+                        else {
                             this.db['users'].findOne({
                                 where: {active: 'Y'},
                                 order: [['user_id', 'DESC']]
@@ -658,6 +661,52 @@ class users extends baseModelbo {
             })
     }
 
+    updateAcc(req,res,next){
+        let {first_name,last_name,email,password_hash,user_id} = req.body;
+        this.db['users'].findOne({where : {user_id : user_id , active : 'Y'}}).then(user=>{
+            if(password_hash){
+                    let UserPass = {
+                        user_id : user.user_id,
+                        first_name : user.first_name,
+                        last_name : user.last_name,
+                        email : user.email,
+                        password_hash
+                    }
+                    this.updateCredentials(UserPass).then(UpdatedAcc=>{
+                        UpdatedAcc.updated_at = moment(new Date());
+                        let params = user.params;
+                        params.pass_web = password_hash;
+                        UpdatedAcc.params = params;
+                        this.db['users'].update(UpdatedAcc,{where : {user_id : user.user_id}}).then(()=>{
+                            res.send({
+                                message: 'success',
+                                status : 200
+                            })
+                        })
+                    }).catch(err=> {
+                        return this.sendResponseError(res, ['Error.CannotUpdatePasswordUser'], 1, 403)
+                    });
+            }else{
+                let User = {
+                    first_name,
+                    last_name,
+                    email,
+                    updated_at : moment(new Date())
+                }
+                this.db['users'].update(User,{where : {user_id : user_id}}).then(()=>{
+                    this.db['accounts'].update(User,{where : {account_id : user.account_id}}).then(()=>{
+                        res.send({
+                            message: 'success',
+                            status : 200
+                        })
+                    })
+                }).catch(err =>{
+                    this.sendResponseError(res,['Error.CannotUpdateUser'],1,403)
+                })
+            }
+        })
+
+    }
     saveUserFunction(user, AddedFields = [], isBulk = false, uuidAgent = null) {
         return new Promise((resolve, reject) => {
             if (user.user_id) {
@@ -811,7 +860,7 @@ class users extends baseModelbo {
         const token = req.body.token || null;
         jwt.verify(token, config.secret, (err, data) => {
             if(!err){
-                this.db['users'].findOne({where: {current_session_token: token, active: 'Y'}})
+                this.db['users'].findOne({where: {current_session_token: token, active: 'Y',status :'Y'}})
                     .then((result) => {
                         res.send({
                             success: !!!!result,

@@ -1074,97 +1074,94 @@ class campaigns extends baseModelbo {
             let user = response.dataValues;
             let oldUuidAgent = user.sip_device.uuid;
             let oldCampaignId = user.campaign_id;
-            this.db.campaigns.findOne({where :{campaign_id: campaign_id}}).then((response) => {
-                let NewCampaign = response.dataValues;
-                let agents = NewCampaign.agents;
-                let NewCampaignUUidQueue = NewCampaign.params.queue.uuid;
-                let _agents = (agents ? agents : []);
-                _agents.push(user_id)
-                let tiers = {tiers: [{
-                        agent_uuid: oldUuidAgent,
-                        tier_level: 1,
-                        tier_position: 1
-                    }]};
-                this.addToQueue(tiers, NewCampaignUUidQueue).then(() => {
-                    let dataUpdateUser = {
-                        isAssigned: true,
-                        campaign_id: campaign_id,
-                        updated_at : updated_at,
-                    }
-                    this.db['users'].update(dataUpdateUser, {
-                        where: {
-                            user_id: user_id,
-                            active: 'Y'
+            if(campaign_id === oldCampaignId){
+                res.send({
+                    success : true,
+                    message : 'Done !'
+                })
+            }else{
+                this.db.campaigns.findOne({where :{campaign_id: campaign_id}}).then((response) => {
+                    let NewCampaign = response.dataValues;
+                    let agents = NewCampaign.agents;
+                    let NewCampaignUUidQueue = NewCampaign.params.queue.uuid;
+                    let _agents = (agents ? agents : []);
+                    _agents.push(user_id)
+                    let tiers = {tiers: [{
+                            agent_uuid: oldUuidAgent,
+                            tier_level: 1,
+                            tier_position: 1
+                        }]};
+                    this.addToQueue(tiers, NewCampaignUUidQueue).then(() => {
+                        let dataUpdateUser = {
+                            isAssigned: true,
+                            campaign_id: campaign_id,
+                            updated_at : updated_at,
                         }
-                    }).then(() => {
-                        this.db.campaigns.update({agents: _agents, updated_at : updated_at}, {
+                        this.db['users'].update(dataUpdateUser, {
                             where: {
-                                active: 'Y',
-                                campaign_id: campaign_id
+                                user_id: user_id,
+                                active: 'Y'
                             }
                         }).then(() => {
-                            if (oldCampaignId) {
-                                this.db.campaigns.findOne({where : {campaign_id: oldCampaignId}}).then((response) => {
-                                    let oldCampaign = response.dataValues;
-                                    let oldCampaignUuidQueue = oldCampaign.params.queue.uuid;
-                                    let oldAgentsCamp = oldCampaign.agents;
-                                    this.deleteAgentsFromQueue(oldAgentsCamp, oldCampaignUuidQueue, {agents: [oldUuidAgent]}).then(() => {
-                                        let index = oldAgentsCamp.indexOf(user_id);
-                                        if(index !== -1){
-                                            oldAgentsCamp.splice(index,1);
-                                        }
-                                        this.db.campaigns.update({agents: oldAgentsCamp, updated_at : updated_at}, {
-                                            where: {
-                                                active: 'Y',
-                                                campaign_id: oldCampaign.campaign_id
+                            this.db.campaigns.update({agents: _agents, updated_at : updated_at}, {
+                                where: {
+                                    active: 'Y',
+                                    campaign_id: campaign_id
+                                }
+                            }).then(() => {
+                                if (oldCampaignId) {
+                                    this.db.campaigns.findOne({where : {campaign_id: oldCampaignId}}).then((response) => {
+                                        let oldCampaign = response.dataValues;
+                                        let oldCampaignUuidQueue = oldCampaign.params.queue.uuid;
+                                        let oldAgentsCamp = oldCampaign.agents;
+                                        this.deleteAgentsFromQueue(oldAgentsCamp, oldCampaignUuidQueue, {agents: [oldUuidAgent]}).then(() => {
+                                            let index = oldAgentsCamp.indexOf(user_id);
+                                            if(index !== -1){
+                                                oldAgentsCamp.splice(index,1);
                                             }
-                                        }).then(() => {
-                                            _agent_log_eventsbo.getLastEventParam(user_id).then((event)=>{
-                                                let data_agent = {
-                                                    user_id: user_id,
-                                                    first_name: user.first_name,
-                                                    last_name: user.last_name,
-                                                    uuid: user.sip_device.uuid,
-                                                    crmStatus: user.params.status,
-                                                    telcoStatus: user.sip_device.status,
-                                                    timerStart: event.start_at,
-                                                    campaign_id: campaign_id,
-                                                    account_id : user.account_id
-                                                };
-                                                appSocket.emit('agent_connection', data_agent);
-                                                appSocket.emit('campaign_updated', {user_id : user_id, campaign_id : campaign_id});
-                                                res.send({
-                                                    status: 200,
-                                                    message: "success"
-                                                })
+                                            this.db.campaigns.update({agents: oldAgentsCamp, updated_at : updated_at}, {
+                                                where: {
+                                                    active: 'Y',
+                                                    campaign_id: oldCampaign.campaign_id
+                                                }
+                                            }).then(() => {
+                                                _agent_log_eventsbo.getLastEventParam(user,campaign_id).then((event)=>{
+                                                    res.send({
+                                                        status: 200,
+                                                        message: "success"
+                                                    })
+                                                }).catch(err => this.sendResponseError(res,['ErrorCannotGetLastAction/EmitEvents'],1,403))
+                                            }).catch((err) => {
+                                                this.sendResponseError(res, ['Error.CannotUpdateOldCampaign'], 0, 403);
                                             })
                                         }).catch((err) => {
-                                            this.sendResponseError(res, ['Error.CannotUpdateOldCampaign'], 0, 403);
+                                            this.sendResponseError(res, ['Error.CannotdeleteAgentFromQueue'], 0, 403);
                                         })
                                     }).catch((err) => {
-                                        this.sendResponseError(res, ['Error.CannotdeleteAgentFromQueue'], 0, 403);
+                                        this.sendResponseError(res, ['Error.CannotFindOldCampaign'], 0, 403);
                                     })
-                                }).catch((err) => {
-                                    this.sendResponseError(res, ['Error.CannotFindOldCampaign'], 0, 403);
-                                })
-                            } else {
-                                res.send({
-                                    status: 200,
-                                    message: "success"
-                                })
-                            }
+                                } else {
+                                    _agent_log_eventsbo.getLastEventParam(user,campaign_id).then((event)=>{
+                                        res.send({
+                                            status: 200,
+                                            message: "success"
+                                        })
+                                    }).catch(err => this.sendResponseError(res,['ErrorCannotGetLastAction/EmitEvents'],1,403))
+                                }
+                            }).catch((err) => {
+                                this.sendResponseError(res, ['Error.CannotUpdateNewCampaign'], 0, 403);
+                            })
                         }).catch((err) => {
-                            this.sendResponseError(res, ['Error.CannotUpdateNewCampaign'], 0, 403);
+                            this.sendResponseError(res, ['Error.CannotUpdateUser'], 0, 403);
                         })
                     }).catch((err) => {
-                        this.sendResponseError(res, ['Error.CannotUpdateUser'], 0, 403);
+                        this.sendResponseError(res, ['Error.CannotAddAgentToQueue'], 0, 403);
                     })
                 }).catch((err) => {
-                    this.sendResponseError(res, ['Error.CannotAddAgentToQueue'], 0, 403);
+                    this.sendResponseError(res, ['Error.CannotFindNewCampaign'], 0, 403);
                 })
-            }).catch((err) => {
-                this.sendResponseError(res, ['Error.CannotFindNewCampaign'], 0, 403);
-            })
+            }
+
         }).catch((err) => {
             this.sendResponseError(res, ['Error.CannotFindUser'], 0, 403);
         })

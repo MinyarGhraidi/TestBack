@@ -1,9 +1,9 @@
 const moment = require('moment');
 const jwt = require('jsonwebtoken');
 const config = require('../config/config.json');
-const db = require('../models');
 const diff = require("deep-object-diff").diff;
 const Sequelize = require('sequelize');
+const appSocket = new (require('../providers/AppSocket'))();
 
 class baseModelbo {
     request = null;
@@ -75,11 +75,11 @@ class baseModelbo {
                         });
                     });
                 })
-                }).catch(err => {
-                    res.status(500).json(err)
-                }
-            )
-        }
+            }).catch(err => {
+                res.status(500).json(err)
+            }
+        )
+    }
 
     findByEncodeId(req, res, next) {
         let params = req.params.params;
@@ -234,52 +234,18 @@ class baseModelbo {
             })
         })
     }
-    deleteRoleCascade(role_id){
-        return new Promise((resolve, reject)=> {
+
+    deleteRoleCascade(role_id) {
+        return new Promise((resolve, reject) => {
             this.db['roles'].findOne({where: {role_id: role_id, active: 'Y'}})
                 .then(role => {
                     if (role) {
-                        let roles_name = ['sales','user'];
-                        const roles_ids = [];
-                        this.db['roles_crms'].findAll({
-                            where: {
-                                active: 'Y',
-                                value: {
-                                    in: roles_name
-                                }
-                            }
-                        }).then((roles_crm) => {
-                            roles_crm.map((role)=>{
-                                roles_ids.push(role.id);
-                            });
-                            this.db['users'].update({status: 'N', role_id : null}, {
-                                where: {
-                                    role_crm_id: {
-                                        in : roles_ids
-                                    },
-                                    role_id: role.role_id,
-                                    active: 'Y'
-                                }
-                            }).then(() => {
-                                this.db['roles'].update({active: 'N'}, {
-                                    where: {
-                                        role_id: role_id,
-                                    }
-                                }).then(() => {
-                                   resolve(true);
-                                }).catch(err => {
-                                    reject(err);
-                                })
-                            })
-                        }).catch(err => {
-                            reject(err);
-                        });
+                        this.updateRoleAndUserToken(role_id, 'delete').then(() => {
+                                resolve(true);
+                        }).catch(err => reject(err))
                     }
-                }).catch(err => {
-                reject(err);
-            })
+                });
         })
-
     }
 
     deleteCascade(req, res, next) {
@@ -299,7 +265,7 @@ class baseModelbo {
                 })
                 break
             case 'roles' :
-                this.deleteRoleCascade(_id).then(()=>{
+                this.deleteRoleCascade(_id).then(() => {
                     res.json({
                         success: true,
                         messages: 'deleted'
@@ -654,6 +620,93 @@ class baseModelbo {
         })
     }
 
+    updateUserToken(user_id,action,sip_device ={}){
+        return new Promise((resolve,reject)=>{
+            let updatedUser = {current_session_token: null}
+            switch(action){
+                case 'delete' : {
+                    updatedUser.active = 'N';
+                    break;
+                }
+                case 'Y' : {
+                    updatedUser = {status : 'Y',updated_at : moment(new Date()),sip_device : sip_device};
+                    break;
+                }
+                case 'N' : {
+                    updatedUser.status = 'N';
+                    updatedUser.updated_at = moment(new Date());
+                    updatedUser.sip_device = sip_device;
+                    break;
+                }
+            }
+            this.db['users'].update(updatedUser,{where : {user_id : user_id, active : 'Y'}}).then(()=>{
+                appSocket.emit('reload.Permission', {user_id: user_id});
+                resolve(true);
+            }).catch(err=>reject(err))
+        })
+    }
+    updateRoleAndUserToken(role_id, action , editRole = {}) {
+        return new Promise((resolve, reject) => {
+            let updatedUser = {current_session_token: null};
+            let updatedRole = {}
+            let whereUser = {role_id: role_id, active: 'Y'}
+            switch (action) {
+                case 'delete' : {
+                    updatedUser.role_id = null;
+                    updatedUser.status = 'N';
+                    updatedRole.active = 'N';
+                    whereUser.status = 'Y';
+                    break;
+                }
+                case 'N' : { // N means disable & Y for enable (status)
+                    updatedUser.status = 'N';
+                    updatedRole.status = 'N';
+                    whereUser.status = 'Y';
+                    break;
+                }
+                case 'Y' : {
+                    updatedUser.status = 'Y';
+                    updatedRole.status = 'Y';
+                    whereUser.status = 'N';
+                    break;
+                }
+                case 'edit' : {
+                    updatedRole = editRole;
+                }
+            }
+            this.db['users'].findAll({where: whereUser}).then(users => {
+                let UsersIds = [];
+                if (users && users.length !== 0) {
+                    users.map((user) => UsersIds.push(user.user_id));
+                } else {
+                    resolve(true)
+                }
+                this.db['users'].update(updatedUser, {where: {user_id: UsersIds}}).then(() => {
+                    this.db['roles'].update(updatedRole, {where: {role_id: role_id}}).then(()=> {
+                        if (UsersIds && UsersIds.length !== 0) {
+                            let index = 0;
+                            UsersIds.forEach(user_id => {
+                                appSocket.emit('reload.Permission', {user_id: user_id});
+                                if (index < UsersIds.length - 1) {
+                                    index++;
+                                } else {
+                                    resolve({
+                                        success: true
+                                    })
+                                }
+                            })
+                        } else {
+                            resolve({
+                                success: true
+                            })
+                        }
+                    }).catch(err=>reject(err))
+                })
+            }).catch(err => reject(err))
+
+        })
+
+    }
 }
 
 

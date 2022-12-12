@@ -448,8 +448,7 @@ class agents extends baseModelbo {
                             .get(`${base_url_cc_kam}api/v1/subscribers/${subscriber_uuid}`, call_center_authorization).then((resp_sub) => {
                             axios
                                 .delete(`${base_url_cc_kam}api/v1/subscribers/${subscriber_uuid}`, call_center_authorization).then((resp) => {
-                                this.db['users'].update({active: 'N'}, {where: {user_id: user_id}})
-                                    .then(() => {
+                                    this.updateUserToken(user_id,'delete').then(()=>{
                                         this.db['meetings'].update({active: 'N'}, {
                                             where: {
                                                 $or: [
@@ -468,10 +467,7 @@ class agents extends baseModelbo {
                                             .catch((err) => {
                                                 reject(err);
                                             });
-                                    })
-                                    .catch((err) => {
-                                        reject(err);
-                                    });
+                                    }).catch(err=>reject(err))
                             }).catch((err) => {
                                 reject(err);
                             })
@@ -515,24 +511,14 @@ class agents extends baseModelbo {
                     .put(`${base_url_cc_kam}api/v1/agents/${uuid}`, data_update, call_center_authorization).then((resp) => {
                     sip_device.enabled = status === 'Y';
                     sip_device.updated_at = new Date();
-                    let updated_Status = {
-                        status: status,
-                        updated_at: new Date(),
-                        sip_device: sip_device
-                    }
-                    this.db['users'].update(updated_Status, {
-                        where: {
-                            user_id: user_id,
-                            active: 'Y'
-                        }
-                    }).then(() => {
+                    this.updateUserToken(user_id,status,sip_device).then(()=>{
                         res.send({
                             status: 200,
                             message: "success",
                             success: true
                         })
                     }).catch(err => {
-                        return this.sendResponseError(res, ['Error.CannotUpdateUserDB'], 0, 403);
+                        return this.sendResponseError(res, ['Error.CannotUpdateUser'], 0, 403);
                     });
                 }).catch((err) => {
                     return this.sendResponseError(res, ['Error.CannotUpdateTelcoAgent'], 0, 403);
@@ -838,7 +824,7 @@ class agents extends baseModelbo {
     filterDashboard(req, res, next) {
         let _this = this;
         let {account_id, campaign_id, agent_id, status, roleCrmAgent} = req.body;
-        let where = {active: 'Y', account_id: account_id, role_crm_id: roleCrmAgent}
+        let where = {active: 'Y', account_id: account_id, role_crm_id: roleCrmAgent , current_session_token: {[Op.not]: null}}
 
         if (campaign_id) {
             where.campaign_id = campaign_id;
@@ -851,7 +837,6 @@ class agents extends baseModelbo {
         if (status) {
             where.params = {"status": status}
         }
-
 
         this.db['users'].findAll({where: where})
             .then(agents => {
