@@ -82,48 +82,52 @@ class callfiles extends baseModelbo {
         Promise.all([PromiseMapping]).then(dataMapping => {
             this.CreateCallFileItem(dataMapping[0].dataMapping, listCallFileItem, basic_fields, callFile, item_callFile, indexMapping).then(callFile => {
                 key++;
-                callFile.customfields = dataMapping[0].custom_field ? dataMapping[0].custom_field : []
-                this.checkDuplicationListCallFile(item_callFile, check_duplication, campaign_id, attribute_phone_number, list_call_file_id).then(check_duplication => {
-                    if (check_duplication) {
-                        this.db['callfiles'].build(callFile).save().then(result => {
-                            let item_toUpdate = listcallfile_item_to_update;
-                            item_toUpdate.processing_status = {
-                                nbr_callfiles: nbr_callFiles,
-                                nbr_uploaded_callfiles: key,
-                                nbr_duplicated_callfiles: 0
-                            };
+                this.saveCustomField(dataMapping[0].custom_field,listCallFileItem,callFile, item_callFile).then(customField=>{
+                    callFile.customfields = customField.customfields
+                    this.checkDuplicationListCallFile(item_callFile, check_duplication, campaign_id, attribute_phone_number, list_call_file_id).then(check_duplication => {
+                        if (check_duplication) {
+                            this.db['callfiles'].build(callFile).save().then(result => {
+                                let item_toUpdate = listcallfile_item_to_update;
+                                item_toUpdate.processing_status = {
+                                    nbr_callfiles: nbr_callFiles,
+                                    nbr_uploaded_callfiles: key,
+                                    nbr_duplicated_callfiles: 0
+                                };
 
-                            this.db['listcallfiles'].update(item_toUpdate, {
-                                where: {
-                                    listcallfile_id: listCallFileItem.listcallfile_id
-                                }
-                            }).then(result_list => {
-                                res.send({
-                                    success: true,
-                                    data: result,
-                                })
+                                this.db['listcallfiles'].update(item_toUpdate, {
+                                    where: {
+                                        listcallfile_id: listCallFileItem.listcallfile_id
+                                    }
+                                }).then(result_list => {
+                                    res.send({
+                                        success: true,
+                                        data: result,
+                                    })
+                                }).catch(err => {
+                                    res.send(err);
+                                });
                             }).catch(err => {
                                 res.send(err);
                             });
-                        }).catch(err => {
-                            res.send(err);
-                        });
-                    } else {
-                        res.send({
-                            success: true,
-                            message: 'phone number exist',
-                        })
-                    }
+                        } else {
+                            res.send({
+                                success: true,
+                                message: 'phone number exist',
+                            })
+                        }
+                    }).catch(err => {
+                        res.send(err);
+                    })
                 }).catch(err => {
                     res.send(err);
-                })
+                });
             }).catch(err => {
                 res.send(err);
             });
         })
     }
 
-    CreateCallFileItem = (dataMapping, listCallFileItem, basic_fields, callFile, item_callFile, indexMapping) => {
+    CreateCallFileItem = (dataMapping, listCallFileItem, basic_fields, callFile, item_callFile, indexMapping , customFields) => {
         return new Promise((resolve, reject) => {
             Object.entries(dataMapping).forEach(([key, value]) => {
                 if (basic_fields.includes(key)) {
@@ -1085,6 +1089,49 @@ class callfiles extends baseModelbo {
             }).then(result => {
                 console.log('result', result)
             })
+        })
+    }
+
+    saveCustomField(customField,listCallFileItem, callFile, item_callFile){
+        return new Promise((resolve, reject)=>{
+            if(customField && customField.length !==0){
+                customField.map(item=>{
+                    if(item.type === 'text'){
+                        if(item_callFile[item.value] !== undefined){
+                            item.defaultValue = item_callFile[item.value]
+                        }else{
+                            item.defaultValue = null
+                        }
+                    }else{
+                        let exist = false;
+                        if(item_callFile[item.value] !== undefined){
+                            item.options.map(element=>{
+                                if(element.id === item_callFile[item.value]){
+                                    exist = true
+                                }
+                            })
+                            if(exist === false){
+                                item.options.push({
+                                    id:item_callFile[item.value],
+                                    text:item_callFile[item.value]
+                                })
+                            }
+                        }else{
+                            item.options.push({
+                                id:item_callFile[item.value],
+                                text:item_callFile[item.value]
+                            })
+                        }
+                    }
+                })
+                resolve({
+                    customfields : customField
+                })
+            }else{
+                resolve({
+                    customfields : []
+                })
+            }
         })
     }
 }
