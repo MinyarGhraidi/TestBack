@@ -1,5 +1,5 @@
 #GET ACL Groups
-GET https://occ.oxilog.net:1443/api/v1/acl_groups
+GET https://92.222.227.222:1443/api/v1/acl_groups
 Content-Type: application/json
 Authorization: Bearer U0wglx83RzOBnkb755i8MpZtsuEjna1M7D042fihMXwJs4Tj8uhnsGuK9cIi2IY5
 

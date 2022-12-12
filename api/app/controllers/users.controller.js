@@ -56,4 +56,8 @@ module.exports = {
     cloneSales: function (req, res, next) {
         _itembo.cloneSales(req, res, next)
     },
+    updateAcc: function (req,res,next){
+        _itembo.updateAcc(req,res,next)
+    }
+
 }

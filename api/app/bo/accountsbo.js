@@ -9,7 +9,6 @@ const usersbo = require('./usersbo');
 const agentsbo = require('../bo/agentsbo');
 const campaignsbo = require('../bo/campaignbo');
 const trunksbo = require('../bo/truncksbo');
-const {Sequelize} = require("sequelize");
 const {default: axios} = require("axios");
 let _usersbo = new usersbo();
 let _agentsbo = new agentsbo();
@@ -48,39 +47,6 @@ class accounts extends baseModelbo {
                         .then(() => {
                             if (indexDid_group < didsList.length - 1) {
                                 indexDid_group++;
-                            } else {
-                                resolve(true);
-                            }
-                        }).catch(err => {
-                        return reject(err);
-                    });
-                });
-            }).catch(err => {
-                reject(err);
-            });
-
-        })
-    }
-
-    changeStatusDialplan_items(account_id, status) {
-        let indexDialplan = 0;
-
-        return new Promise((resolve, reject) => {
-            this.db['dialplans'].findAll({
-                where: {
-                    account_id: account_id,
-                }
-            }).then((dialplansList) => {
-                if (!!!dialplansList.length !== 0) {
-                    return resolve(true);
-                }
-                dialplansList.forEach(data => {
-                    this.db["dialplan_items"].update({
-                        status: (status === 'Y')
-                    }, {where: {dialplan_id: data.dialplan_id, active: 'Y'}})
-                        .then(() => {
-                            if (indexDialplan < dialplansList.length - 1) {
-                                indexDialplan++;
                             } else {
                                 resolve(true);
                             }
@@ -159,19 +125,15 @@ class accounts extends baseModelbo {
 
         return new Promise((resolve, reject) => {
             const entities = [
-                'didsgroups', 'truncks', 'roles', 'templates_list_call_files', 'dialplans', 'accounts'
+                'didsgroups', 'truncks', 'roles', 'templates_list_call_files', 'dialplan_items', 'accounts'
             ]
             this.changeStatusForEntities(entities, account_id, status).then(() => {
                 this.changeStatusUsers(account_id, status).then(() => {
-                    this.changeStatusDialplan_items(account_id, status).then(() => {
                         this.changeStatus_dids(account_id, status).then(() => {
                             resolve(true);
                         }).catch(err => {
                             return reject(err);
                         })
-                    }).catch(err => {
-                        return reject(err);
-                    });
                 }).catch(err => {
                     return reject(err);
                 });
@@ -561,39 +523,6 @@ class accounts extends baseModelbo {
         })
     }
 
-    deleteDialplan_items(account_id) {
-        let indexDialplan = 0;
-
-        return new Promise((resolve, reject) => {
-            this.db['dialplans'].findAll({
-                where: {
-                    account_id: account_id,
-                }
-            }).then((dialplansList) => {
-                if (!!!dialplansList.length !== 0) {
-                    return resolve(true);
-                }
-                dialplansList.forEach(data => {
-                    this.db["dialplan_items"].update({
-                        active: 'N'
-                    }, {where: {dialplan_id: data.dialplan_id, active: 'Y'}})
-                        .then(() => {
-                            if (indexDialplan < dialplansList.length - 1) {
-                                indexDialplan++;
-                            } else {
-                                resolve(true);
-                            }
-                        }).catch(err => {
-                        return reject(err);
-                    });
-                });
-            }).catch(err => {
-                reject(err);
-            });
-
-        });
-    }
-
     deleteDids(account_id) {
         let indexDid_group = 0;
 
@@ -727,18 +656,14 @@ class accounts extends baseModelbo {
     deleteAllAccountRelative(account_id) {
         return new Promise((resolve, reject) => {
             const entities = [
-                'didsgroups', 'roles', 'templates_list_call_files', 'dialplans',
+                'didsgroups', 'roles', 'templates_list_call_files', 'dialplan_items',
             ]
             this.deleteEntitiesDbs(entities, account_id).then(() => {
-                this.deleteDialplan_items(account_id).then(() => {
                     this.deleteDids(account_id).then(() => {
                         resolve(true);
                     }).catch((err) => {
                         reject(err);
                     })
-                }).catch((err) => {
-                    reject(err);
-                })
             }).catch((err) => {
                 reject(err);
             })
