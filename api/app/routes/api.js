@@ -57,6 +57,7 @@ TemplateListCallFile = require('../controllers/templateList.controller');
 DomainController = require('../controllers/domain.controller');
 AclController = require('../controllers/acl.controller');
 AclNodesController = require('../controllers/acl_nodes.controller');
+ServersController = require('../controllers/server.controller');
 
 let apiRouters = function (passport) {
 
@@ -373,6 +374,14 @@ let apiRouters = function (passport) {
     router.post('/api/acl_nodes/find',passport.authenticate('jwt', {session: false}), AclNodesController.find);
     router.put('/api/acl_nodes/update',passport.authenticate('jwt', {session: false}), AclNodesController.updateAclNode);
     router.delete('/api/acl_nodes/delete/:acl_node_id',passport.authenticate('jwt', {session: false}), AclNodesController.deleteAclNode);
+
+//--------------------> SERVERS API
+
+    router.post('/api/server/save',passport.authenticate('jwt', {session: false}), ServersController.addServer);
+    router.post('/api/server/find',passport.authenticate('jwt', {session: false}), ServersController.find);
+    router.get('/api/server/findById/:entity_id', passport.authenticate('jwt', {session: false}), ServersController.findById);
+    router.put('/api/server/update',passport.authenticate('jwt', {session: false}), ServersController.editServer);
+    router.delete('/api/server/delete/:server_id',passport.authenticate('jwt', {session: false}), ServersController.deleteServer);
     return router;
 
 
