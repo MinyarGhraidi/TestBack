@@ -58,6 +58,10 @@ module.exports = {
     },
     updateAcc: function (req,res,next){
         _itembo.updateAcc(req,res,next)
+    },
+    GenerateUserNameFromLastUser : function (req,res,next){
+        _itembo.GenerateUserNameFromLastUser(req,res,next)
     }
+
 
 }

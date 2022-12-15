@@ -115,6 +115,7 @@ let apiRouters = function (passport) {
     router.delete("/api/user/delete/:params", passport.authenticate('jwt', {session: false}), usersController.delete);
     router.post("/api/user/save", passport.authenticate('jwt', {session: false}), usersController.save);
     router.post("/api/user/verifyToken", passport.authenticate('jwt', {session: false}), usersController.verifyToken);
+    router.post("/api/user/GenerateUserNameFromLastUser", passport.authenticate('jwt', {session: false}), usersController.GenerateUserNameFromLastUser);
 
     router.post("/api/user/signin", usersController.signIn);
     router.post("/api/user/getUserByToken", passport.authenticate('jwt', {session: false}), usersController.getUserByToken);

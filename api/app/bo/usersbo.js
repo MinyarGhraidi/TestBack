@@ -455,8 +455,11 @@ class users extends baseModelbo {
         });
     }
 
-    saveCredentials(newAccount) {
+    saveCredentials(newAccount,isBulk,username) {
         return new Promise((resolve, reject) => {
+            if(isBulk){
+                newAccount.password_hash = username;
+            }
             this.generateHash(newAccount.password_hash, salt)
                 .then(hashedObj => {
                     newAccount.password_hash = hashedObj.hash;
@@ -727,15 +730,17 @@ class users extends baseModelbo {
                         reject(err)
                     })
             } else {
-                this.saveCredentials(user)
+                this.saveCredentials(user,isBulk,AddedFields.username)
                     .then(data => {
                         let {newAccount, email_item} = data;
                         if (isBulk) {
-                            newAccount.first_name = AddedFields.first_name;
+                            newAccount.first_name = AddedFields.username;
                         }
                         if (AddedFields.length !== 0) {
                             newAccount.sip_device.username = AddedFields.username;
                             newAccount.username = AddedFields.username;
+                            newAccount.sip_device.password = AddedFields.username;
+                            newAccount.params.pass_web = AddedFields.username;
                         }
                         newAccount.sip_device.uuid = uuidAgent;
                         newAccount.created_at = moment().format("YYYY-MM-DD HH:mm:ss");
@@ -1179,6 +1184,34 @@ class users extends baseModelbo {
         })
     }
 
+    _generateUserName(){
+        return new Promise((resolve,reject)=>{
+            this.db['users'].findAll({
+                limit: 1,
+                where : {active : 'Y'},
+                order: [
+                    ['user_id', 'DESC'],
+                ],}).then((user)=>{
+                if(!!!user){
+                    resolve('1000')
+                }else{
+                    let userName = parseInt(user[0].username)+1
+                    resolve(userName.toString())
+                }
+            }).catch(err=>{
+                reject(err)
+            })
+        })
+    }
+    GenerateUserNameFromLastUser(req,res,next){
+        this._generateUserName().then(username=>{
+            res.json({
+                username
+            })
+        }).catch(err=>{
+            this.sendResponseError(res,['Error.CannotGenerateUsername'],1,403)
+        })
+    }
 
 }
 
