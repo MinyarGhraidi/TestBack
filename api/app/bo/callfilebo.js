@@ -30,6 +30,7 @@ class callfiles extends baseModelbo {
         let check_duplication = req.body.callFiles_options.data_listCallFileItem.check_duplication
         let attribute_phone_number = req.body.attribute_phone_number
         let list_call_file_id = listCallFileItem.listcallfile_id;
+        let custom_fields_list_call_file=req.body.custom_fields
         let callFile = {};
         callFile.listcallfile_id = listCallFileItem.listcallfile_id;
         callFile.status = 0;
@@ -72,6 +73,7 @@ class callfiles extends baseModelbo {
                 })
             } else {
                 dataMapping = listCallFileItem.mapping;
+                custom_field =custom_fields_list_call_file;
                 resolve({
                     dataMapping: dataMapping,
                     custom_field: custom_field
@@ -172,12 +174,19 @@ class callfiles extends baseModelbo {
 
     saveListCallFile = (req, res, next) => {
         let user_id = req.body.user_id;
-        let attribute_phone_number = req.body.phone_number
+        let attribute_phone_number = req.body.phone_number;
+        let custom_fields=[]
+        if(req.body.custom_field){
+             custom_fields = req.body.custom_field;
+        }
         let CallFile = req.body;
         delete CallFile.phone_number;
         delete CallFile.user_id;
+        if(req.body.custom_field){
+            delete CallFile.custom_field;
+        }
         this.db['listcallfiles'].build(CallFile).save().then(save_list => {
-            this.LoadCallFile(save_list.listcallfile_id, user_id, attribute_phone_number).then(result => {
+            this.LoadCallFile(save_list.listcallfile_id, user_id, attribute_phone_number,custom_fields).then(result => {
                 if (result.success) {
                     res.send({
                         success: true
@@ -189,14 +198,14 @@ class callfiles extends baseModelbo {
                 }
 
             }).catch(err => {
-
+                return this.sendResponseError(res, ['Error', err], 1, 403);
             })
         }).catch(err => {
-
+            return this.sendResponseError(res, ['Error', err], 1, 403);
         })
     }
 
-    LoadCallFile = (listcallfile_id, user_id, attribute_phone_number) => {
+    LoadCallFile = (listcallfile_id, user_id, attribute_phone_number,custom_fields) => {
         return new PromiseBB((resolve, reject) => {
             let _this = this;
             let params = {};
@@ -218,7 +227,7 @@ class callfiles extends baseModelbo {
                 },
             }).then(res_listCallFile => {
                 if (res_listCallFile && res_listCallFile.length !== 0) {
-                    _this.CallFilesInfo(res_listCallFile, params, user_id, attribute_phone_number).then(callFilesMapping => {
+                    _this.CallFilesInfo(res_listCallFile, params, user_id, attribute_phone_number,custom_fields).then(callFilesMapping => {
                         if (callFilesMapping.success) {
                             resolve({
                                 success: true,
@@ -237,7 +246,7 @@ class callfiles extends baseModelbo {
 
     }
 
-    CallFilesInfo = (res_listCallFile, params, user_id, attribute_phone_number) => {
+    CallFilesInfo = (res_listCallFile, params, user_id, attribute_phone_number,custom_fields) => {
         let _this = this;
         return new Promise((resolve, reject) => {
             let data_listCallFileItem = res_listCallFile.toJSON();
@@ -285,7 +294,7 @@ class callfiles extends baseModelbo {
                                     campaign_id: result[1].campaign_id
                                 }
                             }).then(campaign => {
-                                this.sendDataToQueue(callFiles, campaign, data_listCallFileItem, listcallfile_item_to_update, user_id, attribute_phone_number).then(send_callFile => {
+                                this.sendDataToQueue(callFiles, campaign, data_listCallFileItem, listcallfile_item_to_update, user_id, attribute_phone_number,custom_fields).then(send_callFile => {
                                     resolve({
                                         send_callFile: send_callFile,
                                         success: true
@@ -351,7 +360,7 @@ class callfiles extends baseModelbo {
         })
     }
 
-    sendDataToQueue(callFiles, campaign, data_listCallFileItem, listcallfile_item_to_update, user_id, attribute_phone_number) {
+    sendDataToQueue(callFiles, campaign, data_listCallFileItem, listcallfile_item_to_update, user_id, attribute_phone_number,custom_fields) {
         return new Promise((resolve, reject) => {
             console.log('rabbitmq_url', rabbitmq_url)
             amqp.connect(rabbitmq_url, function (error0, connection) {
@@ -382,7 +391,10 @@ class callfiles extends baseModelbo {
                         data_call.finish = callFiles.length === index;
                         data_call.user_id = user_id;
                         data_call.attribute_phone_number = attribute_phone_number;
+                        if(custom_fields && custom_fields.length !== 0){
+                            data_call.custom_fields = custom_fields
 
+                        }
                         channel.sendToQueue(queue, Buffer.from(JSON.stringify(data_call)), {type: 'save call file'});
                     }).then((all_r) => {
                         resolve({
