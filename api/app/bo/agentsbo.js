@@ -797,30 +797,39 @@ class agents extends baseModelbo {
                     _usersbo.verifyTokenParam(user.current_session_token).then((res) => {
                         if (res === true) {
                             let {sip_device, first_name, last_name, user_id, campaign_id} = user;
-                            this.db['agent_log_events'].findAll({
-                                where: {active: 'Y', user_id: user_id},
-                                order: [['agent_log_event_id', 'DESC']]
-                            })
-                                .then(events => {
-                                    Users.push({
-                                        user_id: user_id,
-                                        first_name: first_name,
-                                        last_name: last_name,
-                                        uuid: sip_device.uuid,
-                                        crmStatus: user.params.status,
-                                        telcoStatus: sip_device.status,
-                                        timerStart: events[0].start_at,
-                                        campaign_id: campaign_id
-                                    });
-                                    if (idx < agents.length - 1) {
-                                        idx++;
-                                    } else {
-                                        resolve(Users);
-                                    }
-                                })
-                                .catch(err => {
+                            if(user.params.status === 'logged-out'){
+                                this.db['users'].update({current_session_token: null}, {where: {user_id: user.user_id}}).then(() => {
+                                    idx++;
+                                }).catch(err => {
                                     reject(err)
                                 })
+                            }else{
+                                this.db['agent_log_events'].findAll({
+                                    where: {active: 'Y', user_id: user_id},
+                                    order: [['agent_log_event_id', 'DESC']]
+                                })
+                                    .then(events => {
+                                        Users.push({
+                                            user_id: user_id,
+                                            first_name: first_name,
+                                            last_name: last_name,
+                                            uuid: sip_device.uuid,
+                                            crmStatus: user.params.status,
+                                            telcoStatus: sip_device.status,
+                                            timerStart: events[0].start_at,
+                                            campaign_id: campaign_id
+                                        });
+                                        if (idx < agents.length - 1) {
+                                            idx++;
+                                        } else {
+                                            resolve(Users);
+                                        }
+                                    })
+                                    .catch(err => {
+                                        reject(err)
+                                    })
+                            }
+
                         } else {
                             this.db['users'].update({current_session_token: null}, {where: {user_id: user.user_id}}).then(() => {
                                 idx++;
