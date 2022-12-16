@@ -5,7 +5,7 @@ const EFile = db.efiles;
 const fs = require('fs');
 const csv = require('csvtojson');
 const xlsx = require("xlsx")
-
+const path = require("path");
 class efiles extends baseModelbo {
     constructor() {
         super('efiles', 'file_id');
@@ -172,6 +172,45 @@ class efiles extends baseModelbo {
             });
         }
 
+    }
+
+    checkExistingEfile(files_ids,account_id){
+        return new Promise((resolve,reject)=>{
+            let directory ="../resources/efiles/public/upload/audios/";
+            const dir_audios = path.join(__dirname, directory)
+
+            let idx = 0;
+            if(files_ids && files_ids.length !== 0){
+                files_ids.forEach((efile_id)=>{
+                    this.db['audios'].findOne({where : {audio_id : efile_id, active : 'Y',account_id : account_id}}).then(audio =>{
+                        if(!!!audio){
+                            resolve(false);
+                        }
+                        let file_id = audio.file_id;
+                        this.db['efiles'].findOne({where : {file_id : file_id, active : 'Y'}}).then(async (file) => {
+                            if (!!!file) {
+                                resolve(false);
+                            }
+                            let file_name = file.file_name;
+                            const directory_file = dir_audios + file_name;
+                            try {
+                                await fs.promises.access(directory_file);
+                                if (idx < files_ids.length - 1) {
+                                    idx++
+                                } else {
+                                    resolve(true)
+                                }
+                            } catch (error) {
+                                resolve(false);
+                            }
+                        }).catch(err => resolve(false))
+                    }).catch(err => resolve(false))
+                })
+            }else{
+                resolve(false);
+            }
+
+        })
     }
 }
 

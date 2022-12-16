@@ -1,6 +1,7 @@
 const {baseModelbo} = require('./basebo');
 const {default: axios} = require("axios");
 const agentbo = require('./agentsbo')
+const efilebo = require('./efilesbo')
 const agent_log_eventsbo = require('./agent_log_eventsbo')
 const call_center_token = require(__dirname + '/../config/config.json')["call_center_token"];
 const base_url_cc_kam = require(__dirname + '/../config/config.json')["base_url_cc_kam"];
@@ -12,6 +13,7 @@ const call_center_authorization = {
 };
 
 let _agentsbo = new agentbo;
+let _efilebo = new efilebo;
 let _agent_log_eventsbo = new agent_log_eventsbo;
 
 class campaigns extends baseModelbo {
@@ -28,48 +30,66 @@ class campaigns extends baseModelbo {
         let {queue} = values.params;
         let params = values.params;
         let {greetings, hold_music} = queue.options;
-        queue.greetings = ["http://myTestServer/IVRS/" + greetings];
-        queue.hold_music = ["http://myTestServer/IVRS/" + hold_music];
-        this.generateUniqueUsernameFunction()
-            .then(queueName => {
-                queue.name = queueName;
-                queue.domain_uuid = values.domain.params.uuid;
-                axios
-                    .post(`${base_url_cc_kam}api/v1/queues`, queue, call_center_authorization)
-                    .then((result) => {
-                        let {uuid} = result.data.result;
-                        queue.uuid = uuid;
-                        queue.greetings = greetings;
-                        queue.hold_music = hold_music;
-                        params.queue = queue;
-                        delete values.params;
-                        values.params = params;
-                        let modalObj = this.db['campaigns'].build(values);
-                        modalObj.save()
-                            .then((campaign) => {
-                                this.addDefaultStatus(campaign.campaign_id)
-                                    .then(response => {
-                                        res.send({
-                                            status: 200,
-                                            message: "success",
-                                            data: campaign
-                                        })
+        _efilebo.checkExistingEfile([greetings,hold_music],values.account_id).then((result)=>{
+            if(result){
+                queue.greetings = ["http://myTestServer/IVRS/" + greetings];
+                queue.hold_music = ["http://myTestServer/IVRS/" + hold_music];
+                this.generateUniqueUsernameFunction()
+                    .then(queueName => {
+                        queue.name = queueName;
+                        queue.domain_uuid = values.domain.params.uuid;
+                        axios
+                            .post(`${base_url_cc_kam}api/v1/queues`, queue, call_center_authorization)
+                            .then((result) => {
+                                let {uuid} = result.data.result;
+                                queue.uuid = uuid;
+                                queue.greetings = greetings;
+                                queue.hold_music = hold_music;
+                                params.queue = queue;
+                                delete values.params;
+                                values.params = params;
+                                let modalObj = this.db['campaigns'].build(values);
+                                modalObj.save()
+                                    .then((campaign) => {
+                                        this.addDefaultStatus(campaign.campaign_id)
+                                            .then(response => {
+                                                res.send({
+                                                    status: 200,
+                                                    message: "success",
+                                                    data: campaign,
+                                                    success : true
+                                                })
+                                            })
+                                            .catch(err => {
+                                                return _this.sendResponseError(res, ['cannot save default status', err], 1, 403);
+                                            })
                                     })
-                                    .catch(err => {
-                                        return _this.sendResponseError(res, ['cannot save default status', err], 1, 403);
-                                    })
+                                    .catch((err) => {
+                                        return _this.sendResponseError(res, ['Cannot save campaigns in DB', err], 1, 403);
+                                    });
                             })
                             .catch((err) => {
-                                return _this.sendResponseError(res, ['Cannot save campaigns in DB', err], 1, 403);
+                                return _this.sendResponseError(res, ['Cannot save campaign in Kamailio', err], 1, 403);
                             });
                     })
                     .catch((err) => {
-                        return _this.sendResponseError(res, ['Cannot save campaign in Kamailio', err], 1, 403);
+                        return _this.sendResponseError(res, ['Error.AnErrorHasOccurredUser', err], 1, 403);
                     });
+            }else{
+                res.send({
+                    status : 403,
+                    success : false,
+                    message : 'audios not found'
+                })
+            }
+        }).catch((err) => {
+            res.send({
+                status : 403,
+                success : false,
+                message : 'audios not found'
             })
-            .catch((err) => {
-                return _this.sendResponseError(res, ['Error.AnErrorHasOccurredUser', err], 1, 403);
-            });
+        });
+
     }
 
     //----------------> Update Campaign <--------------------------
