@@ -306,6 +306,9 @@ class users extends baseModelbo {
     isUniqueUsername(username, user_id) {
         let _this = this;
         return new Promise((resolve, reject) => {
+            if(!!!username){
+                resolve(false);
+            }
             this.db['users'].findAll({
                 where: {
                     username: {
@@ -455,11 +458,8 @@ class users extends baseModelbo {
         });
     }
 
-    saveCredentials(newAccount,isBulk,username) {
+    saveCredentials(newAccount) {
         return new Promise((resolve, reject) => {
-            if(isBulk){
-                newAccount.password_hash = username;
-            }
             this.generateHash(newAccount.password_hash, salt)
                 .then(hashedObj => {
                     newAccount.password_hash = hashedObj.hash;
@@ -591,7 +591,7 @@ class users extends baseModelbo {
                                     newAccount.sip_device.uuid = uuid;
                                     newAccount.sip_device.username = username;
 
-                                    this.saveUserFunction(newAccount, is_agent)
+                                    this.saveUserFunction(newAccount)
                                         .then((user) => {
                                             res.send({
                                                 message: 'success',
@@ -634,7 +634,7 @@ class users extends baseModelbo {
                                             let username = resp.data.result.agent.username || null;
                                             newAccount.sip_device.uuid = uuid;
                                             newAccount.sip_device.username = username;
-                                            this.saveUserFunction(newAccount, is_agent)
+                                            this.saveUserFunction(newAccount)
                                                 .then((user) => {
                                                     res.send({
                                                         message: 'success',
@@ -710,7 +710,7 @@ class users extends baseModelbo {
         })
 
     }
-    saveUserFunction(user, AddedFields = [], isBulk = false, uuidAgent = null) {
+    saveUserFunction(user) {
         return new Promise((resolve, reject) => {
             if (user.user_id) {
                 this.updateCredentials(user)
@@ -730,21 +730,9 @@ class users extends baseModelbo {
                         reject(err)
                     })
             } else {
-                this.saveCredentials(user,isBulk,AddedFields.username)
+                this.saveCredentials(user)
                     .then(data => {
                         let {newAccount, email_item} = data;
-                        if (isBulk) {
-                            newAccount.first_name = AddedFields.username;
-                        }
-                        if (AddedFields.length !== 0) {
-                            newAccount.sip_device.username = AddedFields.username;
-                            newAccount.username = AddedFields.username;
-                            newAccount.sip_device.password = AddedFields.username;
-                            newAccount.params.pass_web = AddedFields.username;
-                        }
-                        newAccount.sip_device.uuid = uuidAgent;
-                        newAccount.created_at = moment().format("YYYY-MM-DD HH:mm:ss");
-                        newAccount.updated_at = moment().format("YYYY-MM-DD HH:mm:ss");
                         let modalObj = this.db['users'].build(newAccount);
                         modalObj.save()
                             .then(user => {
@@ -1114,7 +1102,7 @@ class users extends baseModelbo {
                                 email,
                                 role_crm_id
                             }
-                            this.saveUserFunction(clonedSales, is_agent)
+                            this.saveUserFunction(clonedSales)
                                 .then(cloned_sales => {
                                     let sales_id = cloned_sales.user_id;
                                     let agents_ids = cloned_sales.params.agents;

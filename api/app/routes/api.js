@@ -217,7 +217,7 @@ let apiRouters = function (passport) {
     router.delete("/api/callfile/delete/:params", passport.authenticate('jwt', {session: false}), callfileController.delete);
     router.post("/api/callfile/save", callfileController.save);
     router.post("/api/callfile/getEntityRevisionByModelId", callfileController.getEntityRevisionByModelId);
-    router.get("/api/callfile/play", callfileController.playMedia);
+    router.get("/api/callfile/play", callfileController.playMediaMusic);
     router.get("/api/callfile/findCallFileById/:call_file_id", passport.authenticate('jwt', {session: false}), callfileController.findCalleFileById);
 
     // dids routers

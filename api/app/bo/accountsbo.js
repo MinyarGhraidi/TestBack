@@ -365,7 +365,7 @@ class accounts extends baseModelbo {
                                                     update_user.sip_device.updated_at = resultAgent.updated_at;
                                                     update_user.account_id = newAccount.account_id;
                                                     update_user.username = username
-                                                    _usersbo.saveUserFunction(update_user, [], false, resultAgent.uuid)
+                                                    _usersbo.saveUserFunction(update_user)
                                                         .then(user => {
                                                             res.send({
                                                                 status: 200,
@@ -436,7 +436,7 @@ class accounts extends baseModelbo {
                                             data_account.user.account_id = new_account.dataValues.account_id;
                                             data_account.user.sip_device.username = username;
 
-                                            _usersbo.saveUserFunction(data_account.user, [], false, resultAgent.uuid).then(new_user => {
+                                            _usersbo.saveUserFunction(data_account.user).then(new_user => {
                                                 this.db['accounts'].update({
                                                     user_id: new_user.user_id
                                                 }, {

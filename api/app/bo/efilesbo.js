@@ -173,38 +173,49 @@ class efiles extends baseModelbo {
         }
 
     }
-
-    checkExistingEfile(files_ids,account_id){
+    checkFile(files_ids,account_id = null){
         return new Promise((resolve,reject)=>{
-            let directory ="../resources/efiles/public/upload/audios/";
-            const dir_audios = path.join(__dirname, directory)
-
+            const dir_audios = path.join(__dirname, "../resources/efiles")
+            let whereAudios = {};
             let idx = 0;
             if(files_ids && files_ids.length !== 0){
                 files_ids.forEach((efile_id)=>{
-                    this.db['audios'].findOne({where : {audio_id : efile_id, active : 'Y',account_id : account_id}}).then(audio =>{
+                    account_id ? whereAudios = {audio_id : efile_id, active : 'Y',account_id : account_id} : {audio_id : efile_id, active : 'Y'};
+                    this.db['audios'].findOne({where : whereAudios}).then(audio =>{
                         if(!!!audio){
-                            resolve(false);
+                            resolve({
+                                success : false
+                            });
                         }
                         let file_id = audio.file_id;
                         this.db['efiles'].findOne({where : {file_id : file_id, active : 'Y'}}).then(async (file) => {
                             if (!!!file) {
-                                resolve(false);
+                                resolve({
+                                    success : false
+                                });
                             }
-                            let file_name = file.file_name;
-                            const directory_file = dir_audios + file_name;
+                           let file_url = dir_audios + file.uri;
                             try {
-                                await fs.promises.access(directory_file);
+                                await fs.promises.access(file_url);
                                 if (idx < files_ids.length - 1) {
                                     idx++
                                 } else {
-                                    resolve(true)
+                                    resolve({
+                                        success : true,
+                                        dir_file : file_url
+                                    })
                                 }
                             } catch (error) {
-                                resolve(false);
+                                resolve({
+                                    success : false
+                                });
                             }
-                        }).catch(err => resolve(false))
-                    }).catch(err => resolve(false))
+                        }).catch(err => resolve({
+                            success : false
+                        }))
+                    }).catch(err => resolve({
+                        success : false
+                    }))
                 })
             }else{
                 resolve(false);

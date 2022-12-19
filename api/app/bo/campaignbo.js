@@ -30,7 +30,7 @@ class campaigns extends baseModelbo {
         let {queue} = values.params;
         let params = values.params;
         let {greetings, hold_music} = queue.options;
-        _efilebo.checkExistingEfile([greetings,hold_music],values.account_id).then((result)=>{
+        _efilebo.checkFile([greetings,hold_music],values.account_id).then((result)=>{
             if(result){
                 queue.greetings = ["http://myTestServer/IVRS/" + greetings];
                 queue.hold_music = ["http://myTestServer/IVRS/" + hold_music];

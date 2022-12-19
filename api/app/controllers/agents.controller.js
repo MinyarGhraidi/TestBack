@@ -24,7 +24,7 @@ module.exports = {
         agentsDaoInst.signIn(req, res, next)
     },
     saveAgent: function (req, res, next) {
-        agentsDaoInst.saveAgent(req, res, next)
+        agentsDaoInst.saveUserAgent(req, res, next)
     },
     changeStatus: function(req,res,next){
         agentsDaoInst.changeStatus(req,res,next)

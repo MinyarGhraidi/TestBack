@@ -37,8 +37,8 @@ module.exports = {
     getEntityRevisionByModelId: function (req, res, next) {
         _itembo.model_history(req, res, next)
     },
-    playMedia: function (req, res, next) {
-        _itembo.playMedia(req, res, next)
+    playMediaMusic: function (req, res, next) {
+        _itembo.playMediaMusic(req, res, next)
     },
     getCustomFields : function (req,res,next){
         _itembo.getCustomFields(req,res,next)

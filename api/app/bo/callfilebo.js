@@ -9,11 +9,12 @@ const appDir = path.dirname(require.main.filename);
 let amqp = require('amqplib/callback_api');
 const appHelper = require("../helpers/app");
 const {reject, promise} = require("bcrypt/promises");
+const efilesBo = require('./efilesbo');
 const moment = require("moment");
 const Op = require("sequelize/lib/operators");
 const rabbitmq_url = appHelper.rabbitmq_url;
 const app_config = require("../helpers/app").appConfig;
-
+const _efilebo = new efilesBo;
 class callfiles extends baseModelbo {
     constructor() {
         super('callfiles', 'callfile_id');
@@ -636,6 +637,24 @@ class callfiles extends baseModelbo {
         fs.readFile(filePath, function (err, data) {
             res.sendFile(filePath);
         });
+    }
+
+    playMediaMusic(req,res,send){
+        let {file_id} = req.body;
+        if(!!!file_id){
+            return this.sendResponseError(res, ['Error.FileIdIsRequired'],1,403);
+        }
+        _efilebo.checkFile([file_id]).then((result)=>{
+            if(result.success){
+                fs.readFile(result.dir_file, function (err, data) {
+                    res.sendFile(result.dir_file);
+                });
+            }else{
+                this.sendResponseError(res,['Error.CannotFindMedia'],1,403);
+            }
+        }).catch(err=>{
+            this.sendResponseError(res,['Error.CannotCheckMedia'],1,403);
+        })
     }
 
     getCustomFields(req, res, next) {
