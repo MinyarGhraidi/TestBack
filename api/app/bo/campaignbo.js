@@ -32,8 +32,8 @@ class campaigns extends baseModelbo {
         let {greetings, hold_music} = queue.options;
         _efilebo.checkFile([greetings,hold_music],values.account_id).then((result)=>{
             if(result){
-                queue.greetings = ["http://myTestServer/IVRS/" + greetings];
-                queue.hold_music = ["http://myTestServer/IVRS/" + hold_music];
+                queue.greetings = [result.data.greetings];
+                queue.hold_music = [result.data.hold_music];
                 this.generateUniqueUsernameFunction()
                     .then(queueName => {
                         queue.name = queueName;
@@ -100,8 +100,9 @@ class campaigns extends baseModelbo {
         this.updateCampaignFunc(values, uuid)
             .then(resp => {
                 res.send({
-                    status: 200,
-                    message: "success"
+                    status: resp.status,
+                    message: resp.message,
+                    success : resp.success
                 })
             })
             .catch((err) => {
@@ -112,50 +113,66 @@ class campaigns extends baseModelbo {
         return new Promise((resolve, reject) => {
             let {accountcode, record, strategy, options} = values.params.queue;
             let {hold_music, greetings} = values.params.queue.options;
-            axios
-                .get(`${base_url_cc_kam}api/v1/queues/${uuid}`, call_center_authorization)
-                .then(resp => {
-                    let {name, extension, domain_uuid} = resp.data.result;
-                    let queue_ = {
-                        hold_music,
-                        greetings,
-                        accountcode,
-                        name,
-                        record,
-                        strategy,
-                        options,
-                        extension,
-                        domain_uuid
-                    }
-                    queue_.greetings = ["http://myTestServer/IVRS/" + greetings];
-                    queue_.hold_music = ["http://myTestServer/IVRS/" + hold_music];
+            _efilebo.checkFile([greetings,hold_music],values.account_id).then((result)=> {
+                if (result.success) {
                     axios
-                        .put(`${base_url_cc_kam}api/v1/queues/${uuid}`, queue_, call_center_authorization)
-                        .then(response => {
-                            let campaign_Updated = {
-                                params: {
-                                    queue: {
-                                        name, uuid, record, strategy, extension, accountcode, domain_uuid,
-                                        options: queue_.options
-                                    }
-                                },
-                                updated_at: moment(new Date())
+                        .get(`${base_url_cc_kam}api/v1/queues/${uuid}`, call_center_authorization)
+                        .then(resp => {
+                            let {name, extension, domain_uuid} = resp.data.result;
+                            let queue_ = {
+                                hold_music,
+                                greetings,
+                                accountcode,
+                                name,
+                                record,
+                                strategy,
+                                options,
+                                extension,
+                                domain_uuid
                             }
-                            this.db['campaigns'].update(campaign_Updated, {where: {campaign_id: values.campaign_id}})
+                            queue_.greetings = [result.data.greetings];
+                            queue_.hold_music = [result.data.hold_music];
+                            axios
+                                .put(`${base_url_cc_kam}api/v1/queues/${uuid}`, queue_, call_center_authorization)
                                 .then(response => {
-                                    resolve(true);
+                                    let campaign_Updated = {
+                                        params: {
+                                            queue: {
+                                                name, uuid, record, strategy, extension, accountcode, domain_uuid,
+                                                options: queue_.options
+                                            }
+                                        },
+                                        updated_at: moment(new Date())
+                                    }
+                                    this.db['campaigns'].update(campaign_Updated, {where: {campaign_id: values.campaign_id}})
+                                        .then(response => {
+                                            resolve({
+                                                success : true,
+                                                status : 200,
+                                                message : 'Success'
+                                            });
+                                        })
+                                        .catch((err) => {
+                                            reject(err);
+                                        });
                                 })
                                 .catch((err) => {
                                     reject(err);
                                 });
-                        })
-                        .catch((err) => {
-                            reject(err);
-                        });
-                }).catch((err) => {
-                reject(err);
-            })
+                        }).catch((err) => {
 
+                        reject(err);
+                    })
+                } else{
+                    resolve({
+                        success : false,
+                        status : 403,
+                        message : 'Audios Not Found'
+                    });
+                }
+            }).catch(err=>{
+                reject(err)
+            })
         })
     }
 

@@ -178,9 +178,13 @@ class efiles extends baseModelbo {
             const dir_audios = path.join(__dirname, "../resources/efiles")
             let whereAudios = {};
             let idx = 0;
+            let data_res = {
+                "hold_music" : "",
+                "greetings" : "",
+            }
             if(files_ids && files_ids.length !== 0){
                 files_ids.forEach((efile_id)=>{
-                    account_id ? whereAudios = {audio_id : efile_id, active : 'Y',account_id : account_id} : {audio_id : efile_id, active : 'Y'};
+                    whereAudios = account_id ? {audio_id : efile_id, active : 'Y',account_id : account_id} : {file_id : efile_id, active : 'Y'};
                     this.db['audios'].findOne({where : whereAudios}).then(audio =>{
                         if(!!!audio){
                             resolve({
@@ -188,22 +192,37 @@ class efiles extends baseModelbo {
                             });
                         }
                         let file_id = audio.file_id;
+                        if(!!!file_id){
+                            resolve({
+                                success : false
+                            })
+                        }
                         this.db['efiles'].findOne({where : {file_id : file_id, active : 'Y'}}).then(async (file) => {
                             if (!!!file) {
                                 resolve({
                                     success : false
                                 });
                             }
+
                            let file_url = dir_audios + file.uri;
+                            data_res[audio.audio_type] = file_url;
                             try {
                                 await fs.promises.access(file_url);
                                 if (idx < files_ids.length - 1) {
                                     idx++
                                 } else {
-                                    resolve({
-                                        success : true,
-                                        dir_file : file_url
-                                    })
+                                    if(files_ids && files_ids.length === 1){
+                                        resolve({
+                                            success : true,
+                                            data : file_url
+                                        })
+                                    }else{
+                                        resolve({
+                                            success : true,
+                                            data : data_res
+                                        })
+                                    }
+
                                 }
                             } catch (error) {
                                 resolve({

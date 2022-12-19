@@ -632,13 +632,6 @@ class callfiles extends baseModelbo {
         })
     }
 
-    playMedia(req, res, next) {
-        let filePath = appDir + '/app/sub-apps/records/speech.wav'
-        fs.readFile(filePath, function (err, data) {
-            res.sendFile(filePath);
-        });
-    }
-
     playMediaMusic(req,res,send){
         let {file_id} = req.body;
         if(!!!file_id){
@@ -646,8 +639,8 @@ class callfiles extends baseModelbo {
         }
         _efilebo.checkFile([file_id]).then((result)=>{
             if(result.success){
-                fs.readFile(result.dir_file, function (err, data) {
-                    res.sendFile(result.dir_file);
+                fs.readFile(result.data, function (err, data) {
+                    res.sendFile(result.data);
                 });
             }else{
                 this.sendResponseError(res,['Error.CannotFindMedia'],1,403);
