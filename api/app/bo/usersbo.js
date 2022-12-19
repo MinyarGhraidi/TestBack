@@ -303,23 +303,33 @@ class users extends baseModelbo {
         });
     }
 
-    isUniqueUsername(username, user_id) {
+    isUniqueUsername(username, user_id, account_id = null) {
         let _this = this;
         return new Promise((resolve, reject) => {
             if(!!!username){
                 resolve(false);
             }
+            let whereQuery = {
+                username: {
+                    [Sequelize.Op.iLike]: username
+                },
+                active: 'Y'
+            }
+            if(!!!!account_id){
+                whereQuery.account_id = account_id;
+            }
             this.db['users'].findAll({
-                where: {
-                    username: {
-                        [Sequelize.Op.iLike]: username
-                    },
-                    active: 'Y'
-                }
+                where: whereQuery
             })
                 .then(data => {
                     if (data && data.length !== 0) {
-                        if (username === data[0].username && user_id === data[0].user_id) {
+                        let check;
+                        if(!!!account_id){
+                            check = (username === data[0].username && user_id === data[0].user_id);
+                        }else{
+                            check =(username === data[0].username && user_id === data[0].user_id && account_id === data[0].account_id)
+                        }
+                        if (check) {
                             resolve(true);
                         } else {
                             resolve(false);
@@ -1172,32 +1182,41 @@ class users extends baseModelbo {
         })
     }
 
-    _generateUserName(){
+    _generateUserName(account_id){
         return new Promise((resolve,reject)=>{
-            this.db['users'].findAll({
-                limit: 1,
-                where : {active : 'Y'},
-                order: [
-                    ['user_id', 'DESC'],
-                ],}).then((user)=>{
-                if(!!!user){
-                    resolve('1000')
-                }else{
-                    let userName = parseInt(user[0].username)+1
-                    resolve(userName.toString())
-                }
-            }).catch(err=>{
-                reject(err)
+            this.db['roles_crms'].findOne({
+                where : {value : 'agent', active : 'Y'}
+            }).then(role =>{
+                this.db['users'].findAll({
+                    limit: 1,
+                    where : {active : 'Y', account_id : account_id, role_crm_id : role.id},
+                    order: [
+                        ['user_id', 'DESC'],
+                    ],}).then((user)=>{
+                    if(user.length === 0){
+                        resolve('1000')
+                    }else{
+                        let userName = parseInt(user[0].username)+1
+                        resolve(userName.toString())
+                    }
+                }).catch(err=>{
+                    reject(err)
+                })
             })
+
         })
     }
     GenerateUserNameFromLastUser(req,res,next){
-        this._generateUserName().then(username=>{
+        let {account_id} = req.body;
+        if(!!!account_id){
+            return this.sendResponseError(res,['Error.AccountIdIsRequired'],1,403)
+        }
+        this._generateUserName(account_id).then(username=>{
             res.json({
                 username
             })
         }).catch(err=>{
-            this.sendResponseError(res,['Error.CannotGenerateUsername'],1,403)
+            return this.sendResponseError(res,['Error.CannotGenerateUsername'],1,403)
         })
     }
 

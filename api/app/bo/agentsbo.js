@@ -201,7 +201,7 @@ class agents extends baseModelbo {
             let idx = 0;
             let arrayUsers = [];
             if (bulkNum.length === 1) {
-                _usersbo.isUniqueUsername(NewUserName, 0).then(isUnique => {
+                _usersbo.isUniqueUsername(NewUserName, 0,user.account_id).then(isUnique => {
                     if (!isUnique) {
                         resolve({
                             success : false,
@@ -218,13 +218,13 @@ class agents extends baseModelbo {
                 })
             }
             else {
-                _usersbo._generateUserName().then(userName => {
+                _usersbo._generateUserName(user.account_id).then(userName => {
                     bulkNum.forEach((inc) => {
                         let parseUserName = parseInt(userName)+inc;
                         let TestuserName = parseUserName.toString();
-                        _usersbo.isUniqueUsername(TestuserName, 0).then(isUnique => {
+                        _usersbo.isUniqueUsername(TestuserName, 0,user.account_id).then(isUnique => {
                             if (!isUnique) {
-                                _usersbo._generateUserName().then(secondGenUserName => {
+                                _usersbo._generateUserName(user.account_id).then(secondGenUserName => {
                                     TestuserName = parseInt(secondGenUserName)+1;
                                     let newUser = {
                                         ...user,
@@ -359,7 +359,7 @@ class agents extends baseModelbo {
         let {sip_device} = values;
         let {password, options, status, enabled, subscriber_id} = sip_device;
         let user_id = req.body.values.user_id;
-        _usersbo.isUniqueUsername(values.username, user_id)
+        _usersbo.isUniqueUsername(values.username, user_id,values.account_id)
             .then(isUnique => {
                 if (isUnique) {
                     this.db['users'].findOne({
