@@ -6,6 +6,7 @@ const fs = require('fs');
 const csv = require('csvtojson');
 const xlsx = require("xlsx")
 const path = require("path");
+
 class efiles extends baseModelbo {
     constructor() {
         super('efiles', 'file_id');
@@ -86,7 +87,7 @@ class efiles extends baseModelbo {
                 }
             }
         }).catch(err => {
-            _this.sendResponseError(res,['Error get data file'])
+            _this.sendResponseError(res, ['Error get data file'])
         });
     }
 
@@ -173,71 +174,109 @@ class efiles extends baseModelbo {
         }
 
     }
-    checkFile(files_ids,account_id = null){
-        return new Promise((resolve,reject)=>{
+
+    allEqual = (arr) => arr.every(val => !!!val);
+
+    checkOneFile(efile_id, account_id) {
+        return new Promise((resolve, reject) => {
             const dir_audios = path.join(__dirname, "../resources/efiles")
             let whereAudios = {};
+
+            whereAudios = account_id ? {audio_id: efile_id, active: 'Y', account_id: account_id} : {
+                file_id: efile_id,
+                active: 'Y'
+            };
+            this.db['audios'].findOne({where: whereAudios}).then(audio => {
+                if (!!!audio) {
+                    resolve({
+                        success: false
+                    });
+                }
+                let file_id = audio.file_id;
+                if (!!!file_id) {
+                    resolve({
+                        success: false
+                    })
+                }
+                this.db['efiles'].findOne({where: {file_id: file_id, active: 'Y'}}).then(async (file) => {
+                    if (!!!file) {
+                        resolve({
+                            success: false
+                        });
+                    }
+
+                    let file_url = dir_audios + file.uri;
+                    try {
+                        await fs.promises.access(file_url);
+                        resolve({
+                            success: true,
+                            data: file_url,
+                            audio_type: audio.audio_type
+                        })
+                    } catch (error) {
+                        resolve({
+                            success: false
+                        });
+                    }
+                }).catch(err => resolve({
+                    success: false
+                }))
+            }).catch(err => resolve({
+                success: false
+            }))
+        })
+
+    }
+
+    checkFile(files_ids, checkType = "", account_id = null) {
+        let data_res = {
+            "hold_music": null,
+            "greetings": null,
+        }
+        return new Promise((resolve, reject) => {
+            let idxNull = 0;
             let idx = 0;
-            let data_res = {
-                "hold_music" : "",
-                "greetings" : "",
+            if (this.allEqual(files_ids) && checkType === "SaveUpdate") {
+                resolve({
+                    success: true,
+                    data: data_res
+                })
             }
-            if(files_ids && files_ids.length !== 0){
-                files_ids.forEach((efile_id)=>{
-                    whereAudios = account_id ? {audio_id : efile_id, active : 'Y',account_id : account_id} : {file_id : efile_id, active : 'Y'};
-                    this.db['audios'].findOne({where : whereAudios}).then(audio =>{
-                        if(!!!audio){
+            if (files_ids && files_ids.length !== 0) {
+                files_ids.forEach((efile_id) => {
+                    console.log(efile_id)
+                    if (!!!efile_id) {
+                        idxNull++;
+                    } else {
+                        this.checkOneFile(efile_id, account_id).then((result) => {
+                            if (result.success) {
+                                data_res[result.audio_type] = result.data;
+                            }
+                        })
+                    }
+                    if (idx < files_ids.length - 1) {
+                        idx++
+
+                    } else {
+                        if (files_ids && files_ids.length === 1) {
+                            let fileUrl = data_res['hold_music'] ? data_res['hold_music'] : data_res['greetings']
                             resolve({
-                                success : false
-                            });
-                        }
-                        let file_id = audio.file_id;
-                        if(!!!file_id){
+                                success: true,
+                                data: fileUrl
+                            })
+                        } else {
                             resolve({
-                                success : false
+                                success: true,
+                                data: data_res
                             })
                         }
-                        this.db['efiles'].findOne({where : {file_id : file_id, active : 'Y'}}).then(async (file) => {
-                            if (!!!file) {
-                                resolve({
-                                    success : false
-                                });
-                            }
 
-                           let file_url = dir_audios + file.uri;
-                            data_res[audio.audio_type] = file_url;
-                            try {
-                                await fs.promises.access(file_url);
-                                if (idx < files_ids.length - 1) {
-                                    idx++
-                                } else {
-                                    if(files_ids && files_ids.length === 1){
-                                        resolve({
-                                            success : true,
-                                            data : file_url
-                                        })
-                                    }else{
-                                        resolve({
-                                            success : true,
-                                            data : data_res
-                                        })
-                                    }
-
-                                }
-                            } catch (error) {
-                                resolve({
-                                    success : false
-                                });
-                            }
-                        }).catch(err => resolve({
-                            success : false
-                        }))
-                    }).catch(err => resolve({
-                        success : false
-                    }))
+                    }
                 })
-            }else{
-                resolve(false);
+            } else {
+                resolve({
+                    success: false,
+                });
             }
 
         })

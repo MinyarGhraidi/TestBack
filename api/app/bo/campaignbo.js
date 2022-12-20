@@ -30,10 +30,10 @@ class campaigns extends baseModelbo {
         let {queue} = values.params;
         let params = values.params;
         let {greetings, hold_music} = queue.options;
-        _efilebo.checkFile([greetings,hold_music],values.account_id).then((result)=>{
-            if(result){
-                queue.greetings = [result.data.greetings];
-                queue.hold_music = [result.data.hold_music];
+        _efilebo.checkFile([greetings,hold_music],"SaveUpdate",values.account_id).then((result)=>{
+            if(result.success){
+                queue.greetings = result.data.greetings === null ? [] : [result.data.greetings];
+                queue.hold_music = result.data.hold_music === null ? [] : [result.data.hold_music];
                 this.generateUniqueUsernameFunction()
                     .then(queueName => {
                         queue.name = queueName;
@@ -113,7 +113,7 @@ class campaigns extends baseModelbo {
         return new Promise((resolve, reject) => {
             let {accountcode, record, strategy, options} = values.params.queue;
             let {hold_music, greetings} = values.params.queue.options;
-            _efilebo.checkFile([greetings,hold_music],values.account_id).then((result)=> {
+            _efilebo.checkFile([greetings,hold_music],"SaveUpdate",values.account_id).then((result)=> {
                 if (result.success) {
                     axios
                         .get(`${base_url_cc_kam}api/v1/queues/${uuid}`, call_center_authorization)
@@ -130,8 +130,9 @@ class campaigns extends baseModelbo {
                                 extension,
                                 domain_uuid
                             }
-                            queue_.greetings = [result.data.greetings];
-                            queue_.hold_music = [result.data.hold_music];
+                            queue_.greetings = result.data.greetings === null ? [] : [result.data.greetings];
+                            queue_.hold_music = result.data.hold_music === null ? [] : [result.data.hold_music];
+
                             axios
                                 .put(`${base_url_cc_kam}api/v1/queues/${uuid}`, queue_, call_center_authorization)
                                 .then(response => {
