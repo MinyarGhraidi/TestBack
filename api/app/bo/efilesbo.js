@@ -244,7 +244,6 @@ class efiles extends baseModelbo {
             }
             if (files_ids && files_ids.length !== 0) {
                 files_ids.forEach((efile_id) => {
-                    console.log(efile_id)
                     if (!!!efile_id) {
                         idxNull++;
                     } else {

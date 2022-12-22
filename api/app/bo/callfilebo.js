@@ -435,10 +435,18 @@ class callfiles extends baseModelbo {
         const limit = parseInt(filter.limit) > 0 ? filter.limit : 1000;
         const page = filter.page || 1;
         const offset = (limit * (page - 1));
-        let {start_time, end_time, date} = filter
-        let sqlListCallFileByAccount = `select listcallfile_id from listcallfiles
-                                       where campaign_id in (select campaign_id from campaigns
-                                                              where account_id = :account_id and active = 'Y' and status = 'Y') and active = 'Y' and status = 'Y'`
+        let {
+            listCallFiles_ids,
+            call_status,
+            dateSelected_from,
+            startTime,
+            endTime,
+            dateSelected_to,
+            campaign_ids,
+            phone_number,
+            } = filter;
+        let sqlListCallFiles = `select listcallfile_id from listcallfiles
+                                       where EXTRA_WHERE and active = 'Y' and status = 'Y'`
 
         let sqlLeads = `Select distinct callF.*
                         from callfiles as callF
@@ -455,47 +463,63 @@ class callfiles extends baseModelbo {
                             EXTRA_WHERE`
         let extra_where_count = '';
         let extra_where = '';
-
-        if (start_time && start_time !== '') {
+        let extra_where_ListCallFile = '';
+        if(listCallFiles_ids && listCallFiles_ids.length === 0){
+            extra_where_ListCallFile = " campaign_id in (:campaign_ids) ";
+        }else{
+            extra_where_ListCallFile = " listcallfile_id in (:listCallFiles_ids) "
+        }
+        if (startTime && startTime !== '') {
             extra_where_count += ' AND started_at >= :start_time';
             extra_where += ' AND started_at >= :start_time';
         }
-        if (end_time && end_time !== '') {
+        if (endTime && endTime !== '') {
             extra_where_count += ' AND finished_at <=  :end_time';
             extra_where += ' AND finished_at <=  :end_time';
         }
+        if(phone_number && phone_number!== ''){
+            extra_where += ' AND phone_number = :phone_number '
+        }
+        if(call_status && call_status.length !== 0){
+            extra_where += ' AND call_status = :call_status '
+        }
+        extra_where_count += ' AND list_call_file_id in (:listCallFiles_ids)'
+        extra_where += ' AND listcallfile_id in (:listCallFiles_ids)'
 
         sqlCount = sqlCount.replace('EXTRA_WHERE', extra_where_count);
         sqlLeads = sqlLeads.replace('EXTRA_WHERE', extra_where);
-        db.sequelize['crm-app'].query(sqlListCallFileByAccount,{
+        sqlListCallFiles = sqlListCallFiles.replace('EXTRA_WHERE', extra_where_ListCallFile);
+        db.sequelize['crm-app'].query(sqlListCallFiles,{
             type: db.sequelize['crm-app'].QueryTypes.SELECT,
             replacements: {
-                account_id: filter.account_id
+                campaign_ids: campaign_ids,
+                listCallFiles_ids : listCallFiles_ids
             }
-        }).then(list_call_file_by_account=>{
-            if(list_call_file_by_account && list_call_file_by_account.length){
-
+        }).then(list_call_file=>{
+            if(list_call_file && list_call_file.length !== 0){
+                let lCF_ids = list_call_file.map((item)=> item.listcallfile_id);
                 db.sequelize['crm-app'].query(sqlCount, {
                     type: db.sequelize['crm-app'].QueryTypes.SELECT,
                     replacements: {
-                        date: parseInt(date),
-                        start_time: moment(date).format('YYYY-MM-DD').concat(' ', start_time),
-                        end_time: moment(date).format('YYYY-MM-DD').concat(' ', end_time),
-                        listCallFiles_ids: list_call_file_by_account,
+                        start_time: moment(dateSelected_from).format('YYYY-MM-DD').concat(' ', startTime),
+                        end_time: moment(dateSelected_to).format('YYYY-MM-DD').concat(' ', endTime),
+                        listCallFiles_ids: lCF_ids,
                         active: 'Y'
                     }
                 }).then(countAll => {
+                    extra_where += ' AND list_call_file_id in (:listCallFiles_ids)'
                     let pages = Math.ceil(countAll[0].count / filter.limit);
                     db.sequelize['crm-app'].query(sqlLeads, {
                         type: db.sequelize['crm-app'].QueryTypes.SELECT,
                         replacements: {
-                            date: parseInt(date),
-                            start_time: moment(date).format('YYYY-MM-DD').concat(' ', start_time),
-                            end_time: moment(date).format('YYYY-MM-DD').concat(' ', end_time),
-                            listCallFiles_ids: list_call_file_by_account,
+                            start_time: moment(dateSelected_from).format('YYYY-MM-DD').concat(' ', startTime),
+                            end_time: moment(dateSelected_to).format('YYYY-MM-DD').concat(' ', endTime),
+                            listCallFiles_ids: lCF_ids,
                             active: 'Y',
                             limit: limit,
-                            offset: offset
+                            offset: offset,
+                            phone_number : phone_number,
+                            call_status : call_status
                         }
                     }).then(dataLeads => {
                         res.send({
