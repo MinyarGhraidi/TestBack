@@ -431,10 +431,17 @@ class callfiles extends baseModelbo {
 
     leadsStats(req, res, next) {
         let _this = this;
-        let filter = req.body;
-        const limit = parseInt(filter.limit) > 0 ? filter.limit : 1000;
-        const page = filter.page || 1;
-        const offset = (limit * (page - 1));
+        let data = req.body;
+        const limit = parseInt(data.limit) > 0 ? data.limit : 1000;
+        const offset = data.limit * (data.pages - 1) || 0
+        if(!!!data.filter){
+            res.send({
+                success: false,
+                status: 403,
+                data: [],
+                message: 'Cannot get filter'
+            })
+        }
         let {
             listCallFiles_ids,
             call_status,
@@ -444,7 +451,7 @@ class callfiles extends baseModelbo {
             dateSelected_to,
             campaign_ids,
             phone_number,
-            } = filter;
+            } = data.filter;
         let sqlListCallFiles = `select listcallfile_id from listcallfiles
                                        where EXTRA_WHERE and active = 'Y' and status = 'Y'`
 
@@ -454,14 +461,15 @@ class callfiles extends baseModelbo {
                         where calls_h.active = :active
                           and callF.active = :active
                            EXTRA_WHERE 
-                         LIMIT :limit
-                        OFFSET :offset`
-        let sqlCount = `select count(*)
-                        from calls_historys as calls_h
-                        WHERE active = :active
-                    
-                            EXTRA_WHERE`
-        let extra_where_count = '';
+                           LIMIT :limit OFFSET :offset
+                         `
+        let sqlLeadsCount = `Select count(*)
+                        from callfiles as callF
+                                 left join calls_historys as calls_h on callF.callfile_id = calls_h.call_file_id
+                        where calls_h.active = :active
+                          and callF.active = :active
+                           EXTRA_WHERE 
+                         `
         let extra_where = '';
         let extra_where_ListCallFile = '';
         if(listCallFiles_ids && listCallFiles_ids.length === 0){
@@ -470,11 +478,9 @@ class callfiles extends baseModelbo {
             extra_where_ListCallFile = " listcallfile_id in (:listCallFiles_ids) "
         }
         if (startTime && startTime !== '') {
-            extra_where_count += ' AND started_at >= :start_time';
             extra_where += ' AND started_at >= :start_time';
         }
         if (endTime && endTime !== '') {
-            extra_where_count += ' AND finished_at <=  :end_time';
             extra_where += ' AND finished_at <=  :end_time';
         }
         if(phone_number && phone_number!== ''){
@@ -483,11 +489,9 @@ class callfiles extends baseModelbo {
         if(call_status && call_status.length !== 0){
             extra_where += ' AND call_status = :call_status '
         }
-        extra_where_count += ' AND list_call_file_id in (:listCallFiles_ids)'
         extra_where += ' AND listcallfile_id in (:listCallFiles_ids)'
-
-        sqlCount = sqlCount.replace('EXTRA_WHERE', extra_where_count);
         sqlLeads = sqlLeads.replace('EXTRA_WHERE', extra_where);
+        sqlLeadsCount = sqlLeadsCount.replace('EXTRA_WHERE', extra_where);
         sqlListCallFiles = sqlListCallFiles.replace('EXTRA_WHERE', extra_where_ListCallFile);
         db.sequelize['crm-app'].query(sqlListCallFiles,{
             type: db.sequelize['crm-app'].QueryTypes.SELECT,
@@ -498,17 +502,19 @@ class callfiles extends baseModelbo {
         }).then(list_call_file=>{
             if(list_call_file && list_call_file.length !== 0){
                 let lCF_ids = list_call_file.map((item)=> item.listcallfile_id);
-                db.sequelize['crm-app'].query(sqlCount, {
+                db.sequelize['crm-app'].query(sqlLeadsCount, {
                     type: db.sequelize['crm-app'].QueryTypes.SELECT,
                     replacements: {
                         start_time: moment(dateSelected_from).format('YYYY-MM-DD').concat(' ', startTime),
                         end_time: moment(dateSelected_to).format('YYYY-MM-DD').concat(' ', endTime),
                         listCallFiles_ids: lCF_ids,
-                        active: 'Y'
+                        active: 'Y',
+                        phone_number : phone_number,
+                        call_status : call_status
                     }
                 }).then(countAll => {
                     extra_where += ' AND list_call_file_id in (:listCallFiles_ids)'
-                    let pages = Math.ceil(countAll[0].count / filter.limit);
+                    let pages = Math.ceil(countAll[0].count / data.limit);
                     db.sequelize['crm-app'].query(sqlLeads, {
                         type: db.sequelize['crm-app'].QueryTypes.SELECT,
                         replacements: {
@@ -522,11 +528,17 @@ class callfiles extends baseModelbo {
                             call_status : call_status
                         }
                     }).then(dataLeads => {
+                        const attributes_res = {
+                            count: countAll,
+                            offset: offset,
+                            limit: limit,
+                            pages: pages
+                        };
                         res.send({
                             success: true,
                             status: 200,
                             data: dataLeads,
-                            pages: pages
+                            attributes: attributes_res
                         })
                     }).catch(err => {
                         _this.sendResponseError(res, ['Error stats'], err)
