@@ -17,261 +17,83 @@ class AccBo extends baseModelbo {
         this.primaryKey = "id"
     }
 
-    getCdrs(req, res, next) {
-        let _this = this;
-        const params = req.body;
-        const filter = params.filter || null;
-        const limit = parseInt(params.limit) > 0 ? params.limit : 1000;
-        const page = params.page || 1;
-        const offset = (limit * (page - 1));
-        let current_Date = moment(new Date()).tz(app_config.TZ).format('YYYYMMDD');
-        let currentDate = moment(new Date()).tz(app_config.TZ).format('YYYY-MM-DD');
-        let {start_time, end_time, sip_code, directions, accounts_code, ip, from, to, sip_reason} = params.filter;
-        if (filter.date !== current_Date) {
-            let sqlCount = `select count(*)
-                            from cdrs_:date
-                            WHERE SUBSTRING("custom_vars", 0 , POSITION(':' in "custom_vars") ) = :accounts_code
-                                EXTRA_WHERE`
+    _getCdrsFunction(params){
+        return new Promise((resolve,reject)=>{
+            const filter = params.filter || null;
+            const limit = parseInt(params.limit) > 0 ? params.limit : 1000;
+            const page = params.page || 1;
+            const offset = (limit * (page - 1));
+            let {date, directions, startTime, endTime, sipCode, reasonCode,ip, from, to, account_code} = filter;
+            let sqlCount = `select FILTER
+                            from acc_cdrs
+                            WHERE SUBSTRING("custom_vars", 0 , POSITION(':' in "custom_vars") ) = :account_code
+                 EXTRA_WHERE`
+            let sqlData = sqlCount;
+            let filter_count = ' count(*) ';
             let extra_where_count = '';
-            if (filter.start_time && filter.start_time !== '') {
+            if (startTime && startTime !== '') {
                 extra_where_count += ' AND start_time >= :start_time';
             }
-            if (filter.end_time && filter.end_time !== '') {
+            if (endTime && endTime !== '') {
                 extra_where_count += ' AND end_time <=  :end_time';
             }
-            if (filter.sip_code && filter.sip_code !== '' && filter.sip_code.length !== 0) {
-                extra_where_count += ' AND sip_code in (:sip_code)';
+            if (sipCode && sipCode !== '') {
+                extra_where_count += ' AND sip_code = :sip_code';
             }
-            if (filter && filter.sip_reason && filter.sip_reason !== '' && filter.sip_reason.length !== 0) {
-                extra_where_count += ' AND sip_reason in (:sip_reason)';
+            if (reasonCode && reasonCode !== '') {
+                extra_where_count += ' AND sip_reason = :sip_reason';
             }
-            if (filter.directions && filter.directions !== '' && filter.directions.length !== 0) {
-                extra_where_count += ' AND direction in (:directions)';
+            if (directions && directions.length !== 0) {
+                extra_where_count += ' AND calldirection in (:directions)';
             }
-            if (filter.ip && filter.ip !== '') {
-                extra_where_count += ' AND src_ip in like :src_ip';
+            if (ip && ip !== '') {
+                extra_where_count += ' AND src_ip like :src_ip';
             }
-            if (filter && filter.from && filter.from !== '') {
-                extra_where_count += ` AND TRIM(LEADING '+' FROM src_user_hmr) like :from`;
+            if (from && from !== '') {
+                extra_where_count += ` AND (call_events -> 0 ->> 'callerNumber')::text like :from`;
             }
-            if (filter && filter.to && filter.to !== '') {
-                extra_where_count += ` AND TRIM(LEADING '+' FROM dst_user_hmr)   like :to `;
-            }
-            if (filter && filter.gateway_numbers && filter.gateway_numbers !== '' && filter.gateway_numbers.length !== 0) {
-                extra_where_count += " and sip_gateway in (:gateway_numbers) ";
+            if (to && to !== '') {
+                extra_where_count += ` AND (call_events -> 0 ->> 'destination')::text like :to `;
             }
             sqlCount = sqlCount.replace('EXTRA_WHERE', extra_where_count);
+            sqlCount = sqlCount.replace('FILTER', filter_count);
             db.sequelize['cdr-db'].query(sqlCount, {
                 type: db.sequelize['cdr-db'].QueryTypes.SELECT,
                 replacements: {
-                    date: parseInt(filter.date),
-                    start_time: start_time,
-                    end_time: end_time,
-                    sip_code: filter.sip_code,
-                    sip_reason: filter.sip_reason,
-                    directions: filter.directions,
-                    accounts_code: filter.accounts_code,
-                    src_ip: filter.ip ? (filter.ip.concat('%')).toString() : null,
-                    from: from ? (from.concat('%')).toString() : null,
-                    to: to ? (to.concat('%')).toString() : null
-                }
-            }).then(countAll => {
-                let pages = Math.ceil(countAll[0].count / params.limit);
-                let sql = `select *
-                           from cdrs_:date
-                           WHERE id >= ( select id from cdrs_:date WHERE SUBSTRING("custom_vars", 0 , POSITION(':' in "custom_vars") ) = :accounts_code
-                               EXTRA_WHERE
-                               ORDER BY id DESC
-                               LIMIT 1
-                               OFFSET :offset
-                               )
-                               EXTRA_WHERE-PARAMS
-                               LIMIT :limit`
-                let extra_where = '';
-                if (filter && filter.start_time && filter.start_time !== '') {
-                    extra_where += ' AND start_time >= :start_time';
-                }
-                if (filter && filter.end_time && filter.end_time !== '') {
-                    extra_where += ' AND end_time <=  :end_time';
-                }
-                if (filter && filter.sip_code && filter.sip_code !== '' && filter.sip_code.length !== 0) {
-                    extra_where += ' AND sip_code in (:sip_code)';
-                }
-                if (filter && filter.sip_reason && filter.sip_reason !== '' && filter.sip_reason.length !== 0) {
-                    extra_where += ' AND sip_reason in (:sip_reason)';
-                }
-                if (filter && filter.directions && filter.directions !== '' && filter.directions.length !== 0) {
-                    extra_where += ' AND direction in (:directions)';
-                }
-                if (filter && filter.ip && filter.ip !== '') {
-                    extra_where += ' AND src_ip like :src_ip';
-                }
-                if (filter && filter.from && filter.from !== '') {
-                    extra_where += ` AND TRIM(LEADING '+' FROM src_user_hmr) like :from`;
-                }
-                if (filter && filter.to && filter.to !== '') {
-                    extra_where += ` AND TRIM(LEADING '+' FROM dst_user_hmr)   like :to `;
-                }
-                if (filter && filter.gateway_numbers && filter.gateway_numbers !== '' && filter.gateway_numbers.length !== 0) {
-                    extra_where += " and sip_gateway in (:gateway_numbers) ";
-                }
-                sql = sql.replace('EXTRA_WHERE', extra_where);
-                sql = sql.replace('EXTRA_WHERE-PARAMS', extra_where);
-                db.sequelize['cdr-db'].query(sql, {
-                    type: db.sequelize['cdr-db'].QueryTypes.SELECT,
-                    replacements: {
-                        date: parseInt(filter.date),
-                        limit: limit,
-                        offset: offset,
-                        start_time: filter.start_time,
-                        end_time: filter.end_time,
-                        sip_code: filter.sip_code,
-                        sip_reason: filter.sip_reason,
-                        directions: filter.directions,
-                        accounts_code: filter.accounts_code,
-                        src_ip: filter.ip ? (filter.ip.concat('%')).toString() : null,
-                        from: from ? (from.concat('%')).toString() : null,
-                        to: to ? (to.concat('%')).toString() : null
-                    }
-                }).then(data => {
-                    this.db['accounts'].findAll({
-                        where: {
-                            active: 'Y'
-                        }
-                    }).then((accounts) => {
-                        let cdrs_data = []
-                        PromiseBB.each(data, item => {
-                            let account_data = accounts.filter(item_acc => item_acc.account_number === item.accountcode);
-                            item.account_info = account_data[0] ? account_data[0].first_name + " " + account_data[0].last_name : null;
-                            item.account = account_data[0];
-                            cdrs_data.push(item);
-                        }).then(cdr_data => {
-                            res.send({
-                                success: true,
-                                status: 200,
-                                data: cdrs_data,
-                                pages: pages,
-                                countAll: countAll[0].count
-                            })
-                        }).catch(err => {
-                            _this.sendResponseError(res, [], err);
-                        })
-                    }).catch(err => {
-                        _this.sendResponseError(res, [], err);
-                    })
-                }).catch(err => {
-                    _this.sendResponseError(res, [], err);
-                })
-            }).catch(err => {
-                _this.sendResponseError(res, [], err);
-            })
-        } else {
-            let sqlCount = `select count(*)
-                            from acc_cdrs
-                            WHERE SUBSTRING("custom_vars", 0 , POSITION(':' in "custom_vars") ) = :accounts_code
-                 EXTRA_WHERE`
-            let extra_where_countCurrenDate = '';
-            if (filter.start_time && filter.start_time !== '') {
-                extra_where_countCurrenDate += ' AND start_time >= :start_time';
-            }
-            if (filter.end_time && filter.end_time !== '') {
-                extra_where_countCurrenDate += ' AND end_time <=  :end_time';
-            }
-            if (filter.sip_code && filter.sip_code !== '' && filter.sip_code.length !== 0) {
-                extra_where_countCurrenDate += ' AND sip_code in (:sip_code)';
-            }
-            if (filter && filter.sip_reason && filter.sip_reason !== '' && filter.sip_reason.length !== 0) {
-                extra_where_countCurrenDate += ' AND sip_reason in (:sip_reason)';
-            }
-            if (filter.directions && filter.directions !== '' && filter.directions.length !== 0) {
-                extra_where_countCurrenDate += ' AND direction in (:directions)';
-            }
-            if (filter.ip && filter.ip !== '') {
-                extra_where_countCurrenDate += ' AND src_ip like :src_ip';
-            }
-            if (filter && filter.from && filter.from !== '') {
-                extra_where_countCurrenDate += ` AND TRIM(LEADING '+' FROM src_user_hmr) like :from`;
-            }
-            if (filter && filter.to && filter.to !== '') {
-                extra_where_countCurrenDate += ` AND TRIM(LEADING '+' FROM dst_user_hmr)   like :to `;
-            }
-            if (filter && filter.gateway_numbers && filter.gateway_numbers !== '' && filter.gateway_numbers.length !== 0) {
-                extra_where_countCurrenDate += " and sip_gateway in (:gateway_numbers) ";
-            }
-            sqlCount = sqlCount.replace('EXTRA_WHERE', extra_where_countCurrenDate);
-            db.sequelize['cdr-db'].query(sqlCount, {
-                type: db.sequelize['cdr-db'].QueryTypes.SELECT,
-                replacements: {
-                    currentData: (currentDate.concat('%')).toString(),
                     limit: limit,
                     offset: offset,
-                    start_time: filter.start_time,
-                    end_time: filter.end_time,
-                    sip_code: sip_code,
+                    start_time: moment(date).format('YYYY-MM-DD').concat(' ', startTime),
+                    end_time: moment(date).format('YYYY-MM-DD').concat(' ', endTime),
+                    sip_code: sipCode,
+                    sip_reason : reasonCode,
                     directions: directions,
-                    accounts_code: filter.accounts_code,
-                    src_ip: filter.ip ? (filter.ip.concat('%')).toString() : null,
-                    from: from ? (from.concat('%')).toString() : null,
-                    to: to ? (to.concat('%')).toString() : null
+                    account_code: account_code,
+                    src_ip: ip ? ('%'+ip.concat('%')).toString() : null,
+                    from: from ? ('%'+from.concat('%')).toString() : null,
+                    to: to ? ('%'+to.concat('%')).toString() : null
                 }
             }).then(countAll => {
                 let pages = Math.ceil(countAll[0].count / params.limit);
-                let sqlData = `select *
-                               from acc_cdrs
-                               WHERE SUBSTRING("custom_vars", 0 , POSITION(':' in "custom_vars") ) = :accounts_code 
-                              AND id >= ( select id  from acc_cdrs where 1=1 
-                               EXTRA_WHERE
-                                LIMIT 1
-                               OFFSET :offset
-                               )
-                            EXTRA_WHERE_PARAMS
-                                   LIMIT :limit`
-                let extra_where_currentDate = '';
-                if (filter && filter.start_time && filter.start_time !== '') {
-                    extra_where_currentDate += ' AND start_time >= :start_time';
-                }
-                if (filter && filter.end_time && filter.end_time !== '') {
-                    extra_where_currentDate += ' AND end_time <=   :end_time';
-                }
-                if (filter && filter.sip_code && filter.sip_code !== '' && filter.sip_code.length !== 0) {
-                    extra_where_currentDate += ' AND sip_code in (:sip_code)';
-                }
-                if (filter && filter.sip_reason && filter.sip_reason !== '' && filter.sip_reason.length !== 0) {
-                    extra_where_currentDate += ' AND sip_reason in (:sip_reason)';
-                }
-                if (filter && filter.directions && filter.directions !== '' && filter.directions.length !== 0) {
-                    extra_where_currentDate += ' AND direction in (:directions)';
-                }
-                if (filter && filter.ip && filter.ip !== '') {
-                    extra_where_currentDate += ' AND src_ip like :src_ip';
-                }
-                if (filter && filter.from && filter.from !== '') {
-                    extra_where_currentDate += ` AND TRIM(LEADING '+' FROM src_user_hmr) like :from`;
-                }
-                if (filter && filter.to && filter.to !== '') {
-                    extra_where_currentDate += ` AND TRIM(LEADING '+' FROM dst_user_hmr)   like :to `;
-                }
-                if (filter && filter.gateway_numbers && filter.gateway_numbers !== '' && filter.gateway_numbers.length !== 0) {
-                    extra_where_currentDate += " and sip_gateway in (:gateway_numbers) ";
-                }
-                sqlData = sqlData.replace('EXTRA_WHERE', extra_where_currentDate);
-                sqlData = sqlData.replace('EXTRA_WHERE_PARAMS', extra_where_currentDate);
+                let extra_where_limit = extra_where_count+= ' LIMIT :limit'
+                sqlData = sqlData.replace('EXTRA_WHERE', extra_where_limit);
+                sqlData = sqlData.replace('FILTER', '*');
+
                 db.sequelize['cdr-db'].query(sqlData, {
                     type: db.sequelize['cdr-db'].QueryTypes.SELECT,
                     replacements: {
-                        currentData: (currentDate.concat('%')).toString(),
                         limit: limit,
                         offset: offset,
-                        start_time: filter.start_time,
-                        end_time: filter.end_time,
-                        sip_code: sip_code,
+                        start_time: moment(date).format('YYYY-MM-DD').concat(' ', startTime),
+                        end_time: moment(date).format('YYYY-MM-DD').concat(' ', endTime),
+                        sip_code: sipCode,
+                        sip_reason : reasonCode,
                         directions: directions,
-                        accounts_code: filter.accounts_code,
-                        src_ip: filter.ip ? (filter.ip.concat('%')).toString() : null,
-                        from: from ? (from.concat('%')).toString() : null,
-                        to: to ? (to.concat('%')).toString() : null,
+                        account_code: account_code,
+                        src_ip: ip ? ('%'+ip.concat('%')).toString() : null,
+                        from: from ? ('%'+from.concat('%')).toString() : null,
+                        to: to ? ('%'+to.concat('%')).toString() : null
                     }
-                }).then(dataCurrentDate => {
+                }).then(data => {
                     this.db['accounts'].findAll({
                         where: {
                             active: 'Y'
@@ -279,30 +101,41 @@ class AccBo extends baseModelbo {
 
                     }).then((accounts) => {
                         let cdrs_data = []
-                        PromiseBB.each(dataCurrentDate, item => {
+                        PromiseBB.each(data, item => {
                             let account_data = accounts.filter(item_acc => item_acc.account_number === item.accountcode);
                             item.account_info = account_data[0] ? account_data[0].first_name + " " + account_data[0].last_name : null;
                             item.account = account_data[0];
                             cdrs_data.push(item);
-                        }).then(cdrs_data => {
-                            res.send({
+                        }).then(() => {
+                            let resData = {
                                 success: true,
                                 status: 200,
                                 data: cdrs_data,
                                 pages: pages,
                                 countAll: countAll[0].count
-                            })
+                            }
+                            resolve(resData)
                         }).catch(err => {
-                            _this.sendResponseError(res, [], err)
+                           reject(err)
                         })
                     }).catch(err => {
-                        _this.sendResponseError(res, [], err)
+                        reject(err)
                     })
                 }).catch(err => {
-                    _this.sendResponseError(res, [], err)
+                    reject(err)
                 })
             })
-        }
+        })
+    }
+    getCdrs(req, res, next) {
+        let _this = this;
+        const params = req.body;
+        _this._getCdrsFunction(params).then((result)=>{
+            res.send(result);
+        }).catch(err=>{
+            return _this.sendResponseError(res,['Error.CannotGetCdrs'],1,403);
+        })
+
 
     };
 

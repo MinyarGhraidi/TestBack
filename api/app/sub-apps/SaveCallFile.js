@@ -116,7 +116,6 @@ function startReadData() {
         });
 
         function processMsg(msg) {
-            console.log(msg.properties.type)
             switch (msg.properties.type) {
                 case 'save call file': {
                     const incomingDate = (new Date()).toISOString();

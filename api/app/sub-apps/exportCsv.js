@@ -15,10 +15,10 @@ const appHelper = require("../helpers/app");
 const rabbitmq_url = appHelper.rabbitmq_url;
 const PromiseBB = require("bluebird");
 const accBo = new (require('../bo/accbo'))();
-const FunctionsManager = require("../services/serviceHelper");
+const AccBo = require("../bo/accbo");
 const writeXlsxFile = require("write-excel-file/node");
 const path = require("path");
-const fctManager = new FunctionsManager();
+const _accbo = new AccBo();
 const appDir = path.dirname(require.main.path);
 const moment = require("moment-timezone");
 
@@ -85,16 +85,14 @@ function start() {
     }
 
     function getData(data, callback) {
-        fctManager.getCdrMq(data.params).then(body => {
+        _accbo._getCdrsFunction(data.params).then(body => {
             if (body && body.success === true) {
                 let dataCallback = {
                     data: body.data,
                     status: true,
                     total: data.pages,
                     currentPage: data.currentPage,
-                    sessionId: data.sessionId,
-                    role_id: data.params.role_id,
-                    role_value: data.params.role_value
+                    sessionId: data.sessionId
                 }
                 callback(dataCallback);
             } else {
@@ -187,7 +185,7 @@ function start() {
                                     {
                                         column: 'account',
                                         type: String,
-                                        value: cdr => cdr.account ? cdr.account.company_name + "(" + cdr.account.first_name + " " + cdr.account.last_name + ")" : cdr.accountcode
+                                        value: cdr => cdr.account ? cdr.account.company + "(" + cdr.account.first_name + " " + cdr.account.last_name + ")" : cdr.accountcode
 
                                     },
                                     {
@@ -235,7 +233,6 @@ function start() {
                                 ]
                                 const file_name = Date.now() + '-cdr.xlsx';
                                 const file_path = appDir + '/resources/cdrs/' + file_name;
-
                                 writeXlsxFile(FullDataToCsv[item_data.sessionId + item_data.params.time_export], {
                                     schema,
                                     filePath: file_path
@@ -253,6 +250,8 @@ function start() {
                                         closeOnErr(e);
                                     }
                                     return true
+                                }).catch(err=>{
+                                    console.log(err)
                                 })
                             }
                         });
