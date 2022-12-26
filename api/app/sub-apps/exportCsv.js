@@ -56,7 +56,7 @@ function start() {
                 }
                 if (accounts && accounts.length !== 0) {
                     PromiseBB.each(accounts, (item_account) => {
-                        let queuecsv = rabbitmq_config.queues.exportCsv + item_account.account_id;
+                        let queuecsv = rabbitmq_config.queues.exportCsv + item_account.user_id;
                         channel.assertQueue(queuecsv, {
                             durable: true
                         })
@@ -131,7 +131,7 @@ function start() {
                     .then(accounts => {
                         if (accounts && accounts.length !== 0) {
                             PromiseBB.each(accounts, (item_account) => {
-                                ch.consume(rabbitmq_config.queues.exportCsv + item_account.account_id, processMsg);
+                                ch.consume(rabbitmq_config.queues.exportCsv + item_account.user_id, processMsg);
                             }).then(data_queue => {
                             })
                         }
