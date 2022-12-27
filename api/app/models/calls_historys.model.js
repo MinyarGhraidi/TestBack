@@ -50,6 +50,9 @@ module.exports = (sequelize, Sequelize) => {
             record_url: {
                 type: Sequelize.STRING
             },
+            revision_id: {
+                type: Sequelize.INTEGER
+            },
         },
         {timestamps: false}
     );
@@ -68,7 +71,8 @@ module.exports = (sequelize, Sequelize) => {
         'dmt',
         'list_call_file_id',
         'note',
-        'record_url'
+        'record_url',
+        "revision_id"
 
     ];
     calls_historys.associate = function (models) {
@@ -77,6 +81,9 @@ module.exports = (sequelize, Sequelize) => {
         })
         calls_historys.belongsTo(models.callfiles, {
             foreignKey: 'call_file_id'
+        })
+        calls_historys.belongsTo(models.revisions, {
+            foreignKey: 'revision_id'
         })
     }
 

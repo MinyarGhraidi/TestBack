@@ -559,22 +559,86 @@ class callfiles extends baseModelbo {
         })
 
     }
+    changeCustomFields(customField){
+        return new Promise((resolve,reject)=>{
+            if(customField && customField.length !== 0){
+                let resData = {};
+                customField.forEach(item=>{
+                    resData[item.value] = item.defaultValue || item.options[0].text;
+                })
+                resolve(resData)
+            }else{
+               resolve({})
+            }
+        })
+    }
+    changeFieldBeforeAfter(_beforeChanges,_afterChanges,_changesDone){
+        return new Promise((resolve,reject)=>{
+            const beforeChanges = new Promise((resolve,reject)=>{
+                let before = _beforeChanges;
+                let customFields = before.customfields;
+                delete before.customfields;
+                this.changeCustomFields(customFields).then(resCustomFields =>{
+                    resolve({...before, ...resCustomFields})
+                }).catch(err=>reject(err))
+            })
+            const afterChanges = new Promise((resolve,reject)=>{
+                let after = _afterChanges;
+                let customFields = after.customfields;
+                delete after.customfields;
+                this.changeCustomFields(customFields).then(resCustomFields =>{
+                    resolve({...after, ...resCustomFields})
+                }).catch(err=>reject(err))
+            })
+            const changes = new Promise((resolve,reject)=>{
+                let changes = _changesDone;
+                let customFields = changes.customfields;
+                delete changes.customfields;
+                this.changeCustomFields(customFields).then(resCustomFields =>{
+                    resolve({...changes, ...resCustomFields})
+                }).catch(err=>reject(err))
+            })
+            Promise.all([beforeChanges,afterChanges,changes]).then((data)=>{
+                resolve(data);
+            }).catch((err)=>{
+                reject(err);
+            })
+        }).catch(err=>reject(err))
+    }
+    returnRevisonData(callFile){
+        return new Promise((resolve,reject)=>{
+            let revision_data = callFile.revision.dataValues;
+            let user_data = callFile.user.dataValues;
+                this.changeFieldBeforeAfter(revision_data.before,revision_data.after,revision_data.changes).then(result =>{
+                        resolve({
+                            before: result[0],
+                            after: result[1],
+                            changes: result[2],
+                            date: moment(revision_data.date).format('YYYY-MM-DD HH:mm:ss'),
+                            user: user_data
+                        })
+                }).catch(err=>{
+                    reject(err)
+                })
+        })
+    }
 
     getHistoryCallFile(req, res, next) {
         let _this = this;
         let data = req.body;
-
         if (!!!data || !!!data.call_file_id) {
             _this.sendResponseError(res, ['Error.callFileIdRequired'])
             return
         }
+        data.call_file_id = 328298
         _this.db['callfiles'].findOne({
             where: {
                 active: 'Y',
                 callfile_id: data.call_file_id
             }
         }).then(callFileData => {
-            if (!!!callFileData) {
+            const isEmpty = Object.keys(callFileData).length === 0;
+            if (!!!callFileData || isEmpty) {
                 res.send({
                     success: true,
                     status: 200,
@@ -582,52 +646,48 @@ class callfiles extends baseModelbo {
                 })
                 return
             }
-            let sqlDetails = `select *
-                              from calls_historys as call_h
-                                       left join users as u On u.user_id = call_h.agent_id
-                                       left join callfiles as callF On callF.callfile_id = call_h.call_file_id
-                              where call_h.call_file_id = :call_file_id
-                                and call_h.active = :active`
             _this.db['calls_historys'].findAll({
                 where: {
                     active: 'Y',
-                    call_file_id: data.call_file_id
+                    call_file_id: data.call_file_id,
+                    revision_id: {
+                        $ne: null
+                    }
                 },
                 include: [{
                     model: db.users
                 }, {
                     model: db.callfiles
+                },{
+                    model: db.revisions
                 }],
                 order: [['started_at', 'DESC']],
             }).then(callFileStats => {
+                if(!!!callFileStats){
+                    res.send({
+                        success: true,
+                        status: 200,
+                        data: []
+                    })
+                    return
+                }
                 let callFileInfo = callFileData.toJSON();
                 let statsData = [];
                 let idx = 0
                 let historyPromise = new Promise((resolve, reject) => {
                     callFileStats.forEach(item_callFile => {
-                        _this.getEntityRevisionByItem(2, 'dialplan_items').then(data_revision => {
                             let item_callFile_json = item_callFile.toJSON();
-                            let data = [];
-                            data_revision.forEach((item_revision, idx) => {
-                                data.push({
-                                    key: idx,
-                                    before: item_revision.before,
-                                    after: item_revision.after,
-                                    changes: item_revision.changes,
-                                    date: moment(item_revision.date).format('YYYY-MM-DD HH:mm:ss'),
-                                    user: item_revision.user
-                                })
-                            });
-                            item_callFile_json.revisionData = data
-                            statsData.push(item_callFile_json)
-                            if (idx < callFileStats.length - 1) {
-                                idx++
-                            } else {
-                                resolve(statsData)
-                            }
-                        }).catch(err => {
+                            this.returnRevisonData(item_callFile).then(res_data=>{
+                                item_callFile_json.revisionData = res_data
+                                statsData.push(item_callFile_json)
+                               if (idx < callFileStats.length - 1) {
+                                    idx++
+                                } else {
+                                    resolve(statsData)
+                               }
+                         }).catch(err => {
                             reject(err)
-                        })
+                         })
                     })
                 })
                 Promise.all([historyPromise]).then(data_stats => {
@@ -645,29 +705,6 @@ class callfiles extends baseModelbo {
             })
         })
     }
-
-    getEntityRevisionByItem(model_id, model_name) {
-        let _this = this;
-        return new Promise((resolve, reject) => {
-            _this.db['revisions'].findAll({
-                where: {
-                    model_id: model_id,
-                    model_name: model_name,
-                    active: 'Y'
-                },
-                order: [['date', 'DESC']],
-                include: [{
-                    model: _this.db['users']
-                }]
-
-            }).then((data) => {
-                resolve(data)
-            }).catch(err => {
-                reject(err)
-            })
-        })
-    }
-
     playMediaMusic(req,res,send){
         let {file_id} = req.body;
         if(!!!file_id){
