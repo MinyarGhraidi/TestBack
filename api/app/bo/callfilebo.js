@@ -564,7 +564,7 @@ class callfiles extends baseModelbo {
             if(customField && customField.length !== 0){
                 let resData = {};
                 customField.forEach(item=>{
-                    resData[item.value] = item.defaultValue || item.options[0].text;
+                    resData[item.value] = item.default || item.options[0].text;
                 })
                 resolve(resData)
             }else{
@@ -630,7 +630,6 @@ class callfiles extends baseModelbo {
             _this.sendResponseError(res, ['Error.callFileIdRequired'])
             return
         }
-        data.call_file_id = 328298
         _this.db['callfiles'].findOne({
             where: {
                 active: 'Y',
@@ -697,6 +696,7 @@ class callfiles extends baseModelbo {
                         data: callFileInfo,
                     })
                 }).catch(err => {
+                    console.log(err)
                     _this.sendResponseError(res, ['Error.getStats'], err)
                 })
             }).catch(err => {
