@@ -637,8 +637,7 @@ class callfiles extends baseModelbo {
                 callfile_id: data.call_file_id
             }
         }).then(callFileData => {
-            const isEmpty = Object.keys(callFileData).length === 0;
-            if (!!!callFileData || isEmpty) {
+            if (!!!callFileData) {
                 res.send({
                     success: true,
                     status: 200,

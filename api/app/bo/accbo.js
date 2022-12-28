@@ -100,23 +100,34 @@ class AccBo extends baseModelbo {
                         }
 
                     }).then((accounts) => {
-                        let cdrs_data = []
-                        PromiseBB.each(data, item => {
-                            let account_data = accounts.filter(item_acc => item_acc.account_number === item.accountcode);
-                            item.account_info = account_data[0] ? account_data[0].first_name + " " + account_data[0].last_name : null;
-                            item.account = account_data[0];
-                            cdrs_data.push(item);
-                        }).then(() => {
-                            let resData = {
-                                success: true,
-                                status: 200,
-                                data: cdrs_data,
-                                pages: pages,
-                                countAll: countAll[0].count
+                        this.db['campaigns'].findAll({
+                            where : {
+                                active : 'Y',
                             }
-                            resolve(resData)
+                        }).then((campaigns)=>{
+                            let cdrs_data = []
+                            PromiseBB.each(data, item => {
+                                    let account_data = accounts.filter(item_acc => item_acc.account_number === item.accountcode);
+                                    let campaign_data = campaigns.filter(item_acc => item_acc.campaign_id === parseInt(item.campaignId));
+                                    item.account_info = account_data[0] ? account_data[0].first_name + " " + account_data[0].last_name : null;
+                                    item.account = account_data[0];
+                                    item.campaign = campaign_data[0];
+                                    item.campaign_name = campaign_data[0] ? campaign_data[0].campaign_name : null;
+                                    cdrs_data.push(item);
+                            }).then(() => {
+                                let resData = {
+                                    success: true,
+                                    status: 200,
+                                    data: cdrs_data,
+                                    pages: pages,
+                                    countAll: countAll[0].count
+                                }
+                                resolve(resData)
+                            }).catch(err => {
+                                reject(err)
+                            })
                         }).catch(err => {
-                           reject(err)
+                            reject(err)
                         })
                     }).catch(err => {
                         reject(err)

@@ -225,9 +225,45 @@ function start() {
 
                                     },
                                     {
-                                        column: 'cost',
+                                        column: 'context',
                                         type: String,
-                                        value: cdr => cdr.cost !== null ? cdr.cost.toString() : ''
+                                        value: cdr => cdr.context !== null ? cdr.context.toString() : ''
+
+                                    },
+                                    {
+                                        column: 'call ID',
+                                        type: String,
+                                        value: cdr => cdr.callid !== null ? cdr.callid.toString() : ''
+
+                                    },
+                                    {
+                                        column: 'Call Status',
+                                        type: String,
+                                        value: cdr => cdr.callstatus !== null ? cdr.callstatus.toString() : ''
+
+                                    },
+                                    {
+                                        column: 'SIP From URI CallCenter',
+                                        type: String,
+                                        value: cdr => cdr.sipfromuri_callcenter !== null ? cdr.sipfromuri_callcenter.toString() : ''
+
+                                    },
+                                    {
+                                        column: 'Answer Time',
+                                        type: String,
+                                        value: cdr => cdr.answertime !== null ? cdr.answertime.toString() : ''
+
+                                    },
+                                    {
+                                        column: 'Agent',
+                                        type: String,
+                                        value: cdr => cdr.agent !== null ? cdr.agent.toString() : ''
+
+                                    },
+                                    {
+                                        column: 'Campaign ID',
+                                        type: String,
+                                        value: cdr => cdr.campaign_name !== null ? cdr.campaign_name.toString() : ''
 
                                     }
                                 ]
