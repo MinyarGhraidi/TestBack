@@ -340,11 +340,11 @@ class baseModelbo {
     saveEntityNewRevision(obj, obj_before, req, res) {
         let _this = this;
         return new Promise(function (resolve, reject) {
-            const obj_after = obj.toJSON();
+            const obj_after =  typeof obj === 'object'? obj :obj.toJSON();
             const fields_changed = diff(obj_before, obj_after);
             if (Object.keys(fields_changed).length > 0) {
                 _this.getUserFromToken(req).then(users => {
-                    if (users && users.account_id) {
+                    if (users && users.user_id) {
                         let entity_revision = {
                             model_id: obj_before[_this.primaryKey],
                             model_name: _this.baseModal,
@@ -352,9 +352,10 @@ class baseModelbo {
                             after: obj_after,
                             changes: fields_changed,
                             date: moment.unix(moment().unix()).format("YYYY-MM-DD HH:mm:ss"),
-                            user_id: users.account_id
+                            user_id: users.user_id
                         };
                         _this.db['revisions'].build(entity_revision).save().then(after_sa => {
+                            entity_revision.id =after_sa.revision_id
                             resolve(entity_revision);
                         });
                     }

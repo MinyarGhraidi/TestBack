@@ -86,7 +86,9 @@ class callfiles extends baseModelbo {
             this.CreateCallFileItem(dataMapping[0].dataMapping, listCallFileItem, basic_fields, callFile, item_callFile, indexMapping).then(callFile => {
                 key++;
                 this.saveCustomField(dataMapping[0].custom_field,listCallFileItem,callFile, item_callFile).then(customField=>{
-                    callFile.customfields = customField.customfields
+                    callFile.customfields = customField.customfields;
+                    callFile.created_at = new Date();
+                    callFile.updated_at = new Date();
                     this.checkDuplicationListCallFile(item_callFile, check_duplication, campaign_id, attribute_phone_number, list_call_file_id).then(check_duplication => {
                         if (check_duplication) {
                             this.db['callfiles'].build(callFile).save().then(result => {
@@ -413,20 +415,32 @@ class callfiles extends baseModelbo {
         let note = req.body.note
         let callStatus = req.body.callStatus
 
-        this.db['callfiles'].update({
-            note: note,
-            callStatus: callStatus
-        }, {
-            where: {
+        this.db['callfiles'].findOne({
+            where:{
                 callfile_id: callfile_id
             }
-        }).then(result => {
-            res.send({
-                success: true
+        }).then(call_previous=>{
+            this.saveEntityNewRevision(req.body,call_previous,req).then(revision=>{
+                this.db['callfiles'].update(req.body,
+                    {
+                        where: {
+                            callfile_id: callfile_id
+                        }
+                    }).then(result => {
+                        if(result){
+                            res.send({
+                                success: true,
+                                revision_id: revision.id
+                            })
+                        }
+
+                }).catch(err => {
+                    return this.sendResponseError(res, ['Error', err], 1, 403);
+                })
             })
-        }).catch(err => {
-            return this.sendResponseError(res, ['Error', err], 1, 403);
         })
+
+
     }
 
     leadsStats(req, res, next) {
@@ -835,6 +849,7 @@ class callfiles extends baseModelbo {
                         "title": item.value,
                         "items": {
                             "type": "string",
+                            "default": item.default,
                             "enum": [],
                         },
                         "uniqueItems": true
@@ -846,7 +861,8 @@ class callfiles extends baseModelbo {
                 } else {
                     schema.properties[item.value] = {
                         "title": item.value,
-                        "type": "string"
+                        "type": "string",
+                        "default": item.default
                     }
                 }
                 if (index < callFile.customfields.length - 1) {
@@ -910,7 +926,7 @@ class callfiles extends baseModelbo {
                             if (result && result.dataField && result.dataField.length !== 0) {
                                 this.creatSchema(result.dataField, schema).then(dataInput => {
                                     if (dataInput && dataInput.dataSchema) {
-                                        schema = dataInput.dataSchema
+                                        schema = dataInput.dataSchema;
                                         if (call_file.customfields && call_file.customfields.length !== 0) {
                                             this.createSchemaCustomField(schema, call_file).then(InputField => {
                                                 if (InputField.success) {
@@ -1194,9 +1210,9 @@ class callfiles extends baseModelbo {
                 customField.map(item=>{
                     if(item.type === 'text'){
                         if(item_callFile[item.value] !== undefined){
-                            item.defaultValue = item_callFile[item.value]
+                            item['default'] = item_callFile[item.value]
                         }else{
-                            item.defaultValue = null
+                            item['default'] = null
                         }
                     }else{
                         let exist = false;
@@ -1207,12 +1223,14 @@ class callfiles extends baseModelbo {
                                 }
                             })
                             if(exist === false){
+                                item['default'] = item_callFile[item.value];
                                 item.options.push({
                                     id:item_callFile[item.value],
                                     text:item_callFile[item.value]
                                 })
                             }
                         }else{
+                            item['default'] = item_callFile[item.value];
                             item.options.push({
                                 id:item_callFile[item.value],
                                 text:item_callFile[item.value]
@@ -1220,6 +1238,7 @@ class callfiles extends baseModelbo {
                         }
                     }
                 })
+
                 resolve({
                     customfields : customField
                 })

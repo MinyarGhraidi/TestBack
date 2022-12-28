@@ -72,8 +72,7 @@ module.exports = (sequelize, Sequelize) => {
         'list_call_file_id',
         'note',
         'record_url',
-        "revision_id"
-
+        'revision_id'
     ];
     calls_historys.associate = function (models) {
         calls_historys.belongsTo(models.users, {
