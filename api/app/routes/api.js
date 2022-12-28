@@ -58,6 +58,7 @@ DomainController = require('../controllers/domain.controller');
 AclController = require('../controllers/acl.controller');
 AclNodesController = require('../controllers/acl_nodes.controller');
 ServersController = require('../controllers/server.controller');
+CallhistoryController = require('../controllers/callhistory.controller');
 
 let apiRouters = function (passport) {
 
@@ -383,6 +384,9 @@ let apiRouters = function (passport) {
     router.get('/api/server/findById/:entity_id', passport.authenticate('jwt', {session: false}), ServersController.findById);
     router.put('/api/server/update',passport.authenticate('jwt', {session: false}), ServersController.editServer);
     router.delete('/api/server/delete/:server_id',passport.authenticate('jwt', {session: false}), ServersController.deleteServer);
+
+    router.put('/api/callhistory/update',passport.authenticate('jwt', {session: false}),CallhistoryController.update);
+    router.post('/api/callhistory/updateCallhistory',passport.authenticate('jwt', {session: false}),CallhistoryController.updateCall);
     return router;
 
 

@@ -683,6 +683,7 @@ class agents extends baseModelbo {
                             limit: 1,
                         }).then(result => {
                             if (result) {
+                                console.log('resultttt', result)
                                 this.db['agent_log_events'].update({
                                         finish_at: new Date(),
                                         updated_at: updatedAt_tz
@@ -699,6 +700,7 @@ class agents extends baseModelbo {
                                     }
                                 ).then(last_action => {
                                     if (last_action) {
+                                        console.log('last_actionnnnn', last_action)
                                         this.db['agent_log_events'].build({
                                             user_id: user_id,
                                             action_name: agent.params.status,
