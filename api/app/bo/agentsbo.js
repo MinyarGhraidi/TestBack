@@ -978,8 +978,8 @@ class agents extends baseModelbo {
             return this.sendResponseError(res, ['Error.AnErrorHasOccurredUser'], 1, 403);
         }
         const promiseDisconnect = new Promise((resolve, reject) => {
-            let couldDisc = data_agent.filter((agent) => agent.crmStatus !== 'waiting-call' && agent.crmStatus !== 'in_call') || [];
-            let cannotDisc = data_agent.filter((agent) => agent.crmStatus === 'waiting-call' || agent.crmStatus === 'in_call') || [];
+            let couldDisc = data_agent.filter((agent) => agent.crmStatus !== 'waiting-call' && agent.crmStatus !== 'in_call' && agent.crmStatus!=='in_qualification') || [];
+            let cannotDisc = data_agent.filter((agent) => agent.crmStatus === 'waiting-call' || agent.crmStatus === 'in_call' || agent.crmStatus==='in_qualification') || [];
             if (couldDisc && couldDisc.length !== 0) {
                 couldDisc.forEach(item => {
                     this.onDisconnect(item).then(result => {
