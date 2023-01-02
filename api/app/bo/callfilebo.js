@@ -489,7 +489,8 @@ class callfiles extends baseModelbo {
         if(listCallFiles_ids && listCallFiles_ids.length === 0){
             extra_where_ListCallFile = " campaign_id in (:campaign_ids) ";
         }else{
-            extra_where_ListCallFile = " listcallfile_id in (:listCallFiles_ids) "
+            extra_where_ListCallFile = " listcallfile_id in (:listCallFiles_ids) ";
+            extra_where = "AND callF.listcallfile_id in (:listCallFiles_ids) ";
         }
         if (startTime && startTime !== '') {
             extra_where += ' AND calls_h.started_at >= :start_time';
@@ -503,7 +504,7 @@ class callfiles extends baseModelbo {
         if(call_status && call_status.length !== 0){
             extra_where += ' AND call_status in (:call_status) '
         }
-        extra_where += ' AND listcallfile_id in (:listCallFiles_ids)'
+        //extra_where += ' AND listcallfile_id in (:listCallFiles_ids)'
         sqlLeads = sqlLeads.replace('EXTRA_WHERE', extra_where);
         sqlLeadsCount = sqlLeadsCount.replace('EXTRA_WHERE', extra_where);
         sqlListCallFiles = sqlListCallFiles.replace('EXTRA_WHERE', extra_where_ListCallFile);
