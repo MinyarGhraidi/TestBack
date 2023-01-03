@@ -483,7 +483,7 @@ class callfiles extends baseModelbo {
                            EXTRA_WHERE 
                            LIMIT :limit OFFSET :offset
                          `
-        let sqlLeadsCount = `Select count(*)
+        let sqlLeadsCount = `Select count(distinct callF.*)
                         from callfiles as callF
                                  left join calls_historys as calls_h on callF.callfile_id = calls_h.call_file_id
                         where calls_h.active = :active
@@ -495,21 +495,22 @@ class callfiles extends baseModelbo {
         if(listCallFiles_ids && listCallFiles_ids.length === 0){
             extra_where_ListCallFile = " campaign_id in (:campaign_ids) ";
         }else{
-            extra_where_ListCallFile = " listcallfile_id in (:listCallFiles_ids) "
+            extra_where_ListCallFile = " listcallfile_id in (:listCallFiles_ids) ";
+            extra_where = "AND callF.listcallfile_id in (:listCallFiles_ids) ";
         }
         if (startTime && startTime !== '') {
-            extra_where += ' AND started_at >= :start_time';
+            extra_where += ' AND calls_h.started_at >= :start_time';
         }
         if (endTime && endTime !== '') {
-            extra_where += ' AND finished_at <=  :end_time';
+            extra_where += ' AND calls_h.finished_at <=  :end_time';
         }
         if(phone_number && phone_number!== ''){
             extra_where += ' AND phone_number = :phone_number '
         }
         if(call_status && call_status.length !== 0){
-            extra_where += ' AND call_status = :call_status '
+            extra_where += ' AND call_status in (:call_status) '
         }
-        extra_where += ' AND listcallfile_id in (:listCallFiles_ids)'
+        //extra_where += ' AND listcallfile_id in (:listCallFiles_ids)'
         sqlLeads = sqlLeads.replace('EXTRA_WHERE', extra_where);
         sqlLeadsCount = sqlLeadsCount.replace('EXTRA_WHERE', extra_where);
         sqlListCallFiles = sqlListCallFiles.replace('EXTRA_WHERE', extra_where_ListCallFile);
@@ -629,6 +630,7 @@ class callfiles extends baseModelbo {
         return new Promise((resolve,reject)=>{
             let revision_data = callFile.revision.dataValues;
             let user_data = callFile.user.dataValues;
+
                 this.changeFieldBeforeAfter(revision_data.before,revision_data.after,revision_data.changes).then(result =>{
                         resolve({
                             before: result[0],
@@ -716,7 +718,6 @@ class callfiles extends baseModelbo {
                         data: callFileInfo,
                     })
                 }).catch(err => {
-                    console.log(err)
                     _this.sendResponseError(res, ['Error.getStats'], err)
                 })
             }).catch(err => {

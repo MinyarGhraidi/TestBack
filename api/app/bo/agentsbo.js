@@ -728,7 +728,6 @@ class agents extends baseModelbo {
                             limit: 1,
                         }).then(result => {
                             if (result) {
-                                console.log('resultttt', result)
                                 this.db['agent_log_events'].update({
                                         finish_at: new Date(),
                                         updated_at: updatedAt_tz
@@ -978,8 +977,8 @@ class agents extends baseModelbo {
             return this.sendResponseError(res, ['Error.AnErrorHasOccurredUser'], 1, 403);
         }
         const promiseDisconnect = new Promise((resolve, reject) => {
-            let couldDisc = data_agent.filter((agent) => agent.crmStatus !== 'waiting-call' && agent.crmStatus !== 'in_call') || [];
-            let cannotDisc = data_agent.filter((agent) => agent.crmStatus === 'waiting-call' || agent.crmStatus === 'in_call') || [];
+            let couldDisc = data_agent.filter((agent) => agent.crmStatus !== 'waiting-call' && agent.crmStatus !== 'in_call' && agent.crmStatus!=='in_qualification') || [];
+            let cannotDisc = data_agent.filter((agent) => agent.crmStatus === 'waiting-call' || agent.crmStatus === 'in_call' || agent.crmStatus==='in_qualification') || [];
             if (couldDisc && couldDisc.length !== 0) {
                 couldDisc.forEach(item => {
                     this.onDisconnect(item).then(result => {
@@ -1040,11 +1039,11 @@ class agents extends baseModelbo {
                 this.DataCallsAgents(data.agents, data.list, dataSelect_from, dataSelect_to).then(data_call => {
                     this.DataActionAgents(data.agents, dataSelect_from, dataSelect_to).then(data_actions => {
                         data.agents.map(item => {
-                            let index_uuid = data_call.findIndex(item_call => item_call.agent === item.sip_device.uuid);
-                            if (index_uuid !== -1) {
-                                item.Number_of_call = data_call[index_uuid].count;
-                                item.Talking_Duration = data_call[index_uuid].total;
-                                item.AVG_Talking_Duration = data_call[index_uuid].moy;
+                            let index_idUser = data_call.findIndex(item_call => item_call.agent_id === item.user_id);
+                            if (index_idUser !== -1) {
+                                item.Number_of_call = data_call[index_idUser].totalcalls;
+                                item.Talking_Duration = data_call[index_idUser].durationcalls;
+                                item.AVG_Talking_Duration = data_call[index_idUser].moy;
 
                             } else {
                                 item.Number_of_call = '0';
@@ -1137,46 +1136,32 @@ class agents extends baseModelbo {
     }
     DataCallsAgents(agents, list_Call, start_time, end_time) {
         return new Promise((resolve, reject) => {
-            let uuid = agents.map(item =>
-                item.sip_device.uuid
-            )
+            let agent_ids = agents.map(item => item.user_id)
 
-            let Calls = list_Call.map(item =>
-                item.callfile_id
-            )
-            let sqlCount = `select ac.agent,
-                                       count(*),
-                                       SUM(CAST(ac.durationsec AS INTEGER)) / 60 as total,
-                                       SUM(CAST(ac.durationsec AS INTEGER) + CAST(ac.durationmsec AS INTEGER) / 1000) /
-                                       60 / count(*)                             as moy
-                                from acc_cdrs as ac
-                                    EXTRA_WHERE
-                                GROUP BY ac.agent`
-
+            let sqlData = `select count(DISTINCT id) as TotalCalls,AVG(finished_at - started_at) AS moy , SUM(finished_at - started_at) AS DurationCalls, agent_id
+            from calls_historys
+             EXTRA_WHERE
+              GROUP BY agent_id`;
             let extra_where_count = '';
-            if (uuid && uuid.length !== 0) {
-                extra_where_count += 'AND agent in (:uuid) '
+            if (agent_ids && agent_ids.length !== 0) {
+                extra_where_count += 'AND agent_id in (:user_ids) '
             }
             if (start_time && start_time !== '') {
-                extra_where_count += 'AND start_time >= :start_time ';
+                extra_where_count += 'AND started_at >= :started_at ';
             }
             if (end_time && end_time !== '') {
-                extra_where_count += 'AND end_time <=  :end_time ';
-            }
-            if (Calls && Calls.length !== 0) {
-                extra_where_count += 'AND CAST((string_to_array("custom_vars", \':\'))[3] AS INTEGER) in (:calls) ';
+                extra_where_count += 'AND finished_at <=  :finished_at ';
             }
             if (extra_where_count !== '') {
                 extra_where_count = extra_where_count.replace('AND', 'WHERE');
             }
-            sqlCount = sqlCount.replace('EXTRA_WHERE', extra_where_count);
-            db.sequelize['cdr-db'].query(sqlCount, {
-                type: db.sequelize['cdr-db'].QueryTypes.SELECT,
+            sqlData = sqlData.replace('EXTRA_WHERE', extra_where_count);
+            db.sequelize['crm-app'].query(sqlData, {
+                type: db.sequelize['crm-app'].QueryTypes.SELECT,
                 replacements: {
-                    start_time: start_time,
-                    end_time: end_time,
-                    uuid: uuid,
-                    calls: Calls
+                    started_at: start_time,
+                    finished_at: end_time,
+                    user_ids: agent_ids,
                 }
             }).then(result => {
                 resolve(result)
@@ -1192,7 +1177,7 @@ class agents extends baseModelbo {
                 let sql = `select agent_log.user_id, agent_log.action_name, SUM(agent_log.finish_at - agent_log.start_at), COUNT(agent_log.action_name)
                        from agent_log_events as agent_log
                        where agent_log.user_id in (:agent_id)
-                         AND (agent_log.action_name = 'on-break' OR agent_log.action_name = 'waiting-call')
+                         AND (agent_log.action_name = 'on-break' OR agent_log.action_name = 'waiting-call' OR agent_log.action_name = 'in_call')
                          AND agent_log.start_at >= :start_at
                          AND agent_log.finish_at <= :finish_at
                        GROUP BY agent_log.action_name, agent_log.user_id `
