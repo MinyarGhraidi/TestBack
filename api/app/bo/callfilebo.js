@@ -414,13 +414,19 @@ class callfiles extends baseModelbo {
         let callfile_id = req.body.callfile_id
         let note = req.body.note
         let callStatus = req.body.callStatus
-
         this.db['callfiles'].findOne({
             where:{
                 callfile_id: callfile_id
             }
         }).then(call_previous=>{
-            this.saveEntityNewRevision(req.body,call_previous,req).then(revision=>{
+           let obj = call_previous.dataValues
+            Object.entries(obj).map(item=>{
+                let index = Object.entries(req.body).findIndex(element=> element[0]=== item[0])
+                if (index === -1){
+                    delete obj[item[0]]
+                }
+            })
+            this.saveEntityNewRevision(req.body,obj,req).then(revision=>{
                 this.db['callfiles'].update(req.body,
                     {
                         where: {
@@ -841,7 +847,8 @@ class callfiles extends baseModelbo {
                         obj.push(element.id)
                     })
                     schema.properties[item.value] = {
-                        "enum": obj
+                        "enum": obj,
+                        "default": item.default
                     }
                 } else if (item.type === 'checkbox') {
                     schema.properties[item.value] = {
@@ -849,8 +856,8 @@ class callfiles extends baseModelbo {
                         "title": item.value,
                         "items": {
                             "type": "string",
-                            "default": item.default,
                             "enum": [],
+                            "default": item.default
                         },
                         "uniqueItems": true
                     }
