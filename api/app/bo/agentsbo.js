@@ -744,7 +744,6 @@ class agents extends baseModelbo {
                                     }
                                 ).then(last_action => {
                                     if (last_action) {
-                                        console.log('last_actionnnnn', last_action)
                                         this.db['agent_log_events'].build({
                                             user_id: user_id,
                                             action_name: agent.params.status,
@@ -1470,6 +1469,7 @@ class agents extends baseModelbo {
             roleCrmAgent,
             account_id
         } = params;
+
         const limit = parseInt(params.limit) > 0 ? params.limit : 1000;
         const page = params.page || 1;
         const offset = (limit * (page - 1));
@@ -1477,38 +1477,39 @@ class agents extends baseModelbo {
             this.getUsers(agent_ids,campaign_ids,roleCrmAgent,account_id).then((result)=>{
                 let agent_uuids = result.users_uuids || [];
                 dataAgents = result.dataAgents;
-                if (campaign_ids && campaign_ids.length !== 0 && listCallFiles_ids && listCallFiles_ids.length === 0) {
-                    this.db['listcallfiles'].findAll({
-                                where: {
-                                    active: 'Y',
-                                    campaign_id: {
-                                        $in: campaign_ids
-                                    }
-                                }
-
-                            }).then((listCallFiles) => {
-                        listCallFiles_ids = listCallFiles.map(item_camp => item_camp.listcallfile_id);
-                        resolve({
-                            success : true,
-                            agent_uuids : agent_uuids,
-                            listCallFiles_ids : listCallFiles_ids
-                        });
-                    })
-                }else{
+                // if (campaign_ids && campaign_ids.length !== 0 && listCallFiles_ids && listCallFiles_ids.length === 0) {
+                //     this.db['listcallfiles'].findAll({
+                //                 where: {
+                //                     active: 'Y',
+                //                     campaign_id: {
+                //                         $in: campaign_ids
+                //                     }
+                //                 }
+                //
+                //             }).then((listCallFiles) => {
+                //         listCallFiles_ids = listCallFiles.map(item_camp => item_camp.listcallfile_id);
+                //         resolve({
+                //             success : true,
+                //             agent_uuids : agent_uuids,
+                //             listCallFiles_ids : listCallFiles_ids
+                //         });
+                //     })
+                // }else{
                     resolve({
                         success : true,
                         agent_uuids : agent_uuids,
-                        listCallFiles_ids : listCallFiles_ids
+                        listCallFiles_ids : listCallFiles_ids,
+                        dataAgents : dataAgents
                     })
-                }
+              //  }
             })
         })
         Promise.all([promiseParams]).then(data_params => {
-            let agent_uuids = data_params.agent_uuids
+            let dataAgents = data_params[0].dataAgents
+            let agents_uuids = data_params[0].agent_uuids
             let sqlCount = `select count(*)
                                 from acc_cdrs
                                 WHERE SUBSTRING("custom_vars", 0, POSITION(':' in "custom_vars")) = :account_code
-                                  AND agent IS NOT NULL
                                     EXTRA_WHERE`
             let extra_where_countCurrenDate = '';
             if (start_time && start_time !== '') {
@@ -1517,8 +1518,8 @@ class agents extends baseModelbo {
             if (end_time && end_time !== '') {
                 extra_where_countCurrenDate += ' AND end_time <=  :end_time';
             }
-            if (agent_uuids && agent_uuids.length !== 0) {
-                extra_where_countCurrenDate += ' AND agent in (:agent_uuids)';
+            if (agents_uuids && agents_uuids.length !== 0) {
+                extra_where_countCurrenDate += ' AND agent in (:agents_uuids)';
             }
             if (listCallFiles_ids && listCallFiles_ids.length !== 0) {
                 extra_where_countCurrenDate += ' AND CAST(REVERSE(SUBSTRING(reverse(custom_vars), 0, POSITION(\':\' IN reverse(custom_vars)))) AS int) in (:listCallFiles_ids)';
@@ -1529,7 +1530,7 @@ class agents extends baseModelbo {
                 replacements: {
                     start_time: moment(dateSelected_from).format('YYYY-MM-DD').concat(' ', start_time),
                     end_time: moment(dateSelected_to).format('YYYY-MM-DD').concat(' ', end_time),
-                    agent_uuids: agent_uuids,
+                    agents_uuids: agents_uuids,
                     account_code: account_code,
                     listCallFiles_ids: listCallFiles_ids,
                 }
@@ -1550,16 +1551,9 @@ class agents extends baseModelbo {
                                            agent
                                     from acc_cdrs
                                     WHERE SUBSTRING("custom_vars", 0, POSITION(':' in "custom_vars")) = :account_code
-                                      AND agent IS NOT NULL
-                                      AND id >= (select id
-                                                 from acc_cdrs
-                                                 where SUBSTRING("custom_vars", 0, POSITION(':' in "custom_vars")) =
-                                                       '703596960803'
-                                        EXTRA_WHERE
-                                        LIMIT 1
-                                    OFFSET :offset ) EXTRA_WHERE_PARAMS
+                                       EXTRA_WHERE_PARAMS
                                     group by agent
-                                        LIMIT :limit`
+                                        LIMIT :limit OFFSET :offset`
                 let extra_where_currentDate = '';
                 if (start_time && start_time !== '') {
                     extra_where_currentDate += ' AND start_time >= :start_time';
@@ -1567,13 +1561,12 @@ class agents extends baseModelbo {
                 if (end_time && end_time !== '') {
                     extra_where_currentDate += ' AND end_time <=  :end_time';
                 }
-                if (agent_uuids !== '' && agent_uuids.length !== 0) {
-                    extra_where_currentDate += ' AND agent in (:agent_uuids)';
+                if (agents_uuids && agents_uuids !== '' && agents_uuids.length !== 0) {
+                    extra_where_currentDate += ' AND agent in (:agents_uuids)';
                 }
                 if (listCallFiles_ids && listCallFiles_ids.length !== 0) {
                     extra_where_currentDate += ' AND CAST(REVERSE(SUBSTRING(reverse(custom_vars), 0, POSITION(\':\' IN reverse(custom_vars)))) AS int) in (:listCallFiles_ids)';
                 }
-                sqlData = sqlData.replace('EXTRA_WHERE', extra_where_currentDate);
                 sqlData = sqlData.replace('EXTRA_WHERE_PARAMS', extra_where_currentDate);
                 db.sequelize['cdr-db'].query(sqlData, {
                     type: db.sequelize['cdr-db'].QueryTypes.SELECT,
@@ -1581,7 +1574,7 @@ class agents extends baseModelbo {
                         date: parseInt(dateSelected_from),
                         start_time: moment(dateSelected_from).format('YYYY-MM-DD').concat(' ', start_time),
                         end_time: moment(dateSelected_to).format('YYYY-MM-DD').concat(' ', end_time),
-                        agent_uuids: agent_uuids,
+                        agents_uuids: agents_uuids,
                         account_code: account_code,
                         listCallFiles_ids: listCallFiles_ids,
                         offset: offset,
@@ -1599,7 +1592,7 @@ class agents extends baseModelbo {
                         return
                     }
                     let statsDetails = []
-                    PromiseBB.each(dataAgent, item => {
+                    PromiseBB.each(dataAgents, item => {
                         let _item = JSON.parse(JSON.stringify(item))
                         let account_data = dataCurrentDate.filter(item_acc => item_acc.agent === item.sip_device.uuid);
                         if (account_data && account_data.length !== 0) {

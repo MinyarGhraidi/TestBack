@@ -580,51 +580,80 @@ class callfiles extends baseModelbo {
         })
 
     }
-    changeCustomFields(customField){
-        return new Promise((resolve,reject)=>{
-            if(customField && customField.length !== 0){
-                let resData = {};
-                customField.forEach(item=>{
-                    resData[item.value] = item.default || item.options[0].text;
-                })
-                resolve(resData)
+    changeCustomFields(customField) {
+        return new Promise((resolve, reject) => {
+            if(Array.isArray(customField)){
+                if (customField && customField.length !== 0) {
+                    let resData = {};
+                    customField.forEach(item => {
+                        resData[item.value] = item.default || (item.options ? item.options[0].text : 'empty' ) ;
+                    })
+                    resolve(resData)
+                } else {
+                    resolve({})
+                }
             }else{
-               resolve({})
+                if (customField) {
+                    let resData = {};
+                    Object.values(customField).forEach(function(item) {
+                        resData[item.value] = item.default || (item.options ? item.options[0].text : 'empty' );
+                    });
+                    resolve(resData)
+                } else {
+                    resolve({})
+                }
             }
+
         })
     }
-    changeFieldBeforeAfter(_beforeChanges,_afterChanges,_changesDone){
-        return new Promise((resolve,reject)=>{
-            const beforeChanges = new Promise((resolve,reject)=>{
+
+    changeFieldBeforeAfter(_beforeChanges, _afterChanges, _changesDone) {
+        return new Promise((resolve, reject) => {
+            const beforeChanges = new Promise((resolve, reject) => {
                 let before = _beforeChanges;
-                let customFields = before.customfields;
-                delete before.customfields;
-                this.changeCustomFields(customFields).then(resCustomFields =>{
-                    resolve({...before, ...resCustomFields})
-                }).catch(err=>reject(err))
+                let customFields = [];
+                if (before.hasOwnProperty('customfields')) {
+                    customFields = before.customfields;
+                    delete before.customfields;
+                    this.changeCustomFields(customFields).then(resCustomFields => {
+                        resolve({...before, ...resCustomFields})
+                    }).catch(err => reject(err))
+                }else{
+                    resolve(before)
+                }
             })
-            const afterChanges = new Promise((resolve,reject)=>{
+            const afterChanges = new Promise((resolve, reject) => {
                 let after = _afterChanges;
-                let customFields = after.customfields;
-                delete after.customfields;
-                this.changeCustomFields(customFields).then(resCustomFields =>{
-                    resolve({...after, ...resCustomFields})
-                }).catch(err=>reject(err))
+                let customFields = [];
+                if (after.hasOwnProperty('customfields')) {
+                    customFields = after.customfields;
+                    delete after.customfields;
+                    this.changeCustomFields(customFields).then(resCustomFields => {
+                        resolve({...after, ...resCustomFields})
+                    }).catch(err => reject(err))
+                }else{
+                    resolve(after)
+                }
             })
-            const changes = new Promise((resolve,reject)=>{
+            const changes = new Promise((resolve, reject) => {
                 let changes = _changesDone;
-                let customFields = changes.customfields;
-                delete changes.customfields;
-                this.changeCustomFields(customFields).then(resCustomFields =>{
-                    resolve({...changes, ...resCustomFields})
-                }).catch(err=>reject(err))
+                let customFields = [];
+                if (changes.hasOwnProperty('customfields')) {
+                    customFields = changes.customfields;
+                    delete changes.customfields;
+                    this.changeCustomFields(customFields).then(resCustomFields => {
+                        resolve({...changes, ...resCustomFields})
+                    }).catch(err => reject(err))
+                }else{
+                    resolve(changes)
+                }
             })
-            Promise.all([beforeChanges,afterChanges,changes]).then((data)=>{
+            Promise.all([beforeChanges, afterChanges, changes]).then((data) => {
                 resolve(data);
-            }).catch((err)=>{
+            }).catch((err) => {
                 reject(err);
             })
-        }).catch(err=>reject(err))
+        }).catch(err => reject(err))
     }
     returnRevisonData(callFile){
         return new Promise((resolve,reject)=>{
