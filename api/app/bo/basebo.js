@@ -342,6 +342,7 @@ class baseModelbo {
         return new Promise(function (resolve, reject) {
             const obj_after =  typeof obj === 'object'? obj :obj.toJSON();
             const fields_changed = diff(obj_before, obj_after);
+            console.log('fields_changeddddd', fields_changed)
             if (Object.keys(fields_changed).length > 0) {
                 _this.getUserFromToken(req).then(users => {
                     if (users && users.user_id) {
