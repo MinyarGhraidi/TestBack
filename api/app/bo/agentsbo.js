@@ -1385,6 +1385,7 @@ class agents extends baseModelbo {
                     from callstatuses as callS
                              left join callfiles as callF On callF.call_status = callS.code
                              left join calls_historys as callH On callH.call_file_id = callF.callfile_id
+                             left join listcallfiles as listCallF On callF.listcallfile_id = listCallF.listcallfile_id
                     where 1 = 1
                         EXTRA_WHERE
                     group by callS.code, callS.callstatus_id)
@@ -1396,6 +1397,7 @@ class agents extends baseModelbo {
             let extra_where = '';
             let extra_where_camp = '';
             let extra_where_status = '';
+            //let extraListCallFileJoin = '';
             if (start_time && start_time !== '') {
                 extra_where += ' AND callH.started_at >= :start_time';
             }
@@ -1411,11 +1413,12 @@ class agents extends baseModelbo {
                 extra_where_status += ' AND call_s.callstatus_id in (:call_status)';
             }
             if (listCallFiles_ids !== '' && listCallFiles_ids.length !== 0) {
-                extra_where += ' AND callF.listcallfile_id in(:listCallFiles_ids)';
+               // extraListCallFileJoin += 'left join listcallfiles as listCallF On callF.listcallfile_id in (:listCallFiles)'
+                extra_where += ' AND listCallF.listcallfile_id in(:listCallFiles_ids)';
             }
             if (campaign_ids !== '' && campaign_ids.length !== 0) {
-                extra_where += ' AND callS.campaign_id in(:campaign_ids)';
                 extra_where_camp += "  call_s.campaign_id in(:campaign_ids) or  call_s.is_system = 'Y'"
+                extra_where += " AND (callS.campaign_id in(:campaign_ids) OR  callS.is_system = 'Y') "
             }else{
                 extra_where_camp += " call_s.is_system = 'Y'"
             }
