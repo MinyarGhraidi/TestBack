@@ -1032,8 +1032,9 @@ class agents extends baseModelbo {
             if (data.success) {
                 let dataSelect_from = moment(dateSelected_from).format('YYYY-MM-DD').concat(' ', start_time)
                 let dataSelect_to = moment(dateSelected_to).format('YYYY-MM-DD').concat(' ', end_time)
-                this.DataCallsAgents(data.agents, data.list, dataSelect_from, dataSelect_to).then(data_call => {
-                    this.DataActionAgents(data.agents, dataSelect_from, dataSelect_to).then(data_actions => {
+                let agents_ids = dataAgents.map(item => item.user_id)
+                this.DataCallsAgents(agents_ids, listCallFiles_ids, dataSelect_from, dataSelect_to).then(data_call => {
+                    this.DataActionAgents(agents_ids, dataSelect_from, dataSelect_to).then(data_actions => {
                         data.agents.map(item => {
                             let index_idUser = data_call.findIndex(item_call => item_call.agent_id === item.user_id);
                             if (index_idUser !== -1) {
@@ -1130,12 +1131,12 @@ class agents extends baseModelbo {
             }
         })
     }
-    DataCallsAgents(agents, list_Call, start_time, end_time) {
+    DataCallsAgents(agent_ids, list_CallFile_ids, start_time, end_time) {
         return new Promise((resolve, reject) => {
-            let agent_ids = agents.map(item => item.user_id)
-
-            let sqlData = `select count(DISTINCT id) as TotalCalls,AVG(finished_at - started_at) AS moy , SUM(finished_at - started_at) AS DurationCalls, agent_id
-            from calls_historys
+            let sqlData = `select count(DISTINCT CallH.id) as TotalCalls,AVG(CallH.finished_at - CallH.started_at) AS moy , SUM(CallH.finished_at - CallH.started_at) AS DurationCalls, CallH.agent_id
+            from calls_historys as CallH
+            left join callfiles as CallF On CallF.callfile_id = CallH.call_file_id
+            left join listcallfiles as listCallF On CallF.listcallfile_id = listCallF.listcallfile_id
              EXTRA_WHERE
               GROUP BY agent_id`;
             let extra_where_count = '';
@@ -1148,6 +1149,9 @@ class agents extends baseModelbo {
             if (end_time && end_time !== '') {
                 extra_where_count += 'AND finished_at <=  :finished_at ';
             }
+            if(list_CallFile_ids && list_CallFile_ids.length !== 0){
+                extra_where_count += 'AND listCallF.listcallfile_id in (:listCallFile_ids) ';
+            }
             if (extra_where_count !== '') {
                 extra_where_count = extra_where_count.replace('AND', 'WHERE');
             }
@@ -1158,6 +1162,7 @@ class agents extends baseModelbo {
                     started_at: start_time,
                     finished_at: end_time,
                     user_ids: agent_ids,
+                    listCallFile_ids : list_CallFile_ids
                 }
             }).then(result => {
                 resolve(result)
@@ -1166,9 +1171,8 @@ class agents extends baseModelbo {
             })
         })
     }
-    DataActionAgents(agents, start_time, end_time) {
+    DataActionAgents(agent_id, start_time, end_time) {
         return new Promise((resolve, reject) => {
-            let agent_id = agents.map(item => item.user_id)
             if (agent_id && agent_id.length !== 0) {
                 let sql = `select agent_log.user_id, agent_log.action_name, SUM(agent_log.finish_at - agent_log.start_at), COUNT(agent_log.action_name)
                        from agent_log_events as agent_log
@@ -1228,7 +1232,6 @@ class agents extends baseModelbo {
     listCallFileReports(req, res, next) {
         let _this = this;
         const params = req.body;
-        let dataCallStatus = params.dataCallStatus
         let {
             account_id,
             agent_ids,
@@ -1280,7 +1283,6 @@ class agents extends baseModelbo {
                                 }
                             }).then((call_status_list) => {
                                 call_status = call_status_list.map(item_cal => item_cal.callstatus_id);
-                                dataCallStatus = call_status_list;
                                 resolve(true);
                             })
                         }
@@ -1397,7 +1399,6 @@ class agents extends baseModelbo {
             let extra_where = '';
             let extra_where_camp = '';
             let extra_where_status = '';
-            //let extraListCallFileJoin = '';
             if (start_time && start_time !== '') {
                 extra_where += ' AND callH.started_at >= :start_time';
             }
@@ -1413,7 +1414,6 @@ class agents extends baseModelbo {
                 extra_where_status += ' AND call_s.callstatus_id in (:call_status)';
             }
             if (listCallFiles_ids !== '' && listCallFiles_ids.length !== 0) {
-               // extraListCallFileJoin += 'left join listcallfiles as listCallF On callF.listcallfile_id in (:listCallFiles)'
                 extra_where += ' AND listCallF.listcallfile_id in(:listCallFiles_ids)';
             }
             if (campaign_ids !== '' && campaign_ids.length !== 0) {
@@ -1453,6 +1453,23 @@ class agents extends baseModelbo {
     }
 
     // --------- Agent Call Report ----------//
+    formatUsers(users){
+        return new Promise((resolve,reject)=>{
+            let newArrayUsers = [];
+            users.map(user=>{
+                let NewFormat = {
+                    user_id : user.user_id,
+                    username : user.username,
+                    first_name : user.first_name,
+                    last_name : user.last_name,
+                    profile_image_id : user.profile_image_id
+                }
+                newArrayUsers.push(NewFormat);
+            })
+            resolve(newArrayUsers)
+        })
+
+    }
     agentCallReports(req, res, next) {
         let _this = this;
         const params = req.body;
@@ -1473,154 +1490,39 @@ class agents extends baseModelbo {
         const limit = parseInt(params.limit) > 0 ? params.limit : 1000;
         const page = params.page || 1;
         const offset = (limit * (page - 1));
-        let promiseParams = new Promise((resolve, reject) => {
-            this.getUsers(agent_ids,campaign_ids,roleCrmAgent,account_id).then((result)=>{
-                let agent_uuids = result.users_uuids || [];
-                dataAgents = result.dataAgents;
-                // if (campaign_ids && campaign_ids.length !== 0 && listCallFiles_ids && listCallFiles_ids.length === 0) {
-                //     this.db['listcallfiles'].findAll({
-                //                 where: {
-                //                     active: 'Y',
-                //                     campaign_id: {
-                //                         $in: campaign_ids
-                //                     }
-                //                 }
-                //
-                //             }).then((listCallFiles) => {
-                //         listCallFiles_ids = listCallFiles.map(item_camp => item_camp.listcallfile_id);
-                //         resolve({
-                //             success : true,
-                //             agent_uuids : agent_uuids,
-                //             listCallFiles_ids : listCallFiles_ids
-                //         });
-                //     })
-                // }else{
-                    resolve({
-                        success : true,
-                        agent_uuids : agent_uuids,
-                        listCallFiles_ids : listCallFiles_ids,
-                        dataAgents : dataAgents
-                    })
-              //  }
-            })
-        })
-        Promise.all([promiseParams]).then(data_params => {
-            let dataAgents = data_params[0].dataAgents
-            let agents_uuids = data_params[0].agent_uuids
-            let sqlCount = `select count(*)
-                                from acc_cdrs
-                                WHERE SUBSTRING("custom_vars", 0, POSITION(':' in "custom_vars")) = :account_code
-                                    EXTRA_WHERE`
-            let extra_where_countCurrenDate = '';
-            if (start_time && start_time !== '') {
-                extra_where_countCurrenDate += ' AND start_time >= :start_time';
-            }
-            if (end_time && end_time !== '') {
-                extra_where_countCurrenDate += ' AND end_time <=  :end_time';
-            }
-            if (agents_uuids && agents_uuids.length !== 0) {
-                extra_where_countCurrenDate += ' AND agent in (:agents_uuids)';
-            }
-            if (listCallFiles_ids && listCallFiles_ids.length !== 0) {
-                extra_where_countCurrenDate += ' AND CAST(REVERSE(SUBSTRING(reverse(custom_vars), 0, POSITION(\':\' IN reverse(custom_vars)))) AS int) in (:listCallFiles_ids)';
-            }
-            sqlCount = sqlCount.replace('EXTRA_WHERE', extra_where_countCurrenDate);
-            db.sequelize['cdr-db'].query(sqlCount, {
-                type: db.sequelize['cdr-db'].QueryTypes.SELECT,
-                replacements: {
-                    start_time: moment(dateSelected_from).format('YYYY-MM-DD').concat(' ', start_time),
-                    end_time: moment(dateSelected_to).format('YYYY-MM-DD').concat(' ', end_time),
-                    agents_uuids: agents_uuids,
-                    account_code: account_code,
-                    listCallFiles_ids: listCallFiles_ids,
-                }
-            }).then(countAll => {
-                if (countAll && parseInt(countAll[0].count) === 0) {
-                    res.send({
-                        success: true,
-                        status: 200,
-                        data: [],
-                        countAll: countAll[0].count
-                    })
-                    return
-                }
-                let pages = Math.ceil(countAll[0].count / params.limit);
-                let sqlData = ` select count(*)                                                                      as total_appel,
-                                           sum(durationsec::int) / 60                                                    AS talk_duration,
-                                           cast(cast((sum(durationsec::int) / 60) AS float) / count(*) AS DECIMAL(5, 3)) as avg_talking,
-                                           agent
-                                    from acc_cdrs
-                                    WHERE SUBSTRING("custom_vars", 0, POSITION(':' in "custom_vars")) = :account_code
-                                       EXTRA_WHERE_PARAMS
-                                    group by agent
-                                        LIMIT :limit OFFSET :offset`
-                let extra_where_currentDate = '';
-                if (start_time && start_time !== '') {
-                    extra_where_currentDate += ' AND start_time >= :start_time';
-                }
-                if (end_time && end_time !== '') {
-                    extra_where_currentDate += ' AND end_time <=  :end_time';
-                }
-                if (agents_uuids && agents_uuids !== '' && agents_uuids.length !== 0) {
-                    extra_where_currentDate += ' AND agent in (:agents_uuids)';
-                }
-                if (listCallFiles_ids && listCallFiles_ids.length !== 0) {
-                    extra_where_currentDate += ' AND CAST(REVERSE(SUBSTRING(reverse(custom_vars), 0, POSITION(\':\' IN reverse(custom_vars)))) AS int) in (:listCallFiles_ids)';
-                }
-                sqlData = sqlData.replace('EXTRA_WHERE_PARAMS', extra_where_currentDate);
-                db.sequelize['cdr-db'].query(sqlData, {
-                    type: db.sequelize['cdr-db'].QueryTypes.SELECT,
-                    replacements: {
-                        date: parseInt(dateSelected_from),
-                        start_time: moment(dateSelected_from).format('YYYY-MM-DD').concat(' ', start_time),
-                        end_time: moment(dateSelected_to).format('YYYY-MM-DD').concat(' ', end_time),
-                        agents_uuids: agents_uuids,
-                        account_code: account_code,
-                        listCallFiles_ids: listCallFiles_ids,
-                        offset: offset,
-                        limit: limit
-                    }
-                }).then(dataCurrentDate => {
-                    if (dataCurrentDate && dataCurrentDate.length === 0) {
-                        res.send({
-                            success: true,
-                            status: 200,
-                            data: [],
-                            pages: pages,
-                            countAll: countAll[0].count
-                        })
-                        return
-                    }
-                    let statsDetails = []
-                    PromiseBB.each(dataAgents, item => {
-                        let _item = JSON.parse(JSON.stringify(item))
-                        let account_data = dataCurrentDate.filter(item_acc => item_acc.agent === item.sip_device.uuid);
-                        if (account_data && account_data.length !== 0) {
-                            _item.stats = account_data[0];
-                        } else {
-                            _item.stats = {
-                                total_appel: 0,
-                                avg_talking: 0,
-                                talk_duration: 0
-                            }
-                        }
-                        statsDetails.push(_item)
-                    }).then(stats_dataA => {
-                        res.send({
-                            success: true,
-                            status: 200,
-                            data: statsDetails,
-                            pages: pages,
-                            countAll: countAll[0].count
-                        })
-                    })
-
-                }).catch(err => {
-                    _this.sendResponseError(res, [], err)
+        let dataSelect_from = moment(dateSelected_from).format('YYYY-MM-DD').concat(' ', start_time)
+        let dataSelect_to = moment(dateSelected_to).format('YYYY-MM-DD').concat(' ', end_time)
+        this.db['users'].findAll({where : {active : 'Y' , user_id : agent_ids}}).then(users =>{
+            if(!!!users){
+                res.send({
+                    success : false
                 })
-            })
-        })
+            }else{
+                this.formatUsers(users).then(AllAgents=>{
+                    let AllUsers = AllAgents;
+                    this.DataCallsAgents(agent_ids,listCallFiles_ids,dataSelect_from,dataSelect_to).then(data_call =>{
+                        AllUsers.map(item =>{
+                            let index_idUser = data_call.findIndex(item_call => item_call.agent_id === item.user_id);
+                            if (index_idUser !== -1) {
+                                item.Number_of_call = data_call[index_idUser].totalcalls;
+                                item.Talking_Duration = data_call[index_idUser].durationcalls;
+                                item.AVG_Talking_Duration = data_call[index_idUser].moy;
 
+                            } else {
+                                item.Number_of_call = '0';
+                                item.Talking_Duration = '0';
+                                item.AVG_Talking_Duration = '0';
+                            }
+                        })
+                        res.send({
+                            success : false,
+                            data  : AllUsers
+                        })
+                    })
+
+                })
+            }
+        })
     }
 
 
