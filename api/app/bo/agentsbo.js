@@ -1242,6 +1242,9 @@ class agents extends baseModelbo {
             if (agents_ids && agents_ids.length !== 0) {
                 whereQuery.user_id = agents_ids;
             }
+            if(agents_ids && agents_ids.length === 0 && campaign_ids && campaign_ids.length !== 0){
+                whereQuery.campaign_id = campaign_ids
+            }
             this.db['users'].findAll({
                 where: whereQuery
             }).then((allAgents) => {
