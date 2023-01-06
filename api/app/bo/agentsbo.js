@@ -645,56 +645,56 @@ class agents extends baseModelbo {
             //             reject(err);
             //         });
             // } else {
-                if (uuid) {
-                    axios
-                        .get(`${base_url_cc_kam}api/v1/agents/${uuid}`, call_center_authorization)
-                        .then(resp => {
-                            let agent = {"status": telcoStatus};
-                            axios
-                                .put(`${base_url_cc_kam}api/v1/agents/${uuid}/status`, agent, call_center_authorization)
-                                .then(() => {
-                                    this.db["users"].findOne({where: {user_id: user_id}})
-                                        .then(user => {
-                                            if (user) {
-                                                let params = user.params;
-                                                user.updated_at = moment(new Date());
-                                                this.updateAgentStatus(user_id, user, telcoStatus, crmStatus, params)
-                                                    .then(agent => {
-                                                        if (agent.success) {
-                                                            resolve({
-                                                                success: true,
-                                                                agent: agent
-                                                            });
-                                                        } else {
-                                                            resolve({
-                                                                success: false,
-                                                            });
-                                                        }
-                                                    })
-                                                    .catch((err) => {
-                                                        reject(err);
-                                                    });
-                                            } else {
-                                                resolve({
-                                                    success: false
+            if (uuid) {
+                axios
+                    .get(`${base_url_cc_kam}api/v1/agents/${uuid}`, call_center_authorization)
+                    .then(resp => {
+                        let agent = {"status": telcoStatus};
+                        axios
+                            .put(`${base_url_cc_kam}api/v1/agents/${uuid}/status`, agent, call_center_authorization)
+                            .then(() => {
+                                this.db["users"].findOne({where: {user_id: user_id}})
+                                    .then(user => {
+                                        if (user) {
+                                            let params = user.params;
+                                            user.updated_at = moment(new Date());
+                                            this.updateAgentStatus(user_id, user, telcoStatus, crmStatus, params)
+                                                .then(agent => {
+                                                    if (agent.success) {
+                                                        resolve({
+                                                            success: true,
+                                                            agent: agent
+                                                        });
+                                                    } else {
+                                                        resolve({
+                                                            success: false,
+                                                        });
+                                                    }
                                                 })
-                                            }
+                                                .catch((err) => {
+                                                    reject(err);
+                                                });
+                                        } else {
+                                            resolve({
+                                                success: false
+                                            })
+                                        }
 
-                                        })
-                                        .catch((err) => {
-                                            reject(err);
-                                        });
-                                })
-                                .catch((err) => {
-                                    reject(err);
-                                });
-                        })
-                        .catch((err) => {
-                            reject(err);
-                        });
-                } else {
-                    reject(false)
-                }
+                                    })
+                                    .catch((err) => {
+                                        reject(err);
+                                    });
+                            })
+                            .catch((err) => {
+                                reject(err);
+                            });
+                    })
+                    .catch((err) => {
+                        reject(err);
+                    });
+            } else {
+                reject(false)
+            }
         })
     }
 
@@ -925,23 +925,6 @@ class agents extends baseModelbo {
         })
     }
 
-    getCampaigns_ids() {
-        return new Promise((resolve, reject) => {
-            this.db['campaigns'].findAll({
-                where: {
-                    active: 'Y',
-                }
-            })
-                .then(campaigns => {
-                    let campaigns_ids = campaigns.map(el => el.campaign_id);
-                    resolve(campaigns_ids);
-                })
-                .catch(err => {
-                    reject(err);
-                })
-        })
-    }
-
     onDisconnect(item) {
         return new Promise((resolve, reject) => {
             this.onConnectFunc(item.user_id, item.uuid, 'connected', 'logged-out')
@@ -973,8 +956,8 @@ class agents extends baseModelbo {
             return this.sendResponseError(res, ['Error.AnErrorHasOccurredUser'], 1, 403);
         }
         const promiseDisconnect = new Promise((resolve, reject) => {
-            let couldDisc = data_agent.filter((agent) => agent.crmStatus !== 'waiting-call' && agent.crmStatus !== 'in_call' && agent.crmStatus!=='in_qualification') || [];
-            let cannotDisc = data_agent.filter((agent) => agent.crmStatus === 'waiting-call' || agent.crmStatus === 'in_call' || agent.crmStatus==='in_qualification') || [];
+            let couldDisc = data_agent.filter((agent) => agent.crmStatus !== 'waiting-call' && agent.crmStatus !== 'in_call' && agent.crmStatus !== 'in_qualification') || [];
+            let cannotDisc = data_agent.filter((agent) => agent.crmStatus === 'waiting-call' || agent.crmStatus === 'in_call' || agent.crmStatus === 'in_qualification') || [];
             if (couldDisc && couldDisc.length !== 0) {
                 couldDisc.forEach(item => {
                     this.onDisconnect(item).then(result => {
@@ -1019,50 +1002,51 @@ class agents extends baseModelbo {
     agentDetailsReports(req, res, next) {
         const filter = req.body || null;
         let {
-            account_id,
-            campaign_ids,
-            dataAgents,
+            agent_ids,
             listCallFiles_ids,
             dateSelected_to,
             dateSelected_from,
             start_time,
             end_time,
-            roleCrmAgent} = filter
-        this.filterData(campaign_ids, dataAgents, listCallFiles_ids,roleCrmAgent,account_id).then(data => {
-            if (data.success) {
+        } = filter
                 let dataSelect_from = moment(dateSelected_from).format('YYYY-MM-DD').concat(' ', start_time)
                 let dataSelect_to = moment(dateSelected_to).format('YYYY-MM-DD').concat(' ', end_time)
-                let agents_ids = dataAgents.map(item => item.user_id)
-                this.DataCallsAgents(agents_ids, listCallFiles_ids, dataSelect_from, dataSelect_to).then(data_call => {
-                    this.DataActionAgents(agents_ids, dataSelect_from, dataSelect_to).then(data_actions => {
-                        data.agents.map(item => {
-                            let index_idUser = data_call.findIndex(item_call => item_call.agent_id === item.user_id);
-                            if (index_idUser !== -1) {
-                                item.Number_of_call = data_call[index_idUser].totalcalls;
-                                item.Talking_Duration = data_call[index_idUser].durationcalls;
-                                item.AVG_Talking_Duration = data_call[index_idUser].moy;
+                this.DataCallsAgents(agent_ids, listCallFiles_ids, dataSelect_from, dataSelect_to).then(data_call => {
+                    let FilteredUsers_ids = [];
+                    data_call.map(user=> FilteredUsers_ids.push(user.agent_id))
+                    this.DataActionAgents(FilteredUsers_ids, dataSelect_from, dataSelect_to).then(data_actions => {
+                        this.formatUsers(FilteredUsers_ids).then(Users=>{
+                            let AllUsers = Users.data;
+                            AllUsers.map(item => {
+                                let index_idUser = data_call.findIndex(item_call => item_call.agent_id === item.user_id);
+                                if (index_idUser !== -1) {
+                                    item.Number_of_call = data_call[index_idUser].totalcalls;
+                                    item.Talking_Duration = data_call[index_idUser].durationcalls;
+                                    item.AVG_Talking_Duration = data_call[index_idUser].moy;
 
-                            } else {
-                                item.Number_of_call = '0';
-                                item.Talking_Duration = '0';
-                                item.AVG_Talking_Duration = '0';
-                            }
-                            let action = []
-                            data_actions.map(item_action => {
-                                if (item_action.user_id === item.user_id) {
-                                    action.push({
-                                        action_name: item_action.action_name,
-                                        duration: item_action.sum,
-                                        count_break : item_action.count
-                                    })
+                                } else {
+                                    item.Number_of_call = '0';
+                                    item.Talking_Duration = '0';
+                                    item.AVG_Talking_Duration = '0';
                                 }
-                                item.data_action = action
+                                let action = []
+                                data_actions.map(item_action => {
+                                    if (item_action.user_id === item.user_id) {
+                                        action.push({
+                                            action_name: item_action.action_name,
+                                            duration: item_action.sum,
+                                            count_break: item_action.count
+                                        })
+                                    }
+                                    item.data_action = action
+                                })
+                            })
+                            res.send({
+                                success: true,
+                                data:AllUsers
                             })
                         })
-                        res.send({
-                            success: true,
-                            data: data.agents
-                        })
+
                     }).catch(err => {
                         return this.sendResponseError(res, ['Error.cannot fetch list agents1', err], 1, 403);
                     })
@@ -1070,67 +1054,9 @@ class agents extends baseModelbo {
                 }).catch(err => {
                     return this.sendResponseError(res, ['Error.cannot fetch list agents2', err], 1, 403);
                 })
-            }
-
-        }).catch(err => {
-            return this.sendResponseError(res, ['Error.cannot fetch list agents3', err], 1, 403);
-        })
 
     }
-    filterData(campaign_id, agents, listcallfile_id,roleCrmAgent,account_id) {
-        return new Promise((resolve, reject) => {
-            if (campaign_id && campaign_id.length !== 0) {
-                if (agents && agents.length !== 0) {
-                    this.ListCallFile(campaign_id, listcallfile_id).then(list => {
-                        resolve({
-                            success: true,
-                            agents: agents,
-                            list: list
-                        })
-                    }).catch(err => {
-                        reject(err)
-                    })
-                } else {
-                    db['users'].findAll({
-                        where: {
-                            account_id: account_id,
-                            active: 'Y',
-                            role_crm_id : roleCrmAgent
-                        }
-                    }).then(agent => {
-                        this.ListCallFile(campaign_id, listcallfile_id).then(list => {
-                            let data_agent = agent.map(item => item.dataValues)
-                            resolve({
-                                success: true,
-                                agents: data_agent,
-                                list: list
-                            })
-                        })
-                    }).catch(err => {
-                        reject(err)
-                    })
-                }
-            } else {
-                if (agents && agents.length !== 0) {
-                    let campaigns = agents.map(item => item.campaign_id)
-                    this.ListCallFile(campaigns, listcallfile_id).then(list => {
-                        resolve({
-                            success: true,
-                            agents: agents,
-                            list: list
-                        })
-                    }).catch(err => {
-                        reject(err)
-                    })
 
-                } else {
-                    resolve({
-                        success: false
-                    })
-                }
-            }
-        })
-    }
     DataCallsAgents(agent_ids, list_CallFile_ids, start_time, end_time) {
         return new Promise((resolve, reject) => {
             let sqlData = `select count(DISTINCT CallH.id) as TotalCalls,AVG(CallH.finished_at - CallH.started_at) AS moy , SUM(CallH.finished_at - CallH.started_at) AS DurationCalls, CallH.agent_id
@@ -1149,12 +1075,13 @@ class agents extends baseModelbo {
             if (end_time && end_time !== '') {
                 extra_where_count += 'AND finished_at <=  :finished_at ';
             }
-            if(list_CallFile_ids && list_CallFile_ids.length !== 0){
+            if (list_CallFile_ids && list_CallFile_ids.length !== 0) {
                 extra_where_count += 'AND listCallF.listcallfile_id in (:listCallFile_ids) ';
             }
             if (extra_where_count !== '') {
                 extra_where_count = extra_where_count.replace('AND', 'WHERE');
             }
+
             sqlData = sqlData.replace('EXTRA_WHERE', extra_where_count);
             db.sequelize['crm-app'].query(sqlData, {
                 type: db.sequelize['crm-app'].QueryTypes.SELECT,
@@ -1162,7 +1089,7 @@ class agents extends baseModelbo {
                     started_at: start_time,
                     finished_at: end_time,
                     user_ids: agent_ids,
-                    listCallFile_ids : list_CallFile_ids
+                    listCallFile_ids: list_CallFile_ids
                 }
             }).then(result => {
                 resolve(result)
@@ -1171,6 +1098,7 @@ class agents extends baseModelbo {
             })
         })
     }
+
     DataActionAgents(agent_id, start_time, end_time) {
         return new Promise((resolve, reject) => {
             if (agent_id && agent_id.length !== 0) {
@@ -1198,37 +1126,8 @@ class agents extends baseModelbo {
             }
         })
     }
-    ListCallFile(campaign_id, listcallfile_id) {
-        return new Promise((resolve, reject) => {
-            let where = {};
-            if (listcallfile_id) {
-                where = {
-                    listcallfile_id: listcallfile_id,
-                    active: 'Y'
-                }
-            } else {
-                where = {
-                    active: 'Y'
-                }
-            }
-            db['listcallfiles'].findAll({
-                include: {
-                    model: db.campaigns,
-                    where: {
-                        campaign_id: campaign_id,
-                        active: 'Y'
-                    },
-                },
-                where: where
-            }).then(list => {
-                resolve(list)
-            }).catch(err => {
-                reject(err)
-            })
-        })
-    }
 
-   // --------- List Call File Reports ---------- //
+    // --------- List Call File Reports ---------- //
     listCallFileReports(req, res, next) {
         let _this = this;
         const params = req.body;
@@ -1246,7 +1145,7 @@ class agents extends baseModelbo {
             start_time,
             account_code
         } = params;
-        this.getUsers(agent_ids, campaign_ids,roleCrmAgent,account_id).then(result => {
+        this.getUsers(agent_ids, campaign_ids, roleCrmAgent, account_id).then(result => {
             dataAgents = result.dataAgents;
             agent_ids = result.users_ids;
             dateSelected_from = moment(dateSelected_from).format('YYYY-MM-DD');
@@ -1289,8 +1188,7 @@ class agents extends baseModelbo {
                     }).catch(err => {
                         reject(err);
                     })
-                }
-                else {
+                } else {
                     this.db['campaigns'].findAll({
                         where: {
                             active: 'Y',
@@ -1308,39 +1206,40 @@ class agents extends baseModelbo {
             Promise.all([promiseParams]).then(() => {
                 let idx = 0;
                 let resultArray = [];
-                agent_ids.forEach(agent =>{
-                    this.getReportByOneAgent({...params, agent_id : agent}).then(result =>{
-                        if(result.success){
+                agent_ids.forEach(agent => {
+                    this.getReportByOneAgent({...params, agent_id: agent}).then(result => {
+                        if (result.success) {
                             let currentAgent = dataAgents.filter((item) => item.user_id === agent)
-                            resultArray.push({ agent : currentAgent[0], data : result.data});
+                            resultArray.push({agent: currentAgent[0], data: result.data});
                         }
                         if (idx < agent_ids.length - 1) {
                             idx++
                         } else {
                             res.send({
-                                success : true,
-                                data : resultArray,
-                                status : 200
+                                success: true,
+                                data: resultArray,
+                                status: 200
                             })
                         }
-                    }).catch(err=>{
-                        return this.sendResponseError(res,['ErrorCannotGetStatus'],1,403)
+                    }).catch(err => {
+                        return this.sendResponseError(res, ['ErrorCannotGetStatus'], 1, 403)
                     })
                 })
-            }).catch(err=>{
-                return this.sendResponseError(res,['ErrorCannotGetStatus'],1,403)
+            }).catch(err => {
+                return this.sendResponseError(res, ['ErrorCannotGetStatus'], 1, 403)
             })
 
         })
     }
-    getUsers = (agents_ids, campaign_ids,roleCrmAgent,account_id) => {
+
+    getUsers = (agents_ids, campaign_ids, roleCrmAgent, account_id) => {
         return new Promise((resolve, reject) => {
             let whereQuery = {
-                active : 'Y',
-                role_crm_id : roleCrmAgent,
-                account_id : account_id
+                active: 'Y',
+                role_crm_id: roleCrmAgent,
+                account_id: account_id
             }
-            if(agents_ids && agents_ids.length !== 0) {
+            if (agents_ids && agents_ids.length !== 0) {
                 whereQuery.user_id = agents_ids;
             }
             this.db['users'].findAll({
@@ -1349,18 +1248,19 @@ class agents extends baseModelbo {
                 let users_ids = allAgents.map(user => user.user_id);
                 let users_uuids = allAgents.map(user => user.sip_device.uuid);
                 resolve({
-                    success : true,
-                    dataAgents : allAgents,
-                    users_ids : users_ids,
-                    users_uuids : users_uuids
+                    success: true,
+                    dataAgents: allAgents,
+                    users_ids: users_ids,
+                    users_uuids: users_uuids
                 })
             }).catch(err => resolve([]))
         })
 
 
     }
-    getReportByOneAgent(params){
-        return new Promise((resolve,reject)=>{
+
+    getReportByOneAgent(params) {
+        return new Promise((resolve, reject) => {
             let {
                 dataAgents,
                 agent_id,
@@ -1419,7 +1319,7 @@ class agents extends baseModelbo {
             if (campaign_ids !== '' && campaign_ids.length !== 0) {
                 extra_where_camp += "  call_s.campaign_id in(:campaign_ids) or  call_s.is_system = 'Y'"
                 extra_where += " AND (callS.campaign_id in(:campaign_ids) OR  callS.is_system = 'Y') "
-            }else{
+            } else {
                 extra_where_camp += " call_s.is_system = 'Y'"
             }
             sqlCallsStats = sqlCallsStats.replace('EXTRA_WHERE', extra_where);
@@ -1438,94 +1338,90 @@ class agents extends baseModelbo {
                 }
             }).then(data_stats => {
                 resolve({
-                    success : true,
-                    data : data_stats,
-                    status : 200
+                    success: true,
+                    data: data_stats,
+                    status: 200
                 })
             }).catch(err => {
                 reject({
-                    success : false,
-                    data : [],
-                    status : 403
+                    success: false,
+                    data: [],
+                    status: 403
                 })
             })
         })
     }
 
     // --------- Agent Call Report ----------//
-    formatUsers(users){
-        return new Promise((resolve,reject)=>{
-            let newArrayUsers = [];
-            users.map(user=>{
-                let NewFormat = {
-                    user_id : user.user_id,
-                    username : user.username,
-                    first_name : user.first_name,
-                    last_name : user.last_name,
-                    profile_image_id : user.profile_image_id
+    formatUsers(users_ids) {
+        return new Promise((resolve, reject) => {
+            this.db['users'].findAll({where: {active: 'Y', user_id: users_ids}}).then(users => {
+                if (!!!users) {
+                    resolve({success: false})
+                } else {
+                    let newArrayUsers = [];
+                    users.map(user => {
+                        let NewFormat = {
+                            user_id: user.user_id,
+                            username: user.username,
+                            first_name: user.first_name,
+                            last_name: user.last_name,
+                            profile_image_id: user.profile_image_id
+                        }
+                        newArrayUsers.push(NewFormat);
+                    })
+                    resolve({
+                        success: true,
+                        data: newArrayUsers
+                    })
                 }
-                newArrayUsers.push(NewFormat);
-            })
-            resolve(newArrayUsers)
+            }).catch(err => reject(err))
         })
 
     }
+
     agentCallReports(req, res, next) {
         let _this = this;
         const params = req.body;
         let {
-            campaign_ids,
             agent_ids,
-            dataAgents,
             listCallFiles_ids,
             dateSelected_to,
             dateSelected_from,
             start_time,
             end_time,
-            account_code,
-            roleCrmAgent,
-            account_id
         } = params;
 
-        const limit = parseInt(params.limit) > 0 ? params.limit : 1000;
-        const page = params.page || 1;
-        const offset = (limit * (page - 1));
         let dataSelect_from = moment(dateSelected_from).format('YYYY-MM-DD').concat(' ', start_time)
         let dataSelect_to = moment(dateSelected_to).format('YYYY-MM-DD').concat(' ', end_time)
-        this.db['users'].findAll({where : {active : 'Y' , user_id : agent_ids}}).then(users =>{
-            if(!!!users){
-                res.send({
-                    success : false
-                })
-            }else{
-                this.formatUsers(users).then(AllAgents=>{
-                    let AllUsers = AllAgents;
-                    this.DataCallsAgents(agent_ids,listCallFiles_ids,dataSelect_from,dataSelect_to).then(data_call =>{
-                        AllUsers.map(item =>{
-                            let index_idUser = data_call.findIndex(item_call => item_call.agent_id === item.user_id);
-                            if (index_idUser !== -1) {
-                                item.Number_of_call = data_call[index_idUser].totalcalls;
-                                item.Talking_Duration = data_call[index_idUser].durationcalls;
-                                item.AVG_Talking_Duration = data_call[index_idUser].moy;
+            this.DataCallsAgents(agent_ids, listCallFiles_ids, dataSelect_from, dataSelect_to).then(data_call => {
+                        let FilterdUsers = [];
+                        data_call.map(user => FilterdUsers.push(user.agent_id));
+                        this.formatUsers(FilterdUsers).then((Users)=>{
+                            let AllUsers = Users.data;
+                            AllUsers.map(item => {
+                                let index_idUser = data_call.findIndex(item_call => item_call.agent_id === item.user_id);
+                                if (index_idUser !== -1) {
+                                    item.Number_of_call = data_call[index_idUser].totalcalls;
+                                    item.Talking_Duration = data_call[index_idUser].durationcalls;
+                                    item.AVG_Talking_Duration = data_call[index_idUser].moy;
 
-                            } else {
-                                item.Number_of_call = '0';
-                                item.Talking_Duration = '0';
-                                item.AVG_Talking_Duration = '0';
-                            }
+                                } else {
+                                    item.Number_of_call = '0';
+                                    item.Talking_Duration = '0';
+                                    item.AVG_Talking_Duration = '0';
+                                }
+                            })
+                            res.send({
+                                success: true,
+                                data: AllUsers
+                            })
                         })
-                        res.send({
-                            success : false,
-                            data  : AllUsers
-                        })
-                    })
 
                 })
-            }
-        })
+
+
     }
-
-
 
 
 }
