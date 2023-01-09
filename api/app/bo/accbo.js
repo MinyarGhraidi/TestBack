@@ -74,7 +74,7 @@ class AccBo extends baseModelbo {
                 }
             }).then(countAll => {
                 let pages = Math.ceil(countAll[0].count / params.limit);
-                let extra_where_limit = extra_where_count+= ' LIMIT :limit'
+                let extra_where_limit = extra_where_count+= ' LIMIT :limit OFFSET :offset'
                 sqlData = sqlData.replace('EXTRA_WHERE', extra_where_limit);
                 sqlData = sqlData.replace('FILTER', '*');
 
