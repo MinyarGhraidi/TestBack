@@ -50,7 +50,7 @@ class Callhistorybo extends baseModelbo {
                         note: req.body.note,
                         dmc: dmc,
                         dmt: dmt,
-                        updated_at: new Date()
+                        updated_at: moment(new Date()).subtract({hours:1})
                     }
                 }).then(call_history=>{
                     res.send({
