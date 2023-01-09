@@ -436,7 +436,7 @@ class callfiles extends baseModelbo {
                         if(result){
                             res.send({
                                 success: true,
-                                revision_id: revision.id
+                                revision_id: revision.id? revision.id: null
                             })
                         }
 

@@ -361,6 +361,8 @@ class baseModelbo {
                         });
                     }
                 });
+            }else{
+                resolve(true)
             }
         });
     }
