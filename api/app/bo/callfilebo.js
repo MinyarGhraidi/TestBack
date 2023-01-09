@@ -481,7 +481,7 @@ class callfiles extends baseModelbo {
                         where calls_h.active = :active
                           and callF.active = :active
                            EXTRA_WHERE 
-                           LIMIT :limit OFFSET :offset
+                           order by callF.updated_at desc LIMIT :limit OFFSET :offset
                          `
         let sqlLeadsCount = `Select count(distinct callF.*)
                         from callfiles as callF
@@ -698,10 +698,7 @@ class callfiles extends baseModelbo {
             _this.db['calls_historys'].findAll({
                 where: {
                     active: 'Y',
-                    call_file_id: data.call_file_id,
-                    revision_id: {
-                        $ne: null
-                    }
+                    call_file_id: data.call_file_id
                 },
                 include: [{
                     model: db.users

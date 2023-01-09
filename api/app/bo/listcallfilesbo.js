@@ -204,7 +204,7 @@ class listcallfiles extends baseModelbo {
 
     cloneListCallFiles = (req, res, next) => {
         let _this = this;
-        let {listCallFile_id, listCallFile_name, account_id, campaign_id} = req.body;
+        let {listCallFile_id, listCallFile_name, user_id, campaign_id} = req.body;
 
         if (!listCallFile_id) {
             _this.sendResponseError(res, 'invalid source list call file')
@@ -233,7 +233,7 @@ class listcallfiles extends baseModelbo {
                             listcallfile_id: listCallFile_id,
                         }
                     }).then(callFiles_items => {
-                        _this.pushItemsToQueue(callFiles_items, list_CallFile_saved.listcallfile_id, listcallfile, listCallFile_name, account_id).then(items => {
+                        _this.pushItemsToQueue(callFiles_items, list_CallFile_saved.listcallfile_id, listcallfile, listCallFile_name, user_id).then(items => {
                             res.send({
                                 success: true,
                                 data: items
@@ -266,7 +266,7 @@ class listcallfiles extends baseModelbo {
 
     }
 
-    pushItemsToQueue = (callFiles_items, listcallfile_id, cloned_listcallfile, listCallFile_name, account_id) => {
+    pushItemsToQueue = (callFiles_items, listcallfile_id, cloned_listcallfile, listCallFile_name, user_id) => {
         let _this = this;
         return new Promise((resolve, reject) => {
             if (callFiles_items.length !== 0) {
@@ -278,7 +278,7 @@ class listcallfiles extends baseModelbo {
                         if (error1) {
                             throw error1;
                         }
-                        const queue = app_config.rabbitmq.queues.clone_List_CallFiles + account_id;
+                        const queue = app_config.rabbitmq.queues.clone_List_CallFiles + user_id;
                         channel.assertQueue(queue, {
                             durable: true
                         });

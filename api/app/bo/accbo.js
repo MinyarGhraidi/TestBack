@@ -198,8 +198,8 @@ class AccBo extends baseModelbo {
     }
 
     pushItemsToQueue = (pages, params) => {
-        let _this = this;
         return new Promise((resolve, reject) => {
+            let _this = this;
             params.time_export = new Date().getTime();
             if (pages !== 0) {
                 amqp.connect(rabbitmq_url, function (error0, connection) {
@@ -215,7 +215,6 @@ class AccBo extends baseModelbo {
                             durable: true,
                         });
                         _this.createItemsArray(pages).then((pages_array) => {
-                            let index = 0;
                             PromiseBB.each(pages_array, (item) => {
                                 params.page = item;
                                 let data = {
@@ -255,12 +254,13 @@ class AccBo extends baseModelbo {
     }
 
     downloadCdr(req, res, next) {
+        let _this = this;
         let file_name = req.params.filename;
         if (file_name && file_name !== 'undefined') {
             const file = appDir + '/app/resources/cdrs/' + file_name;
             res.download(file, function (err) {
                 if (err) {
-                    this.sendResponseError(res, [], err);
+                    return _this.sendResponseError(res, ['Cannot DownloadCdr',err], 1,403);
                 }
             });
         } else {
