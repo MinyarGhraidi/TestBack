@@ -698,10 +698,7 @@ class callfiles extends baseModelbo {
             _this.db['calls_historys'].findAll({
                 where: {
                     active: 'Y',
-                    call_file_id: data.call_file_id,
-                    revision_id: {
-                        $ne: null
-                    }
+                    call_file_id: data.call_file_id
                 },
                 include: [{
                     model: db.users
