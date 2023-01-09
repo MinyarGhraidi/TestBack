@@ -50,10 +50,10 @@ class AccBo extends baseModelbo {
                 extra_where_count += ' AND src_ip like :src_ip';
             }
             if (from && from !== '') {
-                extra_where_count += ` AND (call_events -> 0 ->> 'callerNumber')::text like :from`;
+                extra_where_count += ` AND src_user like :from`;
             }
             if (to && to !== '') {
-                extra_where_count += ` AND (call_events -> 0 ->> 'destination')::text like :to `;
+                extra_where_count += ` AND dst_user like :to `;
             }
             sqlCount = sqlCount.replace('EXTRA_WHERE', extra_where_count);
             sqlCount = sqlCount.replace('FILTER', filter_count);
@@ -74,7 +74,7 @@ class AccBo extends baseModelbo {
                 }
             }).then(countAll => {
                 let pages = Math.ceil(countAll[0].count / params.limit);
-                let extra_where_limit = extra_where_count+= ' LIMIT :limit OFFSET :offset'
+                let extra_where_limit = extra_where_count+= ' ORDER BY start_time DESC LIMIT :limit OFFSET :offset'
                 sqlData = sqlData.replace('EXTRA_WHERE', extra_where_limit);
                 sqlData = sqlData.replace('FILTER', '*');
 
