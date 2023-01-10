@@ -746,6 +746,9 @@ class callfiles extends baseModelbo {
                     })
                 })
                 Promise.all([historyPromise]).then(data_stats => {
+                    statsData.sort(
+                        (objA, objB) => Number(objB.started_at) - Number(objA.started_at),
+                    );
                     callFileInfo.stats = statsData;
                     res.send({
                         success: true,
