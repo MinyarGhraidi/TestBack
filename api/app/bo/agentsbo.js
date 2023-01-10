@@ -1059,7 +1059,7 @@ class agents extends baseModelbo {
 
     DataCallsAgents(agent_ids, list_CallFile_ids, start_time, end_time) {
         return new Promise((resolve, reject) => {
-            let sqlData = `select count(DISTINCT CallH.id) as TotalCalls,AVG(CallH.finished_at - CallH.started_at) AS moy , SUM(CallH.finished_at - CallH.started_at) AS DurationCalls, CallH.agent_id
+            let sqlData = `select count(DISTINCT CallH.id) as TotalCalls,AVG(CallH.finished_at - CallH.started_at) AS moy , SUM(CallH.dmc) AS DurationCalls, CallH.agent_id
             from calls_historys as CallH
             left join callfiles as CallF On CallF.callfile_id = CallH.call_file_id
             left join listcallfiles as listCallF On CallF.listcallfile_id = listCallF.listcallfile_id
@@ -1092,6 +1092,12 @@ class agents extends baseModelbo {
                     listCallFile_ids: list_CallFile_ids
                 }
             }).then(result => {
+                if(result && result.length !== 0){
+                    result.map(res => {
+                        res.durationcalls = parseInt(res.durationcalls);
+                        res.totalcalls = parseInt(res.totalcalls);
+                    })
+                }
                 resolve(result)
             }).catch(err => {
                 reject(err)

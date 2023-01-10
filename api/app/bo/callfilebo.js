@@ -657,11 +657,20 @@ class callfiles extends baseModelbo {
     }
     returnRevisonData(callFile){
         return new Promise((resolve,reject)=>{
-            let revision_data = callFile.revision.dataValues;
             let user_data = callFile.user.dataValues;
+            let rev_data = callFile.revision;
+            if(!!!rev_data ){
+                resolve({
+                    withRevision : false,
+                    user: user_data
+                })
+            }
+            let revision_data = rev_data.dataValues || null;
+
 
                 this.changeFieldBeforeAfter(revision_data.before,revision_data.after,revision_data.changes).then(result =>{
                         resolve({
+                            withRevision : true,
                             before: result[0],
                             after: result[1],
                             changes: result[2],
