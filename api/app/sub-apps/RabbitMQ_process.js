@@ -240,11 +240,11 @@ function startReadData() {
                                 {
                                     column: 'src user',
                                     type: String,
-                                    value: cdr => cdr.call_events ? cdr.call_events[0].callerNumber : ''
+                                    value: cdr => cdr.src_user ? cdr.src_user : ''
                                 }, {
                                     column: 'dst user',
                                     type: String,
-                                    value: cdr => cdr.call_events ? cdr.call_events[0].destination : ''
+                                    value: cdr => cdr.dst_user ? cdr.dst_user : ''
 
                                 }, {
                                     column: 'sip code',
@@ -284,12 +284,6 @@ function startReadData() {
                                     column: 'SIP From URI CallCenter',
                                     type: String,
                                     value: cdr => cdr.sipfromuri_callcenter !== null ? cdr.sipfromuri_callcenter.toString() : ''
-
-                                },
-                                {
-                                    column: 'Answer Time',
-                                    type: String,
-                                    value: cdr => cdr.answertime !== null ? cdr.answertime.toString() : ''
 
                                 },
                                 {
