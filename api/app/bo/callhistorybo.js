@@ -36,8 +36,7 @@ class Callhistorybo extends baseModelbo {
                                  set revision_id = :revision_id ,
                                  dmt = :dmt ,
                                  dmc = :dmc ,
-                                 note = :note ,
-                                 updated_at = :updated_at
+                                 note = :note 
                                  where id = (select id from calls_historys
                                              where call_file_id =:call_file_id
                                              order by started_at DESC
@@ -46,12 +45,10 @@ class Callhistorybo extends baseModelbo {
                     type: db.sequelize['crm-app'].QueryTypes.SELECT,
                     replacements: {
                         call_file_id: req.body.call_file_id,
-                        revision_id:req.body.revision_id,
+                        revision_id: req.body.revision_id,
                         note: req.body.note,
                         dmc: dmc,
-                        dmt: dmt,
-                        updated_at: moment(new Date()).subtract({hours:1})
-                    }
+                        dmt: dmt}
                 }).then(call_history=>{
                     res.send({
                         success: true
