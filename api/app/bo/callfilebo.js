@@ -374,7 +374,7 @@ class callfiles extends baseModelbo {
                     if (error1) {
                         throw error1;
                     }
-                    const queue = app_config.rabbitmq.queues.addCallFiles + campaign.account_id;
+                    const queue = app_config.rabbitmq.queues.addCallFiles + user_id;
                     channel.assertQueue(queue, {
                         durable: true
                     });
