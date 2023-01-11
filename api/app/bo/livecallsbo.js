@@ -28,6 +28,13 @@ class livecalls extends baseModelbo {
     getLiveCallsByAccount(req, res, next) {
         let _this = this;
         let {account_id} = req.body;
+        if(!!!account_id){
+            res.send({
+                status: 403,
+                message: "Account ID Not Found !",
+                data: []
+            })
+        }
         this.db['live_calls'].findAll({where: {active: 'Y'}})
             .then(liveCalls => {
                 this.db['accounts'].findOne({where: {account_id: account_id}})
