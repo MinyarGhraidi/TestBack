@@ -224,7 +224,7 @@ function startReadData() {
                                 {
                                     column: 'duration',
                                     type: String,
-                                    value: cdr => Math.ceil(Number(cdr.durationsec) + Number(cdr.durationmsec / 1000)).toString()
+                                    value: cdr => Math.ceil(Number(cdr.durationsec)).toString()
 
                                 },
                                 {
@@ -285,7 +285,7 @@ function startReadData() {
                                 {
                                     column: 'Agent',
                                     type: String,
-                                    value: cdr => cdr.agent !== null ? cdr.agent.toString() : ''
+                                    value: cdr => cdr.agent_info !== null ? cdr.agent_info.toString() : ''
 
                                 },
                                 {
