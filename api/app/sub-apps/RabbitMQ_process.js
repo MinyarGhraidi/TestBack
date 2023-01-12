@@ -221,12 +221,6 @@ function startReadData() {
                                     value: cdr => new Date(moment(cdr.end_time).add(2, 'hours').tz('Europe/Paris').utc().format('YYYY-MM-DD HH:mm:ss'))
                                 },
                                 {
-                                    column: 'account',
-                                    type: String,
-                                    value: cdr => cdr.account ? cdr.account.company + "(" + cdr.account.first_name + " " + cdr.account.last_name + ")" : cdr.accountcode
-
-                                },
-                                {
                                     column: 'duration',
                                     type: String,
                                     value: cdr => Math.ceil(Number(cdr.durationsec) + Number(cdr.durationmsec / 1000)).toString()
@@ -236,6 +230,12 @@ function startReadData() {
                                     column: 'direction',
                                     type: String,
                                     value: cdr => cdr.calldirection
+                                },
+                                {
+                                    column: 'account',
+                                    type: String,
+                                    value: cdr => cdr.account ? cdr.account.company + "(" + cdr.account.first_name + " " + cdr.account.last_name + ")" : cdr.accountcode
+
                                 },
                                 {
                                     column: 'src user',
@@ -255,11 +255,6 @@ function startReadData() {
                                     column: 'sip reason',
                                     type: String,
                                     value: cdr => cdr.sip_reason !== null ? cdr.sip_reason : ''
-
-                                }, {
-                                    column: 'debit',
-                                    type: String,
-                                    value: cdr => cdr.debit !== null ? cdr.debit.toString() : ''
 
                                 },
                                 {

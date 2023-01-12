@@ -183,6 +183,8 @@ class callfiles extends baseModelbo {
              custom_fields = req.body.custom_field;
         }
         let CallFile = req.body;
+        CallFile.created_at = moment(new Date());
+        CallFile.updated_at = moment(new Date());
         delete CallFile.phone_number;
         delete CallFile.user_id;
         if(req.body.custom_field){
