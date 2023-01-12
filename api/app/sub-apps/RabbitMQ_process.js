@@ -166,7 +166,8 @@ function startReadData() {
                         console.log("Sending Ack for msg at time " + incomingDate);
                         if (result_saveCall.success) {
                             appSocket.emit('refresh_clone_list_callFiles', {
-                                data: data
+                                data: data,
+                                user_id : data.user_id
                             });
                             ch.ack(msg);
                         } else {

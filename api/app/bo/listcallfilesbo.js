@@ -293,6 +293,7 @@ class listcallfiles extends baseModelbo {
                             current_callFile.listCallFile_name = listCallFile_name
                             current_callFile.callFiles_options = listCallFile_name
                             current_callFile.to_treat = 'N'
+                            current_callFile.user_id = user_id
                             current_callFile.save_in_hooper = 'N'
                             index++;
                             channel.sendToQueue(queue, Buffer.from(JSON.stringify(current_callFile)), {type: 'clone listCallFile'});

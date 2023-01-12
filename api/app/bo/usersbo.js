@@ -743,6 +743,8 @@ class users extends baseModelbo {
                 this.saveCredentials(user)
                     .then(data => {
                         let {newAccount, email_item} = data;
+                        newAccount.created_at = moment(new Date());
+                        newAccount.updated_at = moment(new Date());
                         let modalObj = this.db['users'].build(newAccount);
                         modalObj.save()
                             .then(user => {

@@ -118,7 +118,7 @@ class AccBo extends baseModelbo {
                                         });
                                         item.account_info = account_data[0] ? account_data[0].first_name + " " + account_data[0].last_name : null;
                                         item.account = account_data[0];
-                                        item.agent_info = user_data[0] ? user_data[0].first_name + " " + user_data[0].last_name + "("+ user_data[0].sip_device.uuid +")" : null;
+                                        item.agent_info = user_data[0] ? user_data[0].first_name + " " + user_data[0].last_name: null;
                                         item.agent_all = user_data[0];
                                         item.campaign = campaign_data[0];
                                         item.campaign_name = campaign_data[0] ? campaign_data[0].campaign_name : null;
