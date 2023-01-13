@@ -590,8 +590,8 @@ class agents extends baseModelbo {
     //-----------------> Telco Agent <------------------------
     onConnect(req, res, next) {
         let _this = this;
-        let {user_id, uuid, crmStatus, telcoStatus} = req.body;
-        this.onConnectFunc(user_id, uuid, crmStatus, telcoStatus)
+        let {user_id, uuid, crmStatus, telcoStatus, pauseStatus} = req.body;
+        this.onConnectFunc(user_id, uuid, crmStatus, telcoStatus, pauseStatus)
             .then((user) => {
                 let {sip_device, first_name, last_name, user_id, campaign_id, account_id} = user.agent.user;
                 let data_agent = {
@@ -616,7 +616,7 @@ class agents extends baseModelbo {
             });
     }
 
-    onConnectFunc(user_id, uuid, crmStatus, telcoStatus) {
+    onConnectFunc(user_id, uuid, crmStatus, telcoStatus, pauseStatus = null) {
         return new Promise((resolve, reject) => {
             // if (crmStatus === "in_call" || crmStatus === "in_qualification") {
             //     this.db["users"].findOne({where: {user_id: user_id}})
@@ -664,7 +664,7 @@ class agents extends baseModelbo {
                                         if (user) {
                                             let params = user.params;
                                             user.updated_at = moment(new Date());
-                                            this.updateAgentStatus(user_id, user, telcoStatus, crmStatus, params)
+                                            this.updateAgentStatus(user_id, user, telcoStatus, crmStatus, params, pauseStatus)
                                                 .then(agent => {
                                                     if (agent.success) {
                                                         resolve({
@@ -704,7 +704,7 @@ class agents extends baseModelbo {
         })
     }
 
-    updateAgentStatus(user_id, agent_, telcoStatus, crmStatus, params) {
+    updateAgentStatus(user_id, agent_, telcoStatus, crmStatus, params, pauseStatus) {
         let updatedAt_tz = moment(new Date());
         return new Promise((resolve, reject) => {
             let agent;
@@ -752,7 +752,8 @@ class agents extends baseModelbo {
                                             action_name: agent.params.status,
                                             created_at: last_action[1].finish_at,
                                             updated_at: last_action[1].finish_at,
-                                            start_at: last_action[1].finish_at
+                                            start_at: last_action[1].finish_at,
+                                            pause_status_id : agent.params.status === 'on-break' ? pauseStatus : null
                                         }).save().then(agent_event => {
                                             resolve({
                                                 success: true,
@@ -1438,6 +1439,61 @@ class agents extends baseModelbo {
 
     }
 
+    // ------------ Pause Status Report ------------//
+
+    pauseStatusReports(req,res,next){
+        let _this = this;
+        const params = req.body;
+        let {
+            agent_ids,
+            dateSelected_from,
+            dateSelected_to,
+            start_time,
+            end_time,
+            pauseStatus
+        } = params;
+        let sqlPauseStatus = `select 
+                                count(ALE.pause_status_id),
+                                PS.label, 
+                                ALE.user_id 
+                                from public.agent_log_events as ALE 
+                                left join pausestatuses as PS 
+                                on ALE.pause_status_id = PS.pausestatus_id 
+                                where action_name='on-break' and PS.active = 'Y' and PS.status = 'Y' and ALE.active = 'Y'
+                                 WHERECONDITION  
+                                 group by PS.label, ALE.user_id`
+        let extraWhere = '';
+        if(agent_ids && agent_ids.length !== 0){
+            extraWhere += 'AND ALE.user_id in (:agent_ids) ';
+        }
+        if(pauseStatus && pauseStatus.length !== 0){
+            extraWhere += 'AND ALE.pause_status_id in (:pauseStatus) ';
+        }
+        if (start_time && start_time !== '') {
+            extraWhere += ' AND ALE.started_at >= :start_time';
+        }
+        if (end_time && end_time !== '') {
+            extraWhere += ' AND  ALE.finished_at <=  :end_time';
+        }
+        sqlPauseStatus = sqlPauseStatus.replace('WHERECONDITION', extraWhere);
+        db.sequelize['crm-app'].query(sqlPauseStatus, {
+            type: db.sequelize['crm-app'].QueryTypes.SELECT,
+            replacements: {
+                start_time: dateSelected_from.concat(' ', start_time),
+                end_time: dateSelected_to.concat(' ', end_time),
+                agent_ids: agent_ids,
+                pauseStatus: pauseStatus,
+            }
+        }).then(data_stats => {
+            res.send({
+                success: true,
+                data: data_stats,
+                status: 200
+            })
+        }).catch(err => {
+            return _this.sendResponseError(res,['Error.cannotGetStatus',err],1,403)
+        })
+    }
 
 }
 

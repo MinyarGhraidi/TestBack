@@ -44,6 +44,7 @@ class pausestatus extends baseModelbo {
             res.status(500).json(err)
         )
     }
+
 }
 
 module.exports = pausestatus;

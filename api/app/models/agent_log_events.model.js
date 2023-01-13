@@ -34,7 +34,11 @@ module.exports = (sequelize, Sequelize) => {
             finish_at: {
                 allowNull: true,
                 type: Sequelize.DATE,
-            }
+            },
+            pause_status_id: {
+                type: Sequelize.INTEGER
+            },
+
         },
         {timestamps: false})
 
@@ -46,7 +50,8 @@ module.exports = (sequelize, Sequelize) => {
         'updated_at',
         'user_id',
         'start_at',
-        'finish_at'
+        'finish_at',
+        "pause_status_id"
     ]
     agent_log_event.prototype.fieldsSearchMetas = [
         'agent_log_event_id',
@@ -54,8 +59,16 @@ module.exports = (sequelize, Sequelize) => {
         'active',
         'user_id',
         'start_at',
-        'finish_at'
+        'finish_at',
+        "pause_status_id"
     ]
-
+    agent_log_event.associate = function (models) {
+        agent_log_event.belongsTo(models.users, {
+            foreignKey: 'user_id'
+        });
+        agent_log_event.belongsTo(models.pausestatuses, {
+            foreignKey: 'pause_status_id'
+        })
+    };
     return agent_log_event
 }
