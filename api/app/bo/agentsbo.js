@@ -329,7 +329,13 @@ class agents extends baseModelbo {
                                 .saveUserFunction(UserAgent)
                                 .then(agent => {
                                     let user_id = agent.user_id;
-                                    let agentLog = {user_id: user_id};
+                                    let dateNow = moment(new Date());
+                                    let agentLog = {
+                                        user_id: user_id,
+                                        created_at : dateNow,
+                                        updated_at : dateNow,
+                                        start_at : dateNow,
+                                    };
                                     let modalObj = this.db['agent_log_events'].build(agentLog)
                                     modalObj
                                         .save()
@@ -726,7 +732,7 @@ class agents extends baseModelbo {
                         }).then(result => {
                             if (result) {
                                 this.db['agent_log_events'].update({
-                                        finish_at: new Date(),
+                                        finish_at: updatedAt_tz,
                                         updated_at: updatedAt_tz
                                     },
                                     {
@@ -744,8 +750,8 @@ class agents extends baseModelbo {
                                         this.db['agent_log_events'].build({
                                             user_id: user_id,
                                             action_name: agent.params.status,
-                                            created_at: new Date(),
-                                            updated_at: updatedAt_tz,
+                                            created_at: last_action[1].finish_at,
+                                            updated_at: last_action[1].finish_at,
                                             start_at: last_action[1].finish_at
                                         }).save().then(agent_event => {
                                             resolve({
