@@ -332,9 +332,9 @@ class agents extends baseModelbo {
                                     let dateNow = moment(new Date());
                                     let agentLog = {
                                         user_id: user_id,
-                                        created_at : dateNow,
-                                        updated_at : dateNow,
-                                        start_at : dateNow,
+                                        created_at: dateNow,
+                                        updated_at: dateNow,
+                                        start_at: dateNow,
                                     };
                                     let modalObj = this.db['agent_log_events'].build(agentLog)
                                     modalObj
@@ -753,7 +753,7 @@ class agents extends baseModelbo {
                                             created_at: last_action[1].finish_at,
                                             updated_at: last_action[1].finish_at,
                                             start_at: last_action[1].finish_at,
-                                            pause_status_id : agent.params.status === 'on-break' ? pauseStatus : null
+                                            pause_status_id: agent.params.status === 'on-break' ? pauseStatus : null
                                         }).save().then(agent_event => {
                                             resolve({
                                                 success: true,
@@ -1016,51 +1016,51 @@ class agents extends baseModelbo {
             start_time,
             end_time,
         } = filter
-                let dataSelect_from = moment(dateSelected_from).format('YYYY-MM-DD').concat(' ', start_time)
-                let dataSelect_to = moment(dateSelected_to).format('YYYY-MM-DD').concat(' ', end_time)
-                this.DataCallsAgents(agent_ids, listCallFiles_ids, dataSelect_from, dataSelect_to).then(data_call => {
-                    let FilteredUsers_ids = [];
-                    data_call.map(user=> FilteredUsers_ids.push(user.agent_id))
-                    this.DataActionAgents(FilteredUsers_ids, dataSelect_from, dataSelect_to).then(data_actions => {
-                        this.formatUsers(FilteredUsers_ids).then(Users=>{
-                            let AllUsers = Users.data;
-                            AllUsers.map(item => {
-                                let index_idUser = data_call.findIndex(item_call => item_call.agent_id === item.user_id);
-                                if (index_idUser !== -1) {
-                                    item.Number_of_call = data_call[index_idUser].totalcalls;
-                                    item.Talking_Duration = data_call[index_idUser].durationcalls;
-                                    item.AVG_Talking_Duration = data_call[index_idUser].moy;
+        let dataSelect_from = moment(dateSelected_from).format('YYYY-MM-DD').concat(' ', start_time)
+        let dataSelect_to = moment(dateSelected_to).format('YYYY-MM-DD').concat(' ', end_time)
+        this.DataCallsAgents(agent_ids, listCallFiles_ids, dataSelect_from, dataSelect_to).then(data_call => {
+            let FilteredUsers_ids = [];
+            data_call.map(user => FilteredUsers_ids.push(user.agent_id))
+            this.DataActionAgents(FilteredUsers_ids, dataSelect_from, dataSelect_to).then(data_actions => {
+                this.formatUsers(FilteredUsers_ids).then(Users => {
+                    let AllUsers = Users.data;
+                    AllUsers.map(item => {
+                        let index_idUser = data_call.findIndex(item_call => item_call.agent_id === item.user_id);
+                        if (index_idUser !== -1) {
+                            item.Number_of_call = data_call[index_idUser].totalcalls;
+                            item.Talking_Duration = data_call[index_idUser].durationcalls;
+                            item.AVG_Talking_Duration = data_call[index_idUser].moy;
 
-                                } else {
-                                    item.Number_of_call = '0';
-                                    item.Talking_Duration = '0';
-                                    item.AVG_Talking_Duration = '0';
-                                }
-                                let action = []
-                                data_actions.map(item_action => {
-                                    if (item_action.user_id === item.user_id) {
-                                        action.push({
-                                            action_name: item_action.action_name,
-                                            duration: item_action.sum,
-                                            count_break: item_action.count
-                                        })
-                                    }
-                                    item.data_action = action
+                        } else {
+                            item.Number_of_call = '0';
+                            item.Talking_Duration = '0';
+                            item.AVG_Talking_Duration = '0';
+                        }
+                        let action = []
+                        data_actions.map(item_action => {
+                            if (item_action.user_id === item.user_id) {
+                                action.push({
+                                    action_name: item_action.action_name,
+                                    duration: item_action.sum,
+                                    count_break: item_action.count
                                 })
-                            })
-                            res.send({
-                                success: true,
-                                data:AllUsers
-                            })
+                            }
+                            item.data_action = action
                         })
-
-                    }).catch(err => {
-                        return this.sendResponseError(res, ['Error.cannot fetch list agents1', err], 1, 403);
                     })
-
-                }).catch(err => {
-                    return this.sendResponseError(res, ['Error.cannot fetch list agents2', err], 1, 403);
+                    res.send({
+                        success: true,
+                        data: AllUsers
+                    })
                 })
+
+            }).catch(err => {
+                return this.sendResponseError(res, ['Error.cannot fetch list agents1', err], 1, 403);
+            })
+
+        }).catch(err => {
+            return this.sendResponseError(res, ['Error.cannot fetch list agents2', err], 1, 403);
+        })
 
     }
 
@@ -1099,7 +1099,7 @@ class agents extends baseModelbo {
                     listCallFile_ids: list_CallFile_ids
                 }
             }).then(result => {
-                if(result && result.length !== 0){
+                if (result && result.length !== 0) {
                     result.map(res => {
                         res.durationcalls = parseInt(res.durationcalls);
                         res.totalcalls = parseInt(res.totalcalls);
@@ -1255,7 +1255,7 @@ class agents extends baseModelbo {
             if (agents_ids && agents_ids.length !== 0) {
                 whereQuery.user_id = agents_ids;
             }
-            if(agents_ids && agents_ids.length === 0 && campaign_ids && campaign_ids.length !== 0){
+            if (agents_ids && agents_ids.length === 0 && campaign_ids && campaign_ids.length !== 0) {
                 whereQuery.campaign_id = campaign_ids
             }
             this.db['users'].findAll({
@@ -1410,39 +1410,132 @@ class agents extends baseModelbo {
 
         let dataSelect_from = moment(dateSelected_from).format('YYYY-MM-DD').concat(' ', start_time)
         let dataSelect_to = moment(dateSelected_to).format('YYYY-MM-DD').concat(' ', end_time)
-            this.DataCallsAgents(agent_ids, listCallFiles_ids, dataSelect_from, dataSelect_to).then(data_call => {
-                        let FilterdUsers = [];
-                        data_call.map(user => FilterdUsers.push(user.agent_id));
-                        this.formatUsers(FilterdUsers).then((Users)=>{
-                            let AllUsers = Users.data;
-                            AllUsers.map(item => {
-                                let index_idUser = data_call.findIndex(item_call => item_call.agent_id === item.user_id);
-                                if (index_idUser !== -1) {
-                                    item.Number_of_call = data_call[index_idUser].totalcalls;
-                                    item.Talking_Duration = data_call[index_idUser].durationcalls;
-                                    item.AVG_Talking_Duration = data_call[index_idUser].moy;
+        this.DataCallsAgents(agent_ids, listCallFiles_ids, dataSelect_from, dataSelect_to).then(data_call => {
+            let FilterdUsers = [];
+            data_call.map(user => FilterdUsers.push(user.agent_id));
+            this.formatUsers(FilterdUsers).then((Users) => {
+                let AllUsers = Users.data;
+                AllUsers.map(item => {
+                    let index_idUser = data_call.findIndex(item_call => item_call.agent_id === item.user_id);
+                    if (index_idUser !== -1) {
+                        item.Number_of_call = data_call[index_idUser].totalcalls;
+                        item.Talking_Duration = data_call[index_idUser].durationcalls;
+                        item.AVG_Talking_Duration = data_call[index_idUser].moy;
 
-                                } else {
-                                    item.Number_of_call = '0';
-                                    item.Talking_Duration = '0';
-                                    item.AVG_Talking_Duration = '0';
-                                }
-                            })
-                            res.send({
-                                success: true,
-                                data: AllUsers
-                            })
-                        })
-
+                    } else {
+                        item.Number_of_call = '0';
+                        item.Talking_Duration = '0';
+                        item.AVG_Talking_Duration = '0';
+                    }
                 })
+                res.send({
+                    success: true,
+                    data: AllUsers
+                })
+            })
+
+        })
 
 
     }
 
     // ------------ Pause Status Report ------------//
+    affectPauseStatusToSquelette(PS, Squelette) {
+        return new Promise((resolve, reject) => {
 
-    pauseStatusReports(req,res,next){
-        let _this = this;
+            const isSameUser = (a, b) => a.pausestatus_id === b.pausestatus_id;
+            const onlyInLeft = (left, right, compareFunction) =>
+                left.filter(leftValue =>
+                    !right.some(rightValue =>
+                        compareFunction(leftValue, rightValue)));
+
+            const onlyInPS = onlyInLeft(PS, Squelette, isSameUser);
+            const onlyInSquelette = onlyInLeft(Squelette, PS, isSameUser);
+
+            const result = [...PS, ...onlyInPS, ...onlyInSquelette];
+            resolve(result)
+        })
+    }
+
+    squeletteQuery(pauseStatusIds) {
+        return new Promise((resolve, reject) => {
+            let sqlPauseStatus = `
+                                select 0 as total , null as user_id , PS.label, null as username, PS."isSystem", PS.code, PS.pausestatus_id
+                                from pausestatuses as PS 
+                                where PS.active = 'Y' and PS.status = 'Y'
+                                  AND PS.pausestatus_id in (:PS)`
+            db.sequelize['crm-app'].query(sqlPauseStatus, {
+                type: db.sequelize['crm-app'].QueryTypes.SELECT,
+                replacements: {
+                    PS: pauseStatusIds
+                }
+            }).then(Res_pauseStatus => {
+                resolve(Res_pauseStatus)
+            }).catch(err => {
+                reject(err)
+            })
+        })
+    }
+
+    countUsers(params) {
+        return new Promise((resolve, reject) => {
+            let {
+                agent_ids,
+                dateSelected_from,
+                dateSelected_to,
+                start_time,
+                end_time,
+                pauseStatus
+            } = params;
+            let sqlCount = `
+            select 
+                                distinct(count(ALE.pause_status_id)) as total,
+                                ALE.user_id , CONCAT(U.first_name,' ',U.last_name) as username
+                                from public.agent_log_events as ALE 
+                                left join pausestatuses as PS 
+                                on ALE.pause_status_id = PS.pausestatus_id 
+                                left join users as U
+                                on ALE.user_id = U.user_id
+                                where ALE.action_name='on-break' and PS.active = 'Y' and PS.status = 'Y' and ALE.active = 'Y'
+                                WHERECOND
+                                 group by ALE.user_id, CONCAT(U.first_name,' ',U.last_name)
+                                 `
+            let extraWhere = '';
+            if (agent_ids && agent_ids.length !== 0) {
+                extraWhere += 'AND ALE.user_id in (:agent_ids) ';
+            }
+            if (pauseStatus && pauseStatus.length !== 0) {
+                extraWhere += 'AND ALE.pause_status_id in (:pauseStatus) ';
+            }
+            if (start_time && start_time !== '') {
+                extraWhere += ' AND ALE.started_at >= :start_time';
+            }
+            if (end_time && end_time !== '') {
+                extraWhere += ' AND  ALE.finished_at <=  :end_time';
+            }
+            sqlCount = sqlCount.replace('WHERECOND', extraWhere);
+            db.sequelize['crm-app'].query(sqlCount, {
+                type: db.sequelize['crm-app'].QueryTypes.SELECT,
+                replacements: {
+                    start_time: dateSelected_from.concat(' ', start_time),
+                    end_time: dateSelected_to.concat(' ', end_time),
+                    agent_ids: agent_ids,
+                    pauseStatus: pauseStatus,
+                }
+            }).then(data_stats => {
+                let dataS = [];
+                if (data_stats && data_stats.length !== 0) {
+                    data_stats.map(item => dataS.push({user_id : item.user_id, username : item.username}))
+                }
+                resolve(dataS)
+            }).catch(err => {
+                reject(err)
+            })
+        })
+    }
+
+    pauseStatusReports(req, res, next) {
+        let idx = 0;
         const params = req.body;
         let {
             agent_ids,
@@ -1452,47 +1545,131 @@ class agents extends baseModelbo {
             end_time,
             pauseStatus
         } = params;
-        let sqlPauseStatus = `select 
-                                count(ALE.pause_status_id),
+        this.db['users'].findAll({where : {user_id : agent_ids, active : 'Y'}}).then(UsersFetch =>{
+            let AllU = [];
+            if(UsersFetch && UsersFetch.length !== 0){
+                UsersFetch.forEach(U =>{
+                    AllU.push({user_id : U.user_id , username : U.first_name + ' '+ U.last_name})
+                })
+            }
+            this.countUsers(params).then(resUsers => {
+                let AllUsersIds = [];
+                if (resUsers && resUsers.length !== 0) {
+                    AllUsersIds = resUsers
+                } else {
+                    if (agent_ids && agent_ids.length !== 0) {
+                        AllUsersIds = AllU
+                    } else {
+                        res.send({
+                            success: true,
+                            data: [],
+                            status: 200
+                        })
+                    }
+                }
+                this.squeletteQuery(pauseStatus).then(SqueletteQuery => {
+                    let sqlPauseStatus = `
+select 
+                                count(ALE.pause_status_id) as total,
                                 PS.label, 
-                                ALE.user_id 
+                                ALE.user_id ,
+                                PS.pausestatus_id,
+                                PS.code,
+                                PS."isSystem",
+                                CONCAT(U.first_name,' ', U.last_name) AS username
                                 from public.agent_log_events as ALE 
                                 left join pausestatuses as PS 
                                 on ALE.pause_status_id = PS.pausestatus_id 
-                                where action_name='on-break' and PS.active = 'Y' and PS.status = 'Y' and ALE.active = 'Y'
-                                 WHERECONDITION  
-                                 group by PS.label, ALE.user_id`
-        let extraWhere = '';
-        if(agent_ids && agent_ids.length !== 0){
-            extraWhere += 'AND ALE.user_id in (:agent_ids) ';
-        }
-        if(pauseStatus && pauseStatus.length !== 0){
-            extraWhere += 'AND ALE.pause_status_id in (:pauseStatus) ';
-        }
-        if (start_time && start_time !== '') {
-            extraWhere += ' AND ALE.started_at >= :start_time';
-        }
-        if (end_time && end_time !== '') {
-            extraWhere += ' AND  ALE.finished_at <=  :end_time';
-        }
-        sqlPauseStatus = sqlPauseStatus.replace('WHERECONDITION', extraWhere);
-        db.sequelize['crm-app'].query(sqlPauseStatus, {
-            type: db.sequelize['crm-app'].QueryTypes.SELECT,
-            replacements: {
-                start_time: dateSelected_from.concat(' ', start_time),
-                end_time: dateSelected_to.concat(' ', end_time),
-                agent_ids: agent_ids,
-                pauseStatus: pauseStatus,
-            }
-        }).then(data_stats => {
-            res.send({
-                success: true,
-                data: data_stats,
-                status: 200
+                                left join users as U 
+                                on ALE.user_id = U.user_id 
+                                where ALE.action_name='on-break' and PS.active = 'Y' and PS.status = 'Y' and ALE.active = 'Y'
+                                 WHERECONDITION
+                                 group by PS.label, ALE.user_id, PS.pausestatus_id,PS.code, CONCAT(U.first_name,' ', U.last_name), PS."isSystem"
+`
+                    let extraWhere = '';
+                    if (agent_ids && agent_ids.length !== 0) {
+                        extraWhere += 'AND ALE.user_id in (:agent_ids) ';
+                    }
+                    if (pauseStatus && pauseStatus.length !== 0) {
+                        extraWhere += 'AND ALE.pause_status_id in (:pauseStatus) ';
+                    }
+                    if (start_time && start_time !== '') {
+                        extraWhere += ' AND ALE.started_at >= :start_time';
+                    }
+                    if (end_time && end_time !== '') {
+                        extraWhere += ' AND  ALE.finished_at <=  :end_time';
+                    }
+                    sqlPauseStatus = sqlPauseStatus.replace('WHERECONDITION', extraWhere);
+                    db.sequelize['crm-app'].query(sqlPauseStatus, {
+                        type: db.sequelize['crm-app'].QueryTypes.SELECT,
+                        replacements: {
+                            start_time: dateSelected_from.concat(' ', start_time),
+                            end_time: dateSelected_to.concat(' ', end_time),
+                            agent_ids: agent_ids,
+                            pauseStatus: pauseStatus,
+                        }
+                    }).then(data_stats => {
+                        let dataArray = [];
+                        AllUsersIds.forEach(user => {
+                            let SQ_Demo = SqueletteQuery[0];
+                            SQ_Demo = {
+                                ...SQ_Demo,
+                                user_id: user.user_id,
+                                username: user.username,
+                            }
+                            let filtered = data_stats.length !== 0 ? data_stats.filter(u => u.user_id === user.user_id) : [SQ_Demo];
+                            let UserID = null;
+                            let UserName = null;
+                            UserID = filtered[0].user_id;
+                            UserName = filtered[0].username;
+                            const updatedFiltered = filtered.map(F => {
+                                    return {...F, total: parseInt(F.total)}
+                                }
+                            );
+                            const updatedOSArray = SqueletteQuery.map(p => {
+                                    return {...p, user_id: UserID, username: UserName}
+                                }
+                            );
+                            this.affectPauseStatusToSquelette(updatedFiltered, updatedOSArray).then(SQ => {
+                                let username = SQ[0].username;
+                                SQ.forEach(function (v) {
+                                    delete v.username;
+                                    delete v.user_id
+                                })
+                                dataArray.push({
+                                    agent: {
+                                        user_id: user,
+                                        username: username
+                                    },
+                                    data: SQ
+                                })
+                                if (idx < AllUsersIds.length - 1) {
+                                    idx++
+                                } else {
+                                    res.send({
+                                        success: true,
+                                        data: dataArray,
+                                        status: 200
+                                    })
+                                }
+                            }).catch(err => {
+                                return this.sendResponseError(res, ['Error.cannotAffectPauseStatus', err], 1, 403)
+                            });
+
+                        })
+                        // }
+
+                    }).catch(err => {
+                        return this.sendResponseError(res, ['Error.cannotGetStatus', err], 1, 403)
+                    })
+                }).catch(err => {
+                    return this.sendResponseError(res, ['Error.cannotGetStatus', err], 1, 403)
+                })
             })
-        }).catch(err => {
-            return _this.sendResponseError(res,['Error.cannotGetStatus',err],1,403)
         })
+
+
+        //   }
     }
 
 }

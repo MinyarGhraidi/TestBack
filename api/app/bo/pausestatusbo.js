@@ -45,6 +45,34 @@ class pausestatus extends baseModelbo {
         )
     }
 
+    findByCampIdsAndSystem(req, res, next){
+        let {campIds} = req.body;
+        let sqlFind = `
+SELECT * 
+FROM pausestatuses AS PS
+WHERE  ( EXTRAWHERE PS."isSystem" = 'Y') AND PS.active = 'Y' AND PS.status = 'Y';
+`
+        let extraWhere = '';
+        if(campIds && campIds.length !== 0){
+            extraWhere += 'PS.campaign_id IN (:campIds) OR';
+        }
+        sqlFind = sqlFind.replace('EXTRAWHERE', extraWhere);
+        db.sequelize['crm-app'].query(sqlFind, {
+            type: db.sequelize['crm-app'].QueryTypes.SELECT,
+            replacements: {
+                campIds: campIds
+            }
+        }).then(data_stats => {
+            res.send({
+                success: true,
+                data: data_stats,
+                status: 200
+            })
+        }).catch(err => {
+            return this.sendResponseError(res,['Error.cannotGetStatus',err],1,403)
+        })
+    }
+
 }
 
 module.exports = pausestatus;

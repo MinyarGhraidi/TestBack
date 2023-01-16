@@ -210,6 +210,7 @@ let apiRouters = function (passport) {
     router.delete("/api/pausestatus/delete/:params", passport.authenticate('jwt', {session: false}), pausestatusController.delete);
     router.post("/api/pausestatus/save", passport.authenticate('jwt', {session: false}), pausestatusController.save);
     router.post("/api/pausestatus/findByCampaignId", passport.authenticate('jwt', {session: false}), pausestatusController.findByCampaignId);
+    router.post("/api/pausestatus/findByCampaignIdAndSystem", passport.authenticate('jwt', {session: false}), pausestatusController.findByCampIdsAndSystem);
 
     // callfiles routers
     router.post("/api/callfile/find", passport.authenticate('jwt', {session: false}), callfileController.find);
