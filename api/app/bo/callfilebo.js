@@ -477,13 +477,13 @@ class callfiles extends baseModelbo {
         let sqlListCallFiles = `select listcallfile_id from listcallfiles
                                        where EXTRA_WHERE and active = 'Y' and status = 'Y'`
 
-        let sqlLeads = `Select distinct callF.*
+        let sqlLeads = `Select distinct callF.*, calls_h.finished_at
                         from callfiles as callF
                                  left join calls_historys as calls_h on callF.callfile_id = calls_h.call_file_id
                         where calls_h.active = :active
                           and callF.active = :active
                            EXTRA_WHERE 
-                           order by callF.updated_at desc LIMIT :limit OFFSET :offset
+                           order by calls_h.finished_at desc LIMIT :limit OFFSET :offset
                          `
         let sqlLeadsCount = `Select count(distinct callF.*)
                         from callfiles as callF
