@@ -611,6 +611,7 @@ class callfiles extends baseModelbo {
 
     changeFieldBeforeAfter(_beforeChanges, _afterChanges, _changesDone) {
         return new Promise((resolve, reject) => {
+            const KeysToDelete = ['callfile_id', 'updated_at','created_at']
             const beforeChanges = new Promise((resolve, reject) => {
                 let before = _beforeChanges;
                 let customFields = [];
@@ -618,9 +619,12 @@ class callfiles extends baseModelbo {
                     customFields = before.customfields;
                     delete before.customfields;
                     this.changeCustomFields(customFields).then(resCustomFields => {
-                        resolve({...before, ...resCustomFields})
+                        let MergeCustomFields = {...before, ...resCustomFields};
+                        KeysToDelete.forEach(e=> delete MergeCustomFields[e])
+                        resolve(MergeCustomFields)
                     }).catch(err => reject(err))
                 }else{
+                    KeysToDelete.forEach(e=> delete before[e])
                     resolve(before)
                 }
             })
@@ -631,9 +635,12 @@ class callfiles extends baseModelbo {
                     customFields = after.customfields;
                     delete after.customfields;
                     this.changeCustomFields(customFields).then(resCustomFields => {
-                        resolve({...after, ...resCustomFields})
+                        let MergeCustomFields = {...after, ...resCustomFields};
+                        KeysToDelete.forEach(e=> delete MergeCustomFields[e])
+                        resolve(MergeCustomFields)
                     }).catch(err => reject(err))
                 }else{
+                    KeysToDelete.forEach(e=> delete after[e])
                     resolve(after)
                 }
             })
@@ -644,9 +651,12 @@ class callfiles extends baseModelbo {
                     customFields = changes.customfields;
                     delete changes.customfields;
                     this.changeCustomFields(customFields).then(resCustomFields => {
-                        resolve({...changes, ...resCustomFields})
+                        let MergeCustomFields = {...changes, ...resCustomFields};
+                        KeysToDelete.forEach(e=> delete MergeCustomFields[e])
+                        resolve(MergeCustomFields)
                     }).catch(err => reject(err))
                 }else{
+                    KeysToDelete.forEach(e=> delete changes[e])
                     resolve(changes)
                 }
             })
@@ -668,8 +678,6 @@ class callfiles extends baseModelbo {
                 })
             }
             let revision_data = rev_data.dataValues || null;
-
-
                 this.changeFieldBeforeAfter(revision_data.before,revision_data.after,revision_data.changes).then(result =>{
                         resolve({
                             withRevision : true,
