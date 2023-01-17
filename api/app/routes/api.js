@@ -310,6 +310,7 @@ let apiRouters = function (passport) {
     router.post("/api/livecalls/save", passport.authenticate('jwt', {session: false}), liveCallsController.save);
     router.post("/api/livecalls/getLiveCallsByCallId", passport.authenticate('jwt', {session: false}), liveCallsController.getLiveCallsByCallId);
     router.post("/api/livecalls/getLiveCallsByAccount", passport.authenticate('jwt', {session: false}), liveCallsController.getLiveCallsByAccount);
+    router.post("/api/livecalls/getLiveCallsByCampaign", passport.authenticate('jwt', {session: false}), liveCallsController.getLiveCallsByCampaign);
 
     router.post('/api/callfile/UpdateCall', passport.authenticate('jwt', {session: false}), callfileController.updateCallFileQualification)
     router.post('/api/callfile/leadsStats', passport.authenticate('jwt', {session: false}), callfileController.leadsStats)

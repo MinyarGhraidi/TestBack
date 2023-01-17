@@ -63,6 +63,43 @@ class livecalls extends baseModelbo {
             })
     }
 
+    getLiveCallsByCampaign(req, res, next){
+        let _this = this;
+        let {campaign_id} = req.body;
+        if(!!!campaign_id){
+            res.send({
+                status: 403,
+                message: "campaign ID Not Found !",
+                data: []
+            })
+        }
+        this.db['live_calls'].findAll({where: {active: 'Y'}})
+            .then(liveCalls => {
+                this.db['campaigns'].findOne({where: {campaign_id: campaign_id}})
+                    .then(campaign => {
+                        if (Object.keys(campaign) && Object.keys(campaign).length !== 0) {
+                            let filteredData = liveCalls.filter(call => parseInt(call.events[0].campaignId) === parseInt(campaign.campaign_id));
+                            res.send({
+                                status: 200,
+                                message: "success",
+                                data: filteredData,
+                            });
+                        } else {
+                            res.send({
+                                status: 200,
+                                message: "success",
+                                data: []
+                            });
+                        }
+                    })
+                    .catch(err => {
+                        return _this.sendResponseError(res, ['Cannot fetch Campaigns from DB', err], 1, 403);
+                    })
+            })
+            .catch(err => {
+                return _this.sendResponseError(res, ['Cannot fetch data from DB', err], 1, 403);
+            })
+    }
 }
 
 module.exports = livecalls;
