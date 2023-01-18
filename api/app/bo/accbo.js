@@ -19,6 +19,7 @@ class AccBo extends baseModelbo {
 
     _getCdrsFunction(params){
         return new Promise((resolve,reject)=>{
+            const AgentUUID = params.agentUUID || null
             const filter = params.filter || null;
             const limit = parseInt(params.limit) > 0 ? params.limit : 1000;
             const page = params.page || 1;
@@ -55,6 +56,9 @@ class AccBo extends baseModelbo {
             if (to && to !== '') {
                 extra_where_count += ` AND dst_user like :to `;
             }
+            if (AgentUUID && AgentUUID !== '') {
+                extra_where_count += ` AND agent = :agent `;
+            }
             sqlCount = sqlCount.replace('EXTRA_WHERE', extra_where_count);
             sqlCount = sqlCount.replace('FILTER', filter_count);
             db.sequelize['cdr-db'].query(sqlCount, {
@@ -70,7 +74,8 @@ class AccBo extends baseModelbo {
                     account_code: account_code,
                     src_ip: ip ? ('%'+ip.concat('%')).toString() : null,
                     from: from ? ('%'+from.concat('%')).toString() : null,
-                    to: to ? ('%'+to.concat('%')).toString() : null
+                    to: to ? ('%'+to.concat('%')).toString() : null,
+                    agent : AgentUUID
                 }
             }).then(countAll => {
                 let pages = Math.ceil(countAll[0].count / params.limit);
@@ -91,7 +96,9 @@ class AccBo extends baseModelbo {
                         account_code: account_code,
                         src_ip: ip ? ('%'+ip.concat('%')).toString() : null,
                         from: from ? ('%'+from.concat('%')).toString() : null,
-                        to: to ? ('%'+to.concat('%')).toString() : null
+                        to: to ? ('%'+to.concat('%')).toString() : null,
+                        agent : AgentUUID
+
                     }
                 }).then(data => {
                     this.db['roles_crms'].findOne({

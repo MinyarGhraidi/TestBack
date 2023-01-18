@@ -1388,8 +1388,7 @@ class callfiles extends baseModelbo {
             this.db['callfiles'].update(toUpdate, {
                 where: {
                     callfile_id: callFile_ids,
-                    active: 'Y',
-                    status : '1'
+                    active: 'Y'
                 }
             }).then(()=>{
                 resolve(true)
@@ -1404,7 +1403,7 @@ class callfiles extends baseModelbo {
                         if(listcallfiles && listcallfiles.length !== 0){
                             let LCF_ids = [];
                             listcallfiles.forEach(LCF => LCF_ids.push(LCF.listcallfile_id));
-                            this.db['callfiles'].findAll({where : {listcallfile_id: LCF_ids, active : 'Y', status : '1'}}).then(callfiles =>{
+                            this.db['callfiles'].findAll({where : {listcallfile_id: LCF_ids, active : 'Y'}}).then(callfiles =>{
                                 if(callfiles && callfiles.length !== 0) {
                                     let CF_ids = [];
                                     callfiles.forEach(CF => CF_ids.push(CF.callfile_id));
@@ -1441,7 +1440,7 @@ class callfiles extends baseModelbo {
         return new Promise((resolve,reject)=>{
                     this.db['listcallfiles'].findOne({where : {listcallfile_id : list_call_file_id, active : 'Y', status : 'Y'}}).then(listcallfile =>{
                         if(Object.keys(listcallfile) && Object.keys(listcallfile).length !== 0){
-                            this.db['callfiles'].findAll({where : {listcallfile_id: list_call_file_id, active : 'Y', status : '1'}}).then(callfiles =>{
+                            this.db['callfiles'].findAll({where : {listcallfile_id: list_call_file_id, active : 'Y'}}).then(callfiles =>{
                                 if(callfiles && callfiles.length !== 0) {
                                     let CF_ids = [];
                                     callfiles.forEach(CF => CF_ids.push(CF.callfile_id));
