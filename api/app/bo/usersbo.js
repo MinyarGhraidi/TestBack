@@ -252,7 +252,6 @@ class users extends baseModelbo {
                                     });
                                 })
                             })
-
                         } else {
                             this.sendResponseError(res, ['Error.InvalidPassword'], 0, 403);
                         }
