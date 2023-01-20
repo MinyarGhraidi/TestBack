@@ -59,6 +59,7 @@ AclController = require('../controllers/acl.controller');
 AclNodesController = require('../controllers/acl_nodes.controller');
 ServersController = require('../controllers/server.controller');
 CallhistoryController = require('../controllers/callhistory.controller');
+ReminderController = require('../controllers/reminder.controller');
 
 let apiRouters = function (passport) {
 
@@ -387,6 +388,12 @@ let apiRouters = function (passport) {
 
     router.put('/api/callhistory/update',passport.authenticate('jwt', {session: false}),CallhistoryController.update);
     router.post('/api/callhistory/updateCallhistory',passport.authenticate('jwt', {session: false}),CallhistoryController.updateCall);
+
+    router.post('/api/reminder/find/:params?', passport.authenticate('jwt', {session: false}), ReminderController.find);
+    router.get('/api/reminder/findById/:entity_id', passport.authenticate('jwt', {session: false}), ReminderController.findById);
+    router.put('/api/reminder/update', passport.authenticate('jwt', {session: false}), ReminderController.update);
+    router.delete('/api/reminder/delete/:params', passport.authenticate('jwt', {session: false}), ReminderController.delete);
+    router.post('/api/reminder/save', passport.authenticate('jwt', {session: false}), ReminderController.save);
     return router;
 
 
