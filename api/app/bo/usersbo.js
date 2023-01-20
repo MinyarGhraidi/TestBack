@@ -15,7 +15,6 @@ const call_center_authorization = {
     headers: {Authorization: call_center_token}
 };
 const helpers = require('../helpers/helpers')
-const {reject} = require("bcrypt/promises");
 
 class users extends baseModelbo {
     constructor() {
