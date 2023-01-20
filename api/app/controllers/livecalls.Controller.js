@@ -23,4 +23,7 @@ module.exports = {
     getLiveCallsByAccount: function (req, res, next) {
         livecallsDaoInst.getLiveCallsByAccount(req, res, next);
     },
+    getLiveCallsByCampaign: function (req, res, next) {
+        livecallsDaoInst.getLiveCallsByCampaign(req, res, next);
+    },
 }

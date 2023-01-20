@@ -166,7 +166,8 @@ function startReadData() {
                         console.log("Sending Ack for msg at time " + incomingDate);
                         if (result_saveCall.success) {
                             appSocket.emit('refresh_clone_list_callFiles', {
-                                data: data
+                                data: data,
+                                user_id : data.user_id
                             });
                             ch.ack(msg);
                         } else {
@@ -221,15 +222,9 @@ function startReadData() {
                                     value: cdr => new Date(moment(cdr.end_time).add(2, 'hours').tz('Europe/Paris').utc().format('YYYY-MM-DD HH:mm:ss'))
                                 },
                                 {
-                                    column: 'account',
-                                    type: String,
-                                    value: cdr => cdr.account ? cdr.account.company + "(" + cdr.account.first_name + " " + cdr.account.last_name + ")" : cdr.accountcode
-
-                                },
-                                {
                                     column: 'duration',
                                     type: String,
-                                    value: cdr => Math.ceil(Number(cdr.durationsec) + Number(cdr.durationmsec / 1000)).toString()
+                                    value: cdr => Math.ceil(Number(cdr.durationsec)).toString()
 
                                 },
                                 {
@@ -238,13 +233,19 @@ function startReadData() {
                                     value: cdr => cdr.calldirection
                                 },
                                 {
+                                    column: 'account',
+                                    type: String,
+                                    value: cdr => cdr.account ? cdr.account.company + "(" + cdr.account.first_name + " " + cdr.account.last_name + ")" : cdr.accountcode
+
+                                },
+                                {
                                     column: 'src user',
                                     type: String,
-                                    value: cdr => cdr.call_events ? cdr.call_events[0].callerNumber : ''
+                                    value: cdr => cdr.src_user ? cdr.src_user : ''
                                 }, {
                                     column: 'dst user',
                                     type: String,
-                                    value: cdr => cdr.call_events ? cdr.call_events[0].destination : ''
+                                    value: cdr => cdr.dst_user ? cdr.dst_user : ''
 
                                 }, {
                                     column: 'sip code',
@@ -255,11 +256,6 @@ function startReadData() {
                                     column: 'sip reason',
                                     type: String,
                                     value: cdr => cdr.sip_reason !== null ? cdr.sip_reason : ''
-
-                                }, {
-                                    column: 'debit',
-                                    type: String,
-                                    value: cdr => cdr.debit !== null ? cdr.debit.toString() : ''
 
                                 },
                                 {
@@ -287,15 +283,9 @@ function startReadData() {
 
                                 },
                                 {
-                                    column: 'Answer Time',
-                                    type: String,
-                                    value: cdr => cdr.answertime !== null ? cdr.answertime.toString() : ''
-
-                                },
-                                {
                                     column: 'Agent',
                                     type: String,
-                                    value: cdr => cdr.agent !== null ? cdr.agent.toString() : ''
+                                    value: cdr => cdr.agent_info !== null ? cdr.agent_info.toString() : ''
 
                                 },
                                 {

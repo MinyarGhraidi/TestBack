@@ -211,6 +211,7 @@ let apiRouters = function (passport) {
     router.delete("/api/pausestatus/delete/:params", passport.authenticate('jwt', {session: false}), pausestatusController.delete);
     router.post("/api/pausestatus/save", passport.authenticate('jwt', {session: false}), pausestatusController.save);
     router.post("/api/pausestatus/findByCampaignId", passport.authenticate('jwt', {session: false}), pausestatusController.findByCampaignId);
+    router.post("/api/pausestatus/findByCampaignIdAndSystem", passport.authenticate('jwt', {session: false}), pausestatusController.findByCampIdsAndSystem);
 
     // callfiles routers
     router.post("/api/callfile/find", passport.authenticate('jwt', {session: false}), callfileController.find);
@@ -221,6 +222,7 @@ let apiRouters = function (passport) {
     router.post("/api/callfile/getEntityRevisionByModelId", callfileController.getEntityRevisionByModelId);
     router.get("/api/callfile/play", callfileController.playMediaMusic);
     router.get("/api/callfile/findCallFileById/:call_file_id", passport.authenticate('jwt', {session: false}), callfileController.findCalleFileById);
+    router.post("/api/callfile/RecycleCallFile", passport.authenticate('jwt', {session: false}), callfileController.RecycleCallFile);
 
     // dids routers
     router.post("/api/didsgroups/find", passport.authenticate('jwt', {session: false}), didsgroupsController.find);
@@ -310,6 +312,7 @@ let apiRouters = function (passport) {
     router.post("/api/livecalls/save", passport.authenticate('jwt', {session: false}), liveCallsController.save);
     router.post("/api/livecalls/getLiveCallsByCallId", passport.authenticate('jwt', {session: false}), liveCallsController.getLiveCallsByCallId);
     router.post("/api/livecalls/getLiveCallsByAccount", passport.authenticate('jwt', {session: false}), liveCallsController.getLiveCallsByAccount);
+    router.post("/api/livecalls/getLiveCallsByCampaign", passport.authenticate('jwt', {session: false}), liveCallsController.getLiveCallsByCampaign);
 
     router.post('/api/callfile/UpdateCall', passport.authenticate('jwt', {session: false}), callfileController.updateCallFileQualification)
     router.post('/api/callfile/leadsStats', passport.authenticate('jwt', {session: false}), callfileController.leadsStats)
@@ -346,6 +349,7 @@ let apiRouters = function (passport) {
     router.post('/api/acc/getCdrs/:params?', passport.authenticate('jwt', {session: false}), accController.getCdrs);
     router.post('/api/acc/agentCallReports/:params?', passport.authenticate('jwt', {session: false}), agentsController.agentCallReports);
     router.post('/api/acc/listCallFileReports/:params?', passport.authenticate('jwt', {session: false}), agentsController.listCallFileReports);
+    router.post('/api/acc/pauseStatusReports/:params?', passport.authenticate('jwt', {session: false}), agentsController.pauseStatusReports);
     router.post('/api/acc/pushDataToSocket/:params?', passport.authenticate('jwt', {session: false}), accController.pushDataToSocket);
     router.get('/api/acc/getSip_codes', passport.authenticate('jwt', {session: false}), accController.getSip_codes);
     router.get('/api/acc/downloadCdr/:filename', accController.downloadCdr);

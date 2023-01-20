@@ -55,5 +55,8 @@ module.exports = {
     },
     listCallFileReports: function (req, res, next) {
         agentsDaoInst.listCallFileReports(req, res, next)
-    }
+    },
+    pauseStatusReports: function (req, res, next) {
+        agentsDaoInst.pauseStatusReports(req, res, next)
+    },
 }

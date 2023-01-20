@@ -72,6 +72,9 @@ module.exports = (sequelize, Sequelize) => {
             script: {
                 type: Sequelize.STRING
             },
+            call_status_ids : {
+                type: Sequelize.JSONB
+            }
         },
         {timestamps: false,}
     );
@@ -95,7 +98,8 @@ module.exports = (sequelize, Sequelize) => {
         'max_sales_meet',
         'date_start_meet',
         'trunck_id',
-        'script'
+        'script',
+        'call_status_ids'
 
     ]
         campaign.prototype.fieldsSearchMetas = [
@@ -116,7 +120,8 @@ module.exports = (sequelize, Sequelize) => {
             'max_sales_meet',
             'date_start_meet',
             'trunck_id',
-            'script'
+            'script',
+            'call_status_ids'
         ]
     campaign.associate = function (models) {
         campaign.belongsTo(models.accounts, {

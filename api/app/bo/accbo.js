@@ -19,6 +19,7 @@ class AccBo extends baseModelbo {
 
     _getCdrsFunction(params){
         return new Promise((resolve,reject)=>{
+            const AgentUUID = params.agentUUID || null
             const filter = params.filter || null;
             const limit = parseInt(params.limit) > 0 ? params.limit : 1000;
             const page = params.page || 1;
@@ -55,6 +56,9 @@ class AccBo extends baseModelbo {
             if (to && to !== '') {
                 extra_where_count += ` AND dst_user like :to `;
             }
+            if (AgentUUID && AgentUUID !== '') {
+                extra_where_count += ` AND agent = :agent `;
+            }
             sqlCount = sqlCount.replace('EXTRA_WHERE', extra_where_count);
             sqlCount = sqlCount.replace('FILTER', filter_count);
             db.sequelize['cdr-db'].query(sqlCount, {
@@ -70,7 +74,8 @@ class AccBo extends baseModelbo {
                     account_code: account_code,
                     src_ip: ip ? ('%'+ip.concat('%')).toString() : null,
                     from: from ? ('%'+from.concat('%')).toString() : null,
-                    to: to ? ('%'+to.concat('%')).toString() : null
+                    to: to ? ('%'+to.concat('%')).toString() : null,
+                    agent : AgentUUID
                 }
             }).then(countAll => {
                 let pages = Math.ceil(countAll[0].count / params.limit);
@@ -91,47 +96,60 @@ class AccBo extends baseModelbo {
                         account_code: account_code,
                         src_ip: ip ? ('%'+ip.concat('%')).toString() : null,
                         from: from ? ('%'+from.concat('%')).toString() : null,
-                        to: to ? ('%'+to.concat('%')).toString() : null
+                        to: to ? ('%'+to.concat('%')).toString() : null,
+                        agent : AgentUUID
+
                     }
                 }).then(data => {
-                    this.db['accounts'].findAll({
-                        where: {
-                            active: 'Y'
-                        }
-
-                    }).then((accounts) => {
-                        this.db['campaigns'].findAll({
-                            where : {
-                                active : 'Y',
-                            }
-                        }).then((campaigns)=>{
-                            let cdrs_data = []
-                            PromiseBB.each(data, item => {
-                                    let account_data = accounts.filter(item_acc => item_acc.account_number === item.accountcode);
-                                    let campaign_data = campaigns.filter(item_acc => item_acc.campaign_id === parseInt(item.campaignId));
-                                    item.account_info = account_data[0] ? account_data[0].first_name + " " + account_data[0].last_name : null;
-                                    item.account = account_data[0];
-                                    item.campaign = campaign_data[0];
-                                    item.campaign_name = campaign_data[0] ? campaign_data[0].campaign_name : null;
-                                    cdrs_data.push(item);
-                            }).then(() => {
-                                let resData = {
-                                    success: true,
-                                    status: 200,
-                                    data: cdrs_data,
-                                    pages: pages,
-                                    countAll: countAll[0].count
+                    this.db['roles_crms'].findOne({
+                        where : {value : 'agent', active : 'Y'}
+                    }).then(role =>{
+                        this.db['users'].findAll({where : {active : 'Y', role_crm_id : role.id}}).then(users =>{
+                            this.db['accounts'].findAll({
+                                where: {
+                                    active: 'Y'
                                 }
-                                resolve(resData)
+
+                            }).then((accounts) => {
+                                this.db['campaigns'].findAll({
+                                    where : {
+                                        active : 'Y',
+                                    }
+                                }).then((campaigns)=>{
+                                    let cdrs_data = []
+                                    PromiseBB.each(data, item => {
+                                        let account_data = accounts.filter(item_acc => item_acc.account_number === item.accountcode);
+                                        let campaign_data = campaigns.filter(item_acc => item_acc.campaign_id === parseInt(item.campaignId));
+                                        let user_data = users.filter(item_acc => {
+                                            return (item_acc.sip_device.uuid === item.agent)
+                                        });
+                                        item.account_info = account_data[0] ? account_data[0].first_name + " " + account_data[0].last_name : null;
+                                        item.account = account_data[0];
+                                        item.agent_info = user_data[0] ? user_data[0].first_name + " " + user_data[0].last_name: null;
+                                        item.agent_all = user_data[0];
+                                        item.campaign = campaign_data[0];
+                                        item.campaign_name = campaign_data[0] ? campaign_data[0].campaign_name : null;
+                                        cdrs_data.push(item);
+                                    }).then(() => {
+                                        let resData = {
+                                            success: true,
+                                            status: 200,
+                                            data: cdrs_data,
+                                            pages: pages,
+                                            countAll: countAll[0].count
+                                        }
+                                        resolve(resData)
+                                    }).catch(err => {
+                                        reject(err)
+                                    })
+                                }).catch(err => {
+                                    reject(err)
+                                })
                             }).catch(err => {
                                 reject(err)
                             })
-                        }).catch(err => {
-                            reject(err)
-                        })
-                    }).catch(err => {
-                        reject(err)
-                    })
+                        }).catch(err => reject(err))
+                    }).catch(err => reject(err))
                 }).catch(err => {
                     reject(err)
                 })

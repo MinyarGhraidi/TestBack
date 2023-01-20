@@ -20,4 +20,7 @@ module.exports = {
     findByCampaignId: function (req, res, next) {
         pausestatusDaoInst.findByCampaignId(req, res, next);
     },
+    findByCampIdsAndSystem: function (req, res, next) {
+        pausestatusDaoInst.findByCampIdsAndSystem(req, res, next);
+    },
 }
