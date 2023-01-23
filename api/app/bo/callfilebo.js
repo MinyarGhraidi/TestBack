@@ -1428,7 +1428,7 @@ class callfiles extends baseModelbo {
                         }
                     }).then((res_CS) => {
                         if (res_CS && res_CS.length !== 0) {
-                            let Camp_CS_ids = campaign.call_status_ids | -[];
+                            let Camp_CS_ids = campaign.call_status_ids || [];
                             let CS_data = res_CS.filter(CS => Camp_CS_ids.includes(CS.callstatus_id))
                             let CS_codes = [];
                             CS_data.map(item => {
