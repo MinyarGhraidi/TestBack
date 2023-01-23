@@ -84,9 +84,6 @@ module.exports = (sequelize, Sequelize) => {
             lang: {
                 type: Sequelize.STRING,
             },
-            code: {
-                type: Sequelize.STRING,
-            },
             domain_id: {
                 type: Sequelize.INTEGER,
             },
@@ -122,7 +119,6 @@ module.exports = (sequelize, Sequelize) => {
         "role_crm_id",
         "user_id",
         "lang",
-        "code",
         "domain_id",
         "web_domain"
     ];
@@ -149,7 +145,6 @@ module.exports = (sequelize, Sequelize) => {
         "role_crm_id",
         "user_id",
         "lang",
-        "code",
         "domain_id",
         "web_domain"
 
