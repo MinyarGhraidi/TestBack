@@ -49,5 +49,12 @@ module.exports =(sequelize, Sequelize) =>{
         'updated_at'
     ]
 
+    reminder.associate = function (models) {
+
+        reminder.belongsTo(models.callfiles, {
+            foreignKey: 'call_file_id'
+        })
+    }
+
     return reminder
 }
