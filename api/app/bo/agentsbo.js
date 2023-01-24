@@ -899,8 +899,7 @@ class agents extends baseModelbo {
         let where = {
             active: 'Y',
             account_id: account_id,
-            role_crm_id: roleCrmAgent,
-            current_session_token: {[Op.not]: null}
+            role_crm_id: roleCrmAgent
         }
 
         if (campaign_id) {
