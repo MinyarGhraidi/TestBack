@@ -125,13 +125,16 @@ class agents extends baseModelbo {
                             }, config.secret, {
                                 expiresIn: '8600m'
                             });
-                            res.send({
-                                message: 'Success',
-                                user: user.toJSON(),
-                                success: true,
-                                token: token,
-                                result: 1,
-                            });
+                            db['users'].update({current_session_token: token}, {where: {user_id:  user.user_id}})
+                                .then(user => {
+                                    res.send({
+                                        message: 'Success',
+                                        user: user.toJSON(),
+                                        success: true,
+                                        token: token,
+                                        result: 1,
+                                    });
+                                })
 
                         } else {
                             this.sendResponseError(res, ['Error.InvalidPassword'], 2, 403);
