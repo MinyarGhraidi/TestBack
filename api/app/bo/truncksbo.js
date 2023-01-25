@@ -25,100 +25,130 @@ class truncks extends baseModelbo {
     saveTrunk(req, res, next) {
         let _this = this;
         let trunk_kam = req.body.values;
-            let data_db = req.body.db_values;
-        axios
-            .post(`${base_url_cc_kam}api/v1/gateways`, trunk_kam, call_center_authorization)
-            .then((kamailio_obj) => {
-                let kamailio_uuid = kamailio_obj.data.result.uuid || null;
+        let data_db = req.body.db_values;
+        this.db['truncks'].findOne({
+            where:{
+                active: 'Y',
+                status: 'Y',
+                proxy: data_db.proxy
+            }
+        }).then(trunck=>{
+            if(trunck){
+                return _this.sendResponseError(res, ['proxy already exists '], 0, 201)
+            }else{
                 axios
-                    .post(`${base_url_dailer}api/v1/dialer/gateways`, trunk_kam, dialer_authorization)
-                    .then(dialer_obj => {
-                        let dialer_uuid = dialer_obj.data.result.uuid || null;
-                        data_db.gateways = {
-                            callCenter:  kamailio_obj.data.result,
-                            dialer: dialer_obj.data.result
-                        };
-                        let modalObj = this.db['truncks'].build(data_db);
-                        modalObj.save()
-                            .then(trunk => {
-                                if (data_db.is_inbound === 'Y') {
-                                    this.db['truncks'].update({is_inbound: 'N'}, {where: {trunck_id: {[Op.ne]: trunk.trunck_id}}})
-                                        .then(trunk_updated => {
+                    .post(`${base_url_cc_kam}api/v1/gateways`, trunk_kam, call_center_authorization)
+                    .then((kamailio_obj) => {
+                        let kamailio_uuid = kamailio_obj.data.result.uuid || null;
+                        axios
+                            .post(`${base_url_dailer}api/v1/dialer/gateways`, trunk_kam, dialer_authorization)
+                            .then(dialer_obj => {
+                                let dialer_uuid = dialer_obj.data.result.uuid || null;
+                                data_db.gateways = {
+                                    callCenter:  kamailio_obj.data.result,
+                                    dialer: dialer_obj.data.result
+                                };
+                                let modalObj = this.db['truncks'].build(data_db);
+                                modalObj.save()
+                                    .then(trunk => {
+                                        if (data_db.is_inbound === 'Y') {
+                                            this.db['truncks'].update({is_inbound: 'N'}, {where: {trunck_id: {[Op.ne]: trunk.trunck_id}}})
+                                                .then(trunk_updated => {
+                                                    res.send({
+                                                        status: 200,
+                                                        message: "success",
+                                                        success: true,
+                                                        data: trunk
+                                                    })
+                                                })
+                                        } else {
                                             res.send({
                                                 status: 200,
                                                 message: "success",
                                                 success: true,
                                                 data: trunk
                                             })
-                                        })
-                                } else {
-                                    res.send({
-                                        status: 200,
-                                        message: "success",
-                                        success: true,
-                                        data: trunk
+                                        }
                                     })
-                                }
+                                    .catch(err => {
+                                        return _this.sendResponseError(res, ['cannot save trunk in DB', err], 1, 403);
+                                    })
                             })
                             .catch(err => {
-                                return _this.sendResponseError(res, ['cannot save trunk in DB', err], 1, 403);
+                                return _this.sendResponseError(res, ['error dialer', err], 1, 403);
                             })
                     })
-                    .catch(err => {
-                        return _this.sendResponseError(res, ['error dialer', err], 1, 403);
-                    })
-            })
-            .catch((err) => {
-                return _this.sendResponseError(res, ['Error kamailio', err], 1, 403);
-            });
+                    .catch((err) => {
+                        return _this.sendResponseError(res, ['Error kamailio', err], 1, 403);
+                    });
+            }
+        }).catch((err) => {
+            return _this.sendResponseError(res, ['Error Find trunk', err], 1, 403);
+        });
+
     }
 
     updateTrunk(req, res, next) {
         let _this = this;
         let trunk_kam = req.body.values;
-        trunk_kam.domain_uuid = "97b42577-13c7-41cc-be10-f36989a4ce10"
         let data_db = req.body.db_values;
         let uuid = req.body.uuid;
         let dialer_uuid = req.body.dialer_uuid;
-        axios
-            .put(`${base_url_cc_kam}api/v1/gateways/${uuid}`, trunk_kam, call_center_authorization)
-            .then((resp) => {
+        this.db['truncks'].findOne({
+            where:{
+                active: 'Y',
+                status: 'Y',
+                proxy: data_db.proxy
+            }
+        }).then(trunck=>{
+            if(trunck){
+                return _this.sendResponseError(res, ['proxy already exists '], 0, 201)
+            }else{
                 axios
-                    .put(`${base_url_dailer}api/v1/dialer/gateways/${dialer_uuid}`, trunk_kam, dialer_authorization)
-                    .then(dialer_obj => {
-                        this.db['truncks'].update(data_db, {where: {trunck_id: trunk_kam.trunck_id}})
-                            .then(trunk => {
-                                if (data_db.is_inbound === 'Y') {
-                                    this.db['truncks'].update({is_inbound: 'N'}, {where: {trunck_id: {[Op.ne]: trunk_kam.trunck_id}}})
-                                        .then(trunk_updated => {
+                    .put(`${base_url_cc_kam}api/v1/gateways/${uuid}`, trunk_kam, call_center_authorization)
+                    .then((resp) => {
+                        axios
+                            .put(`${base_url_dailer}api/v1/dialer/gateways/${dialer_uuid}`, trunk_kam, dialer_authorization)
+                            .then(dialer_obj => {
+                                this.db['truncks'].update(data_db, {where: {trunck_id: trunk_kam.trunck_id}})
+                                    .then(trunk => {
+                                        if (data_db.is_inbound === 'Y') {
+                                            this.db['truncks'].update({is_inbound: 'N'}, {where: {trunck_id: {[Op.ne]: trunk_kam.trunck_id}}})
+                                                .then(trunk_updated => {
+                                                    res.send({
+                                                        status: 200,
+                                                        message: "success",
+                                                        success: true,
+                                                        data: trunk
+                                                    })
+                                                })
+                                        } else {
                                             res.send({
                                                 status: 200,
                                                 message: "success",
                                                 success: true,
                                                 data: trunk
                                             })
-                                        })
-                                } else {
-                                    res.send({
-                                        status: 200,
-                                        message: "success",
-                                        success: true,
-                                        data: trunk
-                                    })
-                                }
+                                        }
 
+                                    })
+                            })
+                            .catch(err => {
+                                return _this.sendResponseError(res, ['Error update trunk', err], 1, 403);
+                            })
+                            .catch(err => {
+                                return _this.sendResponseError(res, ['Error dialer', err], 1, 403);
                             })
                     })
-                    .catch(err => {
-                        return _this.sendResponseError(res, ['Error update trunk', err], 1, 403);
-                    })
-                    .catch(err => {
-                        return _this.sendResponseError(res, ['Error dialer', err], 1, 403);
-                    })
-            })
-            .catch((err) => {
-                return _this.sendResponseError(res, ['Error kamilio', err], 1, 403);
-            });
+                    .catch((err) => {
+                        return _this.sendResponseError(res, ['Error kamilio', err], 1, 403);
+                    });
+            }
+
+        }).catch((err) => {
+            return _this.sendResponseError(res, ['Error Find trunk', err], 1, 403);
+        });
+
     }
 
     deleteTrunkFunc(dialer_uuid, callCenter_uuid, trunk_id) {
