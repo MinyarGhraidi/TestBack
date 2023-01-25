@@ -11,9 +11,6 @@ module.exports = (sequelize, Sequelize) => {
             did_group_id: {
                 type: Sequelize.INTEGER
             },
-            did_type: {
-                type: Sequelize.INTEGER
-            },
             active: {
                 allowNull: true,
                 type: Sequelize.STRING,
@@ -44,8 +41,7 @@ module.exports = (sequelize, Sequelize) => {
         "active",
         'status',
         'created_at',
-        'updated_at',
-        'did_type'
+        'updated_at'
     ]
     dids.prototype.fieldsSearchMetas = [
         'id',
@@ -53,8 +49,7 @@ module.exports = (sequelize, Sequelize) => {
         'did_group_id',
         'status',
         'created_at',
-        'updated_at',
-        'did_type'
+        'updated_at'
     ]
     dids.associate = function (models) {
         dids.belongsTo(models.didsgroups, {
