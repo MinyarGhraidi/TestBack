@@ -125,7 +125,7 @@ class agents extends baseModelbo {
                             }, config.secret, {
                                 expiresIn: '8600m'
                             });
-                            db['users'].update({current_session_token: token}, {where: {user_id:  user.user_id}})
+                            db['users'].update({current_session_token: token}, {where: {user_id: user.user_id}})
                                 .then(user => {
                                     res.send({
                                         message: 'Success',
@@ -152,7 +152,7 @@ class agents extends baseModelbo {
     saveUserAgent(req, res, next) {
         let _this = this;
         let idx = 0;
-        let {values, accountcode, bulkNum} = req.body;
+        let {values, accountcode, bulkNum, account_id} = req.body;
         if (!!!bulkNum) {
             _this.sendResponseError(res, ['Error.BulkNum is required'])
         } else {
@@ -163,37 +163,73 @@ class agents extends baseModelbo {
             sip_device.accountcode = accountcode;
             sip_device.enabled = true;
             values.sip_device = sip_device;
-            this.bulkUserAgents(bulkNum, values.username, values).then((users) => {
-                if (!users.success) {
-                    res.send({
-                        success: false,
-                        status: 403,
-                        message: users.message
-                    })
-                }
-                let addAgent = new Promise((resolve, reject) => {
-                    users.data.forEach((user) => {
-                        this.saveOneUserAgent(user)
-                            .then(() => {
-                                if (idx < users.length - 1) {
-                                    idx++
+            this.db['roles_crms'].findOne({
+                where: {value: 'agent', active: 'Y'}
+            }).then(role => {
+                if (role) {
+                    this.db['accounts'].findOne({
+                        where: {account_id: account_id, active: 'Y'}
+                    }).then(account_info => {
+                        if (account_info) {
+                            this.db['users'].findAll({
+                                where: {role_crm_id: role.id, account_id: account_id, active: 'Y'}
+                            }).then(data_agents => {
+                                let agents_available = account_info.nb_agents - data_agents.length
+                                if (agents_available && agents_available >= bulkNum.length) {
+                                    this.bulkUserAgents(bulkNum, values.username, values).then((users) => {
+                                        if (!users.success) {
+                                            res.send({
+                                                success: false,
+                                                status: 403,
+                                                message: users.message
+                                            })
+                                        }
+                                        let addAgent = new Promise((resolve, reject) => {
+                                            users.data.forEach((user) => {
+                                                this.saveOneUserAgent(user)
+                                                    .then(() => {
+                                                        if (idx < users.length - 1) {
+                                                            idx++
+                                                        } else {
+                                                            resolve({message: 'success'})
+                                                        }
+                                                    })
+                                                    .catch(err => {
+                                                        reject(err)
+                                                    })
+                                            })
+                                        })
+                                        Promise.all([addAgent]).then(() => {
+                                            res.send({
+                                                success: true,
+                                                status: 200
+                                            })
+                                        }).catch((err) => {
+                                            return this.sendResponseError(res, ['Error.CannotAddAgents'], 0, 403);
+                                        })
+                                    }).catch((err) => {
+                                        return this.sendResponseError(res, ['Error.CannotAddAgents'], 0, 403);
+                                    })
                                 } else {
-                                    resolve({message: 'success'})
+                                    res.send({
+                                        success: false,
+                                        data: [],
+                                        agents_available: agents_available
+                                    })
                                 }
+                            }).catch((err) => {
+                                return this.sendResponseError(res, ['Error.CannotAddAgents'], 0, 403);
                             })
-                            .catch(err => {
-                                reject(err)
-                            })
+                        } else {
+                            return this.sendResponseError(res, ['Error.CannotAddAgents'], 0, 403);
+                        }
+                    }).catch((err) => {
+                        return this.sendResponseError(res, ['Error.CannotAddAgents'], 0, 403);
                     })
-                })
-                Promise.all([addAgent]).then(() => {
-                    res.send({
-                        success: true,
-                        status: 200
-                    })
-                }).catch((err) => {
+                } else {
                     return this.sendResponseError(res, ['Error.CannotAddAgents'], 0, 403);
-                })
+                }
+
             }).catch((err) => {
                 return this.sendResponseError(res, ['Error.CannotAddAgents'], 0, 403);
             })
@@ -1069,12 +1105,16 @@ class agents extends baseModelbo {
 
     DataCallsAgents(agent_ids, list_CallFile_ids, start_time, end_time) {
         return new Promise((resolve, reject) => {
-            let sqlData = `select count(DISTINCT CallH.id) as TotalCalls,AVG(CallH.finished_at - CallH.started_at) AS moy , SUM(CallH.dmc) AS DurationCalls, CallH.agent_id
-            from calls_historys as CallH
-            left join callfiles as CallF On CallF.callfile_id = CallH.call_file_id
-            left join listcallfiles as listCallF On CallF.listcallfile_id = listCallF.listcallfile_id
-             EXTRA_WHERE
-              GROUP BY agent_id`;
+            let sqlData = `select count(DISTINCT CallH.id)                  as TotalCalls,
+                                  AVG(CallH.finished_at - CallH.started_at) AS moy,
+                                  SUM(CallH.dmc)                            AS DurationCalls,
+                                  CallH.agent_id
+                           from calls_historys as CallH
+                                    left join callfiles as CallF On CallF.callfile_id = CallH.call_file_id
+                                    left join listcallfiles as listCallF
+                                              On CallF.listcallfile_id = listCallF.listcallfile_id
+                               EXTRA_WHERE
+                           GROUP BY agent_id`;
             let extra_where_count = '';
             if (agent_ids && agent_ids.length !== 0) {
                 extra_where_count += 'AND agent_id in (:user_ids) '
@@ -1118,13 +1158,17 @@ class agents extends baseModelbo {
     DataActionAgents(agent_id, start_time, end_time) {
         return new Promise((resolve, reject) => {
             if (agent_id && agent_id.length !== 0) {
-                let sql = `select agent_log.user_id, agent_log.action_name, SUM(agent_log.finish_at - agent_log.start_at), COUNT(agent_log.action_name)
-                       from agent_log_events as agent_log
-                       where agent_log.user_id in (:agent_id)
-                         AND (agent_log.action_name = 'on-break' OR agent_log.action_name = 'waiting-call' OR agent_log.action_name = 'in_call')
-                         AND agent_log.start_at >= :start_at
-                         AND agent_log.finish_at <= :finish_at
-                       GROUP BY agent_log.action_name, agent_log.user_id `
+                let sql = `select agent_log.user_id,
+                                  agent_log.action_name,
+                                  SUM(agent_log.finish_at - agent_log.start_at),
+                                  COUNT(agent_log.action_name)
+                           from agent_log_events as agent_log
+                           where agent_log.user_id in (:agent_id)
+                             AND (agent_log.action_name = 'on-break' OR agent_log.action_name = 'waiting-call' OR
+                                  agent_log.action_name = 'in_call')
+                             AND agent_log.start_at >= :start_at
+                             AND agent_log.finish_at <= :finish_at
+                           GROUP BY agent_log.action_name, agent_log.user_id `
                 db.sequelize['crm-app'].query(sql, {
                     type: db.sequelize['crm-app'].QueryTypes.SELECT,
                     replacements: {
@@ -1463,10 +1507,17 @@ class agents extends baseModelbo {
     squeletteQuery(pauseStatusIds) {
         return new Promise((resolve, reject) => {
             let sqlPauseStatus = `
-                                select 0 as total , null as user_id , PS.label, null as username, PS."isSystem", PS.code, PS.pausestatus_id
-                                from pausestatuses as PS 
-                                where PS.active = 'Y' and PS.status = 'Y'
-                                  AND PS.pausestatus_id in (:PS)`
+                select 0    as total,
+                       null as user_id,
+                       PS.label,
+                       null as username,
+                       PS."isSystem",
+                       PS.code,
+                       PS.pausestatus_id
+                from pausestatuses as PS
+                where PS.active = 'Y'
+                  and PS.status = 'Y'
+                  AND PS.pausestatus_id in (:PS)`
             db.sequelize['crm-app'].query(sqlPauseStatus, {
                 type: db.sequelize['crm-app'].QueryTypes.SELECT,
                 replacements: {
@@ -1491,18 +1542,21 @@ class agents extends baseModelbo {
                 pauseStatus
             } = params;
             let sqlCount = `
-            select 
-                                distinct(count(ALE.pause_status_id)) as total,
-                                ALE.user_id , CONCAT(U.first_name,' ',U.last_name) as username
-                                from public.agent_log_events as ALE 
-                                left join pausestatuses as PS 
-                                on ALE.pause_status_id = PS.pausestatus_id 
-                                left join users as U
-                                on ALE.user_id = U.user_id
-                                where ALE.action_name='on-break' and PS.active = 'Y' and PS.status = 'Y' and ALE.active = 'Y'
-                                WHERECOND
-                                 group by ALE.user_id, CONCAT(U.first_name,' ',U.last_name)
-                                 `
+                select distinct(count(ALE.pause_status_id))           as total,
+                               ALE.user_id,
+                               CONCAT(U.first_name, ' ', U.last_name) as username
+                from public.agent_log_events as ALE
+                         left join pausestatuses as PS
+                                   on ALE.pause_status_id = PS.pausestatus_id
+                         left join users as U
+                                   on ALE.user_id = U.user_id
+                where ALE.action_name = 'on-break'
+                  and PS.active = 'Y'
+                  and PS.status = 'Y'
+                  and ALE.active = 'Y'
+                    WHERECOND
+                group by ALE.user_id, CONCAT(U.first_name, ' ', U.last_name)
+            `
             let extraWhere = '';
             if (agent_ids && agent_ids.length !== 0) {
                 extraWhere += 'AND ALE.user_id in (:agent_ids) ';
@@ -1528,7 +1582,7 @@ class agents extends baseModelbo {
             }).then(data_stats => {
                 let dataS = [];
                 if (data_stats && data_stats.length !== 0) {
-                    data_stats.map(item => dataS.push({user_id : item.user_id, username : item.username}))
+                    data_stats.map(item => dataS.push({user_id: item.user_id, username: item.username}))
                 }
                 resolve(dataS)
             }).catch(err => {
@@ -1548,11 +1602,11 @@ class agents extends baseModelbo {
             end_time,
             pauseStatus
         } = params;
-        this.db['users'].findAll({where : {user_id : agent_ids, active : 'Y'}}).then(UsersFetch =>{
+        this.db['users'].findAll({where: {user_id: agent_ids, active: 'Y'}}).then(UsersFetch => {
             let AllU = [];
-            if(UsersFetch && UsersFetch.length !== 0){
-                UsersFetch.forEach(U =>{
-                    AllU.push({user_id : U.user_id , username : U.first_name + ' '+ U.last_name})
+            if (UsersFetch && UsersFetch.length !== 0) {
+                UsersFetch.forEach(U => {
+                    AllU.push({user_id: U.user_id, username: U.first_name + ' ' + U.last_name})
                 })
             }
             this.countUsers(params).then(resUsers => {
@@ -1572,23 +1626,25 @@ class agents extends baseModelbo {
                 }
                 this.squeletteQuery(pauseStatus).then(SqueletteQuery => {
                     let sqlPauseStatus = `
-select 
-                                count(ALE.pause_status_id) as total,
-                                PS.label, 
-                                ALE.user_id ,
-                                PS.pausestatus_id,
-                                PS.code,
-                                PS."isSystem",
-                                CONCAT(U.first_name,' ', U.last_name) AS username
-                                from public.agent_log_events as ALE 
-                                left join pausestatuses as PS 
-                                on ALE.pause_status_id = PS.pausestatus_id 
-                                left join users as U 
-                                on ALE.user_id = U.user_id 
-                                where ALE.action_name='on-break' and PS.active = 'Y' and PS.status = 'Y' and ALE.active = 'Y'
-                                 WHERECONDITION
-                                 group by PS.label, ALE.user_id, PS.pausestatus_id,PS.code, CONCAT(U.first_name,' ', U.last_name), PS."isSystem"
-`
+                        select count(ALE.pause_status_id)             as total,
+                               PS.label,
+                               ALE.user_id,
+                               PS.pausestatus_id,
+                               PS.code,
+                               PS."isSystem",
+                               CONCAT(U.first_name, ' ', U.last_name) AS username
+                        from public.agent_log_events as ALE
+                                 left join pausestatuses as PS
+                                           on ALE.pause_status_id = PS.pausestatus_id
+                                 left join users as U
+                                           on ALE.user_id = U.user_id
+                        where ALE.action_name = 'on-break'
+                          and PS.active = 'Y'
+                          and PS.status = 'Y'
+                          and ALE.active = 'Y'
+                            WHERECONDITION
+                        group by PS.label, ALE.user_id, PS.pausestatus_id, PS.code, CONCAT(U.first_name, ' ', U.last_name), PS."isSystem"
+                    `
                     let extraWhere = '';
                     if (agent_ids && agent_ids.length !== 0) {
                         extraWhere += 'AND ALE.user_id in (:agent_ids) ';
