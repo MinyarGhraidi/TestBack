@@ -768,16 +768,10 @@ class campaigns extends baseModelbo {
                     }
                 })
                     .then(agents => {
-                        let AgentsIds = [];
-                        if (camp_agents && camp_agents.length !== 0) {
-                            camp_agents.forEach(user => {
-                                AgentsIds.push(user.user_id);
-                            })
-                        }
                         axios
                             .get(`${base_url_cc_kam}api/v1/queues/${queue_uuid}/tiers`, call_center_authorization)
                             .then(data => {
-                                this.db['users'].findAll({where: {user_id: AgentsIds, active: 'Y'}})
+                                this.db['users'].findAll({where: {user_id: camp_agents, active: 'Y'}})
                                     .then(allAgents => {
                                         let queue_agents = data.data.result.map(el => el.agent_uuid);
                                         let db_agents = (allAgents && allAgents.length !== 0) ? allAgents.map(el => el.sip_device.uuid) : [];
@@ -915,7 +909,6 @@ class campaigns extends baseModelbo {
                                             this.updateIsAssignedStatus(UnassignAgents, null, false)
                                                 .then(() => {
                                                     this.UpdateCampaign(AssignAgents, UnassignAgents, campaign_id).then(() => {
-                                                       // this.changeAGentsStatus(UnassignAgents).then(()=>{
                                                             this.deleteAgentsMeetings(UnassignAgents)
                                                                 .then(() => {
                                                                     res.send({
@@ -927,14 +920,9 @@ class campaigns extends baseModelbo {
                                                                 .catch((err) => {
                                                                     return _this.sendResponseError(res, ['cannot delete agent meetings', err], 1, 403);
                                                                 });
-                                                         // }).catch((err)=>{
-                                                         //     return _this.sendResponseError(res, ['cannot change Status Telco Agent', err], 1, 403);
-                                                         // })
-
                                                     }).catch((err) => {
                                                         return _this.sendResponseError(res, ['cannot update Assigned/UnAssigned Agents', err], 1, 403);
                                                     })
-
                                                 })
                                                 .catch((err) => {
                                                     return _this.sendResponseError(res, ['cannot update status of unassigned agents', err], 1, 403);
