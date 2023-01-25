@@ -89,7 +89,10 @@ module.exports = (sequelize, Sequelize) => {
             },
             web_domain: {
                 type: Sequelize.STRING,
-            }
+            },
+            nb_agents: {
+                type: Sequelize.INTEGER,
+            },
         },
         {timestamps: false}
     );
@@ -120,7 +123,8 @@ module.exports = (sequelize, Sequelize) => {
         "user_id",
         "lang",
         "domain_id",
-        "web_domain"
+        "web_domain",
+        "nb_agents"
     ];
 
     account.prototype.fieldsSearchMetas = [
