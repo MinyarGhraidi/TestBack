@@ -14,9 +14,7 @@ module.exports = (sequelize, Sequelize) => {
             channels: {
                 type: Sequelize.INTEGER
             },
-            cps: {
-                type: Sequelize.INTEGER
-            }, pai: {
+            pai: {
                 type: Sequelize.INTEGER
             },
             trunck_id: {
@@ -55,7 +53,6 @@ module.exports = (sequelize, Sequelize) => {
         'active',
         'prefix',
         'priority',
-        'cps',
         'trunck_id',
         'pai',
         "status",
@@ -70,7 +67,6 @@ module.exports = (sequelize, Sequelize) => {
         'channels',
         'prefix',
         'priority',
-        'cps',
         'trunck_id',
         'pai',
         "status"
