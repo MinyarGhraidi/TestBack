@@ -12,12 +12,14 @@ const call_center_authorization = {
     headers: {Authorization: call_center_token}
 };
 const PromiseBB = require("bluebird");
+const salt = require("../config/config.json")["salt"]
 
 const usersbo = require('./usersbo');
 let _usersbo = new usersbo;
 const appSocket = new (require('../providers/AppSocket'))();
 const appHelper = require("../helpers/app");
 const Op = require("sequelize/lib/operators");
+const bcrypt = require("bcrypt");
 const app_config = appHelper.appConfig;
 
 class agents extends baseModelbo {
@@ -205,10 +207,11 @@ class agents extends baseModelbo {
                                                 status: 200
                                             })
                                         }).catch((err) => {
+                                            console.log('errrr', err)
                                             return this.sendResponseError(res, ['Error.CannotAddAgents'], 0, 403);
                                         })
                                     }).catch((err) => {
-                                        return this.sendResponseError(res, ['Error.CannotAddAgents'], 0, 403);
+                                        return this.sendResponseError(res, ['Error.CannotAddAgents'], 1, 403);
                                     })
                                 } else {
                                     res.send({
@@ -218,20 +221,20 @@ class agents extends baseModelbo {
                                     })
                                 }
                             }).catch((err) => {
-                                return this.sendResponseError(res, ['Error.CannotAddAgents'], 0, 403);
+                                return this.sendResponseError(res, ['Error.CannotAddAgents'], 2, 403);
                             })
                         } else {
-                            return this.sendResponseError(res, ['Error.CannotAddAgents'], 0, 403);
+                            return this.sendResponseError(res, ['Error.CannotAddAgents'], 3, 403);
                         }
                     }).catch((err) => {
-                        return this.sendResponseError(res, ['Error.CannotAddAgents'], 0, 403);
+                        return this.sendResponseError(res, ['Error.CannotAddAgents'], 4, 403);
                     })
                 } else {
-                    return this.sendResponseError(res, ['Error.CannotAddAgents'], 0, 403);
+                    return this.sendResponseError(res, ['Error.CannotAddAgents'], 5, 403);
                 }
 
             }).catch((err) => {
-                return this.sendResponseError(res, ['Error.CannotAddAgents'], 0, 403);
+                return this.sendResponseError(res, ['Error.CannotAddAgents'], 6, 403);
             })
         }
     }
@@ -265,20 +268,21 @@ class agents extends baseModelbo {
                             if (!isUnique) {
                                 _usersbo._generateUserName(user.account_id).then(secondGenUserName => {
                                     TestuserName = parseInt(secondGenUserName) + 1;
+                                    let pass = this.generatestring(10)
                                     let newUser = {
                                         ...user,
                                         sip_device: {
                                             ...user.sip_device,
                                             username: secondGenUserName.toString(),
-                                            password: secondGenUserName.toString()
+                                            password: pass
                                         },
                                         params: {
                                             ...user.params,
-                                            pass_web: secondGenUserName.toString()
+                                            pass_web: pass
                                         },
                                         username: secondGenUserName.toString(),
                                         first_name: secondGenUserName.toString(),
-                                        password_hash: secondGenUserName.toString()
+                                        password_hash: pass
                                     }
                                     arrayUsers.push(Object.assign({}, newUser));
                                     if (idx < bulkNum.length - 1) {
@@ -291,21 +295,23 @@ class agents extends baseModelbo {
                                     }
                                 })
                             } else {
+                                let pass = this.generatestring(10)
                                 let newUser = {
                                     ...user,
                                     sip_device: {
                                         ...user.sip_device,
                                         username: TestuserName.toString(),
-                                        password: TestuserName.toString()
+                                        password: pass
                                     },
                                     params: {
                                         ...user.params,
-                                        pass_web: TestuserName.toString()
+                                        pass_web: pass
                                     },
                                     username: TestuserName.toString(),
                                     first_name: TestuserName.toString(),
-                                    password_hash: TestuserName.toString()
+                                    password_hash: pass
                                 }
+
                                 arrayUsers.push(Object.assign({}, newUser));
                                 if (idx < bulkNum.length - 1) {
                                     idx++
@@ -315,6 +321,7 @@ class agents extends baseModelbo {
                                         data: arrayUsers
                                     })
                                 }
+
                             }
 
                         }).catch((err) => {
@@ -478,19 +485,19 @@ class agents extends baseModelbo {
                                                                 return _this.sendResponseError(res, ['Error.CannotUpdateUserDB', err], 1, 403);
                                                             })
                                                     }).catch((err) => {
-                                                    return _this.sendResponseError(res, ['Error.CannotUpdateAgent'], 1, 403);
+                                                    return _this.sendResponseError(res, ['Error.CannotUpdateAgent'], 2, 403);
                                                 })
                                             }).catch((err) => {
-                                            return _this.sendResponseError(res, ['Error.CannotUpdateSubscriber'], 1, 403);
+                                            return _this.sendResponseError(res, ['Error.CannotUpdateSubscriber'], 3, 403);
                                         })
                                     }).catch((err) => {
-                                    return _this.sendResponseError(res, ['Error.CannotGetSubscriber'], 1, 403);
+                                    return _this.sendResponseError(res, ['Error.CannotGetSubscriber'], 4, 403);
                                 })
                             }).catch((err) => {
-                            return _this.sendResponseError(res, ['Error.CannotGetAgent'], 1, 403);
+                            return _this.sendResponseError(res, ['Error.CannotGetAgent'], 5, 403);
                         })
                     }).catch((err) => {
-                        return _this.sendResponseError(res, ['Error.CannotFindUser'], 1, 403);
+                        return _this.sendResponseError(res, ['Error.CannotFindUser'], 6, 403);
                     })
                 } else {
                     res.send({
@@ -501,7 +508,7 @@ class agents extends baseModelbo {
                     });
                 }
             }).catch((err) => {
-            return _this.sendResponseError(res, ['Error.UsernameNotUnique'], 1, 403);
+            return _this.sendResponseError(res, ['Error.UsernameNotUnique'], 7, 403);
         })
 
     }
@@ -1729,6 +1736,17 @@ class agents extends baseModelbo {
 
 
         //   }
+    }
+
+    generatestring(length) {
+        let result = '';
+        let characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+        let charactersLength = characters.length;
+        for (let i = 0; i < length; i++) {
+            result += characters.charAt(Math.floor(Math.random() *
+                charactersLength));
+        }
+        return result;
     }
 
 }
