@@ -24,9 +24,7 @@ class users extends baseModelbo {
     }
 
     signIn(req, res, next) {
-
         let {username, password, code, web_domain} = req.body;
-        console.log('herrreee', username, password)
         let _this = this;
         if ((!!!username || !!!password)) {
             return this.sendResponseError(res, ['Error.RequestDataInvalid'], 0, 403);

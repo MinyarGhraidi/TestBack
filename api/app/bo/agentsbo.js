@@ -207,7 +207,6 @@ class agents extends baseModelbo {
                                                 status: 200
                                             })
                                         }).catch((err) => {
-                                            console.log('errrr', err)
                                             return this.sendResponseError(res, ['Error.CannotAddAgents'], 0, 403);
                                         })
                                     }).catch((err) => {
