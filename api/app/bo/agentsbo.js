@@ -895,16 +895,18 @@ class agents extends baseModelbo {
                                     order: [['agent_log_event_id', 'DESC']]
                                 })
                                     .then(events => {
-                                        Users.push({
-                                            user_id: user_id,
-                                            first_name: first_name,
-                                            last_name: last_name,
-                                            uuid: sip_device.uuid,
-                                            crmStatus: user.params.status,
-                                            telcoStatus: sip_device.status,
-                                            timerStart: events[0].start_at,
-                                            campaign_id: campaign_id
-                                        });
+                                       // if(events && events.length !== 0) {
+                                            Users.push({
+                                                user_id: user_id,
+                                                first_name: first_name,
+                                                last_name: last_name,
+                                                uuid: sip_device.uuid,
+                                                crmStatus: user.params.status,
+                                                telcoStatus: sip_device.status,
+                                                timerStart: events.length ? events[0].start_at : null,
+                                                campaign_id: campaign_id
+                                            });
+                                       // }
                                         if (idx < agents.length - 1) {
                                             idx++;
                                         } else {
