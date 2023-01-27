@@ -59,6 +59,7 @@ AclController = require('../controllers/acl.controller');
 AclNodesController = require('../controllers/acl_nodes.controller');
 ServersController = require('../controllers/server.controller');
 CallhistoryController = require('../controllers/callhistory.controller');
+NotificationsController = require('../controllers/notifications.controller');
 ReminderController = require('../controllers/reminder.controller');
 
 let apiRouters = function (passport) {
@@ -68,6 +69,11 @@ let apiRouters = function (passport) {
         "/api/generateTokenForUser",
         utilityController.generateTokenForUser
     );
+
+    // notifications
+    router.post("/api/notification/SaveNotification", NotificationsController.SaveNotification);
+
+
 
     // account routers
     router.post("/api/account/find", passport.authenticate('jwt', {session: false}), accountController.find);
