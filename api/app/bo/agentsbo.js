@@ -665,10 +665,7 @@ class agents extends baseModelbo {
                     campaign_id: campaign_id,
                     account_id: account_id
                 };
-                setTimeout(()=>{
                      appSocket.emit('agent_connection', data_agent);
-                },5000)
-
                 res.send({
                     status: 200,
                     message: 'success'
