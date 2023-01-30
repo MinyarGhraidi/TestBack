@@ -475,28 +475,24 @@ class callfiles extends baseModelbo {
             campaign_ids,
             phone_number,
         } = data.filter;
-        let sqlListCallFiles = `select listcallfile_id
-                                from listcallfiles
-                                where EXTRA_WHERE
-                                  and active = 'Y'
-                                  and status = 'Y'`
+        let sqlListCallFiles = `select listcallfile_id from listcallfiles
+                                       where EXTRA_WHERE and active = 'Y' and status = 'Y'`
 
         let sqlLeads = `Select distinct callF.*, calls_h.finished_at
                         from callfiles as callF
                                  left join calls_historys as calls_h on callF.callfile_id = calls_h.call_file_id
                         where calls_h.active = :active
                           and callF.active = :active
-                            EXTRA_WHERE
-                        order by calls_h.finished_at desc LIMIT :limit
-                        OFFSET :offset
-        `
+                           EXTRA_WHERE 
+                           order by calls_h.finished_at desc LIMIT :limit OFFSET :offset
+                         `
         let sqlLeadsCount = `Select count(distinct callF.*)
-                             from callfiles as callF
-                                      left join calls_historys as calls_h on callF.callfile_id = calls_h.call_file_id
-                             where calls_h.active = :active
-                               and callF.active = :active
-                                 EXTRA_WHERE
-        `
+                        from callfiles as callF
+                                 left join calls_historys as calls_h on callF.callfile_id = calls_h.call_file_id
+                        where calls_h.active = :active
+                          and callF.active = :active
+                           EXTRA_WHERE 
+                         `
         let extra_where = '';
         let extra_where_ListCallFile = '';
         if (listCallFiles_ids && listCallFiles_ids.length === 0) {
@@ -1398,7 +1394,7 @@ class callfiles extends baseModelbo {
                 where: {
                     callfile_id: callFile_ids,
                     active: 'Y',
-                    call_status: call_status
+                    call_status : call_status
                 }
             }).then(() => {
                 resolve(true)
@@ -1426,58 +1422,58 @@ class callfiles extends baseModelbo {
                                 }
                             ]
                         }
-                    }).then((res_CS) => {
-                        if (res_CS && res_CS.length !== 0) {
-                            let Camp_CS_ids = campaign.call_status_ids || [];
-                            let CS_data = res_CS.filter(CS => Camp_CS_ids.includes(CS.callstatus_id))
-                            let CS_codes = [];
-                            CS_data.map(item => {
-                                CS_codes.push(item.code);
-                            })
-                            this.db['listcallfiles'].findAll({
-                                where: {
-                                    campaign_id: campaign_id,
-                                    active: 'Y',
-                                    status: 'Y'
-                                }
-                            }).then(listcallfiles => {
-                                if (listcallfiles && listcallfiles.length !== 0) {
-                                    let LCF_ids = [];
-                                    listcallfiles.forEach(LCF => LCF_ids.push(LCF.listcallfile_id));
-                                    this.db['callfiles'].findAll({
-                                        where: {
-                                            listcallfile_id: LCF_ids,
-                                            active: 'Y',
-                                            call_status: CS_codes
-                                        }
-                                    }).then(callfiles => {
-                                        if (callfiles && callfiles.length !== 0) {
-                                            let CF_ids = [];
-                                            callfiles.forEach(CF => CF_ids.push(CF.callfile_id));
-                                            if (CF_ids.length === callfiles.length) {
-                                                resolve({
-                                                    success: true,
-                                                    data: CF_ids,
-                                                    call_status: CS_codes,
-                                                    message: 'Campaign Recycled Successfully !'
-                                                })
-                                            }
-                                        } else {
+                    }).then((res_CS)=> {
+                        if(res_CS && res_CS.length !== 0){
+                        let Camp_CS_ids = campaign.call_status_ids || [];
+                        let CS_data = res_CS.filter(CS => Camp_CS_ids.includes(CS.callstatus_id))
+                        let CS_codes = [];
+                        CS_data.map(item => {
+                            CS_codes.push(item.code);
+                        })
+                        this.db['listcallfiles'].findAll({
+                            where: {
+                                campaign_id: campaign_id,
+                                active: 'Y',
+                                status: 'Y'
+                            }
+                        }).then(listcallfiles => {
+                            if (listcallfiles && listcallfiles.length !== 0) {
+                                let LCF_ids = [];
+                                listcallfiles.forEach(LCF => LCF_ids.push(LCF.listcallfile_id));
+                                this.db['callfiles'].findAll({
+                                    where: {
+                                        listcallfile_id: LCF_ids,
+                                        active: 'Y',
+                                        call_status: CS_codes
+                                    }
+                                }).then(callfiles => {
+                                    if (callfiles && callfiles.length !== 0) {
+                                        let CF_ids = [];
+                                        callfiles.forEach(CF => CF_ids.push(CF.callfile_id));
+                                        if (CF_ids.length === callfiles.length) {
                                             resolve({
-                                                success: false,
-                                                message: 'ListCallFile doesn`t have callfiles !'
-
+                                                success: true,
+                                                data: CF_ids,
+                                                call_status: CS_codes,
+                                                message: 'Campaign Recycled Successfully !'
                                             })
                                         }
-                                    }).catch(err => reject(err))
-                                } else {
-                                    resolve({
-                                        success: false,
-                                        message: 'Campaign doesn`t have listcallfiles !'
-                                    })
-                                }
-                            }).catch(err => reject(err))
-                        } else {
+                                    } else {
+                                        resolve({
+                                            success: false,
+                                            message: 'ListCallFile doesn`t have callfiles !'
+
+                                        })
+                                    }
+                                }).catch(err => reject(err))
+                            } else {
+                                resolve({
+                                    success: false,
+                                    message: 'Campaign doesn`t have listcallfiles !'
+                                })
+                            }
+                        }).catch(err => reject(err))
+                    }else{
                             reject(false)
                         }
                     })
@@ -1514,14 +1510,8 @@ class callfiles extends baseModelbo {
                                 }
                             ]
                         }
-                    }).then((res_CS) => {
-                        this.db['campaigns'].findOne({
-                            where: {
-                                campaign_id: listcallfile.campaign_id,
-                                status: 'Y',
-                                active: 'Y'
-                            }
-                        }).then((camp) => {
+                    }).then((res_CS)=> {
+                        this.db['campaigns'].findOne({where :{ campaign_id : listcallfile.campaign_id, status : 'Y', active : 'Y'}}).then((camp)=>{
                             let Camp_CS_ids = camp.call_status_ids || [];
                             let CS_data = res_CS.filter(CS => Camp_CS_ids.includes(CS.callstatus_id))
                             let CS_codes = [];
@@ -1532,7 +1522,7 @@ class callfiles extends baseModelbo {
                                 where: {
                                     listcallfile_id: list_call_file_id,
                                     active: 'Y',
-                                    call_status: CS_codes
+                                    call_status : CS_codes
                                 }
                             }).then(callfiles => {
                                 if (callfiles && callfiles.length !== 0) {
@@ -1542,7 +1532,7 @@ class callfiles extends baseModelbo {
                                         resolve({
                                             success: true,
                                             data: CF_ids,
-                                            call_status: CS_codes,
+                                            call_status : CS_codes,
                                             message: 'List Call File Recycled Successfully !'
                                         })
                                     }
@@ -1562,6 +1552,8 @@ class callfiles extends baseModelbo {
             }).catch(err => reject(err))
         })
     }
+
+
 
 }
 
