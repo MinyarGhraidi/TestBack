@@ -884,7 +884,6 @@ class agents extends baseModelbo {
         this.db['users'].findAll({where: where})
             .then(agents => {
                 this.verifyTokenAgents(agents).then((result) => {
-                    console.log(result)
                     res.send({
                         status: "200",
                         message: "success",
@@ -908,19 +907,12 @@ class agents extends baseModelbo {
                     _usersbo.verifyTokenParam(user.current_session_token).then((res) => {
                         if (res === true) {
                             let {sip_device, first_name, last_name, user_id, campaign_id} = user;
-                            if (user.params.status === 'logged-out') {
-                                this.db['users'].update({current_session_token: 1}, {where: {user_id: user.user_id}}).then(() => {
-                                    idx++;
-                                }).catch(err => {
-                                    reject(err)
-                                })
-                            } else {
                                 this.db['agent_log_events'].findAll({
                                     where: {active: 'Y', user_id: user_id},
                                     order: [['agent_log_event_id', 'DESC']]
                                 })
                                     .then(events => {
-                                        if(events && events.length !== 0 ) {
+                                        if(events && events.length !== 0 && events[0].action_name !== 'logged-out') {
                                             Users.push({
                                                 user_id: user_id,
                                                 first_name: first_name,
@@ -942,10 +934,9 @@ class agents extends baseModelbo {
                                     .catch(err => {
                                         reject(err)
                                     })
-                            }
 
                         } else {
-                            this.db['users'].update({current_session_token: 2}, {where: {user_id: user.user_id}}).then(() => {
+                            this.db['users'].update({current_session_token: null}, {where: {user_id: user.user_id}}).then(() => {
                                 idx++;
                             }).catch(err => {
                                 reject(err)
@@ -981,8 +972,6 @@ class agents extends baseModelbo {
         if (status) {
             where.params = {"status": status}
         }
-        console.log(where)
-
         this.db['users'].findAll({where: where})
             .then(agents => {
                 this.verifyTokenAgents(agents).then((result) => {
@@ -992,8 +981,6 @@ class agents extends baseModelbo {
                         data: result
                     })
                 }).catch(err => {
-                    console.log(err)
-
                     return _this.sendResponseError(res, ['Error.cannotVerifyToken', err], 1, 403);
                 })
 
