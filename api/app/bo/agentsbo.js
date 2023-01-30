@@ -665,7 +665,10 @@ class agents extends baseModelbo {
                     campaign_id: campaign_id,
                     account_id: account_id
                 };
-                appSocket.emit('agent_connection', data_agent);
+                setTimeout(()=>{
+                     appSocket.emit('agent_connection', data_agent);
+                },5000)
+
                 res.send({
                     status: 200,
                     message: 'success'
@@ -906,7 +909,7 @@ class agents extends baseModelbo {
                         if (res === true) {
                             let {sip_device, first_name, last_name, user_id, campaign_id} = user;
                             if (user.params.status === 'logged-out') {
-                                this.db['users'].update({current_session_token: null}, {where: {user_id: user.user_id}}).then(() => {
+                                this.db['users'].update({current_session_token: 1}, {where: {user_id: user.user_id}}).then(() => {
                                     idx++;
                                 }).catch(err => {
                                     reject(err)
@@ -942,7 +945,7 @@ class agents extends baseModelbo {
                             }
 
                         } else {
-                            this.db['users'].update({current_session_token: null}, {where: {user_id: user.user_id}}).then(() => {
+                            this.db['users'].update({current_session_token: 2}, {where: {user_id: user.user_id}}).then(() => {
                                 idx++;
                             }).catch(err => {
                                 reject(err)
