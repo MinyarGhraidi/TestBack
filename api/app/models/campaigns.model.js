@@ -74,6 +74,9 @@ module.exports = (sequelize, Sequelize) => {
             },
             call_status_ids : {
                 type: Sequelize.JSONB
+            },
+            config : {
+                type: Sequelize.JSONB
             }
         },
         {timestamps: false,}
@@ -99,7 +102,8 @@ module.exports = (sequelize, Sequelize) => {
         'date_start_meet',
         'trunck_id',
         'script',
-        'call_status_ids'
+        'call_status_ids',
+        'config'
 
     ]
         campaign.prototype.fieldsSearchMetas = [
@@ -121,7 +125,8 @@ module.exports = (sequelize, Sequelize) => {
             'date_start_meet',
             'trunck_id',
             'script',
-            'call_status_ids'
+            'call_status_ids',
+            'config'
         ]
     campaign.associate = function (models) {
         campaign.belongsTo(models.accounts, {

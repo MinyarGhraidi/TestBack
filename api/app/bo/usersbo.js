@@ -1241,20 +1241,31 @@ class users extends baseModelbo {
         })
     }
 
-    _generateUserName(account_id) {
+    _generateUserName(account_id, isAgent = true) {
         return new Promise((resolve, reject) => {
+            let roleUser = isAgent ? 'agent' : 'user'
             this.db['roles_crms'].findOne({
-                where: {value: 'agent', active: 'Y'}
+                where: {value: roleUser, active: 'Y'}
             }).then(role => {
-                this.db['users'].findAll({
-                    limit: 1,
-                    where: {active: 'Y', account_id: account_id, role_crm_id: role.id},
-                    order: [
-                        ['user_id', 'DESC'],
-                    ],
+                console.log(role)
+
+                let SQL = `select * from users where 
+                account_id = :account_id 
+                and role_crm_id = :role_crm_id 
+                and active = 'Y' 
+                and username NOT LIKE '%[^0-9]%' 
+                and length(username) <= 4 
+                ORDER BY username DESC LIMIT 1`;
+
+                db.sequelize['crm-app'].query(SQL, {
+                    type: db.sequelize['crm-app'].QueryTypes.SELECT,
+                    replacements: {
+                        role_crm_id: role.id,
+                        account_id : account_id
+                    }
                 }).then((user) => {
                     if (user.length === 0) {
-                        resolve('1000')
+                        resolve(isAgent ? '1000' : '2000')
                     } else {
                         let userName = parseInt(user[0].username) + 1
                         resolve(userName.toString())
@@ -1268,11 +1279,11 @@ class users extends baseModelbo {
     }
 
     GenerateUserNameFromLastUser(req, res, next) {
-        let {account_id} = req.body;
+        let {account_id, isAgent = true} = req.body;
         if (!!!account_id) {
             return this.sendResponseError(res, ['Error.AccountIdIsRequired'], 1, 403)
         }
-        this._generateUserName(account_id).then(username => {
+        this._generateUserName(account_id,isAgent).then(username => {
             res.json({
                 username
             })

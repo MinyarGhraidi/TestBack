@@ -154,7 +154,7 @@ class agents extends baseModelbo {
     saveUserAgent(req, res, next) {
         let _this = this;
         let idx = 0;
-        let {values, accountcode, bulkNum, account_id} = req.body;
+        let {values, accountcode, bulkNum, account_id,isAgent = true} = req.body;
         if (!!!bulkNum) {
             _this.sendResponseError(res, ['Error.BulkNum is required'])
         } else {
@@ -166,7 +166,7 @@ class agents extends baseModelbo {
             sip_device.enabled = true;
             values.sip_device = sip_device;
             this.db['roles_crms'].findOne({
-                where: {value: 'agent', active: 'Y'}
+                where: {value: isAgent ? 'agent' : 'user', active: 'Y'}
             }).then(role => {
                 if (role) {
                     this.db['accounts'].findOne({
@@ -178,7 +178,7 @@ class agents extends baseModelbo {
                             }).then(data_agents => {
                                 let agents_available = account_info.nb_agents - data_agents.length
                                 if (agents_available && agents_available >= bulkNum.length) {
-                                    this.bulkUserAgents(bulkNum, values.username, values).then((users) => {
+                                    this.bulkUserAgents(bulkNum, values.username, values, isAgent).then((users) => {
                                         if (!users.success) {
                                             res.send({
                                                 success: false,
@@ -188,7 +188,7 @@ class agents extends baseModelbo {
                                         }
                                         let addAgent = new Promise((resolve, reject) => {
                                             users.data.forEach((user) => {
-                                                this.saveOneUserAgent(user)
+                                                this.saveOneUserAgent(user,isAgent)
                                                     .then(() => {
                                                         if (idx < users.length - 1) {
                                                             idx++
@@ -207,38 +207,44 @@ class agents extends baseModelbo {
                                                 status: 200
                                             })
                                         }).catch((err) => {
-                                            return this.sendResponseError(res, ['Error.CannotAddAgents'], 0, 403);
+                                            res.send({
+                                                success: false,
+                                                status: 403,
+                                                message : err.response.data.errors.username[0] ? 'extension required !' : 'Failed Try Again'
+                                            })
                                         })
                                     }).catch((err) => {
-                                        return this.sendResponseError(res, ['Error.CannotAddAgents'], 1, 403);
+                                        return this.sendResponseError(res, ['Error.CannotBulkAgents'], 0, 403);
                                     })
                                 } else {
                                     res.send({
                                         success: false,
+                                        status : 403,
                                         data: [],
-                                        agents_available: agents_available
+                                        agents_available: agents_available,
+                                        message: agents_available === 0 ? "you reached your limit on adding agents ! " : `You only have ${agents_available} agent${agents_available > 1 ?'s' : ''} to add !`
                                     })
                                 }
                             }).catch((err) => {
-                                return this.sendResponseError(res, ['Error.CannotAddAgents'], 2, 403);
+                                return this.sendResponseError(res, ['Error.CannotFindUsers'], 0, 403);
                             })
                         } else {
-                            return this.sendResponseError(res, ['Error.CannotAddAgents'], 3, 403);
+                            return this.sendResponseError(res, ['Error.AccountNotFound'], 0, 403);
                         }
                     }).catch((err) => {
-                        return this.sendResponseError(res, ['Error.CannotAddAgents'], 4, 403);
+
+                        return this.sendResponseError(res, ['Error.CannotFindAccount'], 0, 403);
                     })
                 } else {
-                    return this.sendResponseError(res, ['Error.CannotAddAgents'], 5, 403);
+                    return this.sendResponseError(res, ['Error.RoleCrmNotFound'], 0, 403);
                 }
-
             }).catch((err) => {
-                return this.sendResponseError(res, ['Error.CannotAddAgents'], 6, 403);
+                return this.sendResponseError(res, ['Error.CannotFindRoleCrm'], 0, 403);
             })
         }
     }
 
-    bulkUserAgents(bulkNum, NewUserName, user) {
+    bulkUserAgents(bulkNum, NewUserName, user, isAgent) {
         return new Promise((resolve, reject) => {
             let idx = 0;
             let arrayUsers = [];
@@ -259,13 +265,17 @@ class agents extends baseModelbo {
                     reject(err);
                 })
             } else {
-                _usersbo._generateUserName(user.account_id).then(userName => {
+                let AgentRole = 'agent'
+                if(isAgent){
+                    AgentRole = 'user'
+                }
+                _usersbo._generateUserName(user.account_id, AgentRole).then(userName => {
                     bulkNum.forEach((inc) => {
                         let parseUserName = parseInt(userName) + inc;
                         let TestuserName = parseUserName.toString();
                         _usersbo.isUniqueUsername(TestuserName, 0, user.account_id).then(isUnique => {
                             if (!isUnique) {
-                                _usersbo._generateUserName(user.account_id).then(secondGenUserName => {
+                                _usersbo._generateUserName(user.account_id, AgentRole).then(secondGenUserName => {
                                     TestuserName = parseInt(secondGenUserName) + 1;
                                     let pass = this.generatestring(10)
                                     let newUser = {
@@ -335,12 +345,12 @@ class agents extends baseModelbo {
         })
     }
 
-    saveOneUserAgent(user) {
+    saveOneUserAgent(user, isAgent) {
         return new Promise((resolve, reject) => {
-            let {domain, status, options} = user.sip_device;
+            let {domain, status, options, username} = user.sip_device;
             let name_agent = user.first_name + " " + user.last_name;
             let data_subscriber = {
-                username: user.username,
+                username: username || user.username,
                 domain_uuid: user.domain.params.uuid,
                 password: user.sip_device.password,
                 domain
@@ -373,23 +383,28 @@ class agents extends baseModelbo {
                             _usersbo
                                 .saveUserFunction(UserAgent)
                                 .then(agent => {
-                                    let user_id = agent.user_id;
-                                    let dateNow = moment(new Date());
-                                    let agentLog = {
-                                        user_id: user_id,
-                                        created_at: dateNow,
-                                        updated_at: dateNow,
-                                        start_at: dateNow,
-                                    };
-                                    let modalObj = this.db['agent_log_events'].build(agentLog)
-                                    modalObj
-                                        .save()
-                                        .then(agent => {
-                                            resolve(agent)
-                                        })
-                                        .catch(err => {
-                                            reject(err)
-                                        })
+                                    if(isAgent){
+                                        let user_id = agent.user_id;
+                                        let dateNow = moment(new Date());
+                                        let agentLog = {
+                                            user_id: user_id,
+                                            created_at: dateNow,
+                                            updated_at: dateNow,
+                                            start_at: dateNow,
+                                        };
+                                        let modalObj = this.db['agent_log_events'].build(agentLog)
+                                        modalObj
+                                            .save()
+                                            .then(agent => {
+                                                resolve(agent)
+                                            })
+                                            .catch(err => {
+                                                reject(err)
+                                            })
+                                    }
+                                    else {
+                                        resolve(agent)
+                                    }
                                 })
                                 .catch(err => {
                                     reject(err)
@@ -866,6 +881,7 @@ class agents extends baseModelbo {
         this.db['users'].findAll({where: where})
             .then(agents => {
                 this.verifyTokenAgents(agents).then((result) => {
+                    console.log(result)
                     res.send({
                         status: "200",
                         message: "success",
@@ -909,11 +925,11 @@ class agents extends baseModelbo {
                                                 uuid: sip_device.uuid,
                                                 crmStatus: user.params.status,
                                                 telcoStatus: sip_device.status,
-                                                timerStart: events.length ? events[0].start_at : null,
-                                                campaign_id: campaign_id
+                                                timerStart: events[0].start_at,
+                                                campaign_id: campaign_id,
+                                                extension : sip_device.username
                                             });
                                         }
-
                                         if (idx < agents.length - 1) {
                                             idx++;
                                         } else {
@@ -962,6 +978,7 @@ class agents extends baseModelbo {
         if (status) {
             where.params = {"status": status}
         }
+        console.log(where)
 
         this.db['users'].findAll({where: where})
             .then(agents => {
@@ -972,6 +989,8 @@ class agents extends baseModelbo {
                         data: result
                     })
                 }).catch(err => {
+                    console.log(err)
+
                     return _this.sendResponseError(res, ['Error.cannotVerifyToken', err], 1, 403);
                 })
 
