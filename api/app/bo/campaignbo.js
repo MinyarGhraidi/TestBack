@@ -581,7 +581,8 @@ class campaigns extends baseModelbo {
                     list_mix,
                     hopper,
                     dial_level,
-                    dialtimeout
+                    dialtimeout,
+                    config
                 } = campaign_to_clone
                 let cloned_campaign = {
                     campaign_description,
@@ -594,7 +595,8 @@ class campaigns extends baseModelbo {
                     list_mix,
                     hopper,
                     dial_level,
-                    dialtimeout
+                    dialtimeout,
+                    config : campaign.config ? campaign.config : config
                 }
                 let {queue} = params;
                 let {greetings, hold_music} = queue.options;
@@ -636,23 +638,12 @@ class campaigns extends baseModelbo {
                                                             .then((list_pausestatus) => {
                                                                 this.savePauseStatus(list_pausestatus, cloned_campaign_id)
                                                                     .then(result => {
-                                                                        if (campaign && campaign.didsGp_ids && campaign.didsGp_ids.length !== 0) {
-                                                                            this.db['didsgroups'].update({campaign_id: data.campaign_id}, {where: {did_id: {in: campaign.didsGp_ids}}}).then(data => {
-                                                                                res.send({
-                                                                                    status: 200,
-                                                                                    data: data,
-                                                                                    message: "success clone campaign"
-                                                                                })
-                                                                            }).catch((err) => {
-                                                                                return _this.sendResponseError(res, ['Error.AffectDidGroupsCampaign', err], 1, 403);
-                                                                            });
-                                                                        } else {
                                                                             res.send({
                                                                                 status: 200,
                                                                                 data: data,
                                                                                 message: "success clone campaign"
                                                                             })
-                                                                        }
+
                                                                     }).catch(err => {
                                                                     _this.sendResponseError(res, ['cannot save pause status', err, 403]);
                                                                 });

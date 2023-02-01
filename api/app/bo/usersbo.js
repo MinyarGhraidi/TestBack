@@ -1247,8 +1247,6 @@ class users extends baseModelbo {
             this.db['roles_crms'].findOne({
                 where: {value: roleUser, active: 'Y'}
             }).then(role => {
-                console.log(role)
-
                 let SQL = `select * from users where 
                 account_id = :account_id 
                 and role_crm_id = :role_crm_id 

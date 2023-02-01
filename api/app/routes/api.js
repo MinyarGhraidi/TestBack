@@ -239,6 +239,7 @@ let apiRouters = function (passport) {
     router.post("/api/didsgroups/save", passport.authenticate('jwt', {session: false}), didsgroupsController.save);
     router.post("/api/didsgroups/affectDidsGpToCamp", passport.authenticate('jwt', {session: false}), didsgroupsController.affectDidsGpToCamp);
     router.post('/api/didsgroups/changeStatus', passport.authenticate('jwt', {session: false}), didsgroupsController.changeStatus);
+    router.post('/api/didsgroups/testDeleteDIDCamp', didsgroupsController.testDeleteDIDCamp);
 
 
     router.post("/api/callBlunding/find", passport.authenticate('jwt', {session: false}), callBlundingController.find);

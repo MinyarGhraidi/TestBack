@@ -26,4 +26,7 @@ module.exports = {
     deleteCascade: function (req, res, next) {
         didsDaoGroupsInst.deleteCascade(req, res, next);
     },
+    testDeleteDIDCamp: function (req, res, next) {
+        didsDaoGroupsInst.testDeleteDIDCamp(req, res, next);
+    },
 }

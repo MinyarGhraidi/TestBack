@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 const config = require('../config/config.json');
 const diff = require("deep-object-diff").diff;
 const Sequelize = require('sequelize');
+const Op = require("sequelize/lib/operators");
 const appSocket = new (require('../providers/AppSocket'))();
 
 class baseModelbo {
@@ -248,14 +249,58 @@ class baseModelbo {
         })
     }
 
+    deleteDidGroupFromCampaign(did_group_id,account_id){
+        return new Promise((resolve,reject)=>{
+            this.db['campaigns'].findAll({where : {account_id : account_id, status : 'Y', active : 'Y', config: {[Op.not]: null}}}).then((campaigns)=>{
+                if(!!!campaigns || campaigns.length === 0){
+                    resolve(true)
+                }else{
+                    let camps = campaigns.filter(camp => {
+                        if(!!!camp.config.did_group_ids){
+                            return false
+                        }
+                            return camp.config.did_group_ids.includes(did_group_id)
+                    });
+                    if(camps && camps.length !== 0){
+                        camps.forEach(camp => {
+                            let newDidGrpList = camp.config.did_group_ids
+                            let index = newDidGrpList.indexOf(did_group_id);
+                            if (index > -1) {
+                                newDidGrpList.splice(index, 1);
+                            }
+                            this.db['campaigns'].update({updated_at : moment(new Date()), config : {...camp.config, did_group_ids : newDidGrpList}},{where : {campaign_id : camp.campaign_id}}).then(()=>{
+                                resolve(true)
+                            }).catch(err=>reject(err))
+                        })
+                    }else{
+                        resolve(true)
+                    }
+                }
+            }).catch(err=>reject(err))
+        })
+    }
     deleteCascade(req, res, next) {
         let _id = req.params.params;
         switch (this.baseModal) {
             case 'didsgroups' :
                 this.deleteWithChild('didsgroups', 'dids', 'did_id', 'did_group_id', _id).then(() => {
-                    res.json({
-                        success: true,
-                        messages: 'deleted'
+                    this.db['didsgroups'].findOne({where : {did_id : _id}}).then((didGp=>{
+                        this.deleteDidGroupFromCampaign(parseInt(_id),didGp.account_id).then(()=>{
+                            res.json({
+                                success: true,
+                                messages: 'deleted'
+                            })
+                        }).catch(err=>{
+                            res.json({
+                                success: false,
+                                messages: 'Cant delete'
+                            })
+                        })
+                    })).catch(err=>{
+                        res.json({
+                            success: false,
+                            messages: 'Cant get DID group'
+                        })
                     })
                 }).catch((err) => {
                     res.json({
