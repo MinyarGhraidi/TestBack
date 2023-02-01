@@ -63,9 +63,6 @@ module.exports = (sequelize, Sequelize) => {
                 type: Sequelize.DATE,
                 defaultValue: new Date()
             },
-            current_strategy: {
-                type: Sequelize.STRING
-            },
             trunck_id: {
                 type: Sequelize.INTEGER
             },
@@ -97,7 +94,6 @@ module.exports = (sequelize, Sequelize) => {
         'agents',
         'status',
         'params',
-        'current_strategy',
         'max_sales_meet',
         'date_start_meet',
         'trunck_id',
@@ -120,7 +116,6 @@ module.exports = (sequelize, Sequelize) => {
             'updated_at',
             'agents',
             'status',
-            'current_strategy',
             'max_sales_meet',
             'date_start_meet',
             'trunck_id',

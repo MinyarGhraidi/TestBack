@@ -14,9 +14,6 @@ module.exports = (sequelize, Sequelize) => {
             type: {
                 type: Sequelize.STRING
             },
-            campaign_id: {
-                type: Sequelize.INTEGER
-            },
             active: {
                 allowNull: true,
                 type: Sequelize.STRING,
@@ -47,7 +44,6 @@ module.exports = (sequelize, Sequelize) => {
         'did_id',
         'name',
         'description',
-        'campaign_id',
         "active",
         'status',
         'created_at',
@@ -59,17 +55,11 @@ module.exports = (sequelize, Sequelize) => {
             'did_id',
             'name',
             'description',
-            'campaign_id',
             'status',
             'created_at',
             'updated_at',
             'type',
             'account_id'
         ]
-    didsgroup.associate = function (models) {
-        didsgroup.belongsTo(models.campaigns, {
-            foreignKey: 'campaign_id'
-        });
-    };
     return didsgroup
 }
