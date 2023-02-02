@@ -1281,6 +1281,13 @@ class agents extends baseModelbo {
             Promise.all([promiseParams]).then(() => {
                 let idx = 0;
                 let resultArray = [];
+                if(agent_ids && agent_ids.length === 0){
+                    res.send({
+                        success: false,
+                        data: [],
+                        status: 200
+                    })
+                }
                 agent_ids.forEach(agent => {
                     this.getReportByOneAgent({...params, agent_id: agent}).then(result => {
                         if (result.success) {
@@ -1415,11 +1422,20 @@ class agents extends baseModelbo {
                     campaign_ids: campaign_ids
                 }
             }).then(data_stats => {
-                resolve({
-                    success: true,
-                    data: data_stats,
-                    status: 200
-                })
+                    let total = 0;
+                    data_stats.map(item =>{
+                        total+= parseInt(item.total);
+                    })
+                    data_stats.push({
+                        'label' : 'total',
+                        'code' : 'total',
+                        'total' : total
+                    })
+                    resolve({
+                        success: true,
+                        data: data_stats,
+                        status: 200
+                    })
             }).catch(err => {
                 reject({
                     success: false,
