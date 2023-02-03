@@ -13,11 +13,11 @@ module.exports = {
       label: {
         type: Sequelize.STRING,
       },
-      isDefault: {
+      is_default: {
         type: Sequelize.STRING,
         defaultValue: "N",
       },
-      isSystem: {
+      is_system: {
         type: Sequelize.STRING,
         defaultValue: "N",
       },

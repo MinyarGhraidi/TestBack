@@ -41,6 +41,9 @@ module.exports = {
       check_duplication: {
         type: Sequelize.INTEGER,
       },
+      prefix: {
+        type: Sequelize.STRING,
+      },
       created_at: {
         allowNull: true,
         type: Sequelize.DATE,
@@ -50,6 +53,9 @@ module.exports = {
         allowNull: true,
         type: Sequelize.DATE,
         defaultValue: new Date()
+      },
+      templates_id: {
+        type: Sequelize.INTEGER,
       },
     });
   },
