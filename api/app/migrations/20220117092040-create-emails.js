@@ -14,9 +14,6 @@ module.exports = {
         type: Sequelize.STRING,
         defaultValue: 'N'
       },
-      last_password: {
-        type: Sequelize.STRING,
-      },
       active: {
         type: Sequelize.STRING,
         defaultValue: 'Y'
@@ -24,10 +21,23 @@ module.exports = {
       category: {
         type: Sequelize.STRING,
       },
+      last_password: {
+        type: Sequelize.STRING,
+      },
       template: {
         type: Sequelize.JSONB,
       },
-    }, {})
+      created_at: {
+        allowNull: true,
+        type: Sequelize.DATE,
+        defaultValue: new Date()
+      },
+      updated_at: {
+        allowNull: true,
+        type: Sequelize.DATE,
+        defaultValue: new Date()
+      }
+    })
   },
   down: (queryInterface, Sequelize) => {
     return queryInterface.dropTable('emails');

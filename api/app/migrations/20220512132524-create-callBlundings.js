@@ -8,13 +8,12 @@ module.exports = {
         autoIncrement: true,
         type: Sequelize.INTEGER
       },
-      did_gp_id: {
+      did_id: {
         type: Sequelize.INTEGER
       },
       campaign_id: {
         type: Sequelize.INTEGER
-      },
-      account_id: {
+      },account_id: {
         type: Sequelize.INTEGER
       },
       active: {
@@ -37,22 +36,11 @@ module.exports = {
         defaultValue: new Date()
       },
     })
-    /*
-      Add altering commands here.
-      Return a promise to correctly handle asynchronicity.
 
-      Example:
-      return queryInterface.createTable('users', { id: Sequelize.INTEGER });
-    */
   },
 
   down: (queryInterface, Sequelize) => {
-    /*
-      Add reverting commands here.
-      Return a promise to correctly handle asynchronicity.
+    return queryInterface.dropTable('call_blundings');
 
-      Example:
-      return queryInterface.dropTable('users');
-    */
   }
 };

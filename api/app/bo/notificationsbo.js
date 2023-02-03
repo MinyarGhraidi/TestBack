@@ -44,7 +44,7 @@ class notifications extends baseModelbo {
                                 })
                                 let PercentagesRestToTreat = 100 - (100 * totalToTreat / totalCallFiles).toFixed(2);
                                 let DateTZ = moment(new Date());
-                                if (PercentagesRestToTreat <= 10) {
+                                if (PercentagesRestToTreat <= 100) {
                                     let data = {
                                         account_id: campaign.account_id,
                                         campaign_id: campaign_id,

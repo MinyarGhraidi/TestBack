@@ -46,13 +46,17 @@ module.exports = {
         type: Sequelize.STRING,
         defaultValue: 'Y'
       },
+      current_session_token: {
+        allowNull: true,
+        type: Sequelize.STRING
+      },
       isAssigned: {
         type: Sequelize.BOOLEAN,
         defaultValue: false
       },
       campaign_id: {
         type: Sequelize.INTEGER,
-        defaultValue: 0
+        defaultValue: null
       },
       created_at: {
         allowNull: true,
@@ -66,6 +70,9 @@ module.exports = {
 
       },
       role_crm_id :{
+        type: Sequelize.INTEGER
+      },
+      profile_image_id :{
         type: Sequelize.INTEGER
       }
     });

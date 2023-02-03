@@ -18,6 +18,10 @@ module.exports = {
                 type: Sequelize.STRING,
                 defaultValue: 'Y'
             },
+            is_updatable: {
+                type: Sequelize.STRING,
+                defaultValue: 'Y'
+            },
         }).then(() => {
             queryInterface.bulkInsert("permissions_crms",
                 [
@@ -134,12 +138,7 @@ module.exports = {
     },
 
     down: (queryInterface, Sequelize) => {
-        /*
-          Add reverting commands here.
-          Return a promise to correctly handle asynchronicity.
+        return queryInterface.dropTable('permissions_crms');
 
-          Example:
-          return queryInterface.dropTable('users');
-        */
     }
 };

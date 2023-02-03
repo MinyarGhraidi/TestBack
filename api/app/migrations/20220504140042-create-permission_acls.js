@@ -2,32 +2,27 @@
 
 module.exports = {
   up: (queryInterface, Sequelize) => {
-    return queryInterface.createTable('acls', {
+    return queryInterface.createTable('permission_acls', {
       id: {
         primaryKey: true,
         autoIncrement: true,
         type: Sequelize.INTEGER
       },
-      role_id: {
-        type: Sequelize.INTEGER
+      label: {
+        type: Sequelize.STRING
       },
-      permission_acl_id: {
-        type: Sequelize.INTEGER
+      code: {
+        type: Sequelize.STRING
       },
       active: {
         type: Sequelize.STRING,
         defaultValue: 'Y'
-      },
+      }
     });
   },
 
   down: (queryInterface, Sequelize) => {
-    /*
-      Add reverting commands here.
-      Return a promise to correctly handle asynchronicity.
+    return queryInterface.dropTable('permission_acls');
 
-      Example:
-      return queryInterface.dropTable('users');
-    */
   }
 };

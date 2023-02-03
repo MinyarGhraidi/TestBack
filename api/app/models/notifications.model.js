@@ -14,6 +14,9 @@ module.exports = (sequelize, Sequelize) => {
             campaign_id: {
                 type: Sequelize.INTEGER,
             },
+            list_callfile_id: {
+                type: Sequelize.INTEGER,
+            },
             data: {
                 type: Sequelize.JSONB,
             },
@@ -50,12 +53,14 @@ module.exports = (sequelize, Sequelize) => {
         "status",
         "created_at",
         "updated_at",
+        "list_callfile_id"
     ]),
         (notifications.prototype.fieldsSearchMetas = [
             "notification_id",
             "account_id",
             "campaign_id",
-            "data"
+            "data",
+            "list_callfile_id"
         ]);
     notifications.associate = function (models) {
         notifications.belongsTo(models.campaigns, {
@@ -63,6 +68,9 @@ module.exports = (sequelize, Sequelize) => {
         });
         notifications.belongsTo(models.accounts, {
             foreignKey: 'account_id'
+        })
+        notifications.belongsTo(models.listcallfiles, {
+            foreignKey: 'list_callfile_id'
         })
     };
 

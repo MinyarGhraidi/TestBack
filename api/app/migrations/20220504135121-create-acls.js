@@ -2,52 +2,44 @@
 
 module.exports = {
   up: (queryInterface, Sequelize) => {
-    return queryInterface.createTable('emails', {
-      email_id: {
+    return queryInterface.createTable('acls', {
+      acl_id: {
         primaryKey: true,
         autoIncrement: true,
-        type: Sequelize.INTEGER
-      },
-      user_id: {
         type: Sequelize.INTEGER,
       },
-      is_sended: {
+      name: {
         type: Sequelize.STRING,
-        defaultValue: 'N'
+      },
+      default: {
+        type: Sequelize.STRING,
+      },
+      description: {
+        type: Sequelize.STRING,
       },
       active: {
+        allowNull: true,
         type: Sequelize.STRING,
-        defaultValue: 'Y'
-      },
-      category: {
-        type: Sequelize.STRING,
-      },
-      last_password: {
-        type: Sequelize.STRING,
-      },
-      template: {
-        type: Sequelize.JSONB,
+        defaultValue : 'Y'
       },
       created_at: {
         allowNull: true,
         type: Sequelize.DATE,
-        defaultValue: new Date()
+        defaultValue: new Date(),
       },
       updated_at: {
         allowNull: true,
         type: Sequelize.DATE,
-        defaultValue: new Date()
+        defaultValue: new Date(),
+      },
+      params: {
+        type: Sequelize.JSONB
       },
     });
   },
 
   down: (queryInterface, Sequelize) => {
-    /*
-      Add reverting commands here.
-      Return a promise to correctly handle asynchronicity.
+    return queryInterface.dropTable('acls');
 
-      Example:
-      return queryInterface.dropTable('users');
-    */
   }
 };

@@ -17,7 +17,7 @@ module.exports = {
             active: {
                 type: Sequelize.STRING,
                 defaultValue: 'Y'
-            }
+            },
         }).then(() => {
             queryInterface.bulkInsert("has_permissions",
                 [

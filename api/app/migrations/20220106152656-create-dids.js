@@ -1,19 +1,17 @@
 'use strict';
+
 module.exports = {
   up: (queryInterface, Sequelize) => {
     return queryInterface.createTable('dids', {
-      did_id: {
+      id: {
         primaryKey: true,
         autoIncrement: true,
         type: Sequelize.INTEGER
       },
-      name: {
+      number: {
         type: Sequelize.STRING
       },
-      description: {
-        type: Sequelize.STRING
-      },
-      campaign_id: {
+      did_group_id: {
         type: Sequelize.INTEGER
       },
       active: {
@@ -34,10 +32,13 @@ module.exports = {
         allowNull: true,
         type: Sequelize.DATE,
         defaultValue: new Date()
-      },
-    });
+      }
+    })
+
   },
+
   down: (queryInterface, Sequelize) => {
     return queryInterface.dropTable('dids');
+
   }
 };

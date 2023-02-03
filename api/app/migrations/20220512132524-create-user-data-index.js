@@ -20,10 +20,12 @@ module.exports = {
       created_at: {
         allowNull: true,
         type: Sequelize.DATE,
+        defaultValue: new Date()
       },
       updated_at: {
         allowNull: true,
-        type: Sequelize.DATE
+        type: Sequelize.DATE,
+        defaultValue: new Date()
       },
       active: {
         allowNull: true,
@@ -31,22 +33,10 @@ module.exports = {
         defaultValue: 'Y'
       },
     })
-    /*
-      Add altering commands here.
-      Return a promise to correctly handle asynchronicity.
-
-      Example:
-      return queryInterface.createTable('users', { id: Sequelize.INTEGER });
-    */
   },
 
   down: (queryInterface, Sequelize) => {
-    /*
-      Add reverting commands here.
-      Return a promise to correctly handle asynchronicity.
+    return queryInterface.dropTable('dids');
 
-      Example:
-      return queryInterface.dropTable('users');
-    */
   }
 };

@@ -57,6 +57,9 @@ module.exports = {
         type: Sequelize.DATE,
         defaultValue: new Date()
       },
+      is_inbound: {
+        type: Sequelize.STRING
+      }
     });
   },
   down: (queryInterface, Sequelize) => {
