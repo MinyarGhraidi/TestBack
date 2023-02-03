@@ -443,7 +443,6 @@
       "version": "0.17.1"
     },
     "sequelize": "^4.44.4",
-    "sequelize-cli": "^5.5.1",
     "sequelize-pool": {
       "integrity": "sha512-4YwEw3ZgK/tY/so+GfnSgXkdwIJJ1I32uZJztIEgZeAO6HMgj64OzySbWLgxj+tXhZCJnzRfkY9gINw8Ft8ZMg==",
       "resolved": "https://registry.npmjs.org/sequelize-pool/-/sequelize-pool-6.1.0.tgz",
@@ -580,9 +579,10 @@
     "test": "mocha --exit -r 'test/**/*.js'  --grep",
     "saveCalls": "NODE_ENV=development nodemon SaveCallFile ",
     "startSip": "nodemon  --unhandled-rejections=strict --experimental-modules --es-module-specifier-resolution=node  ./app/sub-apps/sipConnect.js",
-    "rabbitMQ" : "NODE_ENV=development nodemon app/sub-apps/RabbitMQ_process.js"
+    "rabbitMQ": "NODE_ENV=development nodemon app/sub-apps/RabbitMQ_process.js"
   },
   "devDependencies": {
-    "nodemon": "^2.0.19"
+    "nodemon": "^2.0.19",
+    "sequelize-cli": "^5.5.1"
   }
 }
