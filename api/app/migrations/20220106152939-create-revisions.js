@@ -32,6 +32,11 @@ module.exports = {
       user_id: {
         type: Sequelize.INTEGER
       },
+      active: {
+        allowNull: true,
+        type: Sequelize.STRING,
+        defaultValue: 'Y'
+      },
 
     });
   },

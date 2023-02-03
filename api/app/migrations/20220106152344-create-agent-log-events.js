@@ -34,7 +34,10 @@ module.exports = {
       finish_at: {
         allowNull: true,
         type: Sequelize.DATE,
-      }
+      },
+      pause_status_id: {
+        type: Sequelize.INTEGER
+      },
     });
   },
   down: (queryInterface, Sequelize) => {
