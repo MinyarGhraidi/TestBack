@@ -2,11 +2,11 @@
   "development": {
     "databases": {
       "crm-app": {
-        "host": "188.165.157.213",
-        "username": "postgres",
-        "password": "oxilog",
-        "database": "oxilog-crm-app",
-        "port": 5432,
+        "host": "92.222.227.223",
+        "username": "oxilogfact",
+        "password": "oxilog2023",
+        "database": "fact-oxilog-app",
+        "port": 5433,
         "dialect": "postgres",
         "underscored": true,
         "define": {
