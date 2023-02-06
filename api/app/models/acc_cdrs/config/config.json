@@ -1,11 +1,16 @@
 {
   "development": {
-    "host": "188.165.157.213",
+    "host": "92.222.227.221",
     "username": "postgres",
-    "password": "oxilog",
+    "password": "postgres",
     "database": "cdr",
-    "port":5432,
+    "port": 5432,
     "dialect": "postgres",
+    "underscored": true,
+    "define": {
+      "createdAt": "created_at",
+      "updatedAt": "updated_at"
+    },
     "socketUrl": "https://ip221.ip-92-222-227.eu:3002",
     "pool": {
       "max": 500,

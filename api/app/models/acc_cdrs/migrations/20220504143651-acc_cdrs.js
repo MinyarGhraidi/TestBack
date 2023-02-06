@@ -39,13 +39,13 @@ module.exports = {
       hangupCause :{
         type: Sequelize.STRING
       },
-      startTime :{
+      start_time :{
         type: Sequelize.STRING
       },
       answerTime:{
         type: Sequelize.STRING
       } ,
-      endTime :{
+      end_time :{
         type: Sequelize.STRING
       },
       durationSec :{
@@ -107,6 +107,12 @@ module.exports = {
       },
       call_events: {
         type: Sequelize.JSONB
+      },
+      debit: {
+        type: Sequelize.REAL
+      },
+      cost: {
+        type: Sequelize.REAL
       }
     });
   },
