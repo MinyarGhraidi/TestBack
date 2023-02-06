@@ -2,22 +2,65 @@
 
 module.exports = {
   up: (queryInterface, Sequelize) => {
-    /*
-      Add altering commands here.
-      Return a promise to correctly handle asynchronicity.
+    return queryInterface.createTable('calls_historys', {
 
-      Example:
-      return queryInterface.createTable('users', { id: Sequelize.INTEGER });
-    */
+      id: {
+        primaryKey: true,
+        autoIncrement: true,
+        type: Sequelize.INTEGER
+      },
+      agent_id: {
+        type: Sequelize.INTEGER
+      },
+      call_file_id: {
+        type: Sequelize.INTEGER
+      },
+      started_at: {
+        type: Sequelize.DATE
+      },
+      finished_at: {
+        type: Sequelize.DATE
+      },
+      active: {
+        type: Sequelize.STRING,
+        defaultValue: 'Y'
+      },
+      created_at: {
+        allowNull: true,
+        type: Sequelize.DATE,
+        defaultValue: new Date()
+      },
+      updated_at: {
+        allowNull: true,
+        type: Sequelize.DATE,
+        defaultValue: new Date()
+      },
+      uuid: {
+        type: Sequelize.STRING
+      },
+      dmc: {
+        type: Sequelize.INTEGER
+      },
+      dmt: {
+        type: Sequelize.INTEGER
+      },
+      list_call_file_id: {
+        type: Sequelize.INTEGER
+      },
+      note: {
+        type: Sequelize.STRING
+      },
+      record_url: {
+        type: Sequelize.STRING
+      },
+      revision_id: {
+        type: Sequelize.INTEGER
+      },
+    })
+
   },
 
   down: (queryInterface, Sequelize) => {
-    /*
-      Add reverting commands here.
-      Return a promise to correctly handle asynchronicity.
-
-      Example:
-      return queryInterface.dropTable('users');
-    */
+    return queryInterface.dropTable('calls_historys');
   }
 };

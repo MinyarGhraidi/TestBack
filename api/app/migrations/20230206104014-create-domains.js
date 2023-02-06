@@ -2,22 +2,46 @@
 
 module.exports = {
   up: (queryInterface, Sequelize) => {
-    /*
-      Add altering commands here.
-      Return a promise to correctly handle asynchronicity.
+    return queryInterface.createTable('domains', {
 
-      Example:
-      return queryInterface.createTable('users', { id: Sequelize.INTEGER });
-    */
+      domain_id: {
+        primaryKey: true,
+            autoIncrement: true,
+            type: Sequelize.INTEGER,
+      },
+      domain_name: {
+        type: Sequelize.STRING,
+      },
+      description: {
+        type: Sequelize.STRING,
+      },
+      active: {
+        allowNull: true,
+            type: Sequelize.STRING,
+            defaultValue: "Y",
+      },
+      status: {
+        type: Sequelize.STRING,
+            defaultValue: "Y",
+      },
+      created_at: {
+        allowNull: true,
+            type: Sequelize.DATE,
+            defaultValue: new Date(),
+      },
+      updated_at: {
+        allowNull: true,
+            type: Sequelize.DATE,
+            defaultValue: new Date(),
+      },
+      params: {
+        type: Sequelize.JSONB
+      }
+    })
+
   },
 
   down: (queryInterface, Sequelize) => {
-    /*
-      Add reverting commands here.
-      Return a promise to correctly handle asynchronicity.
-
-      Example:
-      return queryInterface.dropTable('users');
-    */
+    return queryInterface.dropTable('domains');
   }
 };

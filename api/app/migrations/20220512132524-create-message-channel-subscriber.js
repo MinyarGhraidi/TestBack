@@ -17,11 +17,11 @@ module.exports = {
         allowNull: true,
         type: Sequelize.INTEGER
       },
-      createdAt: {
+      created_at: {
         allowNull: true,
         type: Sequelize.DATE,
       },
-      updatedAt: {
+      updated_at: {
         allowNull: true,
         type: Sequelize.DATE
       },

@@ -2,22 +2,52 @@
 
 module.exports = {
   up: (queryInterface, Sequelize) => {
-    /*
-      Add altering commands here.
-      Return a promise to correctly handle asynchronicity.
+    return queryInterface.createTable('templates_list_call_files', {
 
-      Example:
-      return queryInterface.createTable('users', { id: Sequelize.INTEGER });
-    */
+      templates_list_call_files_id: {
+        primaryKey: true,
+        autoIncrement: true,
+        type: Sequelize.INTEGER
+      },
+      account_id: {
+        type: Sequelize.INTEGER
+      },
+      template: {
+        type: Sequelize.JSONB,
+      },
+      template_name: {
+        type: Sequelize.STRING,
+      },
+      active: {
+        allowNull: true,
+        type: Sequelize.STRING,
+        defaultValue: 'Y'
+      },
+      created_at: {
+        allowNull: true,
+        type: Sequelize.DATE,
+        defaultValue: new Date()
+      },
+      updated_at: {
+        allowNull: true,
+        type: Sequelize.DATE,
+        defaultValue: new Date()
+      },
+      type:{
+        type: Sequelize.STRING,
+      },
+      custom_field:{
+        type: Sequelize.JSONB,
+      },
+      status: {
+        type: Sequelize.STRING,
+        defaultValue: 'Y'
+      },
+    })
+
   },
 
   down: (queryInterface, Sequelize) => {
-    /*
-      Add reverting commands here.
-      Return a promise to correctly handle asynchronicity.
-
-      Example:
-      return queryInterface.dropTable('users');
-    */
+    return queryInterface.dropTable('templates_list_call_files');
   }
 };

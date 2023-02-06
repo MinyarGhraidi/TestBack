@@ -2,22 +2,48 @@
 
 module.exports = {
   up: (queryInterface, Sequelize) => {
-    /*
-      Add altering commands here.
-      Return a promise to correctly handle asynchronicity.
+    return queryInterface.createTable('reminders', {
 
-      Example:
-      return queryInterface.createTable('users', { id: Sequelize.INTEGER });
-    */
+      reminder_id:{
+        primaryKey: true,
+        autoIncrement: true,
+        type: Sequelize.INTEGER
+      },
+      note:{
+        type: Sequelize.STRING
+      },
+      call_file_id:{
+        type: Sequelize.INTEGER
+      },
+      agent_id:{
+        type: Sequelize.INTEGER
+      },
+      date:{
+        type: Sequelize.STRING
+      },
+      time:{
+        type: Sequelize.STRING
+      },
+      created_at: {
+        allowNull: true,
+        type: Sequelize.DATE,
+        defaultValue: new Date()
+      },
+      updated_at: {
+        allowNull: true,
+        type: Sequelize.DATE,
+        defaultValue: new Date()
+      },
+      active: {
+        allowNull: true,
+        type: Sequelize.STRING,
+        defaultValue: 'Y'
+      }
+    })
+
   },
 
   down: (queryInterface, Sequelize) => {
-    /*
-      Add reverting commands here.
-      Return a promise to correctly handle asynchronicity.
-
-      Example:
-      return queryInterface.dropTable('users');
-    */
+    return queryInterface.dropTable('reminders');
   }
 };
