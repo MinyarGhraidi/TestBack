@@ -291,7 +291,9 @@ class accounts extends baseModelbo {
             code: newAccount.code,
             domain_id: newAccount.domain.value,
             web_domain: newAccount.web_domain,
+            nb_agents: newAccount.nb_agents,
         }
+        console.log(data_account)
         if (!!!newAccount
             || !!!newAccount.user
             || !!!newAccount.role_crm_id) {
