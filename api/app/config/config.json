@@ -15,11 +15,11 @@
         }
       },
       "cdr-db": {
-        "host": "188.165.157.213",
+        "host": "92.222.227.221",
         "username": "postgres",
-        "password": "oxilog",
-        "database": "cdr",
-        "port":5432,
+        "password": "postgres",
+        "database": "oxilog-crm-app",
+        "port": 5432,
         "dialect": "postgres",
         "socketUrl": "https://ip221.ip-92-222-227.eu:3002",
         "logging": true,
@@ -40,7 +40,7 @@
       }
     },
     "rabbitmq": {
-      "host": "188.165.157.213",
+      "host": "92.222.227.221",
       "login": "oxilog",
       "password": "oxilog2021",
       "port": "5009",
