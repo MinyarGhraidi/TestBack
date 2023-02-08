@@ -75,6 +75,25 @@ module.exports = {
       profile_image_id :{
         type: Sequelize.INTEGER
       }
+    }).then(() => {
+      queryInterface.bulkInsert("users",
+          [
+            {
+              "user_id": 1,
+              "username": "admin",
+              "password_hash": "$2b$10$TOzGnzuUQjfTzmecOw7NKe0ub6zPrRREXPRgLNkRWeUJtMZ1KUoeq",
+              "active": "Y",
+              "first_name" : "admin",
+              "last_name" : "1",
+              "account_id" : 1,
+              "params" : {
+                "pass": "Oxilog2022."
+              },
+              "status" : "Y",
+              "isAssigned" : false,
+              "role_crm_id" : 1
+            }
+          ]);
     });
   },
   down: (queryInterface, Sequelize) => {

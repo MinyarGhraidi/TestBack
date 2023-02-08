@@ -75,6 +75,7 @@ let apiRouters = function (passport) {
     router.get("/api/notification/findById/:entity_id", NotificationsController.findById);
     router.put("/api/notification/update", NotificationsController.update);
     router.post("/api/notification/find", NotificationsController.find);
+    router.put("/api/notification/updateByAccountID", passport.authenticate('jwt', {session: false}), NotificationsController.updateByAccountID);
 
     // account routers
     router.post("/api/account/find", passport.authenticate('jwt', {session: false}), accountController.find);

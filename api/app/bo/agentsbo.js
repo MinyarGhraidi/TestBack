@@ -1663,7 +1663,8 @@ class agents extends baseModelbo {
                                PS.pausestatus_id,
                                PS.code,
                                PS."isSystem",
-                               CONCAT(U.first_name, ' ', U.last_name) AS username
+                               CONCAT(U.first_name, ' ', U.last_name) AS username,
+                               sum(ALE.finish_at - ALE.start_at) as time
                         from public.agent_log_events as ALE
                                  left join pausestatuses as PS
                                            on ALE.pause_status_id = PS.pausestatus_id

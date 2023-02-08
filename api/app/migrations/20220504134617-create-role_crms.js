@@ -44,6 +44,12 @@ module.exports = {
               "value": "sales",
               "description": "sales",
               "active": "Y"
+            },
+            {
+              "id": 5,
+              "value": "user",
+              "description": "user",
+              "active": "Y"
             }
           ]);
     });
