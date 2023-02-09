@@ -15,40 +15,40 @@ module.exports = (sequelize, Sequelize) => {
             callid :{
                 type: Sequelize.STRING
             },
-            callDirection :{
+            calldirection :{
                 type: Sequelize.STRING
             },
-            callStatus :{
+            callstatus :{
                 type: Sequelize.STRING
             },
-            sipFromURI_CallCenter :{
+            sipfromuri_callcenter :{
                 type: Sequelize.STRING
             },
-            sipFromTag_CallCenter:{
+            sipfromtag_callcenter:{
                 type: Sequelize.STRING
             } ,
-            sipToURI_CallCenter :{
+            siptouri_callcenter :{
                 type: Sequelize.STRING
             },
             sipToTag_CallCenter :{
                 type: Sequelize.STRING
             },
-            hangupCause :{
+            hangupcause :{
                 type: Sequelize.STRING
             },
             start_time :{
                 type: Sequelize.STRING
             },
-            answerTime:{
+            answertime:{
                 type: Sequelize.STRING
             } ,
             end_time :{
                 type: Sequelize.STRING
             },
-            durationSec :{
+            durationsec :{
                 type: Sequelize.STRING
             },
-            durationMsec :{
+            durationmsec :{
                 type: Sequelize.STRING
             },
             privacy:{
@@ -63,7 +63,7 @@ module.exports = (sequelize, Sequelize) => {
             callID :{
                 type: Sequelize.STRING
             },
-            customVars :{
+            custom_vars :{
                 type: Sequelize.STRING
             },
             agent :{
@@ -105,12 +105,24 @@ module.exports = (sequelize, Sequelize) => {
             call_events: {
                 type: Sequelize.JSONB
             },
-            debit: {
-                type: Sequelize.REAL
+            debit:{
+                type: Sequelize.STRING
             },
-            cost: {
-                type: Sequelize.REAL
-            }
+            cost:{
+                type: Sequelize.STRING
+            } ,
+            sip_code :{
+                type: Sequelize.STRING
+            },
+            sip_reason :{
+                type: Sequelize.STRING
+            },
+            src_user :{
+                type: Sequelize.STRING
+            },
+            dst_user :{
+                type: Sequelize.STRING
+            },
 
         },
         {timestamps: false}
@@ -136,7 +148,7 @@ module.exports = (sequelize, Sequelize) => {
         "failuresipcode" ,
         "failuresipreasonphrase" ,
         "callID" ,
-        "customVars" ,
+        "custom_vars" ,
         "agent" ,
         "campaignId",
         "eventName" ,
@@ -151,7 +163,11 @@ module.exports = (sequelize, Sequelize) => {
         "sipToTag_Dailer",
         "call_events",
         "debit",
-        "cost"
+        "cost",
+        "sip_code",
+        "sip_reason",
+        "src_user",
+        "dst_user"
 
     ];
 
