@@ -93,7 +93,22 @@ module.exports = {
                     type: Sequelize.INTEGER,
                 },
             },
-        );
+        ).then(() => {
+            queryInterface.bulkInsert("accounts",
+                [
+                    {
+                        "account_id": 1,
+                        "account_code": "702344624950",
+                        "first_name": "demo account",
+                        "active": "Y",
+                        "email" : "admin@oxilog.net",
+                        "last_name" : "1",
+                        "user_id" : 1,
+                        "status" : "Y",
+                        "role_crm_id" : 1
+                    }
+                ]);
+        });
     },
     down: (queryInterface, Sequelize) => {
         return queryInterface.dropTable('accounts');

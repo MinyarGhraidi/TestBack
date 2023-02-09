@@ -678,39 +678,6 @@ class agents extends baseModelbo {
 
     onConnectFunc(user_id, uuid, crmStatus, telcoStatus, pauseStatus = null) {
         return new Promise((resolve, reject) => {
-            // if (crmStatus === "in_call" || crmStatus === "in_qualification") {
-            //     this.db["users"].findOne({where: {user_id: user_id}})
-            //         .then(user => {
-            //             if (user) {
-            //                 let params = user.params;
-            //                 user.updated_at = moment(new Date());
-            //                 this.updateAgentStatus(user_id, user, telcoStatus, crmStatus, params)
-            //                     .then((agent) => {
-            //                         if (agent.success) {
-            //                             resolve({
-            //                                 success: true,
-            //                                 agent: agent
-            //                             });
-            //                         } else {
-            //                             resolve({
-            //                                 success: false,
-            //                             });
-            //                         }
-            //                     })
-            //                     .catch((err) => {
-            //                         reject(err);
-            //                     });
-            //             } else {
-            //                 resolve({
-            //                     success: false
-            //                 })
-            //             }
-            //
-            //         })
-            //         .catch((err) => {
-            //             reject(err);
-            //         });
-            // } else {
             if (uuid) {
                 axios
                     .get(`${base_url_cc_kam}api/v1/agents/${uuid}`, call_center_authorization)
@@ -1663,7 +1630,8 @@ class agents extends baseModelbo {
                                PS.pausestatus_id,
                                PS.code,
                                PS."isSystem",
-                               CONCAT(U.first_name, ' ', U.last_name) AS username
+                               CONCAT(U.first_name, ' ', U.last_name) AS username,
+                               sum(ALE.finish_at - ALE.start_at) as time
                         from public.agent_log_events as ALE
                                  left join pausestatuses as PS
                                            on ALE.pause_status_id = PS.pausestatus_id
