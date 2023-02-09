@@ -44,6 +44,11 @@ module.exports = (sequelize, Sequelize) => {
         type: Sequelize.DATE,
         defaultValue: new Date(),
       },
+        status: {
+            allowNull: true,
+            type: Sequelize.STRING,
+            defaultValue: "Y",
+        }
     },
     { timestamps: false }
   );
@@ -57,7 +62,8 @@ module.exports = (sequelize, Sequelize) => {
     "created_at",
     "updated_at",
     "isSystem",
-    "campaign_id"
+    "campaign_id",
+      "status"
   ]),
     (callstatus.prototype.fieldsSearchMetas = [
       "callstatus_id",
