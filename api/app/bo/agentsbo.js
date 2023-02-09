@@ -1542,7 +1542,8 @@ class agents extends baseModelbo {
             let sqlCount = `
                 select distinct(count(ALE.pause_status_id))           as total,
                                ALE.user_id,
-                               CONCAT(U.first_name, ' ', U.last_name) as username
+                               CONCAT(U.first_name, ' ', U.last_name) as username,
+                               sum(ALE.finish_at - ALE.start_at)
                 from public.agent_log_events as ALE
                          left join pausestatuses as PS
                                    on ALE.pause_status_id = PS.pausestatus_id
