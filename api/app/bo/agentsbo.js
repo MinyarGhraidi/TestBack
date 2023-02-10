@@ -1539,8 +1539,11 @@ class agents extends baseModelbo {
                 end_time,
                 pauseStatus
             } = params;
-            let sqlCount = `
-                select distinct(count(ALE.pause_status_id))           as total,
+            let sqlCount = `  
+                select distinct case
+                           WHEN count(ALE.pause_status_id) is null THEN 0
+                           ELSE count(ALE.pause_status_id)
+                           END  as total,
                                ALE.user_id,
                                CONCAT(U.first_name, ' ', U.last_name) as username,
                                sum(ALE.finish_at - ALE.start_at)
@@ -1609,19 +1612,8 @@ class agents extends baseModelbo {
                 })
             }
             this.countUsers(params).then(resUsers => {
-                let AllUsersIds = [];
-                if (resUsers && resUsers.length !== 0) {
-                    AllUsersIds = resUsers
-                } else {
-                    if (agent_ids && agent_ids.length !== 0) {
-                        AllUsersIds = AllU
-                    } else {
-                        res.send({
-                            success: true,
-                            data: [],
-                            status: 200
-                        })
-                    }
+                if(agent_ids && agent_ids.length === 0){
+                    AllU = resUsers;
                 }
                 this.squeletteQuery(pauseStatus).then(SqueletteQuery => {
                     let sqlPauseStatus = `
@@ -1669,14 +1661,14 @@ class agents extends baseModelbo {
                         }
                     }).then(data_stats => {
                         let dataArray = [];
-                        AllUsersIds.forEach(user => {
+                        AllU.forEach((user,index) => {
                             let SQ_Demo = SqueletteQuery[0];
                             SQ_Demo = {
                                 ...SQ_Demo,
                                 user_id: user.user_id,
                                 username: user.username,
                             }
-                            let filtered = data_stats.length !== 0 ? data_stats.filter(u => u.user_id === user.user_id) : [SQ_Demo];
+                            let filtered = data_stats.length !== 0 ? (data_stats.filter(u => u.user_id === user.user_id).length !== 0 ? data_stats.filter(u => u.user_id === user.user_id) : [SQ_Demo]) : [SQ_Demo];
                             let UserID = null;
                             let UserName = null;
                             UserID = filtered[0].user_id;
@@ -1702,10 +1694,10 @@ class agents extends baseModelbo {
                                     },
                                     data: SQ
                                 })
-                                if (idx < AllUsersIds.length - 1) {
+                                if (idx < AllU.length - 1) {
                                     idx++
                                 } else {
-                                    res.send({
+                                    return res.send({
                                         success: true,
                                         data: dataArray,
                                         status: 200
