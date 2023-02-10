@@ -1545,6 +1545,9 @@ class agents extends baseModelbo {
                            ELSE count(ALE.pause_status_id)
                            END  as total,
                                ALE.user_id,
+                               U.first_name,
+                               U.last_name,
+                               U.profile_image_id,
                                CONCAT(U.first_name, ' ', U.last_name) as username,
                                sum(ALE.finish_at - ALE.start_at)
                 from public.agent_log_events as ALE
@@ -1557,7 +1560,7 @@ class agents extends baseModelbo {
                   and PS.status = 'Y'
                   and ALE.active = 'Y'
                     WHERECOND
-                group by ALE.user_id, CONCAT(U.first_name, ' ', U.last_name)
+                group by ALE.user_id, CONCAT(U.first_name, ' ', U.last_name),U.first_name,U.last_name,U.profile_image_id
             `
             let extraWhere = '';
             if (agent_ids && agent_ids.length !== 0) {
@@ -1584,7 +1587,8 @@ class agents extends baseModelbo {
             }).then(data_stats => {
                 let dataS = [];
                 if (data_stats && data_stats.length !== 0) {
-                    data_stats.map(item => dataS.push({user_id: item.user_id, username: item.username}))
+
+                    data_stats.map(item => dataS.push({user_id: item.user_id, username: item.username, profile_id : item.profile_image_id, first_name : item.first_name, last_name : item.last_name}))
                 }
                 resolve(dataS)
             }).catch(err => {
@@ -1608,7 +1612,7 @@ class agents extends baseModelbo {
             let AllU = [];
             if (UsersFetch && UsersFetch.length !== 0) {
                 UsersFetch.forEach(U => {
-                    AllU.push({user_id: U.user_id, username: U.first_name + ' ' + U.last_name})
+                    AllU.push({user_id: U.user_id, username: U.first_name + ' ' + U.last_name, profile_id : U.profile_image_id, first_name : U.first_name, last_name : U.last_name})
                 })
             }
             this.countUsers(params).then(resUsers => {
@@ -1682,16 +1686,12 @@ class agents extends baseModelbo {
                                 }
                             );
                             this.affectPauseStatusToSquelette(updatedFiltered, updatedOSArray).then(SQ => {
-                                let username = SQ[0].username;
                                 SQ.forEach(function (v) {
                                     delete v.username;
                                     delete v.user_id
                                 })
                                 dataArray.push({
-                                    agent: {
-                                        user_id: user,
-                                        username: username
-                                    },
+                                    agent: user,
                                     data: SQ
                                 })
                                 if (idx < AllU.length - 1) {
