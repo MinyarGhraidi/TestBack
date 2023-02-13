@@ -29,109 +29,99 @@ module.exports = {
                         "id": 1,
                         "value": "home",
                         "description": "home",
-                        "active": "Y"
+                        "active": "Y",
+                        "is_updatable" : "N"
                     },
                     {
                         "id": 2,
-                        "value": "livecalls",
-                        "description": "livecalls",
-                        "active": "Y"
+                        "value": "real-time",
+                        "description": "real-time",
+                        "active": "Y",
+                        "is_updatable" : "N"
                     },
                     {
                         "id": 3,
-                        "value": "dashboard",
-                        "description": "dashboard",
-                        "active": "Y"
+                        "value": "user-manager",
+                        "description": "user-manager",
+                        "active": "Y",
+                        "is_updatable" : "Y"
                     },
                     {
                         "id": 4,
-                        "value": "user-manager",
-                        "description": "User Manager",
-                        "active": "Y"
+                        "value": "management",
+                        "description": "management",
+                        "active": "Y",
+                        "is_updatable" : "Y"
                     },
                     {
                         "id": 5,
-                        "value": "campaigns",
-                        "description": "campaigns",
-                        "active": "Y"
+                        "value": "configuration",
+                        "description": "configuration",
+                        "active": "Y",
+                        "is_updatable" : "Y"
                     },
                     {
                         "id": 6,
                         "value": "meetings",
                         "description": "meetings",
-                        "active": "Y"
+                        "active": "Y",
+                        "is_updatable" : "N"
                     },
                     {
                         "id": 7,
-                        "value": "truncks",
-                        "description": "truncks",
-                        "active": "Y"
+                        "value": "cdrs",
+                        "description": "cdrs",
+                        "active": "Y",
+                        "is_updatable" : "N"
                     },
                     {
                         "id": 8,
-                        "value": "roles",
-                        "description": "roles",
-                        "active": "Y"
+                        "value": "reporting",
+                        "description": "reporting",
+                        "active": "Y",
+                        "is_updatable" : "N"
                     },
                     {
                         "id": 9,
                         "value": "accounts",
                         "description": "accounts",
-                        "active": "Y"
+                        "active": "Y",
+                        "is_updatable" : "Y"
                     },
                     {
                         "id": 10,
-                        "value": "servers",
-                        "description": "servers",
-                        "active": "Y"
+                        "value": "administration",
+                        "description": "administration",
+                        "active": "Y",
+                        "is_updatable" : "Y"
                     },
                     {
                         "id": 11,
-                        "value": "acl_groups",
-                        "description": "acl groups",
-                        "active": "Y"
+                        "value": "agent_dashboard",
+                        "description": "agent_dashboard",
+                        "active": "Y",
+                        "is_updatable" : "Y"
                     },
                     {
                         "id": 12,
-                        "value": "dispatcher",
-                        "description": "dispatcher",
-                        "active": "Y"
+                        "value": "agent_history",
+                        "description": "agent_history",
+                        "active": "Y",
+                        "is_updatable" : "Y"
                     },
                     {
                         "id": 13,
-                        "value": "domains",
-                        "description": "domains",
-                        "active": "Y"
+                        "value": "agent_calendar",
+                        "description": "agent_calendar",
+                        "active": "Y",
+                        "is_updatable" : "Y"
                     },
                     {
                         "id": 14,
-                        "value": "rtp_engine",
-                        "description": "rtp_engine",
-                        "active": "Y"
-                    },
-                    {
-                        "id": 18,
-                        "value": "agent_dashboard",
-                        "description": "agent_dashboard",
-                        "active": "Y"
-                    },
-                    {
-                        "id": 19,
-                        "value": "sales_dashboard",
-                        "description": "sales_dashboard",
-                        "active": "Y"
-                    },
-                    {
-                        "id": 20,
-                        "value": "calendar",
-                        "description": "calendar",
-                        "active": "Y"
-                    },
-                    {
-                        "id": 21,
                         "value": "user-settings",
-                        "description": "user settings",
-                        "active": "Y"
+                        "description": "user-settings",
+                        "active": "Y",
+                        "is_updatable" : "N"
                     }
                 ]);
         });
