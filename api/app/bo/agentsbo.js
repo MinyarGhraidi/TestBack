@@ -1570,10 +1570,10 @@ class agents extends baseModelbo {
                 extraWhere += 'AND ALE.pause_status_id in (:pauseStatus) ';
             }
             if (start_time && start_time !== '') {
-                extraWhere += ' AND ALE.started_at >= :start_time';
+                extraWhere += ' AND ALE.start_at >= :start_time';
             }
             if (end_time && end_time !== '') {
-                extraWhere += ' AND  ALE.finished_at <=  :end_time';
+                extraWhere += ' AND  ALE.finish_at <=  :end_time';
             }
             sqlCount = sqlCount.replace('WHERECOND', extraWhere);
             db.sequelize['crm-app'].query(sqlCount, {
@@ -1649,10 +1649,10 @@ class agents extends baseModelbo {
                         extraWhere += 'AND ALE.pause_status_id in (:pauseStatus) ';
                     }
                     if (start_time && start_time !== '') {
-                        extraWhere += ' AND ALE.started_at >= :start_time';
+                        extraWhere += ' AND ALE.start_at >= :start_time';
                     }
                     if (end_time && end_time !== '') {
-                        extraWhere += ' AND  ALE.finished_at <=  :end_time';
+                        extraWhere += ' AND  ALE.finish_at <=  :end_time';
                     }
                     sqlPauseStatus = sqlPauseStatus.replace('WHERECONDITION', extraWhere);
                     db.sequelize['crm-app'].query(sqlPauseStatus, {
