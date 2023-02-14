@@ -1668,6 +1668,7 @@ class agents extends baseModelbo {
                             pauseStatus: pauseStatus,
                         }
                     }).then(data_stats => {
+                        console.log('data_statsssss', data_stats)
                         let dataArray = [];
                         AllUsersIds.forEach(user => {
                             let SQ_Demo = SqueletteQuery[0];
