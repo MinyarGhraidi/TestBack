@@ -1539,9 +1539,15 @@ class agents extends baseModelbo {
                 end_time,
                 pauseStatus
             } = params;
-            let sqlCount = `
-                select distinct(count(ALE.pause_status_id))           as total,
+            let sqlCount = `  
+                select distinct case
+                           WHEN count(ALE.pause_status_id) is null THEN 0
+                           ELSE count(ALE.pause_status_id)
+                           END  as total,
                                ALE.user_id,
+                               U.first_name,
+                               U.last_name,
+                               U.profile_image_id,
                                CONCAT(U.first_name, ' ', U.last_name) as username,
                                sum(ALE.finish_at - ALE.start_at)
                 from public.agent_log_events as ALE
@@ -1554,7 +1560,7 @@ class agents extends baseModelbo {
                   and PS.status = 'Y'
                   and ALE.active = 'Y'
                     WHERECOND
-                group by ALE.user_id, CONCAT(U.first_name, ' ', U.last_name)
+                group by ALE.user_id, CONCAT(U.first_name, ' ', U.last_name),U.first_name,U.last_name,U.profile_image_id
             `
             let extraWhere = '';
             if (agent_ids && agent_ids.length !== 0) {
@@ -1564,10 +1570,10 @@ class agents extends baseModelbo {
                 extraWhere += 'AND ALE.pause_status_id in (:pauseStatus) ';
             }
             if (start_time && start_time !== '') {
-                extraWhere += ' AND ALE.started_at >= :start_time';
+                extraWhere += ' AND ALE.start_at >= :start_time';
             }
             if (end_time && end_time !== '') {
-                extraWhere += ' AND  ALE.finished_at <=  :end_time';
+                extraWhere += ' AND  ALE.finish_at <=  :end_time';
             }
             sqlCount = sqlCount.replace('WHERECOND', extraWhere);
             db.sequelize['crm-app'].query(sqlCount, {
@@ -1581,7 +1587,8 @@ class agents extends baseModelbo {
             }).then(data_stats => {
                 let dataS = [];
                 if (data_stats && data_stats.length !== 0) {
-                    data_stats.map(item => dataS.push({user_id: item.user_id, username: item.username}))
+
+                    data_stats.map(item => dataS.push({user_id: item.user_id, username: item.username, profile_id : item.profile_image_id, first_name : item.first_name, last_name : item.last_name}))
                 }
                 resolve(dataS)
             }).catch(err => {
@@ -1605,23 +1612,12 @@ class agents extends baseModelbo {
             let AllU = [];
             if (UsersFetch && UsersFetch.length !== 0) {
                 UsersFetch.forEach(U => {
-                    AllU.push({user_id: U.user_id, username: U.first_name + ' ' + U.last_name})
+                    AllU.push({user_id: U.user_id, username: U.first_name + ' ' + U.last_name, profile_id : U.profile_image_id, first_name : U.first_name, last_name : U.last_name})
                 })
             }
             this.countUsers(params).then(resUsers => {
-                let AllUsersIds = [];
-                if (resUsers && resUsers.length !== 0) {
-                    AllUsersIds = resUsers
-                } else {
-                    if (agent_ids && agent_ids.length !== 0) {
-                        AllUsersIds = AllU
-                    } else {
-                        res.send({
-                            success: true,
-                            data: [],
-                            status: 200
-                        })
-                    }
+                if(agent_ids && agent_ids.length === 0){
+                    AllU = resUsers;
                 }
                 this.squeletteQuery(pauseStatus).then(SqueletteQuery => {
                     let sqlPauseStatus = `
@@ -1653,10 +1649,10 @@ class agents extends baseModelbo {
                         extraWhere += 'AND ALE.pause_status_id in (:pauseStatus) ';
                     }
                     if (start_time && start_time !== '') {
-                        extraWhere += ' AND ALE.started_at >= :start_time';
+                        extraWhere += ' AND ALE.start_at >= :start_time';
                     }
                     if (end_time && end_time !== '') {
-                        extraWhere += ' AND  ALE.finished_at <=  :end_time';
+                        extraWhere += ' AND  ALE.finish_at <=  :end_time';
                     }
                     sqlPauseStatus = sqlPauseStatus.replace('WHERECONDITION', extraWhere);
                     db.sequelize['crm-app'].query(sqlPauseStatus, {
@@ -1670,14 +1666,14 @@ class agents extends baseModelbo {
                     }).then(data_stats => {
                         console.log('data_statsssss', data_stats)
                         let dataArray = [];
-                        AllUsersIds.forEach(user => {
+                        AllU.forEach((user,index) => {
                             let SQ_Demo = SqueletteQuery[0];
                             SQ_Demo = {
                                 ...SQ_Demo,
                                 user_id: user.user_id,
                                 username: user.username,
                             }
-                            let filtered = data_stats.length !== 0 ? data_stats.filter(u => u.user_id === user.user_id) : [SQ_Demo];
+                            let filtered = data_stats.length !== 0 ? (data_stats.filter(u => u.user_id === user.user_id).length !== 0 ? data_stats.filter(u => u.user_id === user.user_id) : [SQ_Demo]) : [SQ_Demo];
                             let UserID = null;
                             let UserName = null;
                             UserID = filtered[0].user_id;
@@ -1691,22 +1687,18 @@ class agents extends baseModelbo {
                                 }
                             );
                             this.affectPauseStatusToSquelette(updatedFiltered, updatedOSArray).then(SQ => {
-                                let username = SQ[0].username;
                                 SQ.forEach(function (v) {
                                     delete v.username;
                                     delete v.user_id
                                 })
                                 dataArray.push({
-                                    agent: {
-                                        user_id: user,
-                                        username: username
-                                    },
+                                    agent: user,
                                     data: SQ
                                 })
-                                if (idx < AllUsersIds.length - 1) {
+                                if (idx < AllU.length - 1) {
                                     idx++
                                 } else {
-                                    res.send({
+                                    return res.send({
                                         success: true,
                                         data: dataArray,
                                         status: 200

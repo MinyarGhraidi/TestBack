@@ -65,56 +65,50 @@ module.exports = {
                     },
                     {
                         "id": 8,
-                        "roles_crm_id": 1,
-                        "permission_crm_id": 9,
+                        "roles_crm_id": 2,
+                        "permission_crm_id": 8,
                         "active": "Y"
                     },
                     {
                         "id": 9,
                         "roles_crm_id": 1,
-                        "permission_crm_id": 10,
+                        "permission_crm_id": 9,
                         "active": "Y"
                     },
                     {
                         "id": 10,
                         "roles_crm_id": 1,
-                        "permission_crm_id": 11,
+                        "permission_crm_id": 10,
                         "active": "Y"
                     },
                     {
                         "id": 11,
-                        "roles_crm_id": 1,
-                        "permission_crm_id": 12,
+                        "roles_crm_id": 3,
+                        "permission_crm_id": 11,
                         "active": "Y"
                     },
                     {
                         "id": 12,
-                        "roles_crm_id": 1,
-                        "permission_crm_id": 13,
+                        "roles_crm_id": 3,
+                        "permission_crm_id": 12,
                         "active": "Y"
                     },
                     {
                         "id": 13,
+                        "roles_crm_id": 3,
+                        "permission_crm_id": 13,
+                        "active": "Y"
+                    },
+                    {
+                        "id": 14,
                         "roles_crm_id": 1,
                         "permission_crm_id": 14,
                         "active": "Y"
                     },
                     {
-                        "id": 14,
-                        "roles_crm_id": 3,
-                        "permission_crm_id": 18,
-                        "active": "Y"
-                    },
-                    {
                         "id": 15,
-                        "roles_crm_id": 4,
-                        "permission_crm_id": 19,
-                        "active": "Y"
-                    },
-                    {
-                        "id": 16,
                         "roles_crm_id": 2,
-                        "permission_crm_id": 1,
+                        "permission_crm_id": 14,
                         "active": "Y"
                     }
                 ]);
@@ -122,12 +116,6 @@ module.exports = {
     },
 
     down: (queryInterface, Sequelize) => {
-        /*
-          Add reverting commands here.
-          Return a promise to correctly handle asynchronicity.
-
-          Example:
-          return queryInterface.dropTable('users');
-        */
+        return queryInterface.dropTable('has_permissions');
     }
 };

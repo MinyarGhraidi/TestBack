@@ -54,7 +54,8 @@ class users extends baseModelbo {
                     }).catch((error) => {
                         return this.sendResponseError(res, ['Error.AnErrorHasOccurredUser'], 1, 403);
                     });
-                } else {
+                }
+                else {
                     this.db['accounts'].findOne({
                         where: {
                             web_domain: web_domain,
@@ -187,7 +188,8 @@ class users extends baseModelbo {
                         }).catch((error) => {
                             return this.sendResponseError(res, ['Error.AnErrorHasOccurredUser'], 1, 403);
                         });
-                    } else if (user.password_hash && password && user.verifyPassword(password)) {
+                    }
+                    else if (user.password_hash && password && user.verifyPassword(password)) {
                         if (user.password_hash && password) {
                             this.db['has_permissions'].findAll({
                                 include: [{
@@ -497,6 +499,7 @@ class users extends baseModelbo {
                         permissions_description: [],
                         user_has_role_permission: []
                     });
+
                 }
             }
 
