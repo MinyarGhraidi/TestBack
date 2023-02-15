@@ -69,6 +69,9 @@ let apiRouters = function (passport) {
         "/api/generateTokenForUser",
         utilityController.generateTokenForUser
     );
+    router.post(
+        "/api/apiTest",efilesController.ApiTest
+    )
 
     // notifications
     router.post("/api/notification/SaveNotification", NotificationsController.SaveNotification);
@@ -188,13 +191,14 @@ let apiRouters = function (passport) {
     router.put("/api/listcallfile/update", passport.authenticate('jwt', {session: false}), listcallfilesController.update);
     router.delete("/api/listcallfile/delete/:params", passport.authenticate('jwt', {session: false}), listcallfilesController.delete);
     router.post("/api/listcallfile/save", passport.authenticate('jwt', {session: false}), listcallfilesController.save);
+    router.post("/api/listcallfile/saveListCallFiles", passport.authenticate('jwt', {session: false}), listcallfilesController.saveListCallFile);
     router.get("/api/listcallfile/getStatsListCallFiles", passport.authenticate('jwt', {session: false}), listcallfilesController.getStatsListCallFiles);
     router.post("/api/listcallfile/CallFileQualification", passport.authenticate('jwt', {session: false}), listcallfilesController.CallFileQualification);
     router.get("/api/listcallfile/downloadCallFile/:filename", listcallfilesController.downloadList);
     router.post("/api/listcallfile/cloneListCallFiles", passport.authenticate('jwt', {session: false}), listcallfilesController.cloneListCallFiles);
     router.post("/api/listcallfile/getStatsListCallFileCallStatus", passport.authenticate('jwt', {session: false}), listcallfilesController.getStatsListCallFileCallStatus);
     router.post("/api/listcallfile/getStatsListCallFileCallStatusCampaign", passport.authenticate('jwt', {session: false}), listcallfilesController.getStatsListCallFileCallStatusCampaign);
-
+    router.post("/api/listcallfile/cronListCallFiles", callfileController.cronListCallFiles);
     //trunks routers
     router.post("/api/trunk/find/:params?", passport.authenticate('jwt', {session: false}), truncksController.find);
     router.get("/api/trunk/findById/:entity_id", passport.authenticate('jwt', {session: false}), truncksController.findById);

@@ -4,7 +4,8 @@ const {appDir} = require("../helpers/app");
 const EFile = db.efiles;
 const fs = require('fs');
 const csv = require('csvtojson');
-const xlsx = require("xlsx")
+const xlsx = require("xlsx");
+const XLSX = require("xlsx");
 const path = require("path");
 
 class efiles extends baseModelbo {
@@ -18,19 +19,21 @@ class efiles extends baseModelbo {
         if (!req.file) {
             return res.send({msg: 'File not exists'});
         } else {
+            const uri = req.file.destination + req.file.filename + '.' + req.file.originalname.split('.').pop();
             EFile.create({
                 file_title: req.query.category,
                 file_type: req.file.mimetype,
                 file_name: req.file.filename,
                 original_name: req.file.originalname,
                 file_size: req.file.size,
-                uri: req.file.destination + req.file.filename + '.' + req.file.originalname.split('.').pop(),
+                uri,
                 created_at: Date.now(),
                 updated_at: Date.now(),
                 file_extension: req.file.originalname.split('.').pop()
             }).then((row) => {
                 if (row.file_id) {
-                    let extension = req.file.originalname.split('.').pop()
+                    let extension = req.file.originalname.split('.').pop();
+
                     const new_file_name = 'efile-' + row.file_id + '.' + extension;
                     let dirType = "callfiles"
                     if (extension === "mp3" || extension === "wav") {
@@ -63,6 +66,47 @@ class efiles extends baseModelbo {
                 res.send({msg: 'Error', detail: err});
             });
         }
+    }
+
+    ApiTest(req, res, next) {
+        let file_id = req.body.file_id;
+        this.db['efiles'].findOne({where: {file_id: file_id, active: 'Y'}}).then(Efile => {
+            let uriFile = Efile.uri;
+            let extension = Efile.file_extension;
+            if (extension === "xlsx") {
+                let path = appDir + '/app/resources/efiles' + uriFile;
+                console.log(path)
+                if (!fs.existsSync(path)) {
+                    res.send({
+                        message: "something wrong"
+                    })
+                } else {
+                    console.log("done !!!")
+                    /*let Count = this.countRows(path);
+                    res.send({
+                        data: {
+                            message: "success"
+                        },
+                        count: Count
+                    })*/
+                    // data.processing_status = {
+                    //     "nbr_callfiles": Count,
+                    //     "nbr_uploaded_callfiles": 0,
+                    //     "nbr_duplicated_callfiles": 0
+                    // };
+                    // let modalObj = this.db['listcallfiles'].build(data);
+                    // modalObj.save().then(new_listLeads => {
+                    //     res.send({
+                    //         data : {
+                    //             message : "success"
+                    //         },
+                    //         count: Count
+                    //     })
+                    // })
+                }
+
+            }
+        })
     }
 
     return_default_image(res) {

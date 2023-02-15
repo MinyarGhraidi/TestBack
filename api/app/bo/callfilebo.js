@@ -12,6 +12,7 @@ const {reject, promise} = require("bcrypt/promises");
 const efilesBo = require('./efilesbo');
 const moment = require("moment");
 const Op = require("sequelize/lib/operators");
+const XLSX = require("xlsx");
 const rabbitmq_url = appHelper.rabbitmq_url;
 const app_config = require("../helpers/app").appConfig;
 const _efilebo = new efilesBo;
@@ -31,13 +32,14 @@ class callfiles extends baseModelbo {
         let campaign_id = req.body.callFiles_options.data_listCallFileItem.campaign_id;
         let check_duplication = req.body.callFiles_options.data_listCallFileItem.check_duplication
         let attribute_phone_number = req.body.attribute_phone_number
-        let list_call_file_id = listCallFileItem.listcallfile_id;
         let custom_fields_list_call_file = req.body.custom_fields
+        let list_call_file_id = listCallFileItem.listcallfile_id;
         let callFile = {};
         callFile.listcallfile_id = listCallFileItem.listcallfile_id;
         callFile.status = 0;
         callFile.customfields = {};
         let basic_fields = [
+            'province',
             'city',
             'email',
             'state',
@@ -133,285 +135,11 @@ class callfiles extends baseModelbo {
         })
     }
 
-    CreateCallFileItem = (dataMapping, listCallFileItem, basic_fields, callFile, item_callFile, indexMapping, customFields) => {
-        return new Promise((resolve, reject) => {
-            Object.entries(dataMapping).forEach(([key, value]) => {
-                if (basic_fields.includes(key)) {
-                    if (dataMapping[key]) {
-                        let fieldName = (dataMapping[key]);
-                        if (item_callFile[fieldName] !== undefined) {
-                            callFile[key] = item_callFile[fieldName];
-                        }
 
-                        if (indexMapping < dataMapping.length - 1) {
-                            indexMapping++;
-                        } else {
-                            resolve(callFile);
-                        }
-                    } else {
-                        if (indexMapping < dataMapping.length - 1) {
-                            indexMapping++;
-                        } else {
-                            resolve(callFile);
-                        }
-                    }
-                } else {
 
-                    if (dataMapping[key]) {
-                        let fieldName = (dataMapping[key]);
-                        callFile.customfields[key] = item_callFile[fieldName];
-                    }
-                    if (indexMapping < dataMapping.length - 1) {
-                        indexMapping++;
-                    } else {
-                        resolve(callFile);
-                    }
-                }
-                if (indexMapping < dataMapping.length - 1) {
-                    indexMapping++;
-                } else {
-                    resolve(callFile);
-                }
-            });
-        });
-    }
 
-    saveListCallFile = (req, res, next) => {
-        let user_id = req.body.user_id;
-        let attribute_phone_number = req.body.phone_number;
-        let custom_fields = []
-        if (req.body.custom_field) {
-            custom_fields = req.body.custom_field;
-        }
-        let CallFile = req.body;
-        CallFile.created_at = moment(new Date());
-        CallFile.updated_at = moment(new Date());
-        delete CallFile.phone_number;
-        delete CallFile.user_id;
-        if (req.body.custom_field) {
-            delete CallFile.custom_field;
-        }
-        this.db['listcallfiles'].build(CallFile).save().then(save_list => {
-            this.LoadCallFile(save_list.listcallfile_id, user_id, attribute_phone_number, custom_fields).then(result => {
-                if (result.success) {
-                    res.send({
-                        success: true
-                    })
-                } else {
-                    res.send({
-                        success: false
-                    })
-                }
 
-            }).catch(err => {
-                return this.sendResponseError(res, ['Error', err], 1, 403);
-            })
-        }).catch(err => {
-            return this.sendResponseError(res, ['Error', err], 1, 403);
-        })
-    }
 
-    LoadCallFile = (listcallfile_id, user_id, attribute_phone_number, custom_fields) => {
-        return new PromiseBB((resolve, reject) => {
-            let _this = this;
-            let params = {};
-            params.filter = [{
-                operator: 'and',
-                conditions: [
-                    {
-                        field: 'processing',
-                        operator: 'eq',
-                        value: '1'
-                    }
-                ]
-            }];
-            _this.db['listcallfiles'].findOne({
-                where: {
-                    active: "Y",
-                    processing: "1",
-                    listcallfile_id: listcallfile_id
-                },
-            }).then(res_listCallFile => {
-                if (res_listCallFile && res_listCallFile.length !== 0) {
-                    _this.CallFilesInfo(res_listCallFile, params, user_id, attribute_phone_number, custom_fields).then(callFilesMapping => {
-                        if (callFilesMapping.success) {
-                            resolve({
-                                success: true,
-                                data: callFilesMapping
-                            });
-                        }
-
-                    }).catch(err => {
-                        reject(err);
-                    })
-                }
-            }).catch(err => {
-                reject(err);
-            })
-        })
-
-    }
-
-    CallFilesInfo = (res_listCallFile, params, user_id, attribute_phone_number, custom_fields) => {
-        let _this = this;
-        return new Promise((resolve, reject) => {
-            let data_listCallFileItem = res_listCallFile.toJSON();
-            params.filter = [{
-                operator: 'and',
-                conditions: [
-                    {
-                        field: 'file_id',
-                        operator: 'eq',
-                        value: data_listCallFileItem.file_id
-                    }
-                ]
-            }];
-            let listcallfile_item_to_update = {};
-            listcallfile_item_to_update.processing = 1;
-            listcallfile_item_to_update.listcallfile_id = data_listCallFileItem.listcallfile_id;
-            _this.db['listcallfiles'].update({
-                    processing: 1,
-                },
-                {
-                    where: {
-                        listcallfile_id: data_listCallFileItem.listcallfile_id
-                    }
-                }).then(result => {
-                _this.getCallFiles(data_listCallFileItem.file_id).then(callFiles => {
-                    let nbr_callFiles = callFiles ? callFiles.length : 0;
-                    let nbr_uploaded_callFiles = 0;
-                    let nbr_duplicated_callFiles = 0;
-                    listcallfile_item_to_update.processing_status = {
-                        nbr_callfiles: nbr_callFiles,
-                        nbr_uploaded_callfiles: nbr_uploaded_callFiles,
-                        nbr_duplicated_callfiles: nbr_duplicated_callFiles
-                    }
-                    let indexCallFiles = 0;
-                    _this.db['listcallfiles'].update(listcallfile_item_to_update, {
-                        where: {
-                            listcallfile_id: data_listCallFileItem.listcallfile_id
-                        },
-                        returning: true,
-                        plain: true
-                    }).then(result => {
-                        if (callFiles && callFiles.length && callFiles.length !== 0) {
-                            this.db['campaigns'].findOne({
-                                where: {
-                                    campaign_id: result[1].campaign_id
-                                }
-                            }).then(campaign => {
-                                this.sendDataToQueue(callFiles, campaign, data_listCallFileItem, listcallfile_item_to_update, user_id, attribute_phone_number, custom_fields).then(send_callFile => {
-                                    resolve({
-                                        send_callFile: send_callFile,
-                                        success: true
-                                    });
-                                }).catch(err => {
-                                    reject(err);
-                                });
-                            }).catch(err => {
-                                reject(err);
-                            });
-
-                            // _this.CallFilesMapping(callFiles, data_listCallFileItem, nbr_uploaded_callFiles, listcallfile_item_to_update, nbr_duplicated_callFiles, nbr_callFiles, indexCallFiles).then(dataMapping => {
-                            //     resolve(dataMapping);
-                            // }).catch(err => {
-                            //     reject(err);
-                            // });
-                        }
-                    }).catch(err => {
-                        reject(err);
-                    });
-                }).catch(err => {
-                    reject(err);
-                });
-            }).catch(err => {
-                reject(err);
-            });
-        });
-    }
-
-    getCallFiles = (file_id) => {
-        return new Promise((resolve, reject) => {
-            let _this = this;
-            let result = [];
-            if (parseInt(file_id)) {
-                _this.db['efiles'].findOne({
-                    where: {
-                        active: 'Y',
-                        file_id: file_id
-                    }
-                }).then(efile => {
-                    if (efile) {
-                        let path = appDir + '/app/resources/efiles' + efile.uri;
-                        if (efile.file_extension === 'csv' || efile.file_extension === 'xlsx') {
-                            if (fs.existsSync(path)) {
-                                const workbook = xlsx.readFile(path);
-                                const sheetNames = workbook.SheetNames;
-                                const data = xlsx.utils.sheet_to_json(workbook.Sheets[sheetNames[0]])
-                                result = data;
-                                resolve(result);
-                            } else {
-                                resolve(result);
-                            }
-                        } else {
-                            resolve(result);
-                        }
-                    } else {
-                        resolve(result);
-                    }
-                }).catch(err => {
-                    reject(false);
-                });
-            }
-        })
-    }
-
-    sendDataToQueue(callFiles, campaign, data_listCallFileItem, listcallfile_item_to_update, user_id, attribute_phone_number, custom_fields) {
-        return new Promise((resolve, reject) => {
-            console.log('rabbitmq_url', rabbitmq_url)
-            amqp.connect(rabbitmq_url, function (error0, connection) {
-                if (error0) {
-                    throw error0;
-                }
-                connection.createChannel(function (error1, channel) {
-                    if (error1) {
-                        throw error1;
-                    }
-                    const queue = app_config.rabbitmq.queues.addCallFiles + user_id;
-                    channel.assertQueue(queue, {
-                        durable: true
-                    });
-                    let data_call = {};
-                    let index = 0;
-                    PromiseBB.each(callFiles, item => {
-                        index++;
-                        let progress = Math.round((100 * index) / callFiles.length)
-                        data_call.item_callFile = item;
-                        data_call.callFiles_options = {
-                            data_listCallFileItem: data_listCallFileItem,
-                            nbr_callFiles: callFiles ? callFiles.length : 0,
-                            listcallfile_item_to_update: listcallfile_item_to_update,
-                        };
-                        data_call.index = index;
-                        data_call.progress = progress;
-                        data_call.finish = callFiles.length === index;
-                        data_call.user_id = user_id;
-                        data_call.attribute_phone_number = attribute_phone_number;
-                        if (custom_fields && custom_fields.length !== 0) {
-                            data_call.custom_fields = custom_fields
-
-                        }
-                        channel.sendToQueue(queue, Buffer.from(JSON.stringify(data_call)), {type: 'save call file'});
-                    }).then((all_r) => {
-                        resolve({
-                            all_r: all_r,
-                            success: true
-                        });
-                    })
-                });
-            });
-        })
-    }
 
     updateCallFileQualification(req, res, next) {
         let callfile_id = req.body.callfile_id
@@ -1141,175 +869,6 @@ class callfiles extends baseModelbo {
         })
     }
 
-    checkDuplicationListCallFile(callFile, check_duplication, campaign_id, attribute_phone, list_call_file_id) {
-        return new Promise((resolve, reject) => {
-            let phone_number = callFile[attribute_phone]
-            if (phone_number) {
-                switch (check_duplication) {
-                    case  0: {
-                        resolve(true)
-                        break;
-                    }
-                    case 1: {
-                        this.Check_in_campaign_call_files(campaign_id, phone_number, list_call_file_id).then(result => {
-                            if (result) {
-                                resolve(true)
-                            } else {
-                                resolve(false)
-                            }
-                        }).catch(err => {
-                            reject(err)
-                        })
-                        break;
-                    }
-                    case 2: {
-                        this.Check_in_list_call_file(list_call_file_id, phone_number).then(result => {
-                            if (result) {
-                                resolve(true)
-                            } else {
-                                resolve(false)
-                            }
-                        }).catch(err => {
-                            reject(err)
-                        })
-                        break;
-                    }
-                }
-            } else {
-                resolve(false)
-            }
-        })
-    }
-
-    Check_in_campaign_call_files(campaign_id, phone_number, list_call_file_id) {
-        return new Promise((resolve, reject) => {
-            this.db['listcallfiles'].findAll({
-                where: {
-                    active: 'Y',
-                    status: 'Y',
-                    campaign_id: campaign_id,
-                    listcallfile_id: {[Op.ne]: list_call_file_id}
-                }
-            }).then(list_call_files => {
-                if (list_call_files && list_call_files.length !== 0) {
-                    let data_id = [];
-                    list_call_files.map(item => {
-                        data_id.push(item.listcallfile_id)
-                    })
-                    this.db['callfiles'].findOne({
-                        where: {
-                            listcallfile_id: {[Op.in]: data_id},
-                            phone_number: phone_number,
-                            active: 'Y'
-                        }
-                    }).then(call_file => {
-                        if (call_file) {
-                            resolve(false)
-                        } else {
-                            resolve(true)
-                        }
-                    }).catch(err => {
-                        reject(err)
-                    })
-                } else {
-                    resolve(true)
-                }
-            }).catch(err => {
-                reject(err)
-            })
-        })
-    }
-
-    Check_in_list_call_file(list_call_file_id, phone_number) {
-        return new Promise((resolve, reject) => {
-            this.db['callfiles'].findOne({
-                where: {
-                    listcallfile_id: list_call_file_id,
-                    phone_number: phone_number,
-                    active: 'Y'
-                }
-            }).then(call_file => {
-                if (call_file) {
-                    resolve(false)
-                } else {
-                    resolve(true)
-                }
-            }).catch(err => {
-                reject(err)
-            })
-        })
-    }
-
-    listCallFileByAccount(account_id) {
-        return new Promise((resolve, reject) => {
-            this.db['listcallfiles'].findAll({
-                where: {
-                    active: 'Y',
-                    status: 'Y'
-                },
-                include: [
-                    {
-                        model: db.campaigns,
-                        include: [{
-                            model: db.accounts,
-                            where: {
-                                account_id: account_id
-                            }
-                        }]
-                    }
-                ]
-            }).then(result => {
-                console.log('result', result)
-            })
-        })
-    }
-
-    saveCustomField(customField, listCallFileItem, callFile, item_callFile) {
-        return new Promise((resolve, reject) => {
-            if (customField && customField.length !== 0) {
-                customField.map(item => {
-                    if (item.type === 'text') {
-                        if (item_callFile[item.value] !== undefined) {
-                            item['default'] = item_callFile[item.value]
-                        } else {
-                            item['default'] = null
-                        }
-                    } else {
-                        let exist = false;
-                        if (item_callFile[item.value] !== undefined) {
-                            item.options.map(element => {
-                                if (element.id === item_callFile[item.value]) {
-                                    exist = true
-                                }
-                            })
-                            if (exist === false) {
-                                item['default'] = item_callFile[item.value];
-                                item.options.push({
-                                    id: item_callFile[item.value],
-                                    text: item_callFile[item.value]
-                                })
-                            }
-                        } else {
-                            item['default'] = item_callFile[item.value];
-                            item.options.push({
-                                id: item_callFile[item.value],
-                                text: item_callFile[item.value]
-                            })
-                        }
-                    }
-                })
-
-                resolve({
-                    customfields: customField
-                })
-            } else {
-                resolve({
-                    customfields: []
-                })
-            }
-        })
-    }
-
     RecycleCallFile(req, res, next) {
         let {campaign_id, listcallfile_id} = req.body;
         if (!!!campaign_id && !!!listcallfile_id) {
@@ -1394,7 +953,7 @@ class callfiles extends baseModelbo {
                 where: {
                     callfile_id: callFile_ids,
                     active: 'Y',
-                    call_status : call_status
+                    call_status: call_status
                 }
             }).then(() => {
                 resolve(true)
@@ -1422,58 +981,58 @@ class callfiles extends baseModelbo {
                                 }
                             ]
                         }
-                    }).then((res_CS)=> {
-                        if(res_CS && res_CS.length !== 0){
-                        let Camp_CS_ids = campaign.call_status_ids || [];
-                        let CS_data = res_CS.filter(CS => Camp_CS_ids.includes(CS.callstatus_id))
-                        let CS_codes = [];
-                        CS_data.map(item => {
-                            CS_codes.push(item.code);
-                        })
-                        this.db['listcallfiles'].findAll({
-                            where: {
-                                campaign_id: campaign_id,
-                                active: 'Y',
-                                status: 'Y'
-                            }
-                        }).then(listcallfiles => {
-                            if (listcallfiles && listcallfiles.length !== 0) {
-                                let LCF_ids = [];
-                                listcallfiles.forEach(LCF => LCF_ids.push(LCF.listcallfile_id));
-                                this.db['callfiles'].findAll({
-                                    where: {
-                                        listcallfile_id: LCF_ids,
-                                        active: 'Y',
-                                        call_status: CS_codes
-                                    }
-                                }).then(callfiles => {
-                                    if (callfiles && callfiles.length !== 0) {
-                                        let CF_ids = [];
-                                        callfiles.forEach(CF => CF_ids.push(CF.callfile_id));
-                                        if (CF_ids.length === callfiles.length) {
+                    }).then((res_CS) => {
+                        if (res_CS && res_CS.length !== 0) {
+                            let Camp_CS_ids = campaign.call_status_ids || [];
+                            let CS_data = res_CS.filter(CS => Camp_CS_ids.includes(CS.callstatus_id))
+                            let CS_codes = [];
+                            CS_data.map(item => {
+                                CS_codes.push(item.code);
+                            })
+                            this.db['listcallfiles'].findAll({
+                                where: {
+                                    campaign_id: campaign_id,
+                                    active: 'Y',
+                                    status: 'Y'
+                                }
+                            }).then(listcallfiles => {
+                                if (listcallfiles && listcallfiles.length !== 0) {
+                                    let LCF_ids = [];
+                                    listcallfiles.forEach(LCF => LCF_ids.push(LCF.listcallfile_id));
+                                    this.db['callfiles'].findAll({
+                                        where: {
+                                            listcallfile_id: LCF_ids,
+                                            active: 'Y',
+                                            call_status: CS_codes
+                                        }
+                                    }).then(callfiles => {
+                                        if (callfiles && callfiles.length !== 0) {
+                                            let CF_ids = [];
+                                            callfiles.forEach(CF => CF_ids.push(CF.callfile_id));
+                                            if (CF_ids.length === callfiles.length) {
+                                                resolve({
+                                                    success: true,
+                                                    data: CF_ids,
+                                                    call_status: CS_codes,
+                                                    message: 'Campaign Recycled Successfully !'
+                                                })
+                                            }
+                                        } else {
                                             resolve({
-                                                success: true,
-                                                data: CF_ids,
-                                                call_status: CS_codes,
-                                                message: 'Campaign Recycled Successfully !'
+                                                success: false,
+                                                message: 'ListCallFile doesn`t have callfiles !'
+
                                             })
                                         }
-                                    } else {
-                                        resolve({
-                                            success: false,
-                                            message: 'ListCallFile doesn`t have callfiles !'
-
-                                        })
-                                    }
-                                }).catch(err => reject(err))
-                            } else {
-                                resolve({
-                                    success: false,
-                                    message: 'Campaign doesn`t have listcallfiles !'
-                                })
-                            }
-                        }).catch(err => reject(err))
-                    }else{
+                                    }).catch(err => reject(err))
+                                } else {
+                                    resolve({
+                                        success: false,
+                                        message: 'Campaign doesn`t have listcallfiles !'
+                                    })
+                                }
+                            }).catch(err => reject(err))
+                        } else {
                             reject(false)
                         }
                     })
@@ -1510,8 +1069,14 @@ class callfiles extends baseModelbo {
                                 }
                             ]
                         }
-                    }).then((res_CS)=> {
-                        this.db['campaigns'].findOne({where :{ campaign_id : listcallfile.campaign_id, status : 'Y', active : 'Y'}}).then((camp)=>{
+                    }).then((res_CS) => {
+                        this.db['campaigns'].findOne({
+                            where: {
+                                campaign_id: listcallfile.campaign_id,
+                                status: 'Y',
+                                active: 'Y'
+                            }
+                        }).then((camp) => {
                             let Camp_CS_ids = camp.call_status_ids || [];
                             let CS_data = res_CS.filter(CS => Camp_CS_ids.includes(CS.callstatus_id))
                             let CS_codes = [];
@@ -1522,7 +1087,7 @@ class callfiles extends baseModelbo {
                                 where: {
                                     listcallfile_id: list_call_file_id,
                                     active: 'Y',
-                                    call_status : CS_codes
+                                    call_status: CS_codes
                                 }
                             }).then(callfiles => {
                                 if (callfiles && callfiles.length !== 0) {
@@ -1532,7 +1097,7 @@ class callfiles extends baseModelbo {
                                         resolve({
                                             success: true,
                                             data: CF_ids,
-                                            call_status : CS_codes,
+                                            call_status: CS_codes,
                                             message: 'List Call File Recycled Successfully !'
                                         })
                                     }
@@ -1554,6 +1119,212 @@ class callfiles extends baseModelbo {
     }
 
 
+
+
+    cronListCallFiles = (req,res,next) =>{
+
+    }
+    // LoadCallFile = (listcallfile_id, user_id, attribute_phone_number, custom_fields) => {
+    //     return new PromiseBB((resolve, reject) => {
+    //         let _this = this;
+    //         let params = {};
+    //         params.filter = [{
+    //             operator: 'and',
+    //             conditions: [
+    //                 {
+    //                     field: 'processing',
+    //                     operator: 'eq',
+    //                     value: '1'
+    //                 }
+    //             ]
+    //         }];
+    //         _this.db['listcallfiles'].findOne({
+    //             where: {
+    //                 active: "Y",
+    //                 processing: "1",
+    //                 listcallfile_id: listcallfile_id
+    //             },
+    //         }).then(res_listCallFile => {
+    //             console.log(res_listCallFile)
+    //             if (res_listCallFile && res_listCallFile.length !== 0) {
+    //                 _this.CallFilesInfo(res_listCallFile, params, user_id, attribute_phone_number, custom_fields).then(callFilesMapping => {
+    //                     if (callFilesMapping.success) {
+    //                         resolve({
+    //                             success: true,
+    //                             data: callFilesMapping
+    //                         });
+    //                     }
+    //
+    //                 }).catch(err => {
+    //                     reject(err);
+    //                 })
+    //             }
+    //         }).catch(err => {
+    //             reject(err);
+    //         })
+    //     })
+    //
+    // }
+    // CallFilesInfo = (res_listCallFile, params, user_id, attribute_phone_number, custom_fields) => {
+    //     let _this = this;
+    //     return new Promise((resolve, reject) => {
+    //         let data_listCallFileItem = res_listCallFile.toJSON();
+    //         params.filter = [{
+    //             operator: 'and',
+    //             conditions: [
+    //                 {
+    //                     field: 'file_id',
+    //                     operator: 'eq',
+    //                     value: data_listCallFileItem.file_id
+    //                 }
+    //             ]
+    //         }];
+    //         let listcallfile_item_to_update = {};
+    //         listcallfile_item_to_update.processing = 1;
+    //         listcallfile_item_to_update.listcallfile_id = data_listCallFileItem.listcallfile_id;
+    //         _this.db['listcallfiles'].update({
+    //                 processing: 1,
+    //             },
+    //             {
+    //                 where: {
+    //                     listcallfile_id: data_listCallFileItem.listcallfile_id
+    //                 }
+    //             }).then(result => {
+    //             _this.getCallFiles(data_listCallFileItem.file_id).then(callFiles => {
+    //                 let nbr_callFiles = callFiles ? callFiles.length : 0;
+    //                 let nbr_uploaded_callFiles = 0;
+    //                 let nbr_duplicated_callFiles = 0;
+    //                 listcallfile_item_to_update.processing_status = {
+    //                     nbr_callfiles: nbr_callFiles,
+    //                     nbr_uploaded_callfiles: nbr_uploaded_callFiles,
+    //                     nbr_duplicated_callfiles: nbr_duplicated_callFiles
+    //                 }
+    //                 let indexCallFiles = 0;
+    //                 _this.db['listcallfiles'].update(listcallfile_item_to_update, {
+    //                     where: {
+    //                         listcallfile_id: data_listCallFileItem.listcallfile_id
+    //                     },
+    //                     returning: true,
+    //                     plain: true
+    //                 }).then(result => {
+    //                     if (callFiles && callFiles.length && callFiles.length !== 0) {
+    //                         this.db['campaigns'].findOne({
+    //                             where: {
+    //                                 campaign_id: result[1].campaign_id
+    //                             }
+    //                         }).then(campaign => {
+    //                             this.sendDataToQueue(callFiles, campaign, data_listCallFileItem, listcallfile_item_to_update, user_id, attribute_phone_number, custom_fields).then(send_callFile => {
+    //                                 resolve({
+    //                                     send_callFile: send_callFile,
+    //                                     success: true
+    //                                 });
+    //                             }).catch(err => {
+    //                                 reject(err);
+    //                             });
+    //                         }).catch(err => {
+    //                             reject(err);
+    //                         });
+    //
+    //                         // _this.CallFilesMapping(callFiles, data_listCallFileItem, nbr_uploaded_callFiles, listcallfile_item_to_update, nbr_duplicated_callFiles, nbr_callFiles, indexCallFiles).then(dataMapping => {
+    //                         //     resolve(dataMapping);
+    //                         // }).catch(err => {
+    //                         //     reject(err);
+    //                         // });
+    //                     }
+    //                 }).catch(err => {
+    //                     reject(err);
+    //                 });
+    //             }).catch(err => {
+    //                 reject(err);
+    //             });
+    //         }).catch(err => {
+    //             reject(err);
+    //         });
+    //     });
+    // }
+    // sendDataToQueue(callFiles, campaign, data_listCallFileItem, listcallfile_item_to_update, user_id, attribute_phone_number, custom_fields) {
+    //     return new Promise((resolve, reject) => {
+    //         console.log('rabbitmq_url', rabbitmq_url)
+    //         amqp.connect(rabbitmq_url, function (error0, connection) {
+    //             if (error0) {
+    //                 throw error0;
+    //             }
+    //             connection.createChannel(function (error1, channel) {
+    //                 if (error1) {
+    //                     throw error1;
+    //                 }
+    //                 const queue = app_config.rabbitmq.queues.addCallFiles + user_id;
+    //                 channel.assertQueue(queue, {
+    //                     durable: true
+    //                 });
+    //                 let data_call = {};
+    //                 let index = 0;
+    //                 PromiseBB.each(callFiles, item => {
+    //                     index++;
+    //                     let progress = Math.round((100 * index) / callFiles.length)
+    //                     data_call.item_callFile = item;
+    //                     data_call.callFiles_options = {
+    //                         data_listCallFileItem: data_listCallFileItem,
+    //                         nbr_callFiles: callFiles ? callFiles.length : 0,
+    //                         listcallfile_item_to_update: listcallfile_item_to_update,
+    //                     };
+    //                     data_call.index = index;
+    //                     data_call.progress = progress;
+    //                     data_call.finish = callFiles.length === index;
+    //                     data_call.user_id = user_id;
+    //                     data_call.attribute_phone_number = attribute_phone_number;
+    //                     if (custom_fields && custom_fields.length !== 0) {
+    //                         data_call.custom_fields = custom_fields
+    //
+    //                     }
+    //                     channel.sendToQueue(queue, Buffer.from(JSON.stringify(data_call)), {type: 'save call file'});
+    //                 }).then((all_r) => {
+    //                     resolve({
+    //                         all_r: all_r,
+    //                         success: true
+    //                     });
+    //                 })
+    //             });
+    //         });
+    //     })
+    // }
+
+    saveListCallFile = (req, res, next) => {
+        // let user_id = req.body.user_id;
+        // let attribute_phone_number = req.body.phone_number;
+        // let custom_fields = []
+        // if (req.body.custom_field) {
+        //     custom_fields = req.body.custom_field;
+        // }
+        // let CallFile = req.body;
+        // CallFile.created_at = moment(new Date());
+        // CallFile.updated_at = moment(new Date());
+        // delete CallFile.phone_number;
+        // delete CallFile.user_id;
+        // if (req.body.custom_field) {
+        //     delete CallFile.custom_field;
+        // }
+        // this.db['listcallfiles'].build(CallFile).save().then(save_list => {
+        //     this.LoadCallFile(save_list.listcallfile_id, user_id, attribute_phone_number, custom_fields).then(result => {
+        //         if (result.success) {
+        //             res.send({
+        //                 success: true
+        //             })
+        //         } else {
+        //             res.send({
+        //                 success: false
+        //             })
+        //         }
+        //
+        //     }).catch(err => {
+        //         console.log(err)
+        //         return this.sendResponseError(res, ['Error', err], 1, 403);
+        //     })
+        // }).catch(err => {
+        //     console.log(err)
+        //     return this.sendResponseError(res, ['Error', err], 1, 403);
+        // })
+    }
 
 }
 

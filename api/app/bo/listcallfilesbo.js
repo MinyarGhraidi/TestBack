@@ -12,12 +12,49 @@ const PromiseBB = require('bluebird');
 const appSocket = new (require('../providers/AppSocket'))();
 const moment = require('moment');
 const {reject} = require("bcrypt/promises");
+const XLSX = require("xlsx");
+const Op = require("sequelize/lib/operators");
 
 class listcallfiles extends baseModelbo {
     constructor() {
         super('listcallfiles', 'listcallfile_id');
         this.baseModal = "listcallfiles";
         this.primaryKey = 'listcallfile_id';
+    }
+
+    saveListCallFile(req,res,next){
+        let data = req.body;
+        this.db['efiles'].findOne({where : {file_id : data.file_id, active : 'Y'}}).then(Efile=>{
+            let uriFile = Efile.uri;
+            let extension = Efile.file_extension;
+            if(extension === "xlsx"){
+                let path = appDir + '/app/resources/efiles' + uriFile;
+                console.log(path)
+                if (!fs.existsSync(path)) {
+                    res.send({
+                        message: "something wrong"
+                    })
+                } else {
+                    console.log("done !!!")
+                    let Count = this.countRows(path);
+                    data.processing_status = {
+                        "nbr_callfiles": Count,
+                        "nbr_uploaded_callfiles": 0,
+                        "nbr_duplicated_callfiles": 0
+                    };
+                    let modalObj = this.db['listcallfiles'].build(data);
+                    modalObj.save().then(new_listLeads => {
+                        res.send({
+                            data : {
+                                message : "success"
+                            },
+                            count: Count
+                        })
+                    })
+                }
+
+            }
+        })
     }
 
     getStatsListCallFiles(req, res, next) {
