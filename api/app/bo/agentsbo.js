@@ -1085,7 +1085,7 @@ class agents extends baseModelbo {
 
     }
 
-    DataCallsAgents(agent_ids, list_CallFile_ids, start_time, end_time) {
+    DataCallsAgents(agent_ids, list_CallFile_ids, start_time, end_time, campaign_ids) {
         return new Promise((resolve, reject) => {
             let sqlData = `select count(DISTINCT CallH.id)                  as TotalCalls,
                                   AVG(CallH.finished_at - CallH.started_at) AS moy,
@@ -1110,6 +1110,9 @@ class agents extends baseModelbo {
             if (list_CallFile_ids && list_CallFile_ids.length !== 0) {
                 extra_where_count += 'AND listCallF.listcallfile_id in (:listCallFile_ids) ';
             }
+            if (campaign_ids && campaign_ids.length !== 0) {
+                extra_where_count += 'AND listCallF.campaign_id in (:campaign_ids) ';
+            }
             if (extra_where_count !== '') {
                 extra_where_count = extra_where_count.replace('AND', 'WHERE');
             }
@@ -1121,7 +1124,8 @@ class agents extends baseModelbo {
                     started_at: start_time,
                     finished_at: end_time,
                     user_ids: agent_ids,
-                    listCallFile_ids: list_CallFile_ids
+                    listCallFile_ids: list_CallFile_ids,
+                    campaign_ids:campaign_ids
                 }
             }).then(result => {
                 if (result && result.length !== 0) {
@@ -1451,11 +1455,13 @@ class agents extends baseModelbo {
             dateSelected_from,
             start_time,
             end_time,
+            campaign_ids
         } = params;
+        console.log('paramssss', campaign_ids)
 
         let dataSelect_from = moment(dateSelected_from).format('YYYY-MM-DD').concat(' ', start_time)
         let dataSelect_to = moment(dateSelected_to).format('YYYY-MM-DD').concat(' ', end_time)
-        this.DataCallsAgents(agent_ids, listCallFiles_ids, dataSelect_from, dataSelect_to).then(data_call => {
+        this.DataCallsAgents(agent_ids, listCallFiles_ids, dataSelect_from, dataSelect_to, campaign_ids).then(data_call => {
             let FilterdUsers = [];
             data_call.map(user => FilterdUsers.push(user.agent_id));
             this.formatUsers(FilterdUsers).then((Users) => {
