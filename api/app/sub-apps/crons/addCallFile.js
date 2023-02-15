@@ -1,4 +1,3 @@
-const XLSX = require("xlsx");
 const fs = require("fs");
 const Op = require("sequelize/lib/operators");
 const moment = require("moment/moment");
@@ -6,15 +5,13 @@ const xlsx = require("xlsx");
 const db = require("../../models");
 const {baseModelbo} = require("../../bo/basebo");
 const path = require("path");
-const {log} = require("sequelize-cli/lib/helpers/view-helper");
 const appDir = path.dirname(require.main.filename);
-const csv = require('csv-parser');
 class AddCallFile extends baseModelbo{
     countRows(file) {
-        const workbook = XLSX.readFile(file);
+        const workbook = xlsx.readFile(file);
         const sheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[sheetName];
-        const range = XLSX.utils.decode_range(worksheet['!ref']);
+        const range = xlsx.utils.decode_range(worksheet['!ref']);
         return range.e.r + 1;
     };
     CountCallFiles(file_id) {
@@ -60,7 +57,7 @@ class AddCallFile extends baseModelbo{
                         message : "everything is okey !"
                     })
                 }
-                this.updateNumberCallFiles().then(result => {
+                this.updateNumberCallFiles(dataListCallFiles).then(result => {
                     let idxLCF = 0;
                     dataListCallFiles.forEach(ListCallFile_item => {
                         if(ListCallFile_item.templates_id){
@@ -95,29 +92,25 @@ class AddCallFile extends baseModelbo{
                                             message : "Done !"
                                         })
                                     }
+                                }).catch(err =>{
+                                    reject(err)
                                 })
+                            }).catch(err =>{
+                                reject(err)
                             })
                         }
 
                     })
+                }).catch(err =>{
+                    reject(err)
                 })
             }).catch(err =>{
                 reject(err)
             })
         })
     }
-    updateNumberCallFiles() {
+    updateNumberCallFiles(dataListCallFiles) {
         return new Promise((resolve, reject) => {
-            this.db['listcallfiles'].findAll({
-                where: {
-                    file_id: {[Op.not]: null},
-                    active: 'Y',
-                    processing: 0
-                }
-            }).then(dataListCallFiles => {
-                if (dataListCallFiles.length === 0) {
-                    resolve(true)
-                }
                 let idx = 0;
                 dataListCallFiles.forEach(data => {
                     this.CountCallFiles(data.file_id).then(result => {
@@ -128,7 +121,7 @@ class AddCallFile extends baseModelbo{
                                 "nbr_duplicated_callfiles": 0
                             }
                             this.db['listcallfiles'].update({
-                                updated_at: moment(new Date()), processing_status: processing_status
+                                updated_at: moment(new Date()), processing_status: processing_status, processing : 1
                             }, {where: {listcallfile_id: data.listcallfile_id, active: 'Y'}})
                         }
                         if (idx < dataListCallFiles.length - 1) {
@@ -138,7 +131,6 @@ class AddCallFile extends baseModelbo{
                         }
                     })
                 })
-            })
         })
     }
     getCallFiles = (file_id) => {
@@ -217,6 +209,8 @@ class AddCallFile extends baseModelbo{
                                 custom_field: custom_field
                             })
                         }
+                    }).catch(err =>{
+                        reject(err)
                     })
                 } else {
                     dataMapping = listCallFileItem.mapping;

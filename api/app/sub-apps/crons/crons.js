@@ -5,7 +5,7 @@ let addCF = new AddCallFile();
 
 
 
-let Add_CallFiles = new Cron("40 15 * * *", async function () {
+let Add_CallFiles = new Cron("* * * * *", async function () {
     addCF.cronListCallFiles().then(result => {
         console.log('result', result)
     });
