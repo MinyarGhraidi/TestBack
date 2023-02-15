@@ -27,7 +27,6 @@ const get_app_config = () => {
     return require(__dirname + '/../config/config.json')[env];
 };
 const get_rabbitmq_url = () => {
-
     const config = get_app_config();
     return 'amqp://' + config.rabbitmq.login + ':' + config.rabbitmq.password + '@' + config.rabbitmq.host + ':' + config.rabbitmq.port;
 };

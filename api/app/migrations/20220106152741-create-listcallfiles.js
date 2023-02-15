@@ -57,6 +57,9 @@ module.exports = {
       templates_id: {
         type: Sequelize.INTEGER,
       },
+      efile_id: {
+        type: Sequelize.INTEGER,
+      }
     });
   },
   down: (queryInterface, Sequelize) => {
