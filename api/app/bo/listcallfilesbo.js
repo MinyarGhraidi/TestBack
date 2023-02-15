@@ -4,16 +4,8 @@ const ObjectsToCsv = require('objects-to-csv');
 const path = require('path');
 const fs = require("fs");
 const appDir = path.dirname(require.main.path);
-const amqp = require('amqplib/callback_api');
-const appHelper = require("../helpers/app");
-const app_config = appHelper.appConfig;
-const rabbitmq_url = appHelper.rabbitmq_url;
-const PromiseBB = require('bluebird');
-const appSocket = new (require('../providers/AppSocket'))();
 const moment = require('moment');
-const {reject} = require("bcrypt/promises");
-const XLSX = require("xlsx");
-const Op = require("sequelize/lib/operators");
+
 
 class listcallfiles extends baseModelbo {
     constructor() {
@@ -22,40 +14,6 @@ class listcallfiles extends baseModelbo {
         this.primaryKey = 'listcallfile_id';
     }
 
-    saveListCallFile(req,res,next){
-        let data = req.body;
-        this.db['efiles'].findOne({where : {file_id : data.file_id, active : 'Y'}}).then(Efile=>{
-            let uriFile = Efile.uri;
-            let extension = Efile.file_extension;
-            if(extension === "xlsx"){
-                let path = appDir + '/app/resources/efiles' + uriFile;
-                console.log(path)
-                if (!fs.existsSync(path)) {
-                    res.send({
-                        message: "something wrong"
-                    })
-                } else {
-                    console.log("done !!!")
-                    let Count = this.countRows(path);
-                    data.processing_status = {
-                        "nbr_callfiles": Count,
-                        "nbr_uploaded_callfiles": 0,
-                        "nbr_duplicated_callfiles": 0
-                    };
-                    let modalObj = this.db['listcallfiles'].build(data);
-                    modalObj.save().then(new_listLeads => {
-                        res.send({
-                            data : {
-                                message : "success"
-                            },
-                            count: Count
-                        })
-                    })
-                }
-
-            }
-        })
-    }
 
     getStatsListCallFiles(req, res, next) {
         let _this = this;
@@ -259,34 +217,21 @@ class listcallfiles extends baseModelbo {
                 let data_listCallFile_gp = listcallfile.toJSON();
                 data_listCallFile_gp.name = listCallFile_name;
                 data_listCallFile_gp.campaign_id = campaign_id;
-                data_listCallFile_gp.created_at = new Date();
-                data_listCallFile_gp.updated_at = new Date();
+                data_listCallFile_gp.created_at = moment(new Date());
+                data_listCallFile_gp.updated_at = moment(new Date());
+                data_listCallFile_gp.processing = 0;
+                data_listCallFile_gp.processing_status =
+                    {
+                        nbr_callfiles: 0,
+                        nbr_uploaded_callfiles: 0,
+                        nbr_duplicated_callfiles: 0
+                    };
                 delete data_listCallFile_gp['listcallfile_id'];
                 const ListCallFileModel = db['listcallfiles'];
                 let list_CallFile = ListCallFileModel.build(data_listCallFile_gp);
-                list_CallFile.save(data_listCallFile_gp).then(list_CallFile_saved => {
-                    _this.db['callfiles'].findAll({
-                        where: {
-                            listcallfile_id: listCallFile_id,
-                        }
-                    }).then(callFiles_items => {
-                        _this.pushItemsToQueue(callFiles_items, list_CallFile_saved.listcallfile_id, listcallfile, listCallFile_name, user_id).then(items => {
-                            res.send({
-                                success: true,
-                                data: items
-                            })
-                        }).catch(err => {
-                            this.db["listcallfiles"].update({
-                                active: 'N'
-                            }, {where: {listcallfile_id: list_CallFile_saved.listcallfile_id}})
-                                .then(() => {
-                                    _this.sendResponseError(res, ['Error To clone ListCallFile'])
-                                }).catch(err => {
-                                _this.sendResponseError(res, ['Error To clone ListCallFile'])
-                            })
-                        })
-                    }).catch(err => {
-                        _this.sendResponseError(res, err)
+                list_CallFile.save(data_listCallFile_gp).then(() => {
+                    res.send({
+                        success: true,
                     })
                 }).catch(err => {
                     _this.sendResponseError(res, err)
@@ -302,49 +247,6 @@ class listcallfiles extends baseModelbo {
         })
 
     }
-
-    pushItemsToQueue = (callFiles_items, listcallfile_id, cloned_listcallfile, listCallFile_name, user_id) => {
-        let _this = this;
-        return new Promise((resolve, reject) => {
-            if (callFiles_items.length !== 0) {
-                amqp.connect(rabbitmq_url, function (error0, connection) {
-                    if (error0) {
-                        throw error0;
-                    }
-                    connection.createChannel(function (error1, channel) {
-                        if (error1) {
-                            throw error1;
-                        }
-                        const queue = app_config.rabbitmq.queues.clone_List_CallFiles + user_id;
-                        channel.assertQueue(queue, {
-                            durable: true
-                        });
-                        let index = 1;
-                        PromiseBB.each(callFiles_items, item => {
-                            let current_callFile = item.toJSON();
-                            delete current_callFile['callfile_id']
-                            current_callFile.listcallfile_id = listcallfile_id
-                            current_callFile.total_callFiles = callFiles_items.length;
-                            current_callFile.current_callFile = index;
-                            current_callFile.source_listCallFile = cloned_listcallfile.name;
-                            current_callFile.listCallFile_name = listCallFile_name
-                            current_callFile.callFiles_options = listCallFile_name
-                            current_callFile.to_treat = 'N'
-                            current_callFile.user_id = user_id
-                            current_callFile.save_in_hooper = 'N'
-                            index++;
-                            channel.sendToQueue(queue, Buffer.from(JSON.stringify(current_callFile)), {type: 'clone listCallFile'});
-                        }).then((all_r) => {
-                            resolve(all_r);
-                        })
-                    });
-                });
-            } else {
-                reject(false);
-            }
-        })
-    }
-
 
 }
 

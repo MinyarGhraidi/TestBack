@@ -19,15 +19,6 @@ module.exports = {
     delete: function (req, res, next) {
         _itembo.delete(req, res, next);
     },
-    CallFilesMapping : function (req, res,next){
-        _itembo.CallFilesMapping(req, res, next)
-    },
-    cronListCallFiles : function (req, res,next){
-        _itembo.cronListCallFiles(req, res, next)
-    },
-    saveListCallFile: function (req, res, next){
-        _itembo.saveListCallFile(req, res, next)
-    },
     updateCallFileQualification :function (req, res, next){
         _itembo.updateCallFileQualification(req,res,next)
     },

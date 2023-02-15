@@ -8,10 +8,9 @@ const {baseModelbo} = require("../../bo/basebo");
 const path = require("path");
 const {log} = require("sequelize-cli/lib/helpers/view-helper");
 const appDir = path.dirname(require.main.filename);
-
+const csv = require('csv-parser');
 class AddCallFile extends baseModelbo{
     countRows(file) {
-        console.log(file)
         const workbook = XLSX.readFile(file);
         const sheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[sheetName];
@@ -23,10 +22,11 @@ class AddCallFile extends baseModelbo{
             this.db['efiles'].findOne({where: {file_id: file_id, active: 'Y'}}).then(Efile => {
                 let uriFile = Efile.uri;
                 let extension = Efile.file_extension;
-                if (extension === "xlsx") {
+                if (extension === "xlsx" || extension === 'xls' || extension === 'csv') {
                     let path_dir = path.join(appDir+'../../../resources/efiles' + uriFile)
                     if (!fs.existsSync(path_dir)) {
                         resolve({
+                            message : "file path not found !",
                             success: false
                         })
                     } else {
@@ -37,6 +37,11 @@ class AddCallFile extends baseModelbo{
                         })
                     }
 
+                }else{
+                    resolve({
+                        message : "extension not supported : "+extension,
+                        success: false
+                    })
                 }
             })
         })
@@ -56,16 +61,15 @@ class AddCallFile extends baseModelbo{
                     })
                 }
                 this.updateNumberCallFiles().then(result => {
-                    let idx = 0;
+                    let idxLCF = 0;
                     dataListCallFiles.forEach(ListCallFile_item => {
                         if(ListCallFile_item.templates_id){
                             this.db['templates_list_call_files'].findOne({where : {templates_list_call_files_id : ListCallFile_item.templates_id, active : 'Y'}}).then(temp =>{
                                 let Phone_att = temp.template.phone_number;
                                 this.getCallFiles(ListCallFile_item.file_id).then(data => {
                                     this.CallFiles_Mapping(ListCallFile_item,data,Phone_att).then((res1)=>{
-                                        console.log("===>",res1)
-                                        if(idx <= dataListCallFiles.length -1){
-                                            idx++;
+                                        if(idxLCF < dataListCallFiles.length -1){
+                                            idxLCF++;
                                         }else{
                                             resolve({
                                                 message : "Done !"
@@ -73,22 +77,19 @@ class AddCallFile extends baseModelbo{
                                         }
                                     }).catch(err => {
                                         reject(err)
-                                        console.log("====> errMapping ",err)
                                     })
                                 }).catch(err => {
                                     reject(err)
-                                    console.log(err)
                                 })
                             }).catch(err => {
                                 reject(err)
-                                console.log(err)
                             })
                         }else{
                             let phone_att = ListCallFile_item.mapping.phone_number;
                             this.getCallFiles(ListCallFile_item.file_id).then(data => {
                                 this.CallFiles_Mapping(ListCallFile_item,data,phone_att).then(()=>{
-                                    if(idx <= dataListCallFiles.length -1){
-                                        idx++;
+                                    if(idxLCF < dataListCallFiles.length -1){
+                                        idxLCF++;
                                     }else{
                                         resolve({
                                             message : "Done !"
@@ -102,7 +103,6 @@ class AddCallFile extends baseModelbo{
                 })
             }).catch(err =>{
                 reject(err)
-                console.log(err)
             })
         })
     }
@@ -121,7 +121,6 @@ class AddCallFile extends baseModelbo{
                 let idx = 0;
                 dataListCallFiles.forEach(data => {
                     this.CountCallFiles(data.file_id).then(result => {
-                        console.log(result)
                         if (result.success) {
                             let processing_status = {
                                 "nbr_callfiles": result.count,
@@ -155,7 +154,7 @@ class AddCallFile extends baseModelbo{
                 }).then(efile => {
                     if (efile) {
                         let path_dir = path.join(appDir+'../../../resources/efiles' + efile.uri)
-                        if (efile.file_extension === 'csv' || efile.file_extension === 'xlsx') {
+                        if (efile.file_extension === 'csv' || efile.file_extension === 'xlsx' || efile.file_extension === 'xls') {
                             if (fs.existsSync(path_dir)) {
                                 const workbook = xlsx.readFile(path_dir);
                                 const sheetNames = workbook.SheetNames;
@@ -164,7 +163,7 @@ class AddCallFile extends baseModelbo{
                             } else {
                                 resolve(result);
                             }
-                        } else {
+                        }else{
                             resolve(result);
                         }
                     } else {
@@ -200,7 +199,6 @@ class AddCallFile extends baseModelbo{
                 'phone_number',
                 'middle_initial']
             let indexMapping = 0;
-            let key = 0
             let dataMapping = {}
             let custom_field = []
             let PromiseMapping = new Promise((resolve, reject) => {
@@ -237,7 +235,6 @@ class AddCallFile extends baseModelbo{
                         callFile.created_at = new Date();
                         callFile.updated_at = new Date();
                         this.checkDuplicationListCallFile(item_callFile, check_duplication, listCallFileItem.campaign_id, attribute_phone_number, list_call_file_id).then(check_duplication => {
-                            console.log("==================>",check_duplication)
                             if (check_duplication) {
                                 this.db['callfiles'].build(callFile).save().then(result => {
                                     let item_toUpdate = listcallfile_item_to_update;
@@ -260,19 +257,15 @@ class AddCallFile extends baseModelbo{
                                     reject(err);
                                 });
                             } else {
-                                console.log("error in : check_duplication is false")
-                                reject(false);
+                                resolve(false);
                             }
                         }).catch(err => {
-                            console.log("error in : checkDuplicationListCallFile",err)
                             reject(err);
                         })
                     }).catch(err => {
-                        console.log("error in : saveCustomField",err)
                         reject(err);
                     });
                 }).catch(err => {
-                    console.log("Error in : CreateCallFileItem",err)
                     reject(err);
                 });
             })
@@ -334,15 +327,13 @@ class AddCallFile extends baseModelbo{
                     }
                 }
                 this.CallFileMapping(CallFiles.length, listcallfile_item_to_update, ListCallFile, callFile, ListCallFile.campaign_id, ListCallFile.check_duplication, Phone_attribute, ListCallFile.custom_fields, index+1).then(resultMapping => {
-                    if (idx <= CallFiles.length - 1) {
-                        console.log(idx)
+                    if (idx < CallFiles.length - 1) {
                         idx++
                     } else {
                         resolve(true)
                     }
                 }).catch(err=> {
                     reject(err)
-                    console.log("Error CallFilePapping : ",err)
                 })
             })
         })
@@ -394,7 +385,6 @@ class AddCallFile extends baseModelbo{
     }
     checkDuplicationListCallFile(callFile, check_duplication, campaign_id, attribute_phone, list_call_file_id) {
         return new Promise((resolve, reject) => {
-            console.log(check_duplication, campaign_id, attribute_phone, list_call_file_id)
             let phone_number = callFile[attribute_phone]
             if (phone_number) {
                 switch (check_duplication) {
@@ -451,7 +441,7 @@ class AddCallFile extends baseModelbo{
                     this.db['callfiles'].findOne({
                         where: {
                             listcallfile_id: {[Op.in]: data_id},
-                            phone_number: phone_number,
+                            phone_number: phone_number.toString(),
                             active: 'Y'
                         }
                     }).then(call_file => {
