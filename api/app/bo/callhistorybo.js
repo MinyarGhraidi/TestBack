@@ -10,7 +10,7 @@ class Callhistorybo extends baseModelbo {
     }
 
     updateCall(req, res, next) {
-        const user_id = req.body.user_id;
+        const user_id = req.body.agent_id;
         const sql_agent =`select * from agent_log_events
                  where user_id = :user_id and active = 'Y' and (action_name = 'in_call' 
                     or action_name = 'in_qualification')
@@ -54,7 +54,8 @@ class Callhistorybo extends baseModelbo {
                         success: true
                     })
                 }).catch(err => {
-                    return this.sendResponseError(res, ['Error.cannotVerifyToken', err], 1, 403);
+                    console.log('errr', err)
+                    return this.sendResponseError(res, ['Error.cannotUpdateCallHistory', err], 1, 403);
                 })
 
             }else{
@@ -63,6 +64,8 @@ class Callhistorybo extends baseModelbo {
                 })
             }
         }).catch(err => {
+            console.log('errr', err)
+
             return this.sendResponseError(res, ['Error.cannotVerifyToken', err], 1, 403);
         })
     }
