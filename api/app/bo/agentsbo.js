@@ -1036,10 +1036,11 @@ class agents extends baseModelbo {
             dateSelected_from,
             start_time,
             end_time,
+            campaign_ids
         } = filter
         let dataSelect_from = moment(dateSelected_from).format('YYYY-MM-DD').concat(' ', start_time)
         let dataSelect_to = moment(dateSelected_to).format('YYYY-MM-DD').concat(' ', end_time)
-        this.DataCallsAgents(agent_ids, listCallFiles_ids, dataSelect_from, dataSelect_to).then(data_call => {
+        this.DataCallsAgents(agent_ids, listCallFiles_ids, dataSelect_from, dataSelect_to,campaign_ids).then(data_call => {
             let FilteredUsers_ids = [];
             data_call.map(user => FilteredUsers_ids.push(user.agent_id))
             this.DataActionAgents(FilteredUsers_ids, dataSelect_from, dataSelect_to).then(data_actions => {
