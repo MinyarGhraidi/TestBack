@@ -6,6 +6,8 @@ const db = require("../../models");
 const {baseModelbo} = require("../../bo/basebo");
 const path = require("path");
 const appDir = path.dirname(require.main.filename);
+const appSocket = new (require("../../providers/AppSocket"))();
+
 class AddCallFile extends baseModelbo{
     countRows(file) {
         const workbook = xlsx.readFile(file);
@@ -14,123 +16,18 @@ class AddCallFile extends baseModelbo{
         const range = xlsx.utils.decode_range(worksheet['!ref']);
         return range.e.r + 1;
     };
-    CountCallFiles(file_id) {
+    updateNumberCallFiles(lengthCallFiles,ListCallFile_id) {
         return new Promise((resolve, reject) => {
-            this.db['efiles'].findOne({where: {file_id: file_id, active: 'Y'}}).then(Efile => {
-                let uriFile = Efile.uri;
-                let extension = Efile.file_extension;
-                if (extension === "xlsx" || extension === 'xls' || extension === 'csv') {
-                    let path_dir = path.join(appDir+'../../../resources/efiles' + uriFile)
-                    if (!fs.existsSync(path_dir)) {
-                        resolve({
-                            message : "file path not found !",
-                            success: false
-                        })
-                    } else {
-                        let Count = this.countRows(path_dir);
-                        resolve({
-                            success: true,
-                            count: Count
-                        })
-                    }
-
-                }else{
-                    resolve({
-                        message : "extension not supported : "+extension,
-                        success: false
-                    })
-                }
-            })
-        })
-    }
-    cronListCallFiles() {
-        return new Promise((resolve,reject)=>{
-            this.db['listcallfiles'].findAll({
-                where: {
-                    file_id: {[Op.not]: null},
-                    active: 'Y',
-                    processing: 0
-                }
-            }).then(dataListCallFiles => {
-                if (dataListCallFiles.length === 0) {
-                    resolve({
-                        message : "everything is okey !"
-                    })
-                }
-                this.updateNumberCallFiles(dataListCallFiles).then(result => {
-                    let idxLCF = 0;
-                    dataListCallFiles.forEach(ListCallFile_item => {
-                        if(ListCallFile_item.templates_id){
-                            this.db['templates_list_call_files'].findOne({where : {templates_list_call_files_id : ListCallFile_item.templates_id, active : 'Y'}}).then(temp =>{
-                                let Phone_att = temp.template.phone_number;
-                                this.getCallFiles(ListCallFile_item.file_id).then(data => {
-                                    this.CallFiles_Mapping(ListCallFile_item,data,Phone_att).then((res1)=>{
-                                        if(idxLCF < dataListCallFiles.length -1){
-                                            idxLCF++;
-                                        }else{
-                                            resolve({
-                                                message : "Done !"
-                                            })
-                                        }
-                                    }).catch(err => {
-                                        reject(err)
-                                    })
-                                }).catch(err => {
-                                    reject(err)
-                                })
-                            }).catch(err => {
-                                reject(err)
-                            })
-                        }else{
-                            let phone_att = ListCallFile_item.mapping.phone_number;
-                            this.getCallFiles(ListCallFile_item.file_id).then(data => {
-                                this.CallFiles_Mapping(ListCallFile_item,data,phone_att).then(()=>{
-                                    if(idxLCF < dataListCallFiles.length -1){
-                                        idxLCF++;
-                                    }else{
-                                        resolve({
-                                            message : "Done !"
-                                        })
-                                    }
-                                }).catch(err =>{
-                                    reject(err)
-                                })
-                            }).catch(err =>{
-                                reject(err)
-                            })
-                        }
-
-                    })
-                }).catch(err =>{
-                    reject(err)
-                })
-            }).catch(err =>{
-                reject(err)
-            })
-        })
-    }
-    updateNumberCallFiles(dataListCallFiles) {
-        return new Promise((resolve, reject) => {
-                let idx = 0;
-                dataListCallFiles.forEach(data => {
-                    this.CountCallFiles(data.file_id).then(result => {
-                        if (result.success) {
                             let processing_status = {
-                                "nbr_callfiles": result.count,
+                                "nbr_callfiles": lengthCallFiles,
                                 "nbr_uploaded_callfiles": 0,
                                 "nbr_duplicated_callfiles": 0
                             }
                             this.db['listcallfiles'].update({
                                 updated_at: moment(new Date()), processing_status: processing_status, processing : 1
-                            }, {where: {listcallfile_id: data.listcallfile_id, active: 'Y'}})
-                        }
-                        if (idx < dataListCallFiles.length - 1) {
-                            idx++;
-                        } else {
-                            resolve(true)
-                        }
-                    })
-                })
+                            }, {where: {listcallfile_id: ListCallFile_id, active: 'Y'}}).then(()=>{
+                                resolve(true)
+                            }).catch(err=> reject(err))
         })
     }
     getCallFiles = (file_id) => {
@@ -237,16 +134,19 @@ class AddCallFile extends baseModelbo{
                                         nbr_uploaded_callfiles: index,
                                         nbr_duplicated_callfiles: 0
                                     };
-
-                                    this.db['listcallfiles'].update(item_toUpdate, {
-                                        where: {
-                                            listcallfile_id: listCallFileItem.listcallfile_id
-                                        }
-                                    }).then(result_list => {
+                                    if(index === nbr_callFiles){
+                                        this.db['listcallfiles'].update(item_toUpdate, {
+                                            where: {
+                                                listcallfile_id: listCallFileItem.listcallfile_id
+                                            }
+                                        }).then(() => {
+                                            resolve(true)
+                                        }).catch(err => {
+                                            reject(err);
+                                        });
+                                    }else{
                                         resolve(true)
-                                    }).catch(err => {
-                                        reject(err);
-                                    });
+                                    }
                                 }).catch(err => {
                                     reject(err);
                                 });
@@ -310,26 +210,30 @@ class AddCallFile extends baseModelbo{
     CallFiles_Mapping(ListCallFile, CallFiles,Phone_attribute) {
         return new Promise((resolve, reject) => {
             let idx = 0;
-            CallFiles.forEach((callFile,index) => {
-                let listcallfile_item_to_update = {
-                    processing: 1,
-                    listcallfile_id: ListCallFile.listcallfile_id,
-                    processing_status: {
-                        "nbr_callfiles": CallFiles.length,
-                        "nbr_uploaded_callfiles": 0,
-                        "nbr_duplicated_callfiles": 0
+            if(CallFiles && CallFiles.length !== 0){
+                CallFiles.forEach((callFile,index) => {
+                    let listcallfile_item_to_update = {
+                        processing: 1,
+                        listcallfile_id: ListCallFile.listcallfile_id,
+                        processing_status: {
+                            "nbr_callfiles": CallFiles.length,
+                            "nbr_uploaded_callfiles": 0,
+                            "nbr_duplicated_callfiles": 0
+                        }
                     }
-                }
-                this.CallFileMapping(CallFiles.length, listcallfile_item_to_update, ListCallFile, callFile, ListCallFile.campaign_id, ListCallFile.check_duplication, Phone_attribute, ListCallFile.custom_fields, index+1).then(resultMapping => {
-                    if (idx < CallFiles.length - 1) {
-                        idx++
-                    } else {
-                        resolve(true)
-                    }
-                }).catch(err=> {
-                    reject(err)
+                    this.CallFileMapping(CallFiles.length, listcallfile_item_to_update, ListCallFile, callFile, ListCallFile.campaign_id, ListCallFile.check_duplication, Phone_attribute, ListCallFile.custom_fields, index+1).then(resultMapping => {
+                        if (idx < CallFiles.length - 1) {
+                            idx++
+                        } else {
+                            resolve(true)
+                        }
+                    }).catch(err=> {
+                        reject(err)
+                    })
                 })
-            })
+            }else{
+                resolve(true)
+            }
         })
     }
     saveCustomField(customField, listCallFileItem, callFile, item_callFile) {
@@ -473,6 +377,61 @@ class AddCallFile extends baseModelbo{
             }).catch(err => {
                 reject(err)
             })
+        })
+    }
+
+    getPhoneNumberAttribute(ListCallFile_item){
+        return new Promise((resolve,reject)=>{
+            if(!!!ListCallFile_item.templates_id){
+                resolve(ListCallFile_item.mapping.phone_number)
+            }else{
+                this.db['templates_list_call_files'].findOne({where : {templates_list_call_files_id : ListCallFile_item.templates_id, active : 'Y'}}).then(temp =>{
+                    resolve(temp.template.phone_number)
+                }).catch(err=>reject(err))
+            }
+        })
+    }
+
+    cronListCallFiles() {
+        return new Promise((resolve,reject)=>{
+            this.db['listcallfiles'].findAll({
+                where: {
+                    file_id: {[Op.not]: null},
+                    active: 'Y',
+                    processing: 0
+                }
+            }).then(dataListCallFiles => {
+                if (dataListCallFiles.length === 0) {
+                    resolve({
+                        message : "everything is okey !"
+                    })
+                }
+                let Camp_ids = [];
+                let idxLCF = 0;
+                    dataListCallFiles.forEach(ListCallFile_item => {
+                        this.getPhoneNumberAttribute(ListCallFile_item).then(Phone_Attribute=>{
+                            this.getCallFiles(ListCallFile_item.file_id).then(data => {
+                                if(data && data.length !== 0){
+                                    if (!Camp_ids.includes(ListCallFile_item.campaign_id)) {
+                                        Camp_ids.push(ListCallFile_item.campaign_id);
+                                    }
+                                }
+                                this.updateNumberCallFiles(data.length,ListCallFile_item.listcallfile_id).then(()=>{
+                                    this.CallFiles_Mapping(ListCallFile_item,data,Phone_Attribute).then(()=>{
+                                        if(idxLCF < dataListCallFiles.length -1){
+                                            idxLCF++;
+                                        }else{
+                                            appSocket.emit('refresh_list_callFiles', {campaign_ids : Camp_ids});
+                                            resolve({
+                                                message : "Done !"
+                                            })
+                                        }
+                                    }).catch(err => reject(err))
+                                }).catch(err=> reject(err))
+                            }).catch(err => reject(err))
+                        }).catch(err=> reject(err))
+                    })
+            }).catch(err =>reject(err))
         })
     }
 }
