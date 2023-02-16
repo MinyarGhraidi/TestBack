@@ -416,7 +416,7 @@ class AddCallFile extends baseModelbo{
                                         Camp_ids.push(ListCallFile_item.campaign_id);
                                     }
                                 }
-                                this.updateNumberCallFiles(data.length,ListCallFile_item.listCallFile_id).then(()=>{
+                                this.updateNumberCallFiles(data.length,ListCallFile_item.listcallfile_id).then(()=>{
                                     this.CallFiles_Mapping(ListCallFile_item,data,Phone_Attribute).then(()=>{
                                         if(idxLCF < dataListCallFiles.length -1){
                                             idxLCF++;
