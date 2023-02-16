@@ -52,12 +52,6 @@ module.exports = (sequelize, Sequelize) => {
                 type: Sequelize.DATE,
                 defaultValue: new Date()
             },
-            max_sales_meet: {
-                type: Sequelize.INTEGER
-            },
-            date_start_meet: {
-                type: Sequelize.STRING
-            },
             updated_at: {
                 allowNull: true,
                 type: Sequelize.DATE,
@@ -94,8 +88,6 @@ module.exports = (sequelize, Sequelize) => {
         'agents',
         'status',
         'params',
-        'max_sales_meet',
-        'date_start_meet',
         'trunck_id',
         'script',
         'call_status_ids',
@@ -116,8 +108,6 @@ module.exports = (sequelize, Sequelize) => {
             'updated_at',
             'agents',
             'status',
-            'max_sales_meet',
-            'date_start_meet',
             'trunck_id',
             'script',
             'call_status_ids',

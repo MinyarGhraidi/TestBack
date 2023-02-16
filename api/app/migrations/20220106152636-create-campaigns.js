@@ -54,12 +54,6 @@ module.exports = {
                 type: Sequelize.DATE,
                 defaultValue: new Date()
             },
-            max_sales_meet: {
-                type: Sequelize.INTEGER
-            },
-            date_start_meet: {
-                type: Sequelize.STRING
-            },
             updated_at: {
                 allowNull: true,
                 type: Sequelize.DATE,
