@@ -75,13 +75,11 @@ class efiles extends baseModelbo {
             let extension = Efile.file_extension;
             if (extension === "xlsx") {
                 let path = appDir + '/app/resources/efiles' + uriFile;
-                console.log(path)
                 if (!fs.existsSync(path)) {
                     res.send({
                         message: "something wrong"
                     })
                 } else {
-                    console.log("done !!!")
                     /*let Count = this.countRows(path);
                     res.send({
                         data: {

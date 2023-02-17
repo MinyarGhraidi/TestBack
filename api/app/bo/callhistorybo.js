@@ -54,7 +54,6 @@ class Callhistorybo extends baseModelbo {
                         success: true
                     })
                 }).catch(err => {
-                    console.log('errr', err)
                     return this.sendResponseError(res, ['Error.cannotUpdateCallHistory', err], 1, 403);
                 })
 
@@ -64,8 +63,6 @@ class Callhistorybo extends baseModelbo {
                 })
             }
         }).catch(err => {
-            console.log('errr', err)
-
             return this.sendResponseError(res, ['Error.cannotVerifyToken', err], 1, 403);
         })
     }
