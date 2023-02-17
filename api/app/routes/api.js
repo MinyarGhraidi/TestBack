@@ -189,7 +189,7 @@ let apiRouters = function (passport) {
     router.post("/api/listcallfile/find/:params?", passport.authenticate('jwt', {session: false}), listcallfilesController.find);
     router.get("/api/listcallfile/findById/:entity_id", passport.authenticate('jwt', {session: false}), listcallfilesController.findById);
     router.put("/api/listcallfile/update", passport.authenticate('jwt', {session: false}), listcallfilesController.update);
-    router.delete("/api/listcallfile/delete/:params", passport.authenticate('jwt', {session: false}), listcallfilesController.delete);
+    router.delete("/api/listcallfile/delete/:params", passport.authenticate('jwt', {session: false}), listcallfilesController.deleteCascade);
     router.post("/api/listcallfile/save", passport.authenticate('jwt', {session: false}), listcallfilesController.save);
     router.get("/api/listcallfile/getStatsListCallFiles", passport.authenticate('jwt', {session: false}), listcallfilesController.getStatsListCallFiles);
     router.post("/api/listcallfile/CallFileQualification", passport.authenticate('jwt', {session: false}), listcallfilesController.CallFileQualification);

@@ -14,6 +14,9 @@ module.exports = {
     save: function (req, res, next) {
         listcallfilesDaoInst.save(req, res, next);
     },
+    deleteCascade: function (req, res, next) {
+        listcallfilesDaoInst.deleteCascade(req, res, next);
+    },
     delete: function (req, res, next) {
         listcallfilesDaoInst.delete(req, res, next);
     },
