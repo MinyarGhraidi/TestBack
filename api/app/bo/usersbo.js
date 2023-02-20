@@ -368,7 +368,7 @@ class users extends baseModelbo {
                 },
                 active: 'Y'
             }
-            if (!!!!account_id) {
+            if (account_id) {
                 whereQuery.account_id = account_id;
             }
             this.db['users'].findAll({
