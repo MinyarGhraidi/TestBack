@@ -15,38 +15,53 @@ class callfiles extends baseModelbo {
 
     updateCallFileQualification(req, res, next) {
         let callfile_id = req.body.callfile_id
-        let note = req.body.note
-        let callStatus = req.body.callStatus
         this.db['callfiles'].findOne({
             where: {
                 callfile_id: callfile_id
             }
         }).then(call_previous => {
-            let obj = call_previous.dataValues
-            Object.entries(obj).map(item => {
-                let index = Object.entries(req.body).findIndex(element => element[0] === item[0])
-                if (index === -1) {
-                    delete obj[item[0]]
-                }
-            })
-            this.saveEntityNewRevision(req.body, obj, req).then(revision => {
-                this.db['callfiles'].update(req.body,
-                    {
-                        where: {
-                            callfile_id: callfile_id
-                        }
-                    }).then(result => {
-                    if (result) {
-                        res.send({
-                            success: true,
-                            revision_id: revision.id ? revision.id : null
+            this.db['callfiles'].update(req.body,
+                {
+                    where: {
+                        callfile_id: callfile_id
+                    },
+                    returning: true,
+                    plain: true
+                }).then(result => {
+                let obj = call_previous.dataValues
+                Object.entries(obj).map(item => {
+
+                    let index = Object.entries(req.body).findIndex(element => element[0] === item[0])
+                    if (index === -1) {
+                        delete obj[item[0]]
+                    }
+                    if (item[0] === 'customfields') {
+                        item[1].map(field => {
+                                obj[field.value] = field.default
                         })
                     }
-
-                }).catch(err => {
-                    return this.sendResponseError(res, ['Error', err], 1, 403);
                 })
+                let objAfter = req.body
+                delete objAfter.customfields
+                Object.entries(objAfter).map(element=>{
+                    if(Array.isArray(element[1])){
+                        element[1]=element[1].toString()
+                    }
+                })
+                delete obj.customfields
+                this.saveEntityNewRevision(objAfter, obj, req).then(revision => {
+                    res.send({
+                        success: true,
+                        revision_id: revision.id ? revision.id : null
+                    })
+
+
+                })
+            }).catch(err => {
+                return this.sendResponseError(res, ['Error', err], 1, 403);
             })
+        }).catch(err => {
+            return this.sendResponseError(res, ['Error', err], 2, 403);
         })
 
 
@@ -510,8 +525,8 @@ class callfiles extends baseModelbo {
                         "items": {
                             "type": "string",
                             "enum": [],
-                            "default": item.default
                         },
+                        "default": [item.default],
                         "uniqueItems": true
                     }
                     item.options.map(element => {
