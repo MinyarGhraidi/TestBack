@@ -321,7 +321,20 @@ class baseModelbo {
                         messages: 'Cant delete'
                     })
                 })
-                break
+                break;
+            case 'listcallfiles' :
+                this.deleteWithChild('listcallfiles', 'callfiles', 'listcallfile_id', 'listcallfile_id', _id).then(() => {
+                            res.json({
+                                success: true,
+                                messages: 'deleted'
+                            })
+                }).catch((err) => {
+                    res.json({
+                        success: false,
+                        messages: 'Cant delete'
+                    })
+                })
+                break;
             default  :
                 res.json({
                     success: false,

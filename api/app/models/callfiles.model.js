@@ -1,4 +1,3 @@
-const {TooManyRequests} = require("http-errors")
 
 module.exports = (sequelize, Sequelize) => {
     const callfile = sequelize.define("callfiles", {
@@ -60,7 +59,6 @@ module.exports = (sequelize, Sequelize) => {
                 type: Sequelize.STRING,
                 defaultValue: 'Y'
             },
-
             created_at: {
                 allowNull: true,
                 type: Sequelize.DATE,
@@ -89,6 +87,24 @@ module.exports = (sequelize, Sequelize) => {
                 allowNull: true,
                 type: Sequelize.STRING,
                 defaultValue: 'N'
+            },
+            gender: {
+                type: Sequelize.STRING
+            },
+            age: {
+                type: Sequelize.INTEGER
+            },
+            company_name: {
+                type: Sequelize.STRING
+            },
+            category: {
+                type: Sequelize.STRING
+            },
+            siret: {
+                type: Sequelize.STRING
+            },
+            siren: {
+                type: Sequelize.STRING
             },
         },
         {timestamps: false,}

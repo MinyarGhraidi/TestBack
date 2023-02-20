@@ -75,6 +75,9 @@ module.exports = (sequelize, Sequelize) => {
             },
             profile_image_id :{
                 type: Sequelize.INTEGER
+            },
+            config :{
+                type: Sequelize.JSONB
             }
         },
         {timestamps: false})
@@ -99,7 +102,8 @@ module.exports = (sequelize, Sequelize) => {
         'params',
         'role_crm_id',
         'profile_image_id',
-        'current_session_token'
+        'current_session_token',
+        'config'
 
     ],
         user.prototype.fieldsSearchMetas = [
@@ -115,7 +119,8 @@ module.exports = (sequelize, Sequelize) => {
             'campaign_id',
             "sip_device",
             'params',
-            'role_crm_id'
+            'role_crm_id',
+            'config'
         ]
         user.prototype.setPassword_hash = function (password) {
             let salt = bcrypt.genSaltSync();

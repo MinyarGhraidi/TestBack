@@ -1458,8 +1458,6 @@ class agents extends baseModelbo {
             end_time,
             campaign_ids
         } = params;
-        console.log('paramssss', campaign_ids)
-
         let dataSelect_from = moment(dateSelected_from).format('YYYY-MM-DD').concat(' ', start_time)
         let dataSelect_to = moment(dateSelected_to).format('YYYY-MM-DD').concat(' ', end_time)
         this.DataCallsAgents(agent_ids, listCallFiles_ids, dataSelect_from, dataSelect_to, campaign_ids).then(data_call => {
@@ -1671,7 +1669,6 @@ class agents extends baseModelbo {
                             pauseStatus: pauseStatus,
                         }
                     }).then(data_stats => {
-                        console.log('data_statsssss', data_stats)
                         let dataArray = [];
                         AllU.forEach((user,index) => {
                             let SQ_Demo = SqueletteQuery[0];

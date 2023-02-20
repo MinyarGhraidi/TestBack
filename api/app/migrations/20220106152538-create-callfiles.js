@@ -89,6 +89,24 @@ module.exports = {
                 type: Sequelize.STRING,
                 defaultValue: 'N'
             },
+            gender: {
+                type: Sequelize.STRING
+            },
+            age: {
+                type: Sequelize.INTEGER
+            },
+            company_name: {
+                type: Sequelize.STRING
+            },
+            category: {
+                type: Sequelize.STRING
+            },
+            siret: {
+                type: Sequelize.STRING
+            },
+            siren: {
+                type: Sequelize.STRING
+            },
         });
     },
     down: (queryInterface, Sequelize) => {
