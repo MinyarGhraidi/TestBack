@@ -306,7 +306,6 @@ class AccBo extends baseModelbo {
                             })
                         }
                     }).catch(err => {
-                        console.log(err);
                         this.sendResponseError(res, ["Error.CannotGetCDRS"], 1, 403)
                     })
                 })
