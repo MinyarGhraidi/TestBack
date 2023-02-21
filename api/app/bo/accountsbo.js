@@ -347,6 +347,7 @@ class accounts extends baseModelbo {
                                                 updated_at: new Date()
                                             }
                                             let uuid_Agent = userData.sip_device.uuid
+                                            console.log(uuid_Agent, update_Agent)
                                             axios
                                                 .put(`${base_url_cc_kam}api/v1/agents/${uuid_Agent}`, update_Agent, call_center_authorization).then((resp) => {
                                                 let update_account = newAccount;
@@ -381,6 +382,7 @@ class accounts extends baseModelbo {
                                                     return _this.sendResponseError(res, ['Error.CannotUpdateAccount'], 1, 403);
                                                 })
                                             }).catch((err) => {
+                                                //console.log(err)
                                                 return _this.sendResponseError(res, ['Error.CannotUpdateAgent'], 1, 403);
                                             })
                                         }).catch((err) => {

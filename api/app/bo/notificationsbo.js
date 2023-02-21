@@ -287,14 +287,14 @@ class notifications extends baseModelbo {
                     order: [['created_at', 'DESC']]
                 }).then(dataCountAll => {
                     dataCountAll.map(data => {
-
-
                         if (data.campaign_id !== null) {
                             let campToAdd = campaigns.filter(camp => camp.campaign_id === data.campaign_id);
                             data.dataValues.campaign = campToAdd[0].toJSON();
                         } else {
                             let lcfToAdd = listcallfiles.filter(lcf => lcf.listcallfile_id === data.list_callfile_id);
-                            data.dataValues.listcallfile = lcfToAdd[0].toJSON();
+                            if(lcfToAdd && lcfToAdd.length !== 0) {
+                                data.dataValues.listcallfile = lcfToAdd[0].toJSON();
+                            }
                         }
                     })
                     let CountUnreadMessages = 0;
@@ -320,6 +320,7 @@ class notifications extends baseModelbo {
 
                 })
                     .catch(err => {
+                        console.log(err)
                         return res.send({
                             success: false,
                             status: 403,
