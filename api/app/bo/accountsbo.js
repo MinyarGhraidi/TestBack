@@ -382,7 +382,6 @@ class accounts extends baseModelbo {
                                                     return _this.sendResponseError(res, ['Error.CannotUpdateAccount'], 1, 403);
                                                 })
                                             }).catch((err) => {
-                                                //console.log(err)
                                                 return _this.sendResponseError(res, ['Error.CannotUpdateAgent'], 1, 403);
                                             })
                                         }).catch((err) => {

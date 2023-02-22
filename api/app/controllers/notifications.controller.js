@@ -21,4 +21,7 @@ module.exports = {
     updateByAccountID: function (req, res, next) {
         _itembo.updateByAccountID(req, res, next);
     },
+    saveNotificationReminder: function (req, res, next) {
+        _itembo.saveNotificationReminder(req, res, next);
+    },
 };
