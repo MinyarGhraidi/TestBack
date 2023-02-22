@@ -165,12 +165,19 @@ class AccBo extends baseModelbo {
 
     getSip_codes(req, res, next) {
         let _this = this;
+        let date = req.body.date;
+        let startTime = moment(date).format('YYYY-MM-DD').concat(' ', req.body.startTime);
+        let endTime = moment(date).format('YYYY-MM-DD').concat(' ', req.body.endTime);
         let sqlSipCode = `select distinct sip_code, sip_reason
                           from acc_cdrs
-                          where sip_code notnull and sip_reason notnull and sip_code != '' and sip_reason != ''`;
+                          where sip_code notnull and sip_reason notnull and sip_code != '' and sip_reason != '' and start_time >= :start_time and end_time <=  :end_time`;
         db.sequelize["cdr-db"]
             .query(sqlSipCode, {
                 type: db.sequelize["cdr-db"].QueryTypes.SELECT,
+                replacements: {
+                    start_time: startTime,
+                    end_time: endTime,
+                }
             })
             .then((sip_codes) => {
                 res.send({
