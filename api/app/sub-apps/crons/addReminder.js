@@ -64,7 +64,9 @@ class AddReminder extends baseModelbo {
                 include: [{
                     model: db.notifications,
                     required : false
-                },
+                },{
+                    model: db.callfiles
+                }
                 ],
                 where : {
                     active: 'Y',
@@ -75,7 +77,7 @@ class AddReminder extends baseModelbo {
                     '$notifications.reminder_id$' : null
                 }
             }).then(resultData =>{
-
+                console.log(resultData)
                 if(resultData && resultData.length !== 0){
                     let idx = 0;
                     resultData.forEach(reminder =>{
@@ -84,8 +86,7 @@ class AddReminder extends baseModelbo {
                             data: {
                                 agent_id: reminder.agent_id,
                                 Date_Time: reminder.date + ' '+reminder.time,
-                                note: reminder.note,
-                                callfile_id: reminder.callfile_id
+                                callfile: reminder.callfile
                             },
                             reminder_id : reminder.reminder_id,
                             status: 'Y',
