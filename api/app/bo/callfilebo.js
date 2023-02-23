@@ -20,48 +20,64 @@ class callfiles extends baseModelbo {
                 callfile_id: callfile_id
             }
         }).then(call_previous => {
-            this.db['callfiles'].update(req.body,
-                {
-                    where: {
-                        callfile_id: callfile_id
-                    },
-                    returning: true,
-                    plain: true
-                }).then(result => {
-                let obj = call_previous.dataValues
-                Object.entries(obj).map(item => {
+            if(call_previous){
+                this.db['callfiles'].update(req.body,
+                    {
+                        where: {
+                            callfile_id: callfile_id
+                        },
+                        returning: true,
+                        plain: true
+                    }).then(result => {
+                        if(result){
+                            let obj = call_previous.dataValues
+                            Object.entries(obj).map(item => {
 
-                    let index = Object.entries(req.body).findIndex(element => element[0] === item[0])
-                    if (index === -1) {
-                        delete obj[item[0]]
-                    }
-                    if (item[0] === 'customfields') {
-                        item[1].map(field => {
-                                obj[field.value] = field.default
-                        })
-                    }
-                })
-                let objAfter = req.body
-                delete objAfter.customfields
-                Object.entries(objAfter).map(element=>{
-                    if(Array.isArray(element[1])){
-                        element[1]=element[1].toString()
-                    }
-                })
-                delete obj.customfields
-                this.saveEntityNewRevision(objAfter, obj, req).then(revision => {
-                    res.send({
-                        success: true,
-                        revision_id: revision.id ? revision.id : null
-                    })
+                                let index = Object.entries(req.body).findIndex(element => element[0] === item[0])
+                                if (index === -1) {
+                                    delete obj[item[0]]
+                                }
+                                if (item[0] === 'customfields') {
+                                    item[1].map(field => {
+                                        obj[field.value] = field.default
+                                    })
+                                }
+                            })
+                            let objAfter = req.body
+                            delete objAfter.customfields
+                            Object.entries(objAfter).map(element=>{
+                                if(Array.isArray(element[1])){
+                                    element[1]=element[1].toString()
+                                }
+                            })
+                            delete obj.customfields
+                            this.saveEntityNewRevision(objAfter, obj, req).then(revision => {
+                                res.send({
+                                    success: true,
+                                    revision_id: revision.id ? revision.id : null
+                                })
 
 
+                            }).catch(err => {
+                                return this.sendResponseError(res, ['Error', err], 1, 403);
+                            })
+                        }else{
+                            res.send({
+                                success: false
+                            })
+                        }
+
+                }).catch(err => {
+                    return this.sendResponseError(res, ['Error', err], 2, 403);
                 })
-            }).catch(err => {
-                return this.sendResponseError(res, ['Error', err], 1, 403);
-            })
+            }else{
+                res.send({
+                    success: false
+                })
+            }
+
         }).catch(err => {
-            return this.sendResponseError(res, ['Error', err], 2, 403);
+            return this.sendResponseError(res, ['Error', err], 3, 403);
         })
 
 

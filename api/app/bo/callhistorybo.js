@@ -32,6 +32,7 @@ class Callhistorybo extends baseModelbo {
                     dmt = moment(agent_event[0].finish_at, "YYYY-MM-DD HH:mm:ss").diff(moment(agent_event[0].start_at, "YYYY-MM-DD HH:mm:ss"), 'seconds');
                     dmc=moment(agent_event[0].finish_at, "YYYY-MM-DD HH:mm:ss").diff(moment(agent_event[0].start_at, "YYYY-MM-DD HH:mm:ss"), 'seconds');
                 }
+                console.log('dmccc',dmc)
                 const sql_call =`update calls_historys
                                  set revision_id = :revision_id ,
                                  dmt = :dmt ,
@@ -54,6 +55,7 @@ class Callhistorybo extends baseModelbo {
                         success: true
                     })
                 }).catch(err => {
+                    console.log('errr', err)
                     return this.sendResponseError(res, ['Error.cannotUpdateCallHistory', err], 1, 403);
                 })
 
@@ -63,7 +65,7 @@ class Callhistorybo extends baseModelbo {
                 })
             }
         }).catch(err => {
-            return this.sendResponseError(res, ['Error.cannotVerifyToken', err], 1, 403);
+            return this.sendResponseError(res, ['Error.cannotVerifyToken', err], 2, 403);
         })
     }
 

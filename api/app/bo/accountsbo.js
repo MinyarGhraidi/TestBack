@@ -19,6 +19,9 @@ const base_url_cc_kam = require(__dirname + '/../config/config.json')["base_url_
 const call_center_authorization = {
     headers: {Authorization: call_center_token}
 };
+const moment = require("moment");
+const helpers = require("../helpers/helpers");
+
 
 class accounts extends baseModelbo {
     constructor() {
@@ -268,8 +271,16 @@ class accounts extends baseModelbo {
     // ------------------> Add / Edit Account <---------------------
     AddEditAccount(req, res, next) {
         let _this = this;
-        let newAccount = req.body;
+        let nbr_agent;
+        if(req.body.isChecked){
+             nbr_agent = req.body.values.nbr_agents_account;
+            delete req.body.values.nbr_agents_account;
+            delete req.body.values.Campaign_name
+        }
+
+        let newAccount = req.body.values;
         let {first_name, last_name} = newAccount;
+
         let data_account = {
             account_code: newAccount.account_code,
             first_name: newAccount.first_name,
@@ -402,6 +413,7 @@ class accounts extends baseModelbo {
                 return _this.sendResponseError(res, ['Error.CannotFindAccount'], 1, 403);
             })
         } else {
+
             this.couldAffectDomain(domain.value).then((resultAffection) => {
                 if (resultAffection) {
                     let data_subscriber = {
@@ -447,12 +459,86 @@ class accounts extends baseModelbo {
                                                     returning: true,
                                                     plain: true
                                                 }).then(update_account => {
-                                                    res.send({
-                                                        status: 200,
-                                                        message: 'success',
-                                                        success: true,
-                                                        data: new_user
-                                                    })
+                                                    if(req.body.isChecked){
+                                                                let dataCamp ={
+                                                                    campaign_name : req.body.Campaign_name,
+                                                                    campaign_description : req.body.Campaign_name,
+                                                                    campaign_type : 'PREDICTIVE',
+                                                                    account_id : new_account.dataValues.account_id,
+                                                                    list_mix : req.body.Default_dialer_options.list_mix,
+                                                                    list_order : req.body.Default_dialer_options.list_order,
+                                                                    hooper: req.body.Default_dialer_options.hooper,
+                                                                    dial_level: req.body.Default_dialer_options.dial_level,
+                                                                    dialtimeout: req.body.Default_dialer_options.dialtimeout,
+                                                                    params : {},
+                                                                    domain : domain,
+                                                                    updated_at : moment(new Date()),
+                                                                    created_at : moment(new Date())
+                                                                }
+                                                                dataCamp.params.queue = req.body.Default_queue_options;
+                                                                dataCamp.params.queue.accountcode = new_account.dataValues.account_code;
+                                                                dataCamp.params.queue.greetings= [];
+                                                                dataCamp.params.queue.hold_music= [];
+                                                                dataCamp.params.queue.extension=this.generatenumber(12)
+                                                                this.saveCampaign(dataCamp).then(result_camp=>{
+                                                                    if(result_camp.success){
+                                                                        let user = {
+                                                                            first_name: null,
+                                                                            last_name: "",
+                                                                            username: null,
+                                                                            campaign_id: null,
+                                                                            sip_device: {
+                                                                                options: req.body.agent_options,
+                                                                                status: 'logged-out',
+                                                                                enabled: true,
+                                                                                password: null,
+                                                                                domain: domain.label,
+                                                                                subscriber_id: 1,
+                                                                                accountcode: new_account.dataValues.account_code,
+                                                                                created_at : moment().format("YYYY-MM-DD HH:mm:ss"),
+                                                                                updated_at : moment().format("YYYY-MM-DD HH:mm:ss")
+                                                                            },
+                                                                            domain: domain,
+                                                                            password_hash: null,
+                                                                            account_id: new_account.dataValues.account_id,
+                                                                            role_crm_id: 3,
+                                                                            params: {sales: [], status: 'logged-out', pass_web: null, did_gp: []},
+                                                                        };
+                                                                        let dataAgent ={
+                                                                            values: user,
+                                                                            accountcode: new_account.dataValues.account_code,
+                                                                            bulkNum: req.body.bulkNum,
+                                                                            account_id: new_account.dataValues.account_id
+                                                                        }
+                                                                        this.addAgentBulk(dataAgent).then(resultAgent=>{
+                                                                            if(resultAgent.success){
+                                                                                res.send({
+                                                                                    status: 200,
+                                                                                    message: 'success',
+                                                                                    success: true,
+                                                                                    data: new_user
+                                                                                })
+                                                                            }
+
+                                                                        })
+                                                                    }else{
+                                                                        res.send({
+                                                                            status: 200,
+                                                                            message: 'error to create camp',
+                                                                            success: false,
+                                                                        })
+                                                                    }
+                                                                })
+
+                                                    }else{
+                                                        res.send({
+                                                            status: 200,
+                                                            message: 'success',
+                                                            success: true,
+                                                            data: new_user
+                                                        })
+                                                    }
+
                                                 })
                                                     .catch(err => {
                                                         return _this.sendResponseError(res, ['Error.AnErrorHasOccurredUser', err], 1, 403);
@@ -881,6 +967,115 @@ class accounts extends baseModelbo {
             return this.sendResponseError(res, ['Error.UserNotFound'], 1, 403);
         })
 
+    }
+
+    saveCampaign (values){
+        return new Promise((resolve, reject)=>{
+            let {queue} = values.params;
+            let params = values.params;
+            _campaignsbo.generateUniqueUsernameFunction()
+                .then(queueName => {
+                    queue.name = queueName;
+                    queue.domain_uuid = values.domain.uuid;
+                    axios
+                        .post(`${base_url_cc_kam}api/v1/queues`, queue, call_center_authorization)
+                        .then((result) => {
+                            let {uuid} = result.data.result;
+                            queue.uuid = uuid;
+                            params.queue = queue;
+                            delete values.params;
+                            values.params = params;
+                            let modalObj = this.db['campaigns'].build(values);
+                            modalObj.save()
+                                .then((campaign) => {
+                                    _campaignsbo.addDefaultStatus(campaign.campaign_id)
+                                        .then(response => {
+                                            resolve({
+                                                status: 200,
+                                                message: "success",
+                                                data: campaign,
+                                                success : true
+                                            })
+                                        })
+                                        .catch(err => {
+                                            console.log('errr14', err)
+                                            reject(err)
+                                        })
+                                })
+                                .catch((err) => {
+                                    console.log('errr13', err)
+                                    reject(err)
+                                });
+                        })
+                        .catch((err) => {
+                            console.log('errr11', err)
+                            reject(err)
+                        });
+                })
+                .catch((err) => {
+                    console.log('errr12', err)
+                    reject(err)
+                });
+        })
+    }
+
+    addAgentBulk(values){
+        return new Promise((resolve, reject)=>{
+            let idx = 0;
+            _agentsbo.bulkUserAgents(values.bulkNum, values.values.username, values.values, true).then((users) => {
+                if (!users.success) {
+                    resolve({
+                        success: false,
+                        status: 403,
+                        message: users.message
+                    })
+                }
+                let addAgent = new Promise((resolve, reject) => {
+                    users.data.forEach((user) => {
+                        user.domain["params"] = {}
+                        user.domain.params.uuid = user.domain.uuid
+                        _agentsbo.saveOneUserAgent(user,true)
+                            .then(() => {
+                                if (idx < users.length - 1) {
+                                    idx++
+                                } else {
+                                    resolve({success :true,
+                                        message: 'success'})
+                                }
+                            })
+                            .catch(err => {
+                                reject(err)
+                            })
+                    })
+                })
+                Promise.all([addAgent]).then(() => {
+                    resolve({
+                        success: true,
+                        status: 200
+                    })
+                }).catch((err) => {
+                    console.log('errrrrrr', err)
+                    resolve({
+                        success: false,
+                        status: 403,
+                        message : err
+                    })
+                })
+            }).catch((err) => {
+                reject (err)
+            })
+        })
+    }
+
+    generatenumber(length) {
+        let result = '';
+        let characters = '0123456789';
+        let charactersLength = characters.length;
+        for (let i = 0; i < length; i++) {
+            result += characters.charAt(Math.floor(Math.random() *
+                charactersLength));
+        }
+        return result;
     }
 
 
