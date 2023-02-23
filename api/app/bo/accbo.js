@@ -1,14 +1,8 @@
 const {baseModelbo} = require("./basebo");
 let db = require("../models");
-const appHelper = require("../helpers/app");
-const app_config = appHelper.appConfig;
 const moment = require("moment-timezone");
 const PromiseBB = require("bluebird");
-const appSocket = new (require("../providers/AppSocket"))();
-const amqp = require("amqplib/callback_api");
-const path = require("path");
-const rabbitmq_url = appHelper.rabbitmq_url;
-const appDir = path.dirname(require.main.filename);
+
 
 class AccBo extends baseModelbo {
     constructor() {
@@ -17,14 +11,14 @@ class AccBo extends baseModelbo {
         this.primaryKey = "id"
     }
 
-    _getCdrsFunction(params){
-        return new Promise((resolve,reject)=>{
+    _getCdrsFunction(params) {
+        return new Promise((resolve, reject) => {
             const AgentUUID = params.agentUUID || null
             const filter = params.filter || null;
             const limit = parseInt(params.limit) > 0 ? params.limit : 1000;
             const page = params.page || 1;
             const offset = (limit * (page - 1));
-            let {date, directions, startTime, endTime, sipCode, reasonCode,ip, from, to, account_code} = filter;
+            let {date, directions, startTime, endTime, sipCode, reasonCode, ip, from, to, account_code} = filter;
             let sqlCount = `select FILTER
                             from acc_cdrs
                             WHERE SUBSTRING("custom_vars", 0 , POSITION(':' in "custom_vars") ) = :account_code
@@ -69,17 +63,17 @@ class AccBo extends baseModelbo {
                     start_time: moment(date).format('YYYY-MM-DD').concat(' ', startTime),
                     end_time: moment(date).format('YYYY-MM-DD').concat(' ', endTime),
                     sip_code: sipCode,
-                    sip_reason : reasonCode,
+                    sip_reason: reasonCode,
                     directions: directions,
                     account_code: account_code,
-                    src_ip: ip ? ('%'+ip.concat('%')).toString() : null,
-                    from: from ? ('%'+from.concat('%')).toString() : null,
-                    to: to ? ('%'+to.concat('%')).toString() : null,
-                    agent : AgentUUID
+                    src_ip: ip ? ('%' + ip.concat('%')).toString() : null,
+                    from: from ? ('%' + from.concat('%')).toString() : null,
+                    to: to ? ('%' + to.concat('%')).toString() : null,
+                    agent: AgentUUID
                 }
             }).then(countAll => {
                 let pages = Math.ceil(countAll[0].count / params.limit);
-                let extra_where_limit = extra_where_count+= ' ORDER BY start_time DESC LIMIT :limit OFFSET :offset'
+                let extra_where_limit = extra_where_count += ' ORDER BY start_time DESC LIMIT :limit OFFSET :offset'
                 sqlData = sqlData.replace('EXTRA_WHERE', extra_where_limit);
                 sqlData = sqlData.replace('FILTER', '*');
 
@@ -91,20 +85,20 @@ class AccBo extends baseModelbo {
                         start_time: moment(date).format('YYYY-MM-DD').concat(' ', startTime),
                         end_time: moment(date).format('YYYY-MM-DD').concat(' ', endTime),
                         sip_code: sipCode,
-                        sip_reason : reasonCode,
+                        sip_reason: reasonCode,
                         directions: directions,
                         account_code: account_code,
-                        src_ip: ip ? ('%'+ip.concat('%')).toString() : null,
-                        from: from ? ('%'+from.concat('%')).toString() : null,
-                        to: to ? ('%'+to.concat('%')).toString() : null,
-                        agent : AgentUUID
+                        src_ip: ip ? ('%' + ip.concat('%')).toString() : null,
+                        from: from ? ('%' + from.concat('%')).toString() : null,
+                        to: to ? ('%' + to.concat('%')).toString() : null,
+                        agent: AgentUUID
 
                     }
                 }).then(data => {
                     this.db['roles_crms'].findOne({
-                        where : {value : 'agent', active : 'Y'}
-                    }).then(role =>{
-                        this.db['users'].findAll({where : {active : 'Y', role_crm_id : role.id}}).then(users =>{
+                        where: {value: 'agent', active: 'Y'}
+                    }).then(role => {
+                        this.db['users'].findAll({where: {active: 'Y', role_crm_id: role.id}}).then(users => {
                             this.db['accounts'].findAll({
                                 where: {
                                     active: 'Y'
@@ -112,10 +106,10 @@ class AccBo extends baseModelbo {
 
                             }).then((accounts) => {
                                 this.db['campaigns'].findAll({
-                                    where : {
-                                        active : 'Y',
+                                    where: {
+                                        active: 'Y',
                                     }
-                                }).then((campaigns)=>{
+                                }).then((campaigns) => {
                                     let cdrs_data = []
                                     PromiseBB.each(data, item => {
                                         let account_data = accounts.filter(item_acc => item_acc.account_number === item.accountcode);
@@ -125,7 +119,7 @@ class AccBo extends baseModelbo {
                                         });
                                         item.account_info = account_data[0] ? account_data[0].first_name + " " + account_data[0].last_name : null;
                                         item.account = account_data[0];
-                                        item.agent_info = user_data[0] ? user_data[0].first_name + " " + user_data[0].last_name: null;
+                                        item.agent_info = user_data[0] ? user_data[0].first_name + " " + user_data[0].last_name : null;
                                         item.agent_all = user_data[0];
                                         item.campaign = campaign_data[0];
                                         item.campaign_name = campaign_data[0] ? campaign_data[0].campaign_name : null;
@@ -156,52 +150,34 @@ class AccBo extends baseModelbo {
             })
         })
     }
+
     getCdrs(req, res, next) {
         let _this = this;
         const params = req.body;
-        _this._getCdrsFunction(params).then((result)=>{
+        _this._getCdrsFunction(params).then((result) => {
             res.send(result);
-        }).catch(err=>{
-            return _this.sendResponseError(res,['Error.CannotGetCdrs'],1,403);
-        })
-
-
-    };
-
-    pushDataToSocket(req, res, next) {
-        let _this = this;
-        const params = req.body;
-        _this.pushItemsToQueue(params.pages, params).then((items) => {
-            res.send({
-                success: true,
-                data: items,
-            });
         }).catch(err => {
-            _this.sendResponseError(res, [], err);
+            return _this.sendResponseError(res, ['Error.CannotGetCdrs'], 1, 403);
         })
 
-    }
 
-    DataEmitSocket(data, action, key, total, sessionId, totalItems, currentItems) {
-        appSocket.emit('export.cdr', {
-            data: data,
-            action: action,
-            currentItems: currentItems,
-            total: total,
-            current_page: key,
-            sessionId: sessionId,
-            totalItems: totalItems
-        });
     };
 
     getSip_codes(req, res, next) {
         let _this = this;
+        let date = req.body.date;
+        let startTime = moment(date).format('YYYY-MM-DD').concat(' ', req.body.startTime);
+        let endTime = moment(date).format('YYYY-MM-DD').concat(' ', req.body.endTime);
         let sqlSipCode = `select distinct sip_code, sip_reason
                           from acc_cdrs
-                          where sip_code notnull and sip_reason notnull and sip_code != '' and sip_reason != ''`;
+                          where sip_code notnull and sip_reason notnull and sip_code != '' and sip_reason != '' and start_time >= :start_time and end_time <=  :end_time`;
         db.sequelize["cdr-db"]
             .query(sqlSipCode, {
                 type: db.sequelize["cdr-db"].QueryTypes.SELECT,
+                replacements: {
+                    start_time: startTime,
+                    end_time: endTime,
+                }
             })
             .then((sip_codes) => {
                 res.send({
@@ -215,79 +191,166 @@ class AccBo extends baseModelbo {
             });
     }
 
-    pushItemsToQueue = (pages, params) => {
-        return new Promise((resolve, reject) => {
-            let _this = this;
-            params.time_export = new Date().getTime();
-            if (pages !== 0) {
-                amqp.connect(rabbitmq_url, function (error0, connection) {
-                    if (error0) {
-                        throw error0;
+    exportCSV(req, res, next) {
+        let params = req.body;
+        if (params.total < 1) {
+            return res.send({
+                success: false,
+                status: 403,
+                message: "You have to select cdrs"
+            })
+        }
+        if (params.total > 10000) {
+            return res.send({
+                success: false,
+                status: 403,
+                message: "Total CDRS must be less than 10K"
+            })
+        }
+        this._getCdrsFunction(params).then(cdrs => {
+            if (cdrs.success) {
+                let schema = [
+                    {
+                        column: 'start time',
+                        type: 'Date',
+                        currentColumn: 'start_time',
+                    },
+                    {
+                        column: 'end time',
+                        type: 'Date',
+                        currentColumn: 'end_time',
+                    },
+                    {
+                        column: 'duration',
+                        type: 'String',
+                        currentColumn: 'durationsec',
+
+                    },
+                    {
+                        column: 'direction',
+                        type: 'String',
+                        currentColumn: 'calldirection',
+                    },
+                    {
+                        column: 'account',
+                        type: 'String',
+                        currentColumn: 'account',
+
+                    },
+                    {
+                        column: 'src user',
+                        type: 'String',
+                        currentColumn: 'src_user',
+                    }, {
+                        column: 'dst user',
+                        type: 'String',
+                        currentColumn: 'dst_user',
+
+                    }, {
+                        column: 'sip code',
+                        type: 'String',
+                        currentColumn: 'sip_code',
+
+                    }, {
+                        column: 'sip reason',
+                        type: 'String',
+                        currentColumn: 'sip_reason',
+
+                    },
+                    {
+                        column: 'context',
+                        type: 'String',
+                        currentColumn: 'context',
+
+                    },
+
+                    {
+                        column: 'call ID',
+                        type: 'String',
+                        currentColumn: 'callid',
+
+                    },
+                    {
+                        column: 'Call Status',
+                        type: 'String',
+                        currentColumn: 'callstatus',
+
+                    },
+                    {
+                        column: 'SIP From URI CallCenter',
+                        type: 'String',
+                        currentColumn: 'sipfromuri_callcenter',
+
+                    },
+                    {
+                        column: 'Agent',
+                        type: 'String',
+                        currentColumn: 'agent_info',
+
+                    },
+                    {
+                        column: 'Campaign ID',
+                        type: 'String',
+                        currentColumn: 'campaign_name',
+
                     }
-                    connection.createChannel(function (error1, channel) {
-                        if (error1) {
-                            throw error1;
+
+                ]
+                const Sc = ['Start Time', 'End Time', 'Duration (Sec)', 'Direction', 'Account', 'src user', 'dst user', 'sip code', 'sip reason', 'context', 'call ID', 'Call Status', 'SIP From URI CallCenter', 'Agent', 'Campaign Name']
+                let DataCDRS = cdrs.data;
+                let ResultArray = [Sc];
+                let indexMapping = 0;
+                DataCDRS.forEach(data_item => {
+                    this.ReformatOneFileCSV(data_item, schema).then(dataFormat => {
+                        if (indexMapping < DataCDRS.length - 1) {
+                            indexMapping++;
+                            ResultArray.push(dataFormat)
+                        } else {
+                            ResultArray.push(dataFormat);
+                            res.send({
+                                data: ResultArray,
+                                success: true
+                            })
                         }
-                        const queue = app_config.rabbitmq.queues.exportCsv + params.sessionId;
-                        channel.assertQueue(queue, {
-                            durable: true,
-                        });
-                        _this.createItemsArray(pages).then((pages_array) => {
-                            PromiseBB.each(pages_array, (item) => {
-                                params.page = item;
-                                let data = {
-                                    params: params,
-                                    currentPage: item,
-                                    pages: pages,
-                                    sessionId: params.sessionId,
-                                };
-                                channel.sendToQueue(queue, Buffer.from(JSON.stringify(data)), {
-                                    type: "export csv",
-                                });
-                            }).then((all_r) => {
-                                resolve(all_r);
-                            });
-                        });
-                    });
-                });
+                    }).catch(err => {
+                        this.sendResponseError(res, ["Error.CannotGetCDRS"], 1, 403)
+                    })
+                })
             } else {
-                reject(false);
+                res.send({
+                    success: false
+                })
             }
+
+        }).catch(err => {
+            this.sendResponseError(res, ["Error.CannotGetCDRS"], 1, 403)
         });
-    };
-    createItemsArray = (total) => {
+    }
+
+    ReformatOneFileCSV(item, schema) {
         return new Promise((resolve, reject) => {
-            let _this = this;
-            let array = [];
-            let index = 0;
-            for (let i = 1; i <= total; i++) {
-                array.push(i);
-                if (index < total - 1) {
-                    index++;
+            let dataSchema = [];
+            let idx = 0;
+            schema.forEach(data => {
+                if (data.currentColumn === 'account') {
+                    dataSchema.push(item.account ? (item.account.company || '') + "(" + (item.account.first_name || '') + " " + (item.account.last_name || '') + ")" : (item.accountcode || ''))
                 } else {
-                    resolve(array);
+                    dataSchema.push(item[data.currentColumn]);
+
                 }
-            }
+
+                if (idx < schema.length - 1) {
+                    idx++;
+                } else {
+                    if (dataSchema.length !== 0) {
+                        dataSchema[0] = "\r\n" + dataSchema[0]
+                    }
+                    resolve(dataSchema)
+                }
+            })
         })
     }
 
-    downloadCdr(req, res, next) {
-        let _this = this;
-        let file_name = req.params.filename;
-        if (file_name && file_name !== 'undefined') {
-            const file = appDir + '/app/resources/cdrs/' + file_name;
-            res.download(file, function (err) {
-                if (err) {
-                    return _this.sendResponseError(res, ['Cannot DownloadCdr',err], 1,403);
-                }
-            });
-        } else {
-            res.send({
-                success: false,
-                message: 'invalid file name'
-            })
-        }
-    }
 }
 
 module.exports = AccBo

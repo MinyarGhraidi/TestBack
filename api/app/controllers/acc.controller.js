@@ -21,13 +21,10 @@ module.exports ={
     getCdrs: function (req, res, next) {
         _itemAccBo.getCdrs(req, res, next)
     },
-    pushDataToSocket : function (req, res, next){
-        _itemAccBo.pushDataToSocket(req, res, next)
-    },
     getSip_codes: function (req, res, next) {
         _itemAccBo.getSip_codes(req, res, next)
     },
-    downloadCdr: function (req, res, next){
-        _itemAccBo.downloadCdr(req, res, next)
+    exportCSV: function (req, res, next){
+        _itemAccBo.exportCSV(req, res, next)
     }
 }

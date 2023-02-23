@@ -40,6 +40,9 @@ module.exports = (sequelize, Sequelize) => {
                 type: Sequelize.DATE,
                 defaultValue: new Date(),
             },
+            reminder_id: {
+                type: Sequelize.INTEGER,
+            },
         },
         { timestamps: false }
     );
@@ -53,14 +56,16 @@ module.exports = (sequelize, Sequelize) => {
         "status",
         "created_at",
         "updated_at",
-        "list_callfile_id"
+        "list_callfile_id",
+        "reminder_id"
     ]),
         (notifications.prototype.fieldsSearchMetas = [
             "notification_id",
             "account_id",
             "campaign_id",
             "data",
-            "list_callfile_id"
+            "list_callfile_id",
+            "reminder_id"
         ]);
     notifications.associate = function (models) {
         notifications.belongsTo(models.campaigns, {
@@ -71,6 +76,9 @@ module.exports = (sequelize, Sequelize) => {
         })
         notifications.belongsTo(models.listcallfiles, {
             foreignKey: 'list_callfile_id'
+        })
+        notifications.belongsTo(models.reminders, {
+            foreignKey: 'reminder_id'
         })
     };
 
