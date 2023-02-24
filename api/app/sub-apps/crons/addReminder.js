@@ -86,7 +86,12 @@ class AddReminder extends baseModelbo {
                             data: {
                                 agent_id: reminder.agent_id,
                                 Date_Time: reminder.date + ' '+reminder.time,
-                                callfile: reminder.callfile
+                                callfile: {
+                                    note : reminder.callfile.note,
+                                    first_name : reminder.callfile.first_name,
+                                    last_name : reminder.callfile.last_name,
+                                    phone_number : reminder.callfile.phone_number,
+                                }
                             },
                             reminder_id : reminder.reminder_id,
                             status: 'Y',

@@ -25,6 +25,7 @@ class users extends baseModelbo {
 
     signIn(req, res, next) {
         let {username, password, code, web_domain} = req.body;
+        console.log(req.body)
         let _this = this;
         if ((!!!username || !!!password)) {
             return this.sendResponseError(res, ['Error.RequestDataInvalid'], 0, 403);
@@ -54,8 +55,7 @@ class users extends baseModelbo {
                     }).catch((error) => {
                         return this.sendResponseError(res, ['Error.AnErrorHasOccurredUser'], 1, 403);
                     });
-                }
-                else {
+                } else {
                     this.db['accounts'].findOne({
                         where: {
                             web_domain: web_domain,
@@ -63,6 +63,7 @@ class users extends baseModelbo {
                             status: 'Y'
                         }
                     }).then((account_domain) => {
+                        console.log(account_domain)
                         if (account_domain) {
                             this.db['users'].findOne({
                                 include: [{
@@ -188,8 +189,7 @@ class users extends baseModelbo {
                         }).catch((error) => {
                             return this.sendResponseError(res, ['Error.AnErrorHasOccurredUser'], 1, 403);
                         });
-                    }
-                    else if (user.password_hash && password && user.verifyPassword(password)) {
+                    } else if (user.password_hash && password && user.verifyPassword(password)) {
                         if (user.password_hash && password) {
                             this.db['has_permissions'].findAll({
                                 include: [{
@@ -1110,27 +1110,26 @@ class users extends baseModelbo {
         this.db['users'].findOne({where: {user_id: user_id, active: 'Y'}})
             .then(user => {
                 let campaign_id = user.campaign_id;
-                if (campaign_id) {
-                    this.db['campaigns'].findOne({where: {campaign_id: campaign_id, active: 'Y'}})
-                        .then(campaign => {
-                            let status = campaign.status;
-                            let isActiveCampaign = status === 'Y';
-                            res.send({
-                                status: 200,
-                                message: 'success',
-                                data: {campaign_id, isActiveCampaign, script: campaign.script}
-                            })
-                        })
-                        .catch(err => {
-                            return _this.sendResponseError(res, ['Error.AnErrorHasOccurredFetchCampaign', err], 1, 403);
-                        })
-                } else {
-                    res.send({
+                if (!!!campaign_id) {
+                    return res.send({
                         status: 200,
                         message: 'success',
                         data: {campaign_id, isActiveCampaign: false}
                     })
                 }
+                this.db['campaigns'].findOne({where: {campaign_id: campaign_id, active: 'Y'}})
+                    .then(campaign => {
+                        let status = campaign.status;
+                        let isActiveCampaign = status === 'Y';
+                        res.send({
+                            status: 200,
+                            message: 'success',
+                            data: {campaign_id, isActiveCampaign, script: campaign.script}
+                        })
+                    })
+                    .catch(err => {
+                        return _this.sendResponseError(res, ['Error.AnErrorHasOccurredFetchCampaign', err], 1, 403);
+                    })
             })
             .catch(err => {
                 return _this.sendResponseError(res, ['Error.AnErrorHasOccurredFetchUser', err], 1, 403);
@@ -1262,7 +1261,7 @@ class users extends baseModelbo {
                     type: db.sequelize['crm-app'].QueryTypes.SELECT,
                     replacements: {
                         role_crm_id: role.id,
-                        account_id : account_id
+                        account_id: account_id
                     }
                 }).then((user) => {
                     if (user.length === 0) {
@@ -1284,7 +1283,7 @@ class users extends baseModelbo {
         if (!!!account_id) {
             return this.sendResponseError(res, ['Error.AccountIdIsRequired'], 1, 403)
         }
-        this._generateUserName(account_id,isAgent).then(username => {
+        this._generateUserName(account_id, isAgent).then(username => {
             res.json({
                 username
             })
