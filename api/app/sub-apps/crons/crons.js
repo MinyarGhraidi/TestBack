@@ -20,4 +20,4 @@ let Add_Reminder = new Cron("* * * * *", async function () {
 }, null, true, 'Europe/Paris');
 
 Add_CallFiles.start();
-//Add_Reminder.start();
+Add_Reminder.start();

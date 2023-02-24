@@ -144,60 +144,67 @@ class notifications extends baseModelbo {
                             let totalTreated = 0;
                             LCF_ids.forEach((LCF_id) => {
                                 this._saveNotificationByListCallFile_id(LCF_id, campaign.account_id).then(result => {
-                                    totalCallFiles += result.data.total;
-                                    totalTreated += result.data.totalTreated;
+                                    totalCallFiles += result.data.total || 0;
+                                    totalTreated += result.data.totalTreated || 0;
                                     if (idx < LCF_ids.length - 1) {
                                         idx++
                                     } else {
-                                        let PercentagesRestToTreat = 100 - (100 * totalTreated / totalCallFiles).toFixed(2);
-                                        if (PercentagesRestToTreat <= 10) {
-                                            this.db['notifications'].findOne({
-                                                where: {
-                                                    campaign_id: campaign_id,
-                                                    active: 'Y',
-                                                    created_at : {
-                                                        $gte: moment().subtract(1, 'hours').toDate()
-                                                    }
-                                                },
-                                                order: [['created_at', 'DESC']],
-                                                limit : 1
-                                            }).then(LCF_Notifications =>{
-                                                if (LCF_Notifications && LCF_Notifications.length !== 0) {
-                                                    resolve({
-                                                        success : false,
-                                                        data: []
-                                                    })
-                                                }else{
-                                                    let DateTZ = moment(new Date());
-                                                    let data = {
-                                                        account_id: campaign.account_id,
+                                        if(totalCallFiles !== 0){
+                                            let PercentagesRestToTreat = 100 - (100 * totalTreated / totalCallFiles).toFixed(2);
+                                            if (PercentagesRestToTreat <= 10) {
+                                                this.db['notifications'].findOne({
+                                                    where: {
                                                         campaign_id: campaign_id,
-                                                        data: {
-                                                            total: totalCallFiles,
-                                                            totalTreated: totalTreated,
-                                                            percentage: PercentagesRestToTreat + '%',
-                                                            reste: totalCallFiles - totalTreated
-                                                        },
-                                                        status: 'Y',
-                                                        created_at: DateTZ,
-                                                        updated_at: DateTZ
-                                                    }
-                                                    let modalObj = this.db['notifications'].build(data);
-                                                    modalObj.save().then((notif) => {
-                                                        appSocket.emit('save_notification', {
-                                                            target : 'call_file',
-                                                            account_id : campaign.account_id,
-                                                            campaign_id,
-                                                            percentage: PercentagesRestToTreat + '%'
-                                                        });
+                                                        active: 'Y',
+                                                        created_at : {
+                                                            $gte: moment().subtract(1, 'hours').toDate()
+                                                        }
+                                                    },
+                                                    order: [['created_at', 'DESC']],
+                                                    limit : 1
+                                                }).then(LCF_Notifications =>{
+                                                    if (LCF_Notifications && LCF_Notifications.length !== 0) {
                                                         resolve({
-                                                            success: true,
-                                                            data: notif
-                                                        });
-                                                    })
-                                                }
-                                            }).catch(err=> reject(err));
-                                        }else{
+                                                            success : false,
+                                                            data: []
+                                                        })
+                                                    }else{
+                                                        let DateTZ = moment(new Date());
+                                                        let data = {
+                                                            account_id: campaign.account_id,
+                                                            campaign_id: campaign_id,
+                                                            data: {
+                                                                total: totalCallFiles,
+                                                                totalTreated: totalTreated,
+                                                                percentage: PercentagesRestToTreat + '%',
+                                                                reste: totalCallFiles - totalTreated
+                                                            },
+                                                            status: 'Y',
+                                                            created_at: DateTZ,
+                                                            updated_at: DateTZ
+                                                        }
+                                                        let modalObj = this.db['notifications'].build(data);
+                                                        modalObj.save().then((notif) => {
+                                                            appSocket.emit('save_notification', {
+                                                                target : 'call_file',
+                                                                account_id : campaign.account_id,
+                                                                campaign_id,
+                                                                percentage: PercentagesRestToTreat + '%'
+                                                            });
+                                                            resolve({
+                                                                success: true,
+                                                                data: notif
+                                                            });
+                                                        })
+                                                    }
+                                                }).catch(err=> reject(err));
+                                            }else{
+                                                resolve({
+                                                    success: true,
+                                                    data: []
+                                                });
+                                            }
+                                        } else{
                                             resolve({
                                                 success: true,
                                                 data: []
