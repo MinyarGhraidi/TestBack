@@ -132,11 +132,11 @@ class accounts extends baseModelbo {
             ]
             this.changeStatusForEntities(entities, account_id, status).then(() => {
                 this.changeStatusUsers(account_id, status).then(() => {
-                        this.changeStatus_dids(account_id, status).then(() => {
-                            resolve(true);
-                        }).catch(err => {
-                            return reject(err);
-                        })
+                    this.changeStatus_dids(account_id, status).then(() => {
+                        resolve(true);
+                    }).catch(err => {
+                        return reject(err);
+                    })
                 }).catch(err => {
                     return reject(err);
                 });
@@ -270,14 +270,23 @@ class accounts extends baseModelbo {
 
     // ------------------> Add / Edit Account <---------------------
     AddEditAccount(req, res, next) {
-        let _this = this;
-        let nbr_agent;
-        if(req.body.isChecked){
-             nbr_agent = req.body.values.nbr_agents_account;
+        let _this = this
+        let isChecked;
+        let Default_dialer_options;
+        let camp_name;
+        let bulkNum;
+        let agent_options;
+        let Default_queue_options;
+        if (req.body.isChecked) {
+            isChecked = req.body.isChecked
+            Default_dialer_options = req.body.Default_dialer_options;
+            camp_name = req.body.Campaign_name;
+            bulkNum = req.body.bulkNum;
+            agent_options = req.body.agent_options;
+            Default_queue_options = req.body.Default_queue_options;
             delete req.body.values.nbr_agents_account;
             delete req.body.values.Campaign_name
         }
-
         let newAccount = req.body.values;
         let {first_name, last_name} = newAccount;
 
@@ -311,7 +320,7 @@ class accounts extends baseModelbo {
         }
         let sip_device = JSON.parse(JSON.stringify(newAccount.user.sip_device));
         let domain = JSON.parse(JSON.stringify(newAccount.domain));
-        let { password, options, status} = sip_device;
+        let {password, options, status} = sip_device;
         let username = sip_device.username.username;
         if (newAccount.account_id) {
             this.db['accounts'].findOne({
@@ -358,7 +367,6 @@ class accounts extends baseModelbo {
                                                 updated_at: new Date()
                                             }
                                             let uuid_Agent = userData.sip_device.uuid
-                                            console.log(uuid_Agent, update_Agent)
                                             axios
                                                 .put(`${base_url_cc_kam}api/v1/agents/${uuid_Agent}`, update_Agent, call_center_authorization).then((resp) => {
                                                 let update_account = newAccount;
@@ -418,7 +426,7 @@ class accounts extends baseModelbo {
             this.couldAffectDomain(domain.value).then((resultAffection) => {
                 if (resultAffection) {
                     let data_subscriber = {
-                        username : username,
+                        username: username,
                         domain_uuid: domain.uuid,
                         password,
                         domain: domain.label
@@ -460,78 +468,24 @@ class accounts extends baseModelbo {
                                                     returning: true,
                                                     plain: true
                                                 }).then(update_account => {
-                                                    if(req.body.isChecked){
-                                                                let dataCamp ={
-                                                                    campaign_name : req.body.Campaign_name,
-                                                                    campaign_description : req.body.Campaign_name,
-                                                                    campaign_type : 'PREDICTIVE',
-                                                                    account_id : new_account.dataValues.account_id,
-                                                                    list_mix : req.body.Default_dialer_options.list_mix,
-                                                                    list_order : req.body.Default_dialer_options.list_order,
-                                                                    hooper: req.body.Default_dialer_options.hooper,
-                                                                    dial_level: req.body.Default_dialer_options.dial_level,
-                                                                    dialtimeout: req.body.Default_dialer_options.dialtimeout,
-                                                                    params : {},
-                                                                    domain : domain,
-                                                                    updated_at : moment(new Date()),
-                                                                    created_at : moment(new Date())
-                                                                }
-                                                                dataCamp.params.queue = req.body.Default_queue_options;
-                                                                dataCamp.params.queue.accountcode = new_account.dataValues.account_code;
-                                                                dataCamp.params.queue.greetings= [];
-                                                                dataCamp.params.queue.hold_music= [];
-                                                                dataCamp.params.queue.extension=this.generatenumber(12)
-                                                                this.saveCampaign(dataCamp).then(result_camp=>{
-                                                                    if(result_camp.success){
-                                                                        let user = {
-                                                                            first_name: null,
-                                                                            last_name: "",
-                                                                            username: null,
-                                                                            campaign_id: null,
-                                                                            sip_device: {
-                                                                                options: req.body.agent_options,
-                                                                                status: 'logged-out',
-                                                                                enabled: true,
-                                                                                password: null,
-                                                                                domain: domain.label,
-                                                                                subscriber_id: 1,
-                                                                                accountcode: new_account.dataValues.account_code,
-                                                                                created_at : moment().format("YYYY-MM-DD HH:mm:ss"),
-                                                                                updated_at : moment().format("YYYY-MM-DD HH:mm:ss")
-                                                                            },
-                                                                            domain: domain,
-                                                                            password_hash: null,
-                                                                            account_id: new_account.dataValues.account_id,
-                                                                            role_crm_id: 3,
-                                                                            params: {sales: [], status: 'logged-out', pass_web: null, did_gp: []},
-                                                                        };
-                                                                        let dataAgent ={
-                                                                            values: user,
-                                                                            accountcode: new_account.dataValues.account_code,
-                                                                            bulkNum: req.body.bulkNum,
-                                                                            account_id: new_account.dataValues.account_id
-                                                                        }
-                                                                        this.addAgentBulk(dataAgent).then(resultAgent=>{
-                                                                            if(resultAgent.success){
-                                                                                res.send({
-                                                                                    status: 200,
-                                                                                    message: 'success',
-                                                                                    success: true,
-                                                                                    data: new_user
-                                                                                })
-                                                                            }
-
-                                                                        })
-                                                                    }else{
-                                                                        res.send({
-                                                                            status: 200,
-                                                                            message: 'error to create camp',
-                                                                            success: false,
-                                                                        })
-                                                                    }
+                                                    if (isChecked) {
+                                                        this.createCamp_Agent(Default_queue_options, Default_dialer_options, bulkNum, agent_options, camp_name, new_account, domain).then(result_camp_agent => {
+                                                            if (result_camp_agent.success) {
+                                                                res.send({
+                                                                    status: 200,
+                                                                    message: 'success',
+                                                                    success: true,
+                                                                    data: new_user
                                                                 })
-
-                                                    }else{
+                                                            } else {
+                                                                res.send({
+                                                                    status: 200,
+                                                                    message: result_camp_agent.message,
+                                                                    success: false,
+                                                                })
+                                                            }
+                                                        })
+                                                    } else {
                                                         res.send({
                                                             status: 200,
                                                             message: 'success',
@@ -540,12 +494,10 @@ class accounts extends baseModelbo {
                                                         })
                                                     }
 
-                                                })
-                                                    .catch(err => {
+                                                }).catch(err => {
                                                         return _this.sendResponseError(res, ['Error.AnErrorHasOccurredUser', err], 1, 403);
                                                     })
-                                            })
-                                                .catch(err => {
+                                            }).catch(err => {
                                                     return _this.sendResponseError(res, ['Error.AnErrorHasOccurredUser', err], 1, 403);
                                                 })
                                         } else {
@@ -747,11 +699,11 @@ class accounts extends baseModelbo {
                 'didsgroups', 'roles', 'templates_list_call_files', 'dialplan_items',
             ]
             this.deleteEntitiesDbs(entities, account_id).then(() => {
-                    this.deleteDids(account_id).then(() => {
-                        resolve(true);
-                    }).catch((err) => {
-                        reject(err);
-                    })
+                this.deleteDids(account_id).then(() => {
+                    resolve(true);
+                }).catch((err) => {
+                    reject(err);
+                })
             }).catch((err) => {
                 reject(err);
             })
@@ -970,8 +922,8 @@ class accounts extends baseModelbo {
 
     }
 
-    saveCampaign (values){
-        return new Promise((resolve, reject)=>{
+    saveCampaign(values) {
+        return new Promise((resolve, reject) => {
             let {queue} = values.params;
             let params = values.params;
             _campaignsbo.generateUniqueUsernameFunction()
@@ -995,33 +947,29 @@ class accounts extends baseModelbo {
                                                 status: 200,
                                                 message: "success",
                                                 data: campaign,
-                                                success : true
+                                                success: true
                                             })
                                         })
                                         .catch(err => {
-                                            console.log('errr14', err)
                                             reject(err)
                                         })
                                 })
                                 .catch((err) => {
-                                    console.log('errr13', err)
                                     reject(err)
                                 });
                         })
                         .catch((err) => {
-                            console.log('errr11', err)
                             reject(err)
                         });
                 })
                 .catch((err) => {
-                    console.log('errr12', err)
                     reject(err)
                 });
         })
     }
 
-    addAgentBulk(values){
-        return new Promise((resolve, reject)=>{
+    addAgentBulk(values) {
+        return new Promise((resolve, reject) => {
             let idx = 0;
             _agentsbo.bulkUserAgents(values.bulkNum, values.values.username, values.values, true).then((users) => {
                 if (!users.success) {
@@ -1035,13 +983,15 @@ class accounts extends baseModelbo {
                     users.data.forEach((user) => {
                         user.domain["params"] = {}
                         user.domain.params.uuid = user.domain.uuid
-                        _agentsbo.saveOneUserAgent(user,true)
+                        _agentsbo.saveOneUserAgent(user, true)
                             .then(() => {
                                 if (idx < users.length - 1) {
                                     idx++
                                 } else {
-                                    resolve({success :true,
-                                        message: 'success'})
+                                    resolve({
+                                        success: true,
+                                        message: 'success'
+                                    })
                                 }
                             })
                             .catch(err => {
@@ -1055,15 +1005,14 @@ class accounts extends baseModelbo {
                         status: 200
                     })
                 }).catch((err) => {
-                    console.log('errrrrrr', err)
                     resolve({
                         success: false,
                         status: 403,
-                        message : err
+                        message: err
                     })
                 })
             }).catch((err) => {
-                reject (err)
+                reject(err)
             })
         })
     }
@@ -1077,6 +1026,104 @@ class accounts extends baseModelbo {
                 charactersLength));
         }
         return result;
+    }
+
+    createCamp_Agent(Default_queue_options, Default_dialer_options, bulkNum, agent_options, camp_name, new_account, domain) {
+        return new Promise((resolve, reject) => {
+            let dataCamp = {
+                campaign_name: camp_name,
+                campaign_description: camp_name,
+                campaign_type: 'PREDICTIVE',
+                account_id: new_account.dataValues.account_id,
+                list_mix: Default_dialer_options.list_mix,
+                list_order: Default_dialer_options.list_order,
+                hopper: Default_dialer_options.hooper,
+                dial_level: Default_dialer_options.dial_level,
+                dialtimeout: Default_dialer_options.dialtimeout,
+                params: {},
+                domain: domain,
+                updated_at: moment(new Date()),
+                created_at: moment(new Date())
+            }
+            dataCamp.params.queue = Default_queue_options;
+            dataCamp.params.queue.accountcode = new_account.dataValues.account_code;
+            dataCamp.params.queue.greetings = [];
+            dataCamp.params.queue.hold_music = [];
+            dataCamp.params.queue.extension = this.generatenumber(12)
+            this.saveCampaign(dataCamp).then(result_camp => {
+                if (result_camp.success) {
+                    this.db['roles_crms'].findOne({
+                        where:{
+                            value: 'agent',
+                            active: 'Y'
+                        }
+                    }).then(role_agent=>{
+                        if(role_agent){
+                            let user = {
+                                first_name: null,
+                                last_name: "",
+                                username: null,
+                                campaign_id: null,
+                                sip_device: {
+                                    options: agent_options,
+                                    status: 'logged-out',
+                                    enabled: true,
+                                    password: null,
+                                    domain: domain.label,
+                                    subscriber_id: 1,
+                                    accountcode: new_account.dataValues.account_code,
+                                    created_at: moment().format("YYYY-MM-DD HH:mm:ss"),
+                                    updated_at: moment().format("YYYY-MM-DD HH:mm:ss")
+                                },
+                                domain: domain,
+                                password_hash: null,
+                                account_id: new_account.dataValues.account_id,
+                                role_crm_id: role_agent.id,
+                                params: {sales: [], status: 'logged-out', pass_web: null, did_gp: []},
+                            };
+                            let dataAgent = {
+                                values: user,
+                                accountcode: new_account.dataValues.account_code,
+                                bulkNum: bulkNum,
+                                account_id: new_account.dataValues.account_id
+                            }
+                            this.addAgentBulk(dataAgent).then(resultAgent => {
+                                if (resultAgent.success) {
+                                    resolve({
+                                        status: 200,
+                                        message: 'success',
+                                        success: true,
+                                        data: resultAgent
+                                    })
+                                } else {
+                                    resolve({
+                                        message: 'error to create agent',
+                                        success: false,
+
+                                    })
+                                }
+
+                            })
+                        }else{
+                            resolve({
+                                status: 200,
+                                message: 'error to get agent role',
+                                success: false,
+                            })
+                        }
+                    }).catch(err=>{
+                        reject(err)
+                    })
+
+                } else {
+                    resolve({
+                        status: 200,
+                        message: 'error to create camp',
+                        success: false,
+                    })
+                }
+            })
+        })
     }
 
 
