@@ -679,52 +679,76 @@ class agents extends baseModelbo {
     onConnectFunc(user_id, uuid, crmStatus, telcoStatus, pauseStatus = null) {
         return new Promise((resolve, reject) => {
             if (uuid) {
-                axios
-                    .get(`${base_url_cc_kam}api/v1/agents/${uuid}`, call_center_authorization)
-                    .then(resp => {
-                        let agent = {"status": telcoStatus};
-                        axios
-                            .put(`${base_url_cc_kam}api/v1/agents/${uuid}/status`, agent, call_center_authorization)
-                            .then(() => {
-                                this.db["users"].findOne({where: {user_id: user_id}})
-                                    .then(user => {
-                                        if (user) {
-                                            let params = user.params;
-                                            user.updated_at = moment(new Date());
-                                            this.updateAgentStatus(user_id, user, telcoStatus, crmStatus, params, pauseStatus)
-                                                .then(agent => {
-                                                    if (agent.success) {
-                                                        resolve({
-                                                            success: true,
-                                                            agent: agent
-                                                        });
-                                                    } else {
-                                                        resolve({
-                                                            success: false,
-                                                        });
-                                                    }
-                                                })
-                                                .catch((err) => {
-                                                    reject(err);
+                this.OnConnectTelco(uuid, telcoStatus).then(result_telco=>{
+                    if(result_telco.success){
+                        this.db["users"].findOne({where: {user_id: user_id}})
+                            .then(user => {
+                                if (user) {
+                                    let params = user.params;
+                                    user.updated_at = moment(new Date());
+                                    this.updateAgentStatus(user_id, user, telcoStatus, crmStatus, params, pauseStatus)
+                                        .then(agent => {
+                                            if (agent.success) {
+                                                resolve({
+                                                    success: true,
+                                                    agent: agent
                                                 });
-                                        } else {
-                                            resolve({
-                                                success: false
-                                            })
-                                        }
-
+                                            } else {
+                                                resolve({
+                                                    success: false,
+                                                });
+                                            }
+                                        })
+                                        .catch((err) => {
+                                            reject(err);
+                                        });
+                                } else {
+                                    resolve({
+                                        success: false
                                     })
-                                    .catch((err) => {
-                                        reject(err);
-                                    });
+                                }
+
                             })
                             .catch((err) => {
                                 reject(err);
                             });
-                    })
-                    .catch((err) => {
-                        reject(err);
-                    });
+                    }else{
+                        this.db["users"].findOne({where: {user_id: user_id}})
+                            .then(user => {
+                                if (user) {
+                                    let params = user.params;
+                                    user.updated_at = moment(new Date());
+                                    this.updateAgentStatus(user_id, user, "logged-out", "connected", params, pauseStatus)
+
+                                        .then(agent => {
+                                            if (agent.success) {
+                                                resolve({
+                                                    success: true,
+                                                    agent: agent
+                                                });
+                                            } else {
+                                                resolve({
+                                                    success: false,
+                                                });
+                                            }
+                                        })
+                                        .catch((err) => {
+                                            reject(err);
+                                        });
+                                } else {
+                                    resolve({
+                                        success: false
+                                    })
+                                }
+
+                            })
+                            .catch((err) => {
+                                reject(err);
+                            });
+                    }
+                }).catch((err) => {
+                    reject(err);
+                });
             } else {
                 reject(false)
             }
@@ -1737,6 +1761,31 @@ class agents extends baseModelbo {
                 charactersLength));
         }
         return result;
+    }
+
+    OnConnectTelco (uuid,telcoStatus){
+        return new Promise((resolve, reject)=>{
+            axios
+                .get(`${base_url_cc_kam}api/v1/agents/${uuid}`, call_center_authorization)
+                .then(resp => {
+                    let agent = {"status": telcoStatus};
+                    axios
+                        .put(`${base_url_cc_kam}api/v1/agents/${uuid}/status`, agent, call_center_authorization)
+                        .then(() => {
+                            resolve({
+                                success: true
+                            })
+                        }).catch(err=>{
+                        resolve({
+                            success: false
+                        })
+                    })
+                }).catch(err=>{
+                resolve({
+                    success: true
+                })
+            })
+        })
     }
 
 }
