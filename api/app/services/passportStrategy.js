@@ -15,6 +15,7 @@ const hookJWTStrategy = (passport) => {
 
     passport.use(new JWTStrategy(options, (JWTPayload, callback) => {
         callback(null, JWTPayload);
+        return
         db.users.findOne({ where: { user_email: JWTPayload.user_email } })
             .then((user) => {
                 if (!user) {
