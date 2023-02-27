@@ -54,6 +54,9 @@ module.exports =(sequelize, Sequelize) =>{
         reminder.belongsTo(models.callfiles, {
             foreignKey: 'call_file_id'
         })
+        reminder.belongsTo(models.users, {
+            foreignKey: 'agent_id'
+        })
         reminder.hasMany(models.notifications, {
             foreignKey: 'reminder_id'
         })
