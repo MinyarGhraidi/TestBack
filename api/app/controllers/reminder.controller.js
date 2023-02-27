@@ -17,4 +17,7 @@ module.exports = {
     delete: function (req, res, next) {
         rem_DaoInst.delete(req, res, next);
     },
+    findAllReminders: function (req, res, next) {
+        rem_DaoInst.findAllReminders(req, res, next);
+    },
 }

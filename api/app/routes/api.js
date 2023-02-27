@@ -400,6 +400,8 @@ let apiRouters = function (passport) {
     router.put('/api/callhistory/update',passport.authenticate('jwt', {session: false}),CallhistoryController.update);
     router.post('/api/callhistory/updateCallhistory',passport.authenticate('jwt', {session: false}),CallhistoryController.updateCall);
 
+
+    router.post('/api/reminder/findAllReminders', ReminderController.findAllReminders);
     router.post('/api/reminder/find/:params?', passport.authenticate('jwt', {session: false}), ReminderController.find);
     router.get('/api/reminder/findById/:entity_id', passport.authenticate('jwt', {session: false}), ReminderController.findById);
     router.put('/api/reminder/update', passport.authenticate('jwt', {session: false}), ReminderController.update);
