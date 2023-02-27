@@ -271,24 +271,17 @@ class accounts extends baseModelbo {
     // ------------------> Add / Edit Account <---------------------
     AddEditAccount(req, res, next) {
         let _this = this
-        let isChecked;
-        let Default_dialer_options;
-        let camp_name;
-        let bulkNum;
-        let agent_options;
-        let Default_queue_options;
+        let isChecked = req.body.isChecked
+        let Default_dialer_options = req.body.Default_dialer_options;
+        let camp_name = req.body.Campaign_name;
+        let bulkNum = req.body.bulkNum;
+        let agent_options = req.body.agent_options;
+        let Default_queue_options = req.body.Default_queue_options;
         if (req.body.isChecked) {
-            isChecked = req.body.isChecked
-            Default_dialer_options = req.body.Default_dialer_options;
-            camp_name = req.body.Campaign_name;
-            bulkNum = req.body.bulkNum;
-            agent_options = req.body.agent_options;
-            Default_queue_options = req.body.Default_queue_options;
             delete req.body.values.nbr_agents_account;
             delete req.body.values.Campaign_name
         }
         let newAccount = req.body.values;
-        let {first_name, last_name} = newAccount;
 
         let data_account = {
             account_code: newAccount.account_code,
@@ -438,7 +431,7 @@ class accounts extends baseModelbo {
                         .then((resp) => {
                             let result = resp.data.result;
                             let data_agent = {
-                                name: first_name + " " + last_name,
+                                name: newAccount.first_name + " " + newAccount.last_name,
                                 domain_uuid: result.domain_uuid,
                                 subscriber_uuid: result.uuid,
                                 options,
