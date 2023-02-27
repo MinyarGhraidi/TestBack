@@ -154,7 +154,7 @@ class agents extends baseModelbo {
     saveUserAgent(req, res, next) {
         let _this = this;
         let idx = 0;
-        let {values, accountcode, bulkNum, account_id,isAgent = true} = req.body;
+        let {values, accountcode, bulkNum, account_id, isAgent = true} = req.body;
         if (!!!bulkNum) {
             _this.sendResponseError(res, ['Error.BulkNum is required'])
         } else {
@@ -188,7 +188,7 @@ class agents extends baseModelbo {
                                         }
                                         let addAgent = new Promise((resolve, reject) => {
                                             users.data.forEach((user) => {
-                                                this.saveOneUserAgent(user,isAgent)
+                                                this.saveOneUserAgent(user, isAgent)
                                                     .then(() => {
                                                         if (idx < users.length - 1) {
                                                             idx++
@@ -210,7 +210,7 @@ class agents extends baseModelbo {
                                             res.send({
                                                 success: false,
                                                 status: 403,
-                                                message : err.response.data.errors.username[0] ? 'extension required !' : 'Failed Try Again'
+                                                message: err.response.data.errors.username[0] ? 'extension required !' : 'Failed Try Again'
                                             })
                                         })
                                     }).catch((err) => {
@@ -219,10 +219,10 @@ class agents extends baseModelbo {
                                 } else {
                                     res.send({
                                         success: false,
-                                        status : 403,
+                                        status: 403,
                                         data: [],
                                         agents_available: agents_available,
-                                        message: agents_available === 0 ? "you reached your limit on adding agents ! " : `You only have ${agents_available} agent${agents_available > 1 ?'s' : ''} to add !`
+                                        message: agents_available === 0 ? "you reached your limit on adding agents ! " : `You only have ${agents_available} agent${agents_available > 1 ? 's' : ''} to add !`
                                     })
                                 }
                             }).catch((err) => {
@@ -266,7 +266,7 @@ class agents extends baseModelbo {
                 })
             } else {
                 let AgentRole = 'agent'
-                if(isAgent){
+                if (isAgent) {
                     AgentRole = 'user'
                 }
                 _usersbo._generateUserName(user.account_id, AgentRole).then(userName => {
@@ -383,7 +383,7 @@ class agents extends baseModelbo {
                             _usersbo
                                 .saveUserFunction(UserAgent)
                                 .then(agent => {
-                                    if(isAgent){
+                                    if (isAgent) {
                                         let user_id = agent.user_id;
                                         let dateNow = moment(new Date());
                                         let agentLog = {
@@ -401,8 +401,7 @@ class agents extends baseModelbo {
                                             .catch(err => {
                                                 reject(err)
                                             })
-                                    }
-                                    else {
+                                    } else {
                                         resolve(agent)
                                     }
                                 })
@@ -665,7 +664,7 @@ class agents extends baseModelbo {
                     campaign_id: campaign_id,
                     account_id: account_id
                 };
-                     appSocket.emit('agent_connection', data_agent);
+                appSocket.emit('agent_connection', data_agent);
                 res.send({
                     status: 200,
                     message: 'success'
@@ -679,8 +678,8 @@ class agents extends baseModelbo {
     onConnectFunc(user_id, uuid, crmStatus, telcoStatus, pauseStatus = null) {
         return new Promise((resolve, reject) => {
             if (uuid) {
-                this.OnConnectTelco(uuid, telcoStatus).then(result_telco=>{
-                    if(result_telco.success){
+                this.OnConnectTelco(uuid, telcoStatus).then(result_telco => {
+                    if (result_telco.success) {
                         this.db["users"].findOne({where: {user_id: user_id}})
                             .then(user => {
                                 if (user) {
@@ -712,7 +711,7 @@ class agents extends baseModelbo {
                             .catch((err) => {
                                 reject(err);
                             });
-                    }else{
+                    } else {
                         this.db["users"].findOne({where: {user_id: user_id}})
                             .then(user => {
                                 if (user) {
@@ -895,33 +894,33 @@ class agents extends baseModelbo {
                     _usersbo.verifyTokenParam(user.current_session_token).then((res) => {
                         if (res === true) {
                             let {sip_device, first_name, last_name, user_id, campaign_id} = user;
-                                this.db['agent_log_events'].findAll({
-                                    where: {active: 'Y', user_id: user_id},
-                                    order: [['agent_log_event_id', 'DESC']]
+                            this.db['agent_log_events'].findAll({
+                                where: {active: 'Y', user_id: user_id},
+                                order: [['agent_log_event_id', 'DESC']]
+                            })
+                                .then(events => {
+                                    if (events && events.length !== 0 && events[0].action_name !== 'logged-out') {
+                                        Users.push({
+                                            user_id: user_id,
+                                            first_name: first_name,
+                                            last_name: last_name,
+                                            uuid: sip_device.uuid,
+                                            crmStatus: user.params.status,
+                                            telcoStatus: sip_device.status,
+                                            timerStart: events[0].start_at,
+                                            campaign_id: campaign_id,
+                                            extension: sip_device.username
+                                        });
+                                    }
+                                    if (idx < agents.length - 1) {
+                                        idx++;
+                                    } else {
+                                        resolve(Users);
+                                    }
                                 })
-                                    .then(events => {
-                                        if(events && events.length !== 0 && events[0].action_name !== 'logged-out') {
-                                            Users.push({
-                                                user_id: user_id,
-                                                first_name: first_name,
-                                                last_name: last_name,
-                                                uuid: sip_device.uuid,
-                                                crmStatus: user.params.status,
-                                                telcoStatus: sip_device.status,
-                                                timerStart: events[0].start_at,
-                                                campaign_id: campaign_id,
-                                                extension : sip_device.username
-                                            });
-                                        }
-                                        if (idx < agents.length - 1) {
-                                            idx++;
-                                        } else {
-                                            resolve(Users);
-                                        }
-                                    })
-                                    .catch(err => {
-                                        reject(err)
-                                    })
+                                .catch(err => {
+                                    reject(err)
+                                })
 
                         } else {
                             this.db['users'].update({current_session_token: null}, {where: {user_id: user.user_id}}).then(() => {
@@ -1064,7 +1063,7 @@ class agents extends baseModelbo {
         } = filter
         let dataSelect_from = moment(dateSelected_from).format('YYYY-MM-DD').concat(' ', start_time)
         let dataSelect_to = moment(dateSelected_to).format('YYYY-MM-DD').concat(' ', end_time)
-        this.DataCallsAgents(agent_ids, listCallFiles_ids, dataSelect_from, dataSelect_to,campaign_ids).then(data_call => {
+        this.DataCallsAgents(agent_ids, listCallFiles_ids, dataSelect_from, dataSelect_to, campaign_ids).then(data_call => {
             let FilteredUsers_ids = [];
             data_call.map(user => FilteredUsers_ids.push(user.agent_id))
             this.DataActionAgents(FilteredUsers_ids, dataSelect_from, dataSelect_to).then(data_actions => {
@@ -1150,7 +1149,7 @@ class agents extends baseModelbo {
                     finished_at: end_time,
                     user_ids: agent_ids,
                     listCallFile_ids: list_CallFile_ids,
-                    campaign_ids:campaign_ids
+                    campaign_ids: campaign_ids
                 }
             }).then(result => {
                 if (result && result.length !== 0) {
@@ -1277,7 +1276,7 @@ class agents extends baseModelbo {
             Promise.all([promiseParams]).then(() => {
                 let idx = 0;
                 let resultArray = [];
-                if(agent_ids && agent_ids.length === 0){
+                if (agent_ids && agent_ids.length === 0) {
                     res.send({
                         success: false,
                         data: [],
@@ -1418,20 +1417,20 @@ class agents extends baseModelbo {
                     campaign_ids: campaign_ids
                 }
             }).then(data_stats => {
-                    let total = 0;
-                    data_stats.map(item =>{
-                        total+= parseInt(item.total);
-                    })
-                    data_stats.push({
-                        'label' : 'total',
-                        'code' : 'total',
-                        'total' : total
-                    })
-                    resolve({
-                        success: true,
-                        data: data_stats,
-                        status: 200
-                    })
+                let total = 0;
+                data_stats.map(item => {
+                    total += parseInt(item.total);
+                })
+                data_stats.push({
+                    'label': 'total',
+                    'code': 'total',
+                    'total': total
+                })
+                resolve({
+                    success: true,
+                    data: data_stats,
+                    status: 200
+                })
             }).catch(err => {
                 reject({
                     success: false,
@@ -1568,17 +1567,17 @@ class agents extends baseModelbo {
                 end_time,
                 pauseStatus
             } = params;
-            let sqlCount = `  
+            let sqlCount = `
                 select distinct case
-                           WHEN count(ALE.pause_status_id) is null THEN 0
-                           ELSE count(ALE.pause_status_id)
-                           END  as total,
-                               ALE.user_id,
-                               U.first_name,
-                               U.last_name,
-                               U.profile_image_id,
-                               CONCAT(U.first_name, ' ', U.last_name) as username,
-                               sum(ALE.finish_at - ALE.start_at)
+                                    WHEN count(ALE.pause_status_id) is null THEN 0
+                                    ELSE count(ALE.pause_status_id)
+                                    END                                as total,
+                                ALE.user_id,
+                                U.first_name,
+                                U.last_name,
+                                U.profile_image_id,
+                                CONCAT(U.first_name, ' ', U.last_name) as username,
+                                sum(ALE.finish_at - ALE.start_at)
                 from public.agent_log_events as ALE
                          left join pausestatuses as PS
                                    on ALE.pause_status_id = PS.pausestatus_id
@@ -1589,7 +1588,7 @@ class agents extends baseModelbo {
                   and PS.status = 'Y'
                   and ALE.active = 'Y'
                     WHERECOND
-                group by ALE.user_id, CONCAT(U.first_name, ' ', U.last_name),U.first_name,U.last_name,U.profile_image_id
+                group by ALE.user_id, CONCAT(U.first_name, ' ', U.last_name), U.first_name, U.last_name, U.profile_image_id
             `
             let extraWhere = '';
             if (agent_ids && agent_ids.length !== 0) {
@@ -1617,7 +1616,13 @@ class agents extends baseModelbo {
                 let dataS = [];
                 if (data_stats && data_stats.length !== 0) {
 
-                    data_stats.map(item => dataS.push({user_id: item.user_id, username: item.username, profile_id : item.profile_image_id, first_name : item.first_name, last_name : item.last_name}))
+                    data_stats.map(item => dataS.push({
+                        user_id: item.user_id,
+                        username: item.username,
+                        profile_id: item.profile_image_id,
+                        first_name: item.first_name,
+                        last_name: item.last_name
+                    }))
                 }
                 resolve(dataS)
             }).catch(err => {
@@ -1641,11 +1646,17 @@ class agents extends baseModelbo {
             let AllU = [];
             if (UsersFetch && UsersFetch.length !== 0) {
                 UsersFetch.forEach(U => {
-                    AllU.push({user_id: U.user_id, username: U.first_name + ' ' + U.last_name, profile_id : U.profile_image_id, first_name : U.first_name, last_name : U.last_name})
+                    AllU.push({
+                        user_id: U.user_id,
+                        username: U.first_name + ' ' + U.last_name,
+                        profile_id: U.profile_image_id,
+                        first_name: U.first_name,
+                        last_name: U.last_name
+                    })
                 })
             }
             this.countUsers(params).then(resUsers => {
-                if(agent_ids && agent_ids.length === 0){
+                if (agent_ids && agent_ids.length === 0) {
                     AllU = resUsers;
                 }
                 this.squeletteQuery(pauseStatus).then(SqueletteQuery => {
@@ -1659,10 +1670,10 @@ class agents extends baseModelbo {
                                CONCAT(U.first_name, ' ', U.last_name) AS username,
                                sum(ALE.finish_at - ALE.start_at) as time
                         from public.agent_log_events as ALE
-                                 left join pausestatuses as PS
-                                           on ALE.pause_status_id = PS.pausestatus_id
-                                 left join users as U
-                                           on ALE.user_id = U.user_id
+                            left join pausestatuses as PS
+                        on ALE.pause_status_id = PS.pausestatus_id
+                            left join users as U
+                            on ALE.user_id = U.user_id
                         where ALE.action_name = 'on-break'
                           and PS.active = 'Y'
                           and PS.status = 'Y'
@@ -1694,7 +1705,7 @@ class agents extends baseModelbo {
                         }
                     }).then(data_stats => {
                         let dataArray = [];
-                        AllU.forEach((user,index) => {
+                        AllU.forEach((user, index) => {
                             let SQ_Demo = SqueletteQuery[0];
                             SQ_Demo = {
                                 ...SQ_Demo,
@@ -1763,8 +1774,8 @@ class agents extends baseModelbo {
         return result;
     }
 
-    OnConnectTelco (uuid,telcoStatus){
-        return new Promise((resolve, reject)=>{
+    OnConnectTelco(uuid, telcoStatus) {
+        return new Promise((resolve, reject) => {
             axios
                 .get(`${base_url_cc_kam}api/v1/agents/${uuid}`, call_center_authorization)
                 .then(resp => {
@@ -1775,12 +1786,12 @@ class agents extends baseModelbo {
                             resolve({
                                 success: true
                             })
-                        }).catch(err=>{
+                        }).catch(err => {
                         resolve({
                             success: false
                         })
                     })
-                }).catch(err=>{
+                }).catch(err => {
                 resolve({
                     success: false
                 })

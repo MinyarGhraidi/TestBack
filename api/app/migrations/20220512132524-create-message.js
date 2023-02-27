@@ -23,7 +23,7 @@ module.exports = {
       },
       attachment_post_id: {
         allowNull: true,
-        type: Sequelize.STRING
+        type: Sequelize.INTEGER
       },
       created_at: {
         allowNull: true,
