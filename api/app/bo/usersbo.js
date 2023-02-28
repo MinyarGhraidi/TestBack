@@ -25,7 +25,6 @@ class users extends baseModelbo {
 
     signIn(req, res, next) {
         let {username, password, code, web_domain} = req.body;
-        console.log(req.body)
         let _this = this;
         if ((!!!username || !!!password)) {
             return this.sendResponseError(res, ['Error.RequestDataInvalid'], 0, 403);
@@ -63,7 +62,6 @@ class users extends baseModelbo {
                             status: 'Y'
                         }
                     }).then((account_domain) => {
-                        console.log(account_domain)
                         if (account_domain) {
                             this.db['users'].findOne({
                                 include: [{

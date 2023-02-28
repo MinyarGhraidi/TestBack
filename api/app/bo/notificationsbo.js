@@ -488,7 +488,6 @@ class notifications extends baseModelbo {
 
                     })
                         .catch(err => {
-                            console.log(err)
                             return res.send({
                                 success: false,
                                 status: 403,

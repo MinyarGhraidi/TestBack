@@ -77,7 +77,6 @@ class AddReminder extends baseModelbo {
                     '$notifications.reminder_id$' : null
                 }
             }).then(resultData =>{
-                console.log(resultData)
                 if(resultData && resultData.length !== 0){
                     let idx = 0;
                     resultData.forEach(reminder =>{

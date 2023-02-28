@@ -29,7 +29,7 @@ module.exports = (sequelize, Sequelize) => {
                 defaultValue: 'Y'
             },
             status: {
-                type: Sequelize.BOOLEAN,
+                type: Sequelize.STRING,
                 defaultValue: 'Y'
             },
             created_at: {

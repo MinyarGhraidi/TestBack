@@ -191,7 +191,6 @@ class campaigns extends baseModelbo {
                 })
             })
             .catch((err) => {
-                console.log(err)
                 return _this.sendResponseError(res, ['Cannot delete Campaign', err], 1, 403);
             });
     }
