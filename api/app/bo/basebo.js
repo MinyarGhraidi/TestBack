@@ -372,16 +372,9 @@ class baseModelbo {
                 this.db['didsgroups'].findOne({where : {did_id : _id}}).then(didGp=>{
                     let status = didGp.status === 'Y' ? 'N' : 'Y'
                     this.changeStatusWithChild('didsgroups', 'dids', 'did_id', 'did_group_id', _id,status).then(() => {
-                        this.deleteDidGroupFromCampaign(parseInt(_id),didGp.account_id).then(()=>{
-                            res.json({
-                                success: true,
-                                messages: 'deleted'
-                            })
-                        }).catch(err=>{
-                            res.json({
-                                success: false,
-                                messages: 'Cant delete'
-                            })
+                        res.json({
+                            success: true,
+                            messages: 'status changed Successfully !'
                         })
                     }).catch(err=>{
                         res.json({
