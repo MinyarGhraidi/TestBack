@@ -12,6 +12,15 @@
         "define": {
           "createdAt": "created_at",
           "updatedAt": "updated_at"
+        },
+        "dialectOptions": {
+          "options": {
+            "requestTimeout": 30000
+          }
+        },
+        "pool": {
+          "acquire": 100000000,
+          "idle": 100000
         }
       },
       "cdr-db": {
