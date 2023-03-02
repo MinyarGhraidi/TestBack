@@ -123,6 +123,9 @@ module.exports = (sequelize, Sequelize) => {
             dst_user :{
                 type: Sequelize.STRING
             },
+            sip_reason_crm :{
+                type: Sequelize.STRING
+            },
 
         },
         {timestamps: false}
@@ -167,7 +170,8 @@ module.exports = (sequelize, Sequelize) => {
         "sip_code",
         "sip_reason",
         "src_user",
-        "dst_user"
+        "dst_user",
+        "sip_reason_crm"
 
     ];
 
