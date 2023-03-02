@@ -15,6 +15,7 @@ module.exports = {
                 type: Sequelize.INTEGER
             },
             active: {
+                allowNull: true,
                 type: Sequelize.STRING,
                 defaultValue: 'Y'
             },

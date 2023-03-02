@@ -56,10 +56,7 @@ module.exports = (sequelize, Sequelize) => {
                 allowNull: true,
                 type: Sequelize.DATE,
                 defaultValue: new Date()
-            },
-            is_inbound: {
-                type: Sequelize.STRING
-            },
+            }
         },
         {timestamps: false,}
     )
@@ -79,8 +76,7 @@ module.exports = (sequelize, Sequelize) => {
         'codec_prefs',
         'channels', 
         'status',
-        'gateways',
-        'is_inbound'
+        'gateways'
     ],
     trunck.prototype.fieldsSearchMetas = [
         'trunck_id',
@@ -97,9 +93,8 @@ module.exports = (sequelize, Sequelize) => {
         'codec_prefs',
         'channels', 
         'status',
-        'gateways',
-        'is_inbound'
-        ],
+        'gateways'
+        ]
         trunck.associate = function (models) {
             trunck.belongsTo(models.accounts, {
                 foreignKey: 'account_id'

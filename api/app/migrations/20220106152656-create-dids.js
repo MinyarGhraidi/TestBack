@@ -20,6 +20,7 @@ module.exports = {
         defaultValue: 'Y'
       },
       status: {
+        allowNull: true,
         type: Sequelize.STRING,
         defaultValue: 'Y'
       },

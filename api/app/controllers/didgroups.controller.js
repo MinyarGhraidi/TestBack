@@ -21,12 +21,9 @@ module.exports = {
         didsDaoGroupsInst.affectDidsGpToCamp(req, res, next);
     },
     changeStatus: function (req, res, next) {
-        didsDaoGroupsInst.changeStatus(req, res, next);
+        didsDaoGroupsInst.changeStatusCascade(req, res, next);
     },
     deleteCascade: function (req, res, next) {
         didsDaoGroupsInst.deleteCascade(req, res, next);
-    },
-    testDeleteDIDCamp: function (req, res, next) {
-        didsDaoGroupsInst.testDeleteDIDCamp(req, res, next);
     },
 }

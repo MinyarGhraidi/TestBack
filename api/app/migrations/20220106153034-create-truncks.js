@@ -36,6 +36,7 @@ module.exports = {
         type: Sequelize.INTEGER
       },
       status: {
+        allowNull: true,
         type: Sequelize.STRING,
         defaultValue: 'Y'
       },

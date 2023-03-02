@@ -23,25 +23,20 @@ class baseModelbo {
             messages: messages,
         });
     }
-
     alterFindById(entityData) {
         return new Promise((resolve, reject) => {
             resolve(entityData);
         });
     }
-
     setRequest(req) {
         this.request = req;
     }
-
     setResponse(res) {
         this.response = res;
     }
-
     setRequestParams(params) {
         this.request_params = params;
     }
-
     findById(req, res, next) {
         this.setRequest(req);
         this.setResponse(res);
@@ -81,7 +76,6 @@ class baseModelbo {
             }
         )
     }
-
     findByEncodeId(req, res, next) {
         let params = req.params.params;
         params = (params && params.length) ? JSON.parse(params) : {};
@@ -120,13 +114,11 @@ class baseModelbo {
             res.status(500).json(err)
         )
     }
-
     preSave(data, req, res) {
         return new Promise((resolve, reject) => {
             resolve(data);
         });
     }
-
     save(req, res, next) {
         const preFormData = req.body;
         this.preSave(preFormData).then(formData => {
@@ -170,13 +162,11 @@ class baseModelbo {
             res.status(500).json(err);
         });
     }
-
     alterSave(data, req, res) {
         return new Promise((resolve, reject) => {
             resolve(data);
         });
     }
-
     delete(req, res, next) {
         let _id = req.params.params;
         let whereQuery = {};
@@ -203,7 +193,6 @@ class baseModelbo {
         )
 
     }
-
     deleteWithChild(parent, child, parent_id, childParent_id, id) {
         return new Promise((resolve, reject) => {
             const ParentEntity = new Promise((resolve, reject) => {
@@ -236,6 +225,40 @@ class baseModelbo {
         })
     }
 
+
+    changeStatusWithChild(parent, child, parent_id, childParent_id, id,status) {
+        return new Promise((resolve, reject) => {
+            const UpdateTZ = moment(new Date());
+            const ParentEntity = new Promise((resolve, reject) => {
+                let whereQuery = {}
+                whereQuery[parent_id] = id;
+                this.db[parent].update({status: status, updated_at : UpdateTZ}, {
+                    where: whereQuery
+                }).then(() => {
+                    resolve(true);
+                }).catch(err => {
+                    reject(err);
+                });
+            });
+            const ChildEntity = new Promise((resolve, reject) => {
+                let whereQuery = {}
+                whereQuery[childParent_id] = id;
+                this.db[child].update({status: status, updated_at : UpdateTZ}, {
+                    where: whereQuery
+                }).then(() => {
+                    resolve(true);
+                }).catch(err => {
+                    reject(err);
+                });
+            });
+            Promise.all([ParentEntity, ChildEntity]).then(() => {
+                resolve(true);
+            }).catch((err) => {
+                reject(err);
+            })
+        })
+    }
+
     deleteRoleCascade(role_id) {
         return new Promise((resolve, reject) => {
             this.db['roles'].findOne({where: {role_id: role_id, active: 'Y'}})
@@ -248,7 +271,6 @@ class baseModelbo {
                 });
         })
     }
-
     deleteDidGroupFromCampaign(did_group_id,account_id){
         return new Promise((resolve,reject)=>{
             this.db['campaigns'].findAll({where : {account_id : account_id, status : 'Y', active : 'Y', config: {[Op.not]: null}}}).then((campaigns)=>{
@@ -338,11 +360,49 @@ class baseModelbo {
             default  :
                 res.json({
                     success: false,
-                    messages: 'Something wrong contact the admin'
+                    messages: 'Cannot deleteCascade from Table ( '+this.baseModal+' )'
                 })
         }
     }
 
+    changeStatusCascade(req, res, next){
+        let _id = req.params.params;
+        switch(this.baseModal){
+            case 'didsgroups' :
+                this.db['didsgroups'].findOne({where : {did_id : _id}}).then(didGp=>{
+                    let status = didGp.status === 'Y' ? 'N' : 'Y'
+                    this.changeStatusWithChild('didsgroups', 'dids', 'did_id', 'did_group_id', _id,status).then(() => {
+                        this.deleteDidGroupFromCampaign(parseInt(_id),didGp.account_id).then(()=>{
+                            res.json({
+                                success: true,
+                                messages: 'deleted'
+                            })
+                        }).catch(err=>{
+                            res.json({
+                                success: false,
+                                messages: 'Cant delete'
+                            })
+                        })
+                    }).catch(err=>{
+                        res.json({
+                            success: false,
+                            messages: 'Cant update Status'
+                        })
+                    })
+                }).catch((err) => {
+                    res.json({
+                        success: false,
+                        messages: 'Cant get DID group'
+                    })
+                })
+                break;
+            default  :
+                res.json({
+                    success: false,
+                    messages: 'Cannot changeStatus from Table ( '+this.baseModal+' )'
+                })
+        }
+    }
     update(req, res, next) {
         let _id = req.body[this.primaryKey];
         let dataRequest = req.body;
@@ -394,7 +454,6 @@ class baseModelbo {
             res.status(500).json(err);
         })
     }
-
     saveEntityNewRevision(obj, obj_before, req, res) {
         let _this = this;
         return new Promise(function (resolve, reject) {
@@ -424,19 +483,16 @@ class baseModelbo {
             }
         });
     }
-
     beforeUpdate(req, res) {
         return new Promise((resolve, reject) => {
             resolve();
         });
     }
-
     alterUpdate(data, req, res) {
         return new Promise((resolve, reject) => {
             resolve(data);
         });
     }
-
     getUserFromToken(req) {
         return new Promise((resolve, reject) => {
             if (!req.headers.authorization) {
@@ -459,7 +515,6 @@ class baseModelbo {
             });
         });
     }
-
     find(req, res, next) {
         this.setRequest(req);
         this.setResponse(res);
@@ -606,18 +661,15 @@ class baseModelbo {
             });
         });
     }
-
     alterGetDataFind(data, res, attributes_res) {
         res.status(200).json({
             'data': data,
             'attributes': attributes_res
         })
     }
-
     hookWhereFindQuery(whereQuery) {
         return whereQuery;
     }
-
     model_history(req, res, next) {
         let _this = this;
         let {model_id, model_name} = req.body
@@ -681,7 +733,6 @@ class baseModelbo {
             })
         })
     }
-
     updateUserToken(user_id,action,sip_device ={}){
         return new Promise((resolve,reject)=>{
             let updatedUser = {current_session_token: null}

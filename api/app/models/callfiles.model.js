@@ -76,7 +76,9 @@ module.exports = (sequelize, Sequelize) => {
                 type: Sequelize.STRING
             },
             status: {
-                type: Sequelize.STRING
+                type: Sequelize.STRING,
+                defaultValue: 'Y',
+                allowNull: true
             },
             to_treat: {
                 allowNull: true,

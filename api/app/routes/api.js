@@ -243,8 +243,7 @@ let apiRouters = function (passport) {
     router.delete("/api/didsgroups/deleteCascade/:params", passport.authenticate('jwt', {session: false}), didsgroupsController.deleteCascade);
     router.post("/api/didsgroups/save", passport.authenticate('jwt', {session: false}), didsgroupsController.save);
     router.post("/api/didsgroups/affectDidsGpToCamp", passport.authenticate('jwt', {session: false}), didsgroupsController.affectDidsGpToCamp);
-    router.post('/api/didsgroups/changeStatus', passport.authenticate('jwt', {session: false}), didsgroupsController.changeStatus);
-    router.post('/api/didsgroups/testDeleteDIDCamp', didsgroupsController.testDeleteDIDCamp);
+    router.post('/api/didsgroups/changeStatus/:params', passport.authenticate('jwt', {session: false}), didsgroupsController.changeStatus);
 
 
     router.post("/api/callBlunding/find", passport.authenticate('jwt', {session: false}), callBlundingController.find);

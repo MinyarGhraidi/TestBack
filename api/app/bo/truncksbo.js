@@ -51,24 +51,12 @@ class truncks extends baseModelbo {
                                 let modalObj = this.db['truncks'].build(data_db);
                                 modalObj.save()
                                     .then(trunk => {
-                                        if (data_db.is_inbound === 'Y') {
-                                            this.db['truncks'].update({is_inbound: 'N'}, {where: {trunck_id: {[Op.ne]: trunk.trunck_id}}})
-                                                .then(trunk_updated => {
-                                                    res.send({
-                                                        status: 200,
-                                                        message: "success",
-                                                        success: true,
-                                                        data: trunk
-                                                    })
-                                                })
-                                        } else {
                                             res.send({
                                                 status: 200,
                                                 message: "success",
                                                 success: true,
                                                 data: trunk
                                             })
-                                        }
                                     })
                                     .catch(err => {
                                         return _this.sendResponseError(res, ['cannot save trunk in DB', err], 1, 403);
@@ -112,25 +100,12 @@ class truncks extends baseModelbo {
                             .then(dialer_obj => {
                                 this.db['truncks'].update(data_db, {where: {trunck_id: trunk_kam.trunck_id}})
                                     .then(trunk => {
-                                        if (data_db.is_inbound === 'Y') {
-                                            this.db['truncks'].update({is_inbound: 'N'}, {where: {trunck_id: {[Op.ne]: trunk_kam.trunck_id}}})
-                                                .then(trunk_updated => {
-                                                    res.send({
-                                                        status: 200,
-                                                        message: "success",
-                                                        success: true,
-                                                        data: trunk
-                                                    })
-                                                })
-                                        } else {
                                             res.send({
                                                 status: 200,
                                                 message: "success",
                                                 success: true,
                                                 data: trunk
                                             })
-                                        }
-
                                     })
                             })
                             .catch(err => {

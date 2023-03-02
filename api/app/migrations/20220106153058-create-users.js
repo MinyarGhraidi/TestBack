@@ -39,7 +39,8 @@ module.exports = {
       },
       status: {
         type: Sequelize.STRING,
-        defaultValue: 'Y'
+        defaultValue: 'Y',
+        allowNull: true,
       },
       active: {
         allowNull: true,
