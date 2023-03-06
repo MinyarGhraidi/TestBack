@@ -65,6 +65,7 @@ class MigrateRecords extends baseModelbo {
                     }).catch(e => console.log(e))
                 })
                 Promise.all([PromiseDownload]).then(data_cdr => {
+                    Client.close()
 
                 })
             })
