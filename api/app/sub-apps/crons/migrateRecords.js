@@ -3,6 +3,7 @@ const {baseModelbo} = require("../../bo/basebo");
 const db = require("../../models");
 const moment = require("moment");
 const dbcdr = require("../../models/acc_cdrs/models");
+const { exec } = require("child_process");
 
 
 class MigrateRecords extends baseModelbo {
@@ -33,30 +34,45 @@ class MigrateRecords extends baseModelbo {
                             client.downloadFile(
                                 item_cdr.record_url,
                                 '/var/www/crm/crm-backend/api/app/recordings/' + item_cdr.memberUUID + '.wav',
-                                // options?: TransferOptions
                             )
                                 .then(response => {
-                                    dbcdr['acc_cdrs'].update({is_treated: 'Y'}, {
-                                        where: {
-                                            id: item_cdr.id
+                                    let cmd_ffmpeg = ' ffmpeg -i /var/www/crm/crm-backend/api/app/recordings/' + item_cdr.memberUUID + '.wav -vn -ar 44100 -ac 2 -b:a 192k ' + '/var/www/crm/crm-backend/api/app/recordings/' + item_cdr.memberUUID + '.mp3'
+                                    exec(cmd_ffmpeg, (error, stdout, stderr) => {
+                                        if (error) {
+                                            console.log(`error: ${error.message}`);
+                                            return;
                                         }
-                                    }).then(call_updated => {
-                                        this.db["calls_historys"].update({record_url: 'https://crm-back-demo.oxilog.net/api/callHistory/play/'+item_cdr.memberUUID}, {
+                                        if (stderr) {
+                                            console.log(`stderr: ${stderr}`);
+                                            return;
+                                        }
+                                        console.log(`stdout: ${stdout}`);
+                                        dbcdr['acc_cdrs'].update({is_treated: 'Y'}, {
                                             where: {
-                                                uuid: item_cdr.memberUUID,
-                                                active: 'Y'
+                                                id: item_cdr.id
                                             }
-                                        })
-                                            .then(() => {
-                                                if (index <= datacdrRecords.length - 1) {
-                                                    index++
-                                                } else {
-                                                    resolve(true)
+                                        }).then(call_updated => {
+                                            this.db["calls_historys"].update({record_url: 'https://crm-back-demo.oxilog.net/api/callHistory/play/'+item_cdr.memberUUID}, {
+                                                where: {
+                                                    uuid: item_cdr.memberUUID,
+                                                    active: 'Y'
                                                 }
                                             })
-                                    }).catch(err => {
-                                        console.log(err)
-                                    })
+                                                .then(() => {
+                                                    let cmd_delete = 'rm -rf ' +'/var/www/crm/crm-backend/api/app/recordings/' + item_cdr.memberUUID + '.wav'
+                                                    exec(cmd_delete, (error, stdout, stderr) => {
+                                                        console.log(`stdout: ${stdout}`);
+                                                    if (index <= datacdrRecords.length - 1) {
+                                                        index++
+                                                    } else {
+                                                        resolve(true)
+                                                    }
+                                                })
+                                        }).catch(err => {
+                                            console.log(err)
+                                        })
+                                    });
+
                                 })
                                 .catch(error => {
                                     console.log(error)
@@ -66,7 +82,6 @@ class MigrateRecords extends baseModelbo {
                 })
                 Promise.all([PromiseDownload]).then(data_cdr => {
                     Client.close()
-
                 })
             })
         })
