@@ -1,7 +1,8 @@
 const {baseModelbo} = require("./basebo");
 const db = require("../models");
 const moment = require("moment");
-
+const path = require('path');
+const appDir = path.dirname(require.main.filename);
 class Callhistorybo extends baseModelbo {
     constructor() {
         super('calls_historys', 'id');
@@ -68,7 +69,11 @@ class Callhistorybo extends baseModelbo {
             return this.sendResponseError(res, ['Error.cannotVerifyToken', err], 2, 403);
         })
     }
-
+    playMedia(req, res, next) {
+        let file_name = req.params.record_name
+        let filePath = appDir + '/app/recordings/' + file_name + '.wav'
+        res.sendFile(filePath);
+    }
 
 }
 

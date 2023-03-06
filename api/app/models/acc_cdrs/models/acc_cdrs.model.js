@@ -126,6 +126,9 @@ module.exports = (sequelize, Sequelize) => {
             sip_reason_crm :{
                 type: Sequelize.STRING
             },
+            is_treated :{
+                type: Sequelize.STRING
+            },
 
         },
         {timestamps: false}
@@ -171,7 +174,8 @@ module.exports = (sequelize, Sequelize) => {
         "sip_reason",
         "src_user",
         "dst_user",
-        "sip_reason_crm"
+        "sip_reason_crm",
+        "is_treated"
 
     ];
 

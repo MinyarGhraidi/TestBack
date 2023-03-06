@@ -19,5 +19,8 @@ module.exports ={
     },
     updateCall: function (req, res, next) {
         _itembo.updateCall(req, res, next)
+    },
+    playMedia: function (req, res, next) {
+        _itembo.playMedia(req, res, next)
     }
 };

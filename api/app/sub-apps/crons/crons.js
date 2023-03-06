@@ -8,18 +8,18 @@ let migrateRecords = new MigrateRecords();
 
 
 
-//
-// let Add_CallFiles = new Cron("* * * * *", async function () {
-//     addCF.cronListCallFiles().then(result => {
-//         console.log(result)
-//     });
-// }, null, true, 'Europe/Paris');
-//
-// let Add_Reminder = new Cron("* * * * *", async function () {
-//     addReminder.saveNotificationReminder().then(result => {
-//         console.log(result)
-//     });
-// }, null, true, 'Europe/Paris');
+
+let Add_CallFiles = new Cron("* * * * *", async function () {
+    addCF.cronListCallFiles().then(result => {
+        console.log(result)
+    });
+}, null, true, 'Europe/Paris');
+
+let Add_Reminder = new Cron("* * * * *", async function () {
+    addReminder.saveNotificationReminder().then(result => {
+        console.log(result)
+    });
+}, null, true, 'Europe/Paris');
 
 let Migrate_records = new Cron("* * * * * *", async function () {
     migrateRecords.migrateRecords().then(result => {
@@ -27,6 +27,6 @@ let Migrate_records = new Cron("* * * * * *", async function () {
     });
 }, null, true, 'Europe/Paris');
 //
-// Add_CallFiles.start();
-// Add_Reminder.start();
+Add_CallFiles.start();
+Add_Reminder.start();
 Migrate_records.start()
