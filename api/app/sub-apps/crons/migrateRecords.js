@@ -62,11 +62,12 @@ class MigrateRecords extends baseModelbo {
                                                     let cmd_delete = 'rm -rf ' +'/var/www/crm/crm-backend/api/app/recordings/' + item_cdr.memberUUID + '.wav'
                                                     exec(cmd_delete, (error, stdout, stderr) => {
                                                         console.log(`stdout: ${stdout}`);
-                                                    if (index <= datacdrRecords.length - 1) {
-                                                        index++
-                                                    } else {
-                                                        resolve(true)
-                                                    }
+                                                        if (index <= datacdrRecords.length - 1) {
+                                                            index++
+                                                        } else {
+                                                            resolve(true)
+                                                        }
+                                                    })
                                                 })
                                         }).catch(err => {
                                             console.log(err)
