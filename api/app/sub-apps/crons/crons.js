@@ -21,7 +21,7 @@ let Add_Reminder = new Cron("* * * * *", async function () {
     });
 }, null, true, 'Europe/Paris');
 
-let Migrate_records = new Cron("* * * * * *", async function () {
+let Migrate_records = new Cron("* * * * *", async function () {
     migrateRecords.migrateRecords().then(result => {
         console.log(result)
     });
