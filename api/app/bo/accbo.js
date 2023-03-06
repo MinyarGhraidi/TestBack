@@ -11,7 +11,7 @@ class AccBo extends baseModelbo {
         this.primaryKey = "id"
     }
 
-    _getCdrsFunction(params) {
+    _getCdrsFunction(params, sansLimit = false) {
         return new Promise((resolve, reject) => {
             const AgentUUID = params.agentUUID || null
             const filter = params.filter || null;
@@ -73,7 +73,12 @@ class AccBo extends baseModelbo {
                 }
             }).then(countAll => {
                 let pages = Math.ceil(countAll[0].count / params.limit);
-                let extra_where_limit = extra_where_count += ' ORDER BY start_time DESC LIMIT :limit OFFSET :offset'
+                let extra_where_limit;
+                if(sansLimit){
+                    extra_where_limit = extra_where_count += ' ORDER BY start_time DESC'
+                }else{
+                    extra_where_limit = extra_where_count += ' ORDER BY start_time DESC LIMIT :limit OFFSET :offset'
+                }
                 sqlData = sqlData.replace('EXTRA_WHERE', extra_where_limit);
                 sqlData = sqlData.replace('FILTER', '*');
 
@@ -207,7 +212,7 @@ class AccBo extends baseModelbo {
                 message: "Total CDRS must be less than 10K"
             })
         }
-        this._getCdrsFunction(params).then(cdrs => {
+        this._getCdrsFunction(params,true).then(cdrs => {
             if (cdrs.success) {
                 let schema = [
                     {

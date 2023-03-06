@@ -621,7 +621,7 @@ class accounts extends baseModelbo {
                 trunks.forEach(trunk => {
                     let uuid_callCenter = trunk.gateways.callCenter.uuid;
                     let uuid_dialer = trunk.gateways.dialer.uuid;
-                    let trunk_id = trunk.campaign_id;
+                    let trunk_id = trunk.trunck_id;
                     _trunksbo.deleteTrunkFunc(uuid_dialer, uuid_callCenter, trunk_id)
                         .then(() => {
                             if (index < trunks.length - 1) {
