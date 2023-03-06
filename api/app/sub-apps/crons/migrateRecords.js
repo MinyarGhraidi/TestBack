@@ -38,15 +38,6 @@ class MigrateRecords extends baseModelbo {
                                 .then(response => {
                                     let cmd_ffmpeg = ' ffmpeg -i /var/www/crm/crm-backend/api/app/recordings/' + item_cdr.memberUUID + '.wav -vn -ar 44100 -ac 2 -b:a 192k ' + '/var/www/crm/crm-backend/api/app/recordings/' + item_cdr.memberUUID + '.mp3'
                                     exec(cmd_ffmpeg, (error, stdout, stderr) => {
-                                        if (error) {
-                                            console.log(`error: ${error.message}`);
-                                            return;
-                                        }
-                                        if (stderr) {
-                                            console.log(`stderr: ${stderr}`);
-                                            return;
-                                        }
-                                        console.log(`stdout: ${stdout}`);
                                         dbcdr['acc_cdrs'].update({is_treated: 'Y'}, {
                                             where: {
                                                 id: item_cdr.id
