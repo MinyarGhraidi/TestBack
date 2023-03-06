@@ -32,7 +32,7 @@ class MigrateRecords extends baseModelbo {
                         datacdrRecords.forEach((item_cdr, i) => {
                             client.downloadFile(
                                 item_cdr.record_url,
-                                '/home/oussama/projects/crm/crm-backend/api/app/recordings/' + item_cdr.memberUUID + '.wav',
+                                '/var/www/crm/crm-backend/api/app/recordings/' + item_cdr.memberUUID + '.wav',
                                 // options?: TransferOptions
                             )
                                 .then(response => {
