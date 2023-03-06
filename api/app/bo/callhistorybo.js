@@ -71,7 +71,7 @@ class Callhistorybo extends baseModelbo {
     }
     playMedia(req, res, next) {
         let file_name = req.params.record_name
-        let filePath = appDir + '/app/recordings/' + file_name + '.wav'
+        let filePath = appDir + '/app/recordings/' + file_name + '.mp3'
         res.sendFile(filePath);
     }
 
