@@ -41,7 +41,7 @@ class MigrateRecords extends baseModelbo {
                                             id: item_cdr.id
                                         }
                                     }).then(call_updated => {
-                                        this.db["calls_historys"].update({record_url: 'http://localhost:3001/api/callHistory/play/'+item_cdr.memberUUID}, {
+                                        this.db["calls_historys"].update({record_url: 'https://crm-back-demo.oxilog.net/api/callHistory/play/'+item_cdr.memberUUID}, {
                                             where: {
                                                 uuid: item_cdr.memberUUID,
                                                 active: 'Y'
