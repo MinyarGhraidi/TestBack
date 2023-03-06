@@ -42,6 +42,9 @@ module.exports = {
     },
     RecycleCallFile: function (req, res, next){
         _itembo.RecycleCallFile(req, res, next)
+    },
+    getCallBlending: function (req, res, next){
+        _itembo.getCallBlending(req, res, next)
     }
 
 };

@@ -1020,6 +1020,33 @@ class callfiles extends baseModelbo {
             }).catch(err => reject(err))
         })
     }
+
+    getCallBlending (req, res, next){
+        let number = req.body.number;
+        if(!!!number){
+            return this.sendResponseError(res, ['Error.numberIsNull', ], 1, 403);
+        }
+        this.db['callfiles'].findOne({
+            where:{
+                phone_number: number,
+                active : 'Y',
+            },
+            order: [['updated_at', 'DESC']]
+        }).then(call_blending=>{
+            if(call_blending){
+                res.send({
+                    success: true,
+                    data:call_blending
+                })
+            }else{
+                res.send({
+                    success: false
+                })
+            }
+        }).catch(err=>{
+            return this.sendResponseError(res, ['Error.CannotGetCallBlending', err], 1, 403);
+        })
+    }
 }
 
 module.exports = callfiles;
