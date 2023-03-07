@@ -649,7 +649,7 @@ class agents extends baseModelbo {
     //-----------------> Telco Agent <------------------------
     onConnect(req, res, next) {
         let _this = this;
-        let {user_id, uuid, crmStatus, telcoStatus, pauseStatus} = req.body;
+        let {user_id, uuid, crmStatus, telcoStatus, pauseStatus, call_type} = req.body;
         this.onConnectFunc(user_id, uuid, crmStatus, telcoStatus, pauseStatus)
             .then((user) => {
                 let {sip_device, first_name, last_name, user_id, campaign_id, account_id} = user.agent.user;
@@ -662,7 +662,8 @@ class agents extends baseModelbo {
                     telcoStatus: sip_device.status,
                     timerStart: sip_device.updated_at,
                     campaign_id: campaign_id,
-                    account_id: account_id
+                    account_id: account_id,
+                    call_type: call_type
                 };
                 appSocket.emit('agent_connection', data_agent);
                 res.send({
