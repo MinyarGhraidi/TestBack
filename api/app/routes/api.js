@@ -232,6 +232,7 @@ let apiRouters = function (passport) {
     router.post("/api/callfile/save", callfileController.save);
     router.post("/api/callfile/getEntityRevisionByModelId", callfileController.getEntityRevisionByModelId);
     router.get("/api/callfile/play", callfileController.playMediaMusic);
+    router.get("/api/callHistory/play/:record_name", CallhistoryController.playMedia);
     router.get("/api/callfile/findCallFileById/:call_file_id", passport.authenticate('jwt', {session: false}), callfileController.findCalleFileById);
     router.post("/api/callfile/RecycleCallFile", passport.authenticate('jwt', {session: false}), callfileController.RecycleCallFile);
     router.post("/api/callfile/CallBlending", passport.authenticate('jwt', {session: false}), callfileController.getCallBlending);
