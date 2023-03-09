@@ -931,24 +931,39 @@ class users extends baseModelbo {
 
     verifyToken(req, res, next) {
         let _this = this;
-        const token = req.body.token || null;
+        let {token,user_id} = req.body;
+        if(!!!token || !!!user_id){
+            return res.send({
+                success: false,
+                data: [],
+                message: 'Invalid token',
+            });
+        }
         jwt.verify(token, config.secret, (err, data) => {
             if (!err) {
-                res.send({
-                    success: true,
-                    data: data,
-                    message: 'Token valid',
-                });
-                // this.db['users'].findOne({where: {current_session_token: token, active: 'Y',status :'Y'}})
-                //     .then((result) => {
-                //         res.send({
-                //             success: !!!!result,
-                //             data: data,
-                //             message: 'Token valid',
-                //         });
-                //     }).catch(err => {
-                //     return _this.sendResponseError(res, ['Error.AnErrorHasOccurredGetUser', err], 1, 403);
-                // })
+                // res.send({
+                //     success: true,
+                //     data: data,
+                //     message: 'Token valid',
+                // });
+                this.db['users'].findOne({where: {user_id : user_id,current_session_token: token, active: 'Y',status :'Y'}})
+                    .then((result) => {
+                        if(result && Object.keys(result).length > 0){
+                            res.send({
+                                success: true,
+                                data: data,
+                                message: 'Token valid',
+                            });
+                        }else{
+                            res.send({
+                                success: false,
+                                data: [],
+                                message: 'User without Token',
+                            });
+                        }
+                    }).catch(err => {
+                    return _this.sendResponseError(res, ['Error.AnErrorHasOccurredGetUser', err], 1, 403);
+                })
             } else {
                 res.send({
                     success: false,
