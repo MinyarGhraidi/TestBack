@@ -941,11 +941,6 @@ class users extends baseModelbo {
         }
         jwt.verify(token, config.secret, (err, data) => {
             if (!err) {
-                // res.send({
-                //     success: true,
-                //     data: data,
-                //     message: 'Token valid',
-                // });
                 this.db['users'].findOne({where: {user_id : user_id,current_session_token: token, active: 'Y',status :'Y'}})
                     .then((result) => {
                         if(result && Object.keys(result).length > 0){
