@@ -15,6 +15,7 @@ const call_center_authorization = {
     headers: {Authorization: call_center_token}
 };
 const helpers = require('../helpers/helpers')
+const Op = require("sequelize/lib/operators");
 
 class users extends baseModelbo {
     constructor() {
@@ -99,7 +100,7 @@ class users extends baseModelbo {
                 } else {
                     let user_info = user.toJSON();
                     if ((user_info && user_info.roles_crm && user_info.roles_crm.value === 'agent')) {
-                        if(!!!user_info.current_session_token){
+                        if (!!!user_info.current_session_token) {
                             this.db['accounts'].findOne({
                                 where: {
                                     account_id: user_info.account_id,
@@ -115,8 +116,7 @@ class users extends baseModelbo {
                                         message: 'Invalid admin code'
                                     })
                                     return
-                                }
-                                else if (user.password_hash && password && user.verifyPassword(password)) {
+                                } else if (user.password_hash && password && user.verifyPassword(password)) {
                                     if (user.password_hash && password) {
                                         this.db['has_permissions'].findAll({
                                             include: [{
@@ -183,8 +183,7 @@ class users extends baseModelbo {
                                     } else {
                                         this.sendResponseError(res, ['Error.InvalidPassword'], 0, 403);
                                     }
-                                }
-                                else {
+                                } else {
                                     this.sendResponseError(res, ['Error.InvalidPassword'], 2, 403);
                                 }
 
@@ -192,7 +191,7 @@ class users extends baseModelbo {
                             }).catch((error) => {
                                 return this.sendResponseError(res, ['Error.AnErrorHasOccurredUser'], 1, 403);
                             });
-                        }else{
+                        } else {
                             res.send({
                                 data: null,
                                 status: 403,
@@ -202,8 +201,7 @@ class users extends baseModelbo {
                             return
                         }
 
-                    }
-                    else if (user.password_hash && password && user.verifyPassword(password)) {
+                    } else if (user.password_hash && password && user.verifyPassword(password)) {
                         if (user.password_hash && password) {
                             this.db['has_permissions'].findAll({
                                 include: [{
@@ -271,8 +269,7 @@ class users extends baseModelbo {
                         } else {
                             this.sendResponseError(res, ['Error.InvalidPassword'], 0, 403);
                         }
-                    }
-                    else {
+                    } else {
                         this.sendResponseError(res, ['Error.InvalidPassword'], 2, 403);
                     }
                 }
@@ -931,8 +928,8 @@ class users extends baseModelbo {
 
     verifyToken(req, res, next) {
         let _this = this;
-        let {token,user_id} = req.body;
-        if(!!!token || !!!user_id){
+        let {token, user_id} = req.body;
+        if (!!!token || !!!user_id) {
             return res.send({
                 success: false,
                 data: [],
@@ -941,19 +938,35 @@ class users extends baseModelbo {
         }
         jwt.verify(token, config.secret, (err, data) => {
             if (!err) {
-                this.db['users'].findOne({where: {user_id : user_id,current_session_token: token, active: 'Y',status :'Y'}})
+                this.db['users'].findOne({
+                    where: {
+                        user_id: user_id,
+                        active: 'Y',
+                        status: 'Y',
+                        current_session_token: {[Op.not]: null}
+                    }, include: [db.roles_crms]
+                })
                     .then((result) => {
-                        if(result && Object.keys(result).length > 0){
-                            res.send({
-                                success: true,
-                                data: data,
-                                message: 'Token valid',
-                            });
-                        }else{
+                        if (result && Object.keys(result).length > 0) {
+                            let user = result.toJSON();
+                            if ((user.roles_crm.value === 'agent' && user.current_session_token === token) || user.roles_crm.value !== 'agent') {
+                                res.send({
+                                    success: true,
+                                    data: data,
+                                    message: 'Valid token',
+                                });
+                            } else {
+                                res.send({
+                                    success: false,
+                                    data: [],
+                                    message: 'Invalid token',
+                                });
+                            }
+                        } else {
                             res.send({
                                 success: false,
                                 data: [],
-                                message: 'User without Token',
+                                message: 'User Not Found',
                             });
                         }
                     }).catch(err => {
