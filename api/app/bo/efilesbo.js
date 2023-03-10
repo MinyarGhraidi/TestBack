@@ -68,45 +68,6 @@ class efiles extends baseModelbo {
         }
     }
 
-    ApiTest(req, res, next) {
-        let file_id = req.body.file_id;
-        this.db['efiles'].findOne({where: {file_id: file_id, active: 'Y'}}).then(Efile => {
-            let uriFile = Efile.uri;
-            let extension = Efile.file_extension;
-            if (extension === "xlsx") {
-                let path = appDir + '/app/resources/efiles' + uriFile;
-                if (!fs.existsSync(path)) {
-                    res.send({
-                        message: "something wrong"
-                    })
-                } else {
-                    /*let Count = this.countRows(path);
-                    res.send({
-                        data: {
-                            message: "success"
-                        },
-                        count: Count
-                    })*/
-                    // data.processing_status = {
-                    //     "nbr_callfiles": Count,
-                    //     "nbr_uploaded_callfiles": 0,
-                    //     "nbr_duplicated_callfiles": 0
-                    // };
-                    // let modalObj = this.db['listcallfiles'].build(data);
-                    // modalObj.save().then(new_listLeads => {
-                    //     res.send({
-                    //         data : {
-                    //             message : "success"
-                    //         },
-                    //         count: Count
-                    //     })
-                    // })
-                }
-
-            }
-        })
-    }
-
     return_default_image(res) {
         const file_path = appDir + '/app/resources/assets/images/no-image.png';
         res.sendFile(file_path);
