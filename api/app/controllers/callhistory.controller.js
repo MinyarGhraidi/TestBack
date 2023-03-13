@@ -18,7 +18,7 @@ module.exports ={
         _itembo.delete(req, res, next);
     },
     updateCall: function (req, res, next) {
-        _itembo.updateCall(req, res, next)
+        _itembo.updateCallFile(req, res, next)
     },
     playMedia: function (req, res, next) {
         _itembo.playMedia(req, res, next)
