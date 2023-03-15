@@ -69,7 +69,7 @@ let apiRouters = function (passport) {
         "/api/generateTokenForUser",
         utilityController.generateTokenForUser
     );
-
+    router.post("/api/changeCrmStatus/",passport.authenticate('jwt', {session: false}), agentsController.changeCrmStatus);
     // notifications
     router.post("/api/notification/SaveNotification",passport.authenticate('jwt', {session: false}), NotificationsController.SaveNotification);
     router.get("/api/notification/findById/:entity_id",passport.authenticate('jwt', {session: false}), NotificationsController.findById);

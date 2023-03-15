@@ -1820,6 +1820,28 @@ class agents extends baseModelbo {
         })
     }
 
+    changeCrmStatus(req,res,next) {
+        let {user_id, uuid, crmStatus,telcoStatus} = req.body;
+                this.onConnectFunc(user_id,uuid, crmStatus, telcoStatus)
+                    .then((user) => {
+                        let {sip_device, first_name, last_name, user_id, campaign_id, account_id} = user.agent.user;
+                        let data_agent = {
+                            user_id: user_id,
+                            first_name: first_name,
+                            last_name: last_name,
+                            uuid: sip_device.uuid,
+                            crmStatus: user.agent.user.params.status,
+                            telcoStatus: sip_device.status,
+                            timerStart: sip_device.updated_at,
+                            campaign_id: campaign_id,
+                            account_id: account_id,
+                            call_type: null
+                        };
+                        appSocket.emit('agent_connection', data_agent);
+                        res.sendStatus(204);
+                    }).catch(() => res.sendStatus(403))
+    }
+
 }
 
 module.exports = agents;
