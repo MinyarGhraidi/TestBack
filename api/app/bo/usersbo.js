@@ -791,16 +791,18 @@ class users extends baseModelbo {
             if (user.user_id) {
                 this.updateCredentials(user)
                     .then(newAccount => {
-                        newAccount['current_session_token'] = null;
-                        newAccount.updated_at = moment().format("YYYY-MM-DD HH:mm:ss");
-                        db['users'].update(newAccount, {where: {user_id: newAccount.user_id}})
-                            .then(user => {
-                                appSocket.emit('reload.Permission', {user_id: newAccount.user_id});
-                                resolve(user)
-                            })
-                            .catch(err => {
-                                reject(err)
-                            })
+                            if(!!!!user.role_id){
+                                newAccount['current_session_token'] = null;
+                            }
+                            newAccount.updated_at = moment().format("YYYY-MM-DD HH:mm:ss");
+                            db['users'].update(newAccount, {where: {user_id: newAccount.user_id}})
+                                .then(user => {
+                                    appSocket.emit('reload.Permission', {user_id: newAccount.user_id});
+                                    resolve(user)
+                                })
+                                .catch(err => {
+                                    reject(err)
+                                })
                     })
                     .catch(err => {
                         reject(err)
