@@ -126,7 +126,8 @@ class users extends baseModelbo {
                                         }
                                     }).then(permissions => {
                                         this.getPermissionsValues(permissions, user).then(data_perm => {
-                                            this.db['accounts'].findOne({where: {account_id: user.account_id}})
+                                            this.db['accounts'].findOne({include:[{model: db.domains}],
+                                                where: {account_id: user.account_id}})
                                                 .then(account => {
                                                     let accountcode = account.account_code;
                                                     let {
@@ -160,6 +161,7 @@ class users extends baseModelbo {
                                                     });
                                                     this.db['users'].update({current_session_token: token}, {where: {user_id: user.user_id}})
                                                         .then(() => {
+                                                            console.log('userrrrrrrr', )
                                                             res.send({
                                                                 message: 'Success',
                                                                 user: user.toJSON(),
@@ -168,7 +170,8 @@ class users extends baseModelbo {
                                                                 success: true,
                                                                 token: token,
                                                                 result: 1,
-                                                                accountcode: accountcode
+                                                                accountcode: accountcode,
+                                                                domain_name: account.domain && account.domain.domain_name ? account.domain.domain_name: null
                                                             });
                                                         }).catch((error) => {
                                                         return this.sendResponseError(res, ['Error.AnErrorHasOccurredUser'], 1, 403);
@@ -200,6 +203,9 @@ class users extends baseModelbo {
                             }).then(permissions => {
                                 this.getPermissionsValues(permissions, user).then(data_perm => {
                                     this.db['accounts'].findOne({
+                                        include:[{
+                                            model: db.domains
+                                        }],
                                         where: {
                                             account_id: user.account_id,
                                             active: 'Y',
@@ -207,6 +213,7 @@ class users extends baseModelbo {
                                         }
                                     })
                                         .then(account => {
+                                            console.log('accounttttt', account)
                                             if (!account) {
                                                 res.send({
                                                     data: null,
@@ -238,9 +245,11 @@ class users extends baseModelbo {
                                                             token: token,
                                                             result: 1,
                                                             accountcode: accountcode,
-                                                            list_permission: user.role_id !== null ? user.role.permission : []
+                                                            list_permission: user.role_id !== null ? user.role.permission : [],
+                                                            domain_name: account.domain && account.domain.domain_name ? account.domain.domain_name: null
                                                         });
                                                     }).catch((error) => {
+                                                    console.log('herrrrrrrrrrrrrrrrrrrreee',error)
                                                     return this.sendResponseError(res, ['Error.AnErrorHasOccurredUser'], 1, 403);
                                                 });
                                             } else {
@@ -318,7 +327,7 @@ class users extends baseModelbo {
                     }
                 }).then(permissions => {
                     this.getPermissionsValues(permissions).then(data_perm => {
-                        this.db['accounts'].findOne({where: {account_id: user.account_id}})
+                        this.db['accounts'].findOne({include:[{model: db.domains}],where: {account_id: user.account_id}})
                             .then(account => {
                                 let accountcode = account.account_code;
                                 const token = jwt.sign({
@@ -337,7 +346,8 @@ class users extends baseModelbo {
                                             success: true,
                                             token: token,
                                             result: 1,
-                                            accountcode: accountcode
+                                            accountcode: accountcode,
+                                            domain_name: account.domain && account.domain.domain_name ? account.domain.domain_name: null
                                         });
                                     }).catch((error) => {
                                     return this.sendResponseError(res, ['Error.AnErrorHasOccurredUpdateTokenUser'], 1, 403);
