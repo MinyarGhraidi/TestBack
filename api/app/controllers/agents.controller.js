@@ -59,4 +59,7 @@ module.exports = {
     pauseStatusReports: function (req, res, next) {
         agentsDaoInst.pauseStatusReports(req, res, next)
     },
+    changeCrmStatus : function (req, res, next) {
+        agentsDaoInst.changeCrmStatus(req, res, next)
+    },
 }

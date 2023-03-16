@@ -75,6 +75,9 @@ module.exports = {
       },
       profile_image_id :{
         type: Sequelize.INTEGER
+      },
+      channel_uuid : {
+        type: Sequelize.STRING
       }
     }).then(() => {
       queryInterface.bulkInsert("users",

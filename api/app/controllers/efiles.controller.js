@@ -28,8 +28,5 @@ module.exports = {
     },
     getHeaderCallFile: function (req, res, next) {
         efilesDaoInst.getHeaderCallFile(req, res, next)
-    },
-    ApiTest: function (req, res, next) {
-        efilesDaoInst.ApiTest(req, res, next)
-    },
+    }
 }

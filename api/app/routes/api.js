@@ -69,21 +69,18 @@ let apiRouters = function (passport) {
         "/api/generateTokenForUser",
         utilityController.generateTokenForUser
     );
-    router.post(
-        "/api/apiTest",efilesController.ApiTest
-    )
-
+    router.post("/api/changeCrmStatus/",passport.authenticate('jwt', {session: false}), agentsController.changeCrmStatus);
     // notifications
-    router.post("/api/notification/SaveNotification", NotificationsController.SaveNotification);
-    router.get("/api/notification/findById/:entity_id", NotificationsController.findById);
-    router.put("/api/notification/update", NotificationsController.update);
-    router.post("/api/notification/find", NotificationsController.find);
-    router.post("/api/notification/saveNotificationReminder", NotificationsController.saveNotificationReminder);
+    router.post("/api/notification/SaveNotification",passport.authenticate('jwt', {session: false}), NotificationsController.SaveNotification);
+    router.get("/api/notification/findById/:entity_id",passport.authenticate('jwt', {session: false}), NotificationsController.findById);
+    router.put("/api/notification/update",passport.authenticate('jwt', {session: false}), NotificationsController.update);
+    router.post("/api/notification/find",passport.authenticate('jwt', {session: false}), NotificationsController.find);
+    router.post("/api/notification/saveNotificationReminder",passport.authenticate('jwt', {session: false}), NotificationsController.saveNotificationReminder);
     router.put("/api/notification/updateByAccountID", passport.authenticate('jwt', {session: false}), NotificationsController.updateByAccountID);
 
     // account routers
     router.post("/api/account/find", passport.authenticate('jwt', {session: false}), accountController.find);
-    router.post("/api/account/changeStatus", accountController.changeStatusByIdAcc);
+    router.post("/api/account/changeStatus", passport.authenticate('jwt', {session: false}), accountController.changeStatusByIdAcc);
     router.get("/api/account/findById/:entity_id", passport.authenticate('jwt', {session: false}), accountController.findById);
     router.put("/api/account/update", passport.authenticate('jwt', {session: false}), accountController.AddEditAccount);
     router.delete("/api/account/delete/:params", passport.authenticate('jwt', {session: false}), accountController.delete);
@@ -259,7 +256,6 @@ let apiRouters = function (passport) {
     router.put("/api/dids/update", passport.authenticate('jwt', {session: false}), didsController.update);
     router.delete("/api/dids/delete/:params", passport.authenticate('jwt', {session: false}), didsController.delete);
     router.post("/api/dids/saveBulk", passport.authenticate('jwt', {session: false}), didsController.saveBulk);
-
     router.post("/api/dids/save", passport.authenticate('jwt', {session: false}), didsController.save);
 
     // audios routers
@@ -402,7 +398,7 @@ let apiRouters = function (passport) {
     router.post('/api/callhistory/updateCallhistory',passport.authenticate('jwt', {session: false}),CallhistoryController.updateCall);
 
 
-    router.post('/api/reminder/findAllReminders', ReminderController.findAllReminders);
+    router.post('/api/reminder/findAllReminders',passport.authenticate('jwt', {session: false}), ReminderController.findAllReminders);
     router.post('/api/reminder/find/:params?', passport.authenticate('jwt', {session: false}), ReminderController.find);
     router.get('/api/reminder/findById/:entity_id', passport.authenticate('jwt', {session: false}), ReminderController.findById);
     router.put('/api/reminder/update', passport.authenticate('jwt', {session: false}), ReminderController.update);

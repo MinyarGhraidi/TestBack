@@ -23,10 +23,10 @@ class Reminderbo extends baseModelbo{
                           WHERE "user".active = 'Y' and "Rem".active = 'Y' and "callfile".active = 'Y' WHEREQUERYCOUNT`
 
         let sqlQuery = `select "Rem".note , "Rem".agent_id, "Rem".reminder_id,
-                        CAST(CONCAT("Rem".date, ' ',"Rem".time) as timestamp) as date_time,
+                        CONCAT("Rem".date, ' ',"Rem".time) as date_time,
                         CONCAT("user".first_name, ' ',"user".last_name) as agent,
                         CONCAT("callfile".first_name,' ',"callfile".last_name,' (',"callfile".phone_number,' )') as callfile,
-                        AGE(CAST(CONCAT("Rem".date, ' ',"Rem".time) as timestamp),NOW() + interval '1 hour') as diff_dateTime
+                        AGE(CAST(CONCAT("Rem".date, ' ',"Rem".time) as timestamptz),NOW() + interval '1 hour') as diff_dateTime
                           FROM reminders as "Rem" LEFT OUTER JOIN "users" AS "user" ON "Rem"."agent_id" = "user"."user_id" LEFT OUTER JOIN "callfiles" AS "callfile" ON "Rem"."call_file_id" = "callfile"."callfile_id" 
                           WHERE "user".active = 'Y' and "Rem".active = 'Y' and "callfile".active = 'Y' WHEREQUERY`;
 
@@ -41,17 +41,17 @@ class Reminderbo extends baseModelbo{
             whereQueryCount += ' AND "Rem".agent_id in (:agentIds)';
         }
         if (startTime && dateFrom && startTime !== '' && dateFrom !== '') {
-            whereQuery += ' AND CAST(CONCAT("Rem".date, \' \',"Rem".time) as timestamp) >= :start_time';
-            whereQueryCount += ' AND CAST(CONCAT("Rem".date, \' \',"Rem".time) as timestamp) >= :start_time';
+            whereQuery += ' AND CAST(CONCAT("Rem".date, \' \',"Rem".time) as timestamptz) >= :start_time';
+            whereQueryCount += ' AND CAST(CONCAT("Rem".date, \' \',"Rem".time) as timestamptz) >= :start_time';
         }
         if (endTime && dateTo && endTime !== '' && dateTo !== '') {
-            whereQuery += ' AND CAST(CONCAT("Rem".date, \' \',"Rem".time) as timestamp) <= :end_time';
-            whereQueryCount += ' AND CAST(CONCAT("Rem".date, \' \',"Rem".time) as timestamp) <= :end_time';
+            whereQuery += ' AND CAST(CONCAT("Rem".date, \' \',"Rem".time) as timestamptz) <= :end_time';
+            whereQueryCount += ' AND CAST(CONCAT("Rem".date, \' \',"Rem".time) as timestamptz) <= :end_time';
         }
         if(sortBy){
             whereQuery += ' order by :SORT_BY '+sortDir
         }else{
-            whereQuery += ' order by CAST(CONCAT("Rem".date, \' \',"Rem".time) as timestamp) '+sortDir
+            whereQuery += ' order by CAST(CONCAT("Rem".date, \' \',"Rem".time) as timestamptz) '+sortDir
         }
         whereQuery += ' LIMIT :limit OFFSET :offset'
         sqlCount = sqlCount.replace('WHEREQUERYCOUNT', whereQueryCount);

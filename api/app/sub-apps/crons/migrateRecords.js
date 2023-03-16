@@ -15,6 +15,7 @@ class MigrateRecords extends baseModelbo {
                                        from acc_cdrs
                                        where is_treated = 'N'
                                          AND record_url <> ''
+                                         and durationsec <> '0'
                                          and start_time like :current_date limit 50`
             db.sequelize['cdr-db'].query(SqlGetCDrNotTreated, {
                 type: db.sequelize['cdr-db'].QueryTypes.SELECT,

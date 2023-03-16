@@ -13,27 +13,27 @@ class callfiles extends baseModelbo {
         this.primaryKey = 'callfile_id';
     }
 
-    updateCallFileQualification(req, res, next) {
-        let callfile_id = req.body.callfile_id
-        this.db['callfiles'].findOne({
-            where: {
-                callfile_id: callfile_id
-            }
-        }).then(call_previous => {
-            if(call_previous){
-                this.db['callfiles'].update(req.body,
-                    {
-                        where: {
-                            callfile_id: callfile_id
-                        },
-                        returning: true,
-                        plain: true
-                    }).then(result => {
+    _updateCallFileQualification(callfile_id,body,req){
+        return new Promise((resolve,reject)=> {
+            this.db['callfiles'].findOne({
+                where: {
+                    callfile_id: callfile_id
+                }
+            }).then(call_previous => {
+                if(call_previous){
+                    this.db['callfiles'].update(body,
+                        {
+                            where: {
+                                callfile_id: callfile_id
+                            },
+                            returning: true,
+                            plain: true
+                        }).then(result => {
                         if(result){
                             let obj = call_previous.dataValues
                             Object.entries(obj).map(item => {
 
-                                let index = Object.entries(req.body).findIndex(element => element[0] === item[0])
+                                let index = Object.entries(body).findIndex(element => element[0] === item[0])
                                 if (index === -1) {
                                     delete obj[item[0]]
                                 }
@@ -43,7 +43,7 @@ class callfiles extends baseModelbo {
                                     })
                                 }
                             })
-                            let objAfter = req.body
+                            let objAfter = body
                             delete objAfter.customfields
                             Object.entries(objAfter).map(element=>{
                                 if(Array.isArray(element[1])){
@@ -52,35 +52,41 @@ class callfiles extends baseModelbo {
                             })
                             delete obj.customfields
                             this.saveEntityNewRevision(objAfter, obj, req).then(revision => {
-                                res.send({
+                                resolve({
                                     success: true,
                                     revision_id: revision.id ? revision.id : null
                                 })
-
-
                             }).catch(err => {
-                                return this.sendResponseError(res, ['Error', err], 1, 403);
+                                reject(err)
                             })
                         }else{
-                            res.send({
-                                success: false
-                            })
+                           resolve({
+                               success : false
+                           })
                         }
 
-                }).catch(err => {
-                    return this.sendResponseError(res, ['Error', err], 2, 403);
-                })
-            }else{
-                res.send({
-                    success: false
-                })
-            }
+                    }).catch(err => {
+                        reject(err)
+                    })
+                }
+                else{
+                    resolve({
+                        success : false
+                    })
+                }
 
-        }).catch(err => {
-            return this.sendResponseError(res, ['Error', err], 3, 403);
+            }).catch(err => {
+                reject(err)
+            })
         })
-
-
+    }
+    updateCallFileQualification(req, res, next) {
+        let callfile_id = req.body.callfile_id
+        this._updateCallFileQualification(callfile_id,req.body,req).then(result => {
+            res.send(result)
+        }).catch(err => {
+            this.sendResponseError(res,['cannotUpdateCallFile',err],1,403)
+        })
     }
 
     leadsStats(req, res, next) {

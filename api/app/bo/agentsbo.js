@@ -15,7 +15,11 @@ const PromiseBB = require("bluebird");
 const salt = require("../config/config.json")["salt"]
 
 const usersbo = require('./usersbo');
+const callfilebo = require('./callfilebo');
+const callhistorybo = require('./callhistorybo');
 let _usersbo = new usersbo;
+let _callfilebo = new callfilebo;
+let _callhistorybo = new callhistorybo;
 const appSocket = new (require('../providers/AppSocket'))();
 const appHelper = require("../helpers/app");
 const Op = require("sequelize/lib/operators");
@@ -676,6 +680,20 @@ class agents extends baseModelbo {
             });
     }
 
+    deleteChannelUUID(user_id,crmStatus){
+        return new Promise((resolve,reject)=>{
+            if(crmStatus === 'in_call'){
+                return resolve(true)
+            }
+            let toUpdate = {
+                channel_uuid: null,
+                updated_at : moment(new Date())
+            }
+            this.db['users'].update(toUpdate, {where: {user_id: user_id, active: 'Y'}}).then(()=>{
+                resolve(true)
+            }).catch(err=> reject(err))
+        })
+    }
     onConnectFunc(user_id, uuid, crmStatus, telcoStatus, pauseStatus = null) {
         return new Promise((resolve, reject) => {
             if (uuid) {
@@ -684,24 +702,26 @@ class agents extends baseModelbo {
                         this.db["users"].findOne({where: {user_id: user_id}})
                             .then(user => {
                                 if (user) {
-                                    let params = user.params;
-                                    user.updated_at = moment(new Date());
-                                    this.updateAgentStatus(user_id, user, telcoStatus, crmStatus, params, pauseStatus)
-                                        .then(agent => {
-                                            if (agent.success) {
-                                                resolve({
-                                                    success: true,
-                                                    agent: agent
-                                                });
-                                            } else {
-                                                resolve({
-                                                    success: false,
-                                                });
-                                            }
-                                        })
-                                        .catch((err) => {
-                                            reject(err);
-                                        });
+                                    this.deleteChannelUUID(user_id,crmStatus).then(()=> {
+                                        let params = user.params;
+                                        user.updated_at = moment(new Date());
+                                        this.updateAgentStatus(user_id, user, telcoStatus, crmStatus, params, pauseStatus)
+                                            .then(agent => {
+                                                if (agent.success) {
+                                                    resolve({
+                                                        success: true,
+                                                        agent: agent
+                                                    });
+                                                } else {
+                                                    resolve({
+                                                        success: false,
+                                                    });
+                                                }
+                                            })
+                                            .catch((err) => {
+                                                reject(err);
+                                            });
+                                    }).catch(err => reject(err))
                                 } else {
                                     resolve({
                                         success: false
@@ -868,7 +888,6 @@ class agents extends baseModelbo {
             role_crm_id: roleCrmAgent,
             current_session_token: {[Op.not]: null}
         }
-
         this.db['users'].findAll({where: where})
             .then(agents => {
                 this.verifyTokenAgents(agents).then((result) => {
@@ -924,7 +943,12 @@ class agents extends baseModelbo {
                                 })
 
                         } else {
-                            this.db['users'].update({current_session_token: null}, {where: {user_id: user.user_id}}).then(() => {
+                            let toUpdate = {
+                                channel_uuid: null,
+                                updated_at : moment(new Date()),
+                                current_session_token : null
+                            }
+                            this.db['users'].update(toUpdate, {where: {user_id: user.user_id}}).then(() => {
                                 idx++;
                             }).catch(err => {
                                 reject(err)
@@ -1800,6 +1824,56 @@ class agents extends baseModelbo {
         })
     }
 
+    qualifyCallFile(callfile,callfile_id,user_id,req){
+        return new Promise((resolve,reject)=> {
+            if(!!!callfile || !!!callfile_id){
+                return resolve(true)
+            }
+            let Body = callfile;
+            Body.note = null
+            Body.callfile_id = callfile_id
+            Body.updated_at = new Date()
+            let DDC = {
+                agent_id: user_id,
+                note: '',
+                call_file_id: callfile_id
+            }
+            _callfilebo._updateCallFileQualification(callfile_id,Body,req).then(result => {
+                DDC.revision_id = result.revision_id
+                _callhistorybo._updateCall(DDC).then(resultHistory => {
+                    resolve(resultHistory)
+                }).catch(err => reject(err))
+            }).catch(err => reject(err))
+        })
+    }
+    changeCrmStatus(req,res,next) {
+        let {user_id, uuid, crmStatus,telcoStatus,callfile,callfile_id} = req.body;
+        this.onConnectFunc(user_id,uuid, crmStatus, telcoStatus)
+            .then((user) => {
+                let {sip_device, first_name, last_name, user_id, campaign_id, account_id} = user.agent.user;
+                let data_agent = {
+                    user_id: user_id,
+                    first_name: first_name,
+                    last_name: last_name,
+                    uuid: sip_device.uuid,
+                    crmStatus: user.agent.user.params.status,
+                    telcoStatus: sip_device.status,
+                    timerStart: sip_device.updated_at,
+                    campaign_id: campaign_id,
+                    account_id: account_id,
+                    call_type: null
+                };
+                appSocket.emit('agent_connection', data_agent);
+                this.qualifyCallFile(callfile,callfile_id,user_id,req).then(resultQualify => {
+                        res.sendStatus(resultQualify ? 204 : 403);
+                }).catch(() => {
+                    res.sendStatus(403)
+                })
+            }).catch(() => {
+            res.sendStatus(403)
+        })
+
+    }
 }
 
 module.exports = agents;
