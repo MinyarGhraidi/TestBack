@@ -15,7 +15,11 @@ const PromiseBB = require("bluebird");
 const salt = require("../config/config.json")["salt"]
 
 const usersbo = require('./usersbo');
+const callfilebo = require('./callfilebo');
+const callhistorybo = require('./callhistorybo');
 let _usersbo = new usersbo;
+let _callfilebo = new callfilebo;
+let _callhistorybo = new callhistorybo;
 const appSocket = new (require('../providers/AppSocket'))();
 const appHelper = require("../helpers/app");
 const Op = require("sequelize/lib/operators");
@@ -1820,28 +1824,56 @@ class agents extends baseModelbo {
         })
     }
 
-    changeCrmStatus(req,res,next) {
-        let {user_id, uuid, crmStatus,telcoStatus} = req.body;
-                this.onConnectFunc(user_id,uuid, crmStatus, telcoStatus)
-                    .then((user) => {
-                        let {sip_device, first_name, last_name, user_id, campaign_id, account_id} = user.agent.user;
-                        let data_agent = {
-                            user_id: user_id,
-                            first_name: first_name,
-                            last_name: last_name,
-                            uuid: sip_device.uuid,
-                            crmStatus: user.agent.user.params.status,
-                            telcoStatus: sip_device.status,
-                            timerStart: sip_device.updated_at,
-                            campaign_id: campaign_id,
-                            account_id: account_id,
-                            call_type: null
-                        };
-                        appSocket.emit('agent_connection', data_agent);
-                        res.sendStatus(204);
-                    }).catch(() => res.sendStatus(403))
+    qualifyCallFile(callfile,callfile_id,user_id,req){
+        return new Promise((resolve,reject)=> {
+            if(!!!callfile || !!!callfile_id){
+                return resolve(true)
+            }
+            let Body = callfile;
+            Body.note = null
+            Body.callfile_id = callfile_id
+            Body.updated_at = new Date()
+            let DDC = {
+                agent_id: user_id,
+                note: '',
+                call_file_id: callfile_id
+            }
+            _callfilebo._updateCallFileQualification(callfile_id,Body,req).then(result => {
+                DDC.revision_id = result.revision_id
+                _callhistorybo._updateCall(DDC).then(resultHistory => {
+                    resolve(resultHistory)
+                }).catch(err => reject(err))
+            }).catch(err => reject(err))
+        })
     }
+    changeCrmStatus(req,res,next) {
+        let {user_id, uuid, crmStatus,telcoStatus,callfile,callfile_id} = req.body;
+        this.onConnectFunc(user_id,uuid, crmStatus, telcoStatus)
+            .then((user) => {
+                let {sip_device, first_name, last_name, user_id, campaign_id, account_id} = user.agent.user;
+                let data_agent = {
+                    user_id: user_id,
+                    first_name: first_name,
+                    last_name: last_name,
+                    uuid: sip_device.uuid,
+                    crmStatus: user.agent.user.params.status,
+                    telcoStatus: sip_device.status,
+                    timerStart: sip_device.updated_at,
+                    campaign_id: campaign_id,
+                    account_id: account_id,
+                    call_type: null
+                };
+                appSocket.emit('agent_connection', data_agent);
+                this.qualifyCallFile(callfile,callfile_id,user_id,req).then(resultQualify => {
+                        res.sendStatus(resultQualify ? 204 : 403);
+                }).catch(() => {
+                    res.sendStatus(403)
+                })
+            }).catch(() => {
+            res.sendStatus(403)
+        })
 
+    }
 }
 
 module.exports = agents;
