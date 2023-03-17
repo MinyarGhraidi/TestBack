@@ -45,6 +45,9 @@ module.exports = {
     },
     getCallBlending: function (req, res, next){
         _itembo.getCallBlending(req, res, next)
+    },
+    eavesdrop : function (req, res, next){
+        _itembo.eavesdrop(req, res, next)
     }
 
 };
