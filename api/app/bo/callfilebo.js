@@ -6,6 +6,12 @@ const efilesBo = require('./efilesbo');
 const moment = require("moment");
 const _efilebo = new efilesBo;
 const request = require('request');
+const call_center_token = require(__dirname + '/../config/config.json')["call_center_token"];
+const base_url_cc_kam = require(__dirname + '/../config/config.json')["base_url_cc_kam"];
+const call_center_authorization = {
+    headers: {Authorization: call_center_token}
+};
+const {default: axios} = require("axios");
 
 class callfiles extends baseModelbo {
     constructor() {
@@ -1059,24 +1065,10 @@ class callfiles extends baseModelbo {
         let agent_id = req.body.agent_id;
         let supSipUri = req.body.sip_uri
         let domain = req.body.domain
-        if(!!!agent_id){
+        if(!!!agent_id || !!!supSipUri || !!!domain){
             res.send({
                 success: false,
                 message: 'agent id is null'
-            })
-            return
-        }
-        if(!!!supSipUri){
-            res.send({
-                success: false,
-                message: 'supSipUri is null'
-            })
-            return
-        }
-        if(!!!domain){
-            res.send({
-                success: false,
-                message: 'domain  is null'
             })
             return
         }
@@ -1093,49 +1085,25 @@ class callfiles extends baseModelbo {
                     "supervisorSipUri": supSipUri+"@"+domain,
                     "callerIdNumber": "33980762256"
                 }
-                this.eavesdropCall(obj, (ok) => {
-                    try {
-                        if (ok) {
-                            res.send({
-                                success: true
-                            })
-
-                        } else {
-                            res.send({
-                                success: false,
-                                message: 'error eavesdrop'
-                            })
-                        }
-                    } catch (e) {
+                axios.post(`${base_url_cc_kam}api/v1/commands/eavesdrop`,obj,call_center_authorization).then(result=>{
+                    if(result.data && result.data.status === 'success'){
                         res.send({
-                            success: false,
-                            message: 'error eavesdrop'
+                            success: true
+                        })
+                    }else{
+                        res.send({
+                            success: false
                         })
                     }
-                });
+
+                }).catch(err=>{
+                    return this.sendResponseError(res, ['Error.eavesdrop', err], 1, 403);
+                })
+
             }
         })
     }
 
-    eavesdropCall(data, callback) {
-        const options = {
-            uri: 'https://sip-crm.oxilog-telecom.net:1443/api/v1/commands/eavesdrop',
-            method: 'POST',
-            json: true,
-            body: data,
-            auth: {
-                'bearer': 'BomjNx8kFfZTdCFx4kH3hGECO78yS0C0KS7pgO0BUe8COxcved'
-            }
-        };
-        request(options, function (error, response, body) {
-            console.log('body', body)
-            if (body && body.status === 'success') {
-                callback(true);
-            } else {
-                callback(false);
-            }
-        });
-    }
 
 
 }
