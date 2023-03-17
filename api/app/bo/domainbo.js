@@ -40,7 +40,7 @@ class domains extends baseModelbo {
         }).catch((err) => {
             res.send({
                 success: false,
-                message: err.response.data.errors.domain_name[0]
+                message: 'Failed Adding Domain'
             })
         })
 
