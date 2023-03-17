@@ -11,6 +11,7 @@ class notifications extends baseModelbo {
         this.baseModal = "notifications";
         this.primaryKey = 'notification_id';
     }
+
     addMinutesToTime(minutes, timeString) {
         const [hours, mins] = timeString.split(":").map(Number);
         const totalMins = hours * 60 + mins + minutes;
@@ -45,9 +46,10 @@ class notifications extends baseModelbo {
         } else {
             afterMidnight.push(`${formattedHours}:${formattedMins}`);
         }
-            return { beforeMidnight, afterMidnight};
+        return {beforeMidnight, afterMidnight};
     }
-    saveNotificationReminder(req,res,next){
+
+    saveNotificationReminder(req, res, next) {
         let currDate = new Date();
         let hoursMin = currDate.getHours() + ':' + currDate.getMinutes();
         let hoursMinExp = "00:00";
@@ -65,348 +67,228 @@ class notifications extends baseModelbo {
         if (mm_Tomorrow < 10) mm_Tomorrow = '0' + mm_Tomorrow;
         const formattedToday = yyyy_Now + '-' + mm_Now + '-' + dd_Now;
         const formattedTomorrow = yyyy_Tomorrow + '-' + mm_Tomorrow + '-' + dd_Tomorrow;
-        const ArrayTimes = this.addMinutesToTime(15,hoursMin);
+        const ArrayTimes = this.addMinutesToTime(15, hoursMin);
         this.db['reminders'].findAll({
             include: [{
-                model: db.notifications,
-                required : false
-            },
-            ],
-            where : {
+                model: db.notifications, required: false
+            },], where: {
                 active: 'Y',
-                [Op.or]: [
-                    { date : formattedToday, time : ArrayTimes.beforeMidnight},
-                    { date : formattedTomorrow, time : ArrayTimes.afterMidnight}
-                ],
-                '$notifications.reminder_id$' : null
+                [Op.or]: [{date: formattedToday, time: ArrayTimes.beforeMidnight}, {
+                    date: formattedTomorrow,
+                    time: ArrayTimes.afterMidnight
+                }],
+                '$notifications.reminder_id$': null
             }
-        }).then(resultData =>{
+        }).then(resultData => {
 
-            if(resultData && resultData.length !== 0){
+            if (resultData && resultData.length !== 0) {
                 let idx = 0;
-                resultData.forEach(reminder =>{
+                resultData.forEach(reminder => {
                     let DateTZ = moment(new Date());
                     let data = {
                         data: {
                             agent_id: reminder.agent_id,
-                            Date_Time: reminder.date + ' '+reminder.time,
+                            Date_Time: reminder.date + ' ' + reminder.time,
                             note: reminder.note,
                             callfile_id: reminder.callfile_id
-                        },
-                        reminder_id : reminder.reminder_id,
-                        status: 'Y',
-                        created_at: DateTZ,
-                        updated_at: DateTZ
+                        }, reminder_id: reminder.reminder_id, status: 'Y', created_at: DateTZ, updated_at: DateTZ
                     }
                     let modalObj = this.db['notifications'].build(data);
                     modalObj.save().then(() => {
                         appSocket.emit('save_notification', {
-                            target : 'reminder',
-                            agent_id : reminder.agent_id,
+                            target: 'reminder', agent_id: reminder.agent_id,
                         });
-                        if(idx < resultData.length -1){
+                        if (idx < resultData.length - 1) {
                             idx++;
-                        }else{
+                        } else {
                             res.send({
-                                success :true,
-                                message : resultData.length + 'Reminders Added to Notifications !'
+                                success: true, message: resultData.length + 'Reminders Added to Notifications !'
                             })
                         }
                     })
                 })
-            }else{
+            } else {
                 res.send({
-                    success :true,
-                    message : "Nothing To Add !"
+                    success: true, message: "Nothing To Add !"
                 })
             }
         }).catch(err => res.send(err))
     }
-    _saveNotificationByCampaign_id(campaign_id) {
+
+
+    _saveNotificationIfDoesntExist(to_save) {
         return new Promise((resolve, reject) => {
-            this.db['campaigns'].findOne({where: {campaign_id: campaign_id, active: 'Y'}}).then(campaign => {
-                if (!!!campaign) {
-                    reject(false);
+            let idx = 0;
+            let idxSaveCount = 0;
+            to_save.forEach(data => {
+                let WhereQuery = {}
+                if (data.campaign_id) {
+                    WhereQuery = {
+                        active: 'Y',
+                        created_at: {$gte: moment(new Date()).subtract(1, 'hours').toDate()},
+                        campaign_id: data.campaign_id
+
+                    }
+                } else if (data.list_callfile_id) {
+                    WhereQuery = {
+                        active: 'Y',
+                        created_at: {$gte: moment(new Date()).subtract(1, 'hours').toDate()},
+                        list_callfile_id: data.list_callfile_id
+
+                    }
                 }
-                if (Object.keys(campaign) && Object.keys(campaign).length !== 0) {
-                    this.db['listcallfiles'].findAll({
-                        where: {
-                            campaign_id: campaign_id,
-                            active: 'Y',
-                            status: 'Y'
-                        }
-                    }).then(listcallfiles => {
-                        if (listcallfiles && listcallfiles.length !== 0) {
-                            let LCF_ids = [];
-                            listcallfiles.forEach(LCF => LCF_ids.push(LCF.listcallfile_id));
-                            let idx = 0;
-                            let totalCallFiles = 0;
-                            let totalTreated = 0;
-                            LCF_ids.forEach((LCF_id) => {
-                                this._saveNotificationByListCallFile_id(LCF_id, campaign.account_id).then(result => {
-                                    totalCallFiles += result.data.total || 0;
-                                    totalTreated += result.data.totalTreated || 0;
-                                    if (idx < LCF_ids.length - 1) {
-                                        idx++
-                                    } else {
-                                        if(totalCallFiles !== 0){
-                                            let PercentagesRestToTreat = 100 - (100 * totalTreated / totalCallFiles).toFixed(2);
-                                            if (PercentagesRestToTreat <= 10) {
-                                                this.db['notifications'].findOne({
-                                                    where: {
-                                                        campaign_id: campaign_id,
-                                                        active: 'Y',
-                                                        created_at : {
-                                                            $gte: moment().subtract(1, 'hours').toDate()
-                                                        }
-                                                    },
-                                                    order: [['created_at', 'DESC']],
-                                                    limit : 1
-                                                }).then(LCF_Notifications =>{
-                                                    if (LCF_Notifications && LCF_Notifications.length !== 0) {
-                                                        resolve({
-                                                            success : false,
-                                                            data: []
-                                                        })
-                                                    }else{
-                                                        let DateTZ = moment(new Date());
-                                                        let data = {
-                                                            account_id: campaign.account_id,
-                                                            campaign_id: campaign_id,
-                                                            data: {
-                                                                total: totalCallFiles,
-                                                                totalTreated: totalTreated,
-                                                                percentage: PercentagesRestToTreat + '%',
-                                                                reste: totalCallFiles - totalTreated
-                                                            },
-                                                            status: 'Y',
-                                                            created_at: DateTZ,
-                                                            updated_at: DateTZ
-                                                        }
-                                                        let modalObj = this.db['notifications'].build(data);
-                                                        modalObj.save().then((notif) => {
-                                                            appSocket.emit('save_notification', {
-                                                                target : 'call_file',
-                                                                account_id : campaign.account_id,
-                                                                campaign_id,
-                                                                percentage: PercentagesRestToTreat + '%'
-                                                            });
-                                                            resolve({
-                                                                success: true,
-                                                                data: notif
-                                                            });
-                                                        })
-                                                    }
-                                                }).catch(err=> reject(err));
-                                            }else{
-                                                resolve({
-                                                    success: true,
-                                                    data: []
-                                                });
-                                            }
-                                        } else{
-                                            resolve({
-                                                success: true,
-                                                data: []
-                                            });
-                                        }
-                                    }
-                                })
-                            })
-                        }else{
-                            resolve({
-                                success: true,
-                                data: []
+                console.log(WhereQuery)
+                this.db['notifications'].findOne({
+                    where: WhereQuery, order: [['created_at', 'DESC']], limit: 1
+                }).then(LCF_Notifications => {
+                    if (!!!LCF_Notifications || LCF_Notifications.length === 0) {
+                        let modalObj = this.db['notifications'].build(data);
+                        modalObj.save().then(() => {
+                            idxSaveCount++;
+                            appSocket.emit('save_notification', {
+                                target: 'call_file',
+                                account_id: data.account_id,
+                                listCallFile_id: data.list_callfile_id,
+                                campaign_id: data.campaign_id,
+                                percentage: data.data.percentage + '%'
                             });
-                        }
-                    }).catch(err => {
-                        resolve({
-                            success: false,
-                            message: 'Error.CannotGetListCallFile'
-                        })
-                    })
-                } else {
-                    resolve({
-                        success: false,
-                        message: 'Error.CannotGetCampaign'
-                    })
-                }
-            }).catch(err => {
-                resolve({
-                    success: false,
-                    message: 'Error.CannotGetCampaign'
-                })
-            })
-        })
-    }
-
-    _saveNotificationByListCallFile_id(listCallFile_id, account_id) {
-        return new Promise((resolve, reject) => {
-
-            this.db['listcallfiles'].findOne({
-                where: {
-                    listcallfile_id: listCallFile_id,
-                    active: 'Y',
-                    status: 'Y'
-                }
-            }).then(listcallfile => {
-                if (Object.keys(listcallfile) && Object.keys(listcallfile).length !== 0) {
-                    this.db['callfiles'].findAll({
-                        where: {
-                            listcallfile_id: listCallFile_id,
-                            active: 'Y',
-                        }
-                    }).then(callfiles =>
-                    {
-                        if (callfiles && callfiles.length !== 0) {
-                            let totalCallFiles = callfiles.length;
-                            let totalToTreat = 0;
-                            callfiles.forEach(CF => {
-                                if (CF.save_in_hooper === 'Y') {
-                                    totalToTreat += 1;
-                                }
-                            })
-                            let PercentagesRestToTreat = 100 - (100 * totalToTreat / totalCallFiles).toFixed(2);
-                            let DateTZ = moment(new Date());
-                            if (PercentagesRestToTreat <= 10) {
-                                let data = {
-                                    account_id: account_id,
-                                    list_callfile_id: listCallFile_id,
-                                    data: {
-                                        total: totalCallFiles,
-                                        totalTreated: totalToTreat,
-                                        percentage: PercentagesRestToTreat + '%',
-                                        reste: totalCallFiles - totalToTreat
-                                    },
-                                    status: 'Y',
-                                    created_at: DateTZ,
-                                    updated_at: DateTZ
-                                }
-                                this.db['notifications'].findOne({
-                                    where: {
-                                        list_callfile_id: listCallFile_id,
-                                        active: 'Y',
-                                        created_at : {
-                                            $gte: moment(new Date()).subtract(1, 'hours').toDate()
-                                        }
-                                    },
-                                    order: [['created_at', 'DESC']],
-                                    limit : 1
-                                }).then(LCF_Notifications => {
-                                    if (LCF_Notifications && LCF_Notifications.length !== 0) {
-                                        resolve({
-                                            success: true,
-                                            message: "ListCallFile already Pushed To Notif",
-                                            data: {
-                                                total: totalCallFiles,
-                                                totalTreated: totalToTreat,
-                                                rest: totalCallFiles - totalToTreat
-                                            }
-                                        })
-                                    } else {
-                                        let modalObj = this.db['notifications'].build(data);
-                                        modalObj.save().then(() => {
-                                            appSocket.emit('save_notification', {
-                                                target : 'call_file',
-                                                account_id,
-                                                listCallFile_id,
-                                                percentage: PercentagesRestToTreat + '%'
-                                            });
-                                            resolve({
-                                                success: true,
-                                                data: {
-                                                    total: totalCallFiles,
-                                                    totalTreated: totalToTreat,
-                                                    rest: totalCallFiles - totalToTreat
-                                                }
-                                            });
-                                        })
-                                    }
-                                }).catch(err => reject(err))
+                            if(idx < to_save.length -1){
+                                idx++;
                             }else{
-                                resolve({
-                                    success: true,
-                                    message: PercentagesRestToTreat + '% > 10%',
-                                    data: {
-                                        total: totalCallFiles,
-                                        totalTreated: totalToTreat,
-                                        rest: totalCallFiles - totalToTreat
-                                    }
+                                return resolve({
+                                    success :true,
+                                    message : idxSaveCount +' saved to Notifications !'
                                 })
                             }
-                        } else {
-                            resolve({
-                                success: false,
-                                message: 'Error.CannotGetCallFiles'
+                        })
+                    }else{
+                        if(idx < to_save.length -1){
+                            idx++;
+                        }else{
+                            return resolve({
+                                success :true,
+                                message : idxSaveCount > 0 ? idxSaveCount + ' saved to Notifications !' : 'Nothing added to Notifications !'
                             })
                         }
-                    }).catch(err => {
-                        resolve({
-                            success: false,
-                            message: 'Error.CannotGetCallFiles'
-                        })
-                    })
-                }
-                else {
-                    resolve({
-                        success: false,
-                        message: 'Error.CannotGetListCallFile'
-                    })
-                }
-            }).catch(err => {
-                resolve({
-                    success: false,
-                    message: 'Error.CannotGetListCallFile'
-                })
+                    }
+                }).catch(err => reject(err))
             })
+
         })
     }
 
     SaveNotification(req, res, next) {
-
         if (req.body.campaign_id) {
-            this._saveNotificationByCampaign_id(req.body.campaign_id).then(result => {
-                if (result.success) {
-                    return res.send({
-                        success: true,
-                        status: 200,
-                        data: result.data
+            this._getDataToSaveInNotifications(req.body.campaign_id).then(data => {
+                if (data.success) {
+                    this._saveNotificationIfDoesntExist(data.data).then(resultSave => {
+                        res.send(resultSave)
                     })
                 } else {
-                    return res.send({
-                        success: false,
-                        status: 403,
-                        data: [],
-                        message: result.message
-                    })
+                    res.send(data)
                 }
-            }).catch(err => {
-                return this.sendResponseError(res, ['CannotSaveNotification'], 1, 403);
             })
-        }
-        else {
+        } else {
             return this.sendResponseError(res, ["Error.CannotSave"], 1, 403);
         }
     }
+
+    _getDataToSaveInNotifications(campaign_id) {
+        return new Promise((resolve, reject) => {
+            this.db['campaigns'].findOne({where: {campaign_id: campaign_id, active: 'Y'}}).then(campaign => {
+                if (!!!campaign) {
+                   return  reject(false);
+                }
+                    let sqlQuery = `select listcallfile_id,
+                                        COUNT(*) as total_CallFiles, 
+                                        COUNT(CASE WHEN to_treat = 'Y' THEN 1 END ) as total_called, 
+                                        (COUNT(*) - COUNT(CASE WHEN to_treat = 'Y' THEN 1 END )) as available_callfiles, 
+                                        CAST((100 - CAST((COUNT(CASE WHEN to_treat = 'Y' THEN 1 END ) * 100) as DECIMAL(11,2))  /  COUNT(*))as DECIMAL(5,2)) as Percentages 
+                                        FROM callfiles WHERE listcallfile_id in (
+                                                                                    select listcallfile_id 
+                                                                                    from listcallfiles 
+                                                                                    where campaign_id = :campaign_id 
+                                                                                    and active = 'Y' 
+                                                                                    and status = 'Y'
+                                                                                    ) 
+                                        and active = 'Y' 
+                                        group by listcallfile_id
+                                        having CAST((100 - CAST((COUNT(CASE WHEN to_treat = 'Y' THEN 1 END ) * 100) as DECIMAL(11,2))  /  Count(*))as DECIMAL(5,2)) <=10`
+                    db.sequelize["crm-app"]
+                        .query(sqlQuery, {
+                            type: db.sequelize["crm-app"].QueryTypes.SELECT, replacements: {
+                                campaign_id: campaign_id
+                            }
+                        }).then(resData => {
+                        let total_callfiles = 0;
+                        let total_called = 0;
+                        let available_callfiles = 0;
+                        let toSaveInNotifications = []
+                        if (resData && resData.length === 0) {
+                            return resolve({
+                                success: true, status: 200, data: [],
+                            })
+                        }
+                        resData.forEach(dataLCF => {
+                            let TZ = moment(new Date())
+                            total_callfiles += parseInt(dataLCF.total_callfiles);
+                            total_called += parseInt(dataLCF.total_called);
+                            available_callfiles += parseInt(dataLCF.available_callfiles);
+                            toSaveInNotifications.push({
+                                account_id: campaign.account_id, list_callfile_id: dataLCF.listcallfile_id, data: {
+                                    reste: dataLCF.available_callfiles,
+                                    total: dataLCF.total_callfiles,
+                                    percentage: parseFloat(dataLCF.percentages),
+                                    totalTreated: dataLCF.total_called
+                                }, active: 'Y', status: 'Y', created_at: TZ, updated_at: TZ
+                            })
+                        })
+                        let PercentagesCampaign = 100 - (100 * total_called / total_callfiles).toFixed(2);
+
+                        if (PercentagesCampaign <= 10) {
+                            let DateTZ = moment(new Date());
+                            toSaveInNotifications.push({
+                                account_id: campaign.account_id, campaign_id: campaign_id, data: {
+                                    reste: available_callfiles,
+                                    total: total_callfiles,
+                                    percentage: parseFloat(PercentagesCampaign.toFixed(2)),
+                                    totalTreated: total_called
+                                }, active: 'Y', status: 'Y', created_at: DateTZ, updated_at: DateTZ
+                            })
+                        }
+                        resolve({
+                            success: true, status: 200, data: toSaveInNotifications,
+                        })
+                    }).catch(err => {
+                        resolve({
+                            success: false, message: 'Error.CannotGetListCallFiles', err
+                        })
+                    })
+            }).catch(err => resolve({
+                success: false, message: 'Error.CannotGetCampaign', err
+            }))
+        })
+    }
+
 
     findNotification(req, res, next) {
         let params = req.body;
         if (!!!params.target) {
             return this.sendResponseError(res, ['Error.Target is Required'], 1, 403);
         }
-        if(params.target === 'reminder' && !!!params.agent_id){
+        if (params.target === 'reminder' && !!!params.agent_id) {
             return this.sendResponseError(res, ['Error.Agent_id is Required'], 1, 403);
         }
 
-        if(params.target === 'call_file' && !!!params.account_id){
+        if (params.target === 'call_file' && !!!params.account_id) {
             return this.sendResponseError(res, ['Error.Agent_id is Required'], 1, 403);
         }
         let whereClause = {
             active: 'Y',
         }
-        if(params.target === 'call_file'){
+        if (params.target === 'call_file') {
             whereClause['account_id'] = params.account_id;
-        }else if(params.target === 'reminder'){
+        } else if (params.target === 'reminder') {
             whereClause['data'] = {
                 [Op.contains]: {
                     agent_id: params.agent_id
@@ -421,105 +303,97 @@ class notifications extends baseModelbo {
         }
         const limit = parseInt(params.limit) > 0 ? params.limit : 1000;
 
-        switch(params.target){
-            case 'reminder' : this.db['notifications'].findAll({
-                where : whereClause,
-                order: [['created_at', 'DESC']]
-            }).then(resultReminder =>{
-                let CountUnreadMessagesReminder = 0;
-                let UnreadMessagesReminder = [];
-                let dataCountAllUnreadReminder = [];
-                let CountAllNotificationsReminder = resultReminder.length;
-                if (CountAllNotificationsReminder !== 0) {
-                    UnreadMessagesReminder = resultReminder.filter(notif => notif.status === 'Y');
-                    CountUnreadMessagesReminder = UnreadMessagesReminder.length;
-                    resultReminder = resultReminder.slice(0, parseInt(limit));
-                    dataCountAllUnreadReminder = UnreadMessagesReminder.slice(0, parseInt(limit));
-                }
-                let data = {
-                    success: true,
-                    status: 200,
-                    data: !!!!params.status ? dataCountAllUnreadReminder : resultReminder,
-                    count: {
-                        all: CountAllNotificationsReminder,
-                        unread: CountUnreadMessagesReminder
+        switch (params.target) {
+            case 'reminder' :
+                this.db['notifications'].findAll({
+                    where: whereClause, order: [['created_at', 'DESC']]
+                }).then(resultReminder => {
+                    let CountUnreadMessagesReminder = 0;
+                    let UnreadMessagesReminder = [];
+                    let dataCountAllUnreadReminder = [];
+                    let CountAllNotificationsReminder = resultReminder.length;
+                    if (CountAllNotificationsReminder !== 0) {
+                        UnreadMessagesReminder = resultReminder.filter(notif => notif.status === 'Y');
+                        CountUnreadMessagesReminder = UnreadMessagesReminder.length;
+                        resultReminder = resultReminder.slice(0, parseInt(limit));
+                        dataCountAllUnreadReminder = UnreadMessagesReminder.slice(0, parseInt(limit));
                     }
-                }
-                res.send(data)
-
-            }).catch(err => res.send(err));break;
-            case 'call_file' :this.db['campaigns'].findAll({where: {account_id: params.account_id, active: "Y"}}).then(campaigns => {
-                this.db['listcallfiles'].findAll({where: {active: "Y"}}).then(listcallfiles => {
-                    this.db['notifications'].findAll({
-                        where: whereClause,
-                        order: [['created_at', 'DESC']]
-                    }).then(dataCountAll => {
-                        dataCountAll.map(data => {
-                            if (data.campaign_id !== null) {
-                                let campToAdd = campaigns.filter(camp => camp.campaign_id === data.campaign_id);
-                                data.dataValues.campaign = campToAdd[0].toJSON();
-                            } else {
-                                let lcfToAdd = listcallfiles.filter(lcf => lcf.listcallfile_id === data.list_callfile_id);
-                                if(lcfToAdd && lcfToAdd.length !== 0) {
-                                    data.dataValues.listcallfile = lcfToAdd[0].toJSON();
-                                }
-                            }
-                        })
-                        let CountUnreadMessages = 0;
-                        let UnreadMessages = [];
-                        let dataCountAllUnread = [];
-                        let CountAllNotifications = dataCountAll.length;
-                        if (CountAllNotifications !== 0) {
-                            UnreadMessages = dataCountAll.filter(notif => notif.status === 'Y');
-                            CountUnreadMessages = UnreadMessages.length;
-                            dataCountAll = dataCountAll.slice(0, parseInt(limit));
-                            dataCountAllUnread = UnreadMessages.slice(0, parseInt(limit));
+                    let data = {
+                        success: true,
+                        status: 200,
+                        data: !!!!params.status ? dataCountAllUnreadReminder : resultReminder,
+                        count: {
+                            all: CountAllNotificationsReminder, unread: CountUnreadMessagesReminder
                         }
-                        let data = {
-                            success: true,
-                            status: 200,
-                            data: !!!!params.status ? dataCountAllUnread : dataCountAll,
-                            count: {
-                                all: CountAllNotifications,
-                                unread: CountUnreadMessages
-                            }
-                        }
-                        res.send(data)
+                    }
+                    res.send(data)
 
-                    })
-                        .catch(err => {
-                            return res.send({
-                                success: false,
-                                status: 403,
-                                data: [],
-                                count: {
-                                    all: 0,
-                                    unread: 0
+                }).catch(err => res.send(err));
+                break;
+            case 'call_file' :
+                this.db['campaigns'].findAll({
+                    where: {
+                        account_id: params.account_id, active: "Y"
+                    }
+                }).then(campaigns => {
+                    this.db['listcallfiles'].findAll({where: {active: "Y"}}).then(listcallfiles => {
+                        this.db['notifications'].findAll({
+                            where: whereClause, order: [['created_at', 'DESC']]
+                        }).then(dataCountAll => {
+                            dataCountAll.map(data => {
+                                if (data.campaign_id !== null) {
+                                    let campToAdd = campaigns.filter(camp => camp.campaign_id === data.campaign_id);
+                                    data.dataValues.campaign = campToAdd[0].toJSON();
+                                } else {
+                                    let lcfToAdd = listcallfiles.filter(lcf => lcf.listcallfile_id === data.list_callfile_id);
+                                    if (lcfToAdd && lcfToAdd.length !== 0) {
+                                        data.dataValues.listcallfile = lcfToAdd[0].toJSON();
+                                    }
                                 }
                             })
+                            let CountUnreadMessages = 0;
+                            let UnreadMessages = [];
+                            let dataCountAllUnread = [];
+                            let CountAllNotifications = dataCountAll.length;
+                            if (CountAllNotifications !== 0) {
+                                UnreadMessages = dataCountAll.filter(notif => notif.status === 'Y');
+                                CountUnreadMessages = UnreadMessages.length;
+                                dataCountAll = dataCountAll.slice(0, parseInt(limit));
+                                dataCountAllUnread = UnreadMessages.slice(0, parseInt(limit));
+                            }
+                            let data = {
+                                success: true,
+                                status: 200,
+                                data: !!!!params.status ? dataCountAllUnread : dataCountAll,
+                                count: {
+                                    all: CountAllNotifications, unread: CountUnreadMessages
+                                }
+                            }
+                            res.send(data)
+
                         })
+                            .catch(err => {
+                                return res.send({
+                                    success: false, status: 403, data: [], count: {
+                                        all: 0, unread: 0
+                                    }
+                                })
+                            })
+                    }).catch(err => {
+                        return res.send({
+                            success: false, status: 403, data: [], count: {
+                                all: 0, unread: 0
+                            }
+                        })
+                    });
                 }).catch(err => {
                     return res.send({
-                        success: false,
-                        status: 403,
-                        data: [],
-                        count: {
-                            all: 0,
-                            unread: 0
+                        success: false, status: 403, data: [], count: {
+                            all: 0, unread: 0
                         }
                     })
                 });
-            }).catch(err => {
-                return res.send({
-                    success: false,
-                    status: 403,
-                    data: [],
-                    count: {
-                        all: 0,
-                        unread: 0
-                    }
-                })
-            });break;
+                break;
         }
 
     }
@@ -531,13 +405,11 @@ class notifications extends baseModelbo {
         }
         this.db['notifications'].update({status: 'N', updated_at: moment(new Date())}, {
             where: {
-                account_id: account_id,
-                active: 'Y'
+                account_id: account_id, active: 'Y'
             }
         }).then(() => {
             res.send({
-                status: 200,
-                success: true
+                status: 200, success: true
             })
         }).catch(err => {
             return this.sendResponseError(res, ['CannotUpdateNotifications'], 1, 403);
