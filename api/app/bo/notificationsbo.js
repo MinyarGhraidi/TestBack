@@ -137,7 +137,6 @@ class notifications extends baseModelbo {
 
                     }
                 }
-                console.log(WhereQuery)
                 this.db['notifications'].findOne({
                     where: WhereQuery, order: [['created_at', 'DESC']], limit: 1
                 }).then(LCF_Notifications => {

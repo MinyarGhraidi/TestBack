@@ -21,6 +21,7 @@ const call_center_authorization = {
 };
 const moment = require("moment");
 const helpers = require("../helpers/helpers");
+const appSocket = new (require("../providers/AppSocket"))();
 
 
 class accounts extends baseModelbo {
@@ -64,39 +65,55 @@ class accounts extends baseModelbo {
         })
     }
 
-    changeStatusUsers(account_id, status) {
+    changeStatusUsersAndDestroySession(account_id, status) {
         let indexUser = 0;
-
         return new Promise((resolve, reject) => {
-            this.db['roles_crms'].findAll({
+            this.db['users'].findAll({
                 where: {
-                    value: {in: ['agent', 'user', 'sales']},
+                    account_id: account_id,
+                    active: 'Y'
                 }
-            }).then((role) => {
-                if (!!!role.length !== 0) {
-                    return resolve(true);
-                }
-                role.forEach(data => {
-                    this.db["users"].update({status: status, updated_at: new Date()}, {
+            }).then(users => {
+                if (users && users.length !== 0) {
+                    let users_ids = users.map((item) => item.user_id);
+                    let updateTo = {}
+                    if (status === 'Y') {
+                        updateTo = {status: status, updated_at: moment(new Date())}
+                    } else {
+                        updateTo = {
+                            status: status,
+                            updated_at: moment(new Date()),
+                            current_session_token: null,
+                            channel_uuid: null
+                        }
+                    }
+                    this.db["users"].update(updateTo, {
                         where: {
-                            role_crm_id: data.id,
                             account_id: account_id,
                             active: 'Y'
                         }
                     })
                         .then(() => {
-                            if (indexUser < role.length - 1) {
-                                indexUser++;
+                            if (status === 'N') {
+                                users_ids.forEach(_user_id => {
+                                    appSocket.emit('reload.Permission', {user_id: _user_id});
+                                    if (indexUser < users_ids.length - 1) {
+                                        indexUser++;
+                                    } else {
+                                        return resolve(true);
+                                    }
+                                })
                             } else {
-                                resolve(true);
+                                return resolve(true)
                             }
                         }).catch(err => {
                         return reject(err);
                     });
-                });
-            }).catch(err => {
-                reject(err);
-            });
+
+                } else {
+                    return resolve(true)
+                }
+            })
         })
     }
 
@@ -131,11 +148,11 @@ class accounts extends baseModelbo {
                 'didsgroups', 'truncks', 'roles', 'templates_list_call_files', 'dialplan_items', 'accounts'
             ]
             this.changeStatusForEntities(entities, account_id, status).then(() => {
-                this.changeStatusUsers(account_id, status).then(() => {
-                    this.changeStatus_dids(account_id, status).then(() => {
+                this.changeStatus_dids(account_id, status).then(() => {
+                    this.changeStatusUsersAndDestroySession(account_id,status).then(() => {
                         resolve(true);
                     }).catch(err => {
-                        return reject(err);
+                        return reject(err)
                     })
                 }).catch(err => {
                     return reject(err);
@@ -488,11 +505,11 @@ class accounts extends baseModelbo {
                                                     }
 
                                                 }).catch(err => {
-                                                        return _this.sendResponseError(res, ['Error.AnErrorHasOccurredUser', err], 1, 403);
-                                                    })
-                                            }).catch(err => {
                                                     return _this.sendResponseError(res, ['Error.AnErrorHasOccurredUser', err], 1, 403);
                                                 })
+                                            }).catch(err => {
+                                                return _this.sendResponseError(res, ['Error.AnErrorHasOccurredUser', err], 1, 403);
+                                            })
                                         } else {
                                             return _this.sendResponseError(res, ['Error.AnErrorHasOccurredSaveAccount'], 1, 403);
                                         }
@@ -1046,12 +1063,12 @@ class accounts extends baseModelbo {
             this.saveCampaign(dataCamp).then(result_camp => {
                 if (result_camp.success) {
                     this.db['roles_crms'].findOne({
-                        where:{
+                        where: {
                             value: 'agent',
                             active: 'Y'
                         }
-                    }).then(role_agent=>{
-                        if(role_agent){
+                    }).then(role_agent => {
+                        if (role_agent) {
                             let user = {
                                 first_name: null,
                                 last_name: "",
@@ -1097,14 +1114,14 @@ class accounts extends baseModelbo {
                                 }
 
                             })
-                        }else{
+                        } else {
                             resolve({
                                 status: 200,
                                 message: 'error to get agent role',
                                 success: false,
                             })
                         }
-                    }).catch(err=>{
+                    }).catch(err => {
                         reject(err)
                     })
 
