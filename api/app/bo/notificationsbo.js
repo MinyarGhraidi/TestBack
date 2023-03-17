@@ -197,9 +197,8 @@ class notifications extends baseModelbo {
         return new Promise((resolve, reject) => {
             this.db['campaigns'].findOne({where: {campaign_id: campaign_id, active: 'Y'}}).then(campaign => {
                 if (!!!campaign) {
-                    reject(false);
+                   return  reject(false);
                 }
-                if (Object.keys(campaign) && Object.keys(campaign).length !== 0) {
                     let sqlQuery = `select listcallfile_id,
                                         COUNT(*) as total_CallFiles, 
                                         COUNT(CASE WHEN to_treat = 'Y' THEN 1 END ) as total_called, 
@@ -265,11 +264,6 @@ class notifications extends baseModelbo {
                             success: false, message: 'Error.CannotGetListCallFiles', err
                         })
                     })
-                } else {
-                    resolve({
-                        success: false, message: 'Error.CannotGetCampaign'
-                    })
-                }
             }).catch(err => resolve({
                 success: false, message: 'Error.CannotGetCampaign', err
             }))
