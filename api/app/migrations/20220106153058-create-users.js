@@ -78,7 +78,10 @@ module.exports = {
       },
       channel_uuid : {
         type: Sequelize.STRING
-      }
+      },
+      config: {
+        type: Sequelize.JSONB
+      },
     }).then(() => {
       queryInterface.bulkInsert("users",
           [
