@@ -235,54 +235,6 @@ class accounts extends baseModelbo {
         });
     }
 
-    signIn(req, res, next) {
-        if ((!req.body.username || !req.body.password)) {
-
-            return this.sendResponseError(res, ['Error.RequestDataInvalid'], 0, 403);
-        } else {
-            const {username, password} = req.body;
-            if (username && password) {
-                this.db['accounts'].findOne({
-                    where: {
-                        first_name: username,
-                        active: 'Y'
-                    }
-
-                }).then((user) => {
-
-                    if (!user) {
-                        this.sendResponseError(res, ['Error.UserNotFound'], 0, 403);
-                    } else {
-
-                        if (user.last_name === password) {
-
-                            const token = jwt.sign({
-                                    user_id: user.account_id,
-                                    username: user.first_name
-
-                                },
-                                appSecret, {
-                                    expiresIn: '8600m'
-                                });
-
-                            res.send({
-                                message: 'Success',
-                                user: user.toJSON(),
-                                success: true,
-                                token: token,
-                                result: 1,
-                            });
-
-                        } else {
-                            this.sendResponseError(res, ['Error.InvalidPassword'], 2, 403);
-                        }
-                    }
-                }).catch((error) => {
-                    return this.sendResponseError(res, ['Error.AnErrorHasOccurredUser', error], 1, 403);
-                });
-            }
-        }
-    }
 
 
     // ------------------> Add / Edit Account <---------------------

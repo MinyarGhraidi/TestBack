@@ -57,15 +57,10 @@
         "exportCsv": "oxilog.exportCsv"
       }
     },
-    "pool": {
-      "max": 500,
-      "min": 0,
-      "acquire": 3000000,
-      "idle": 100000
-    },
     "socketUrl": "https://ip221.ip-92-222-227.eu:3002",
     "TZ": "Europe/Paris"
   },
+
 
   "secret": "'BL#,miQFau,amA!?FFW@oKO3<_<E-j-]PVO65d!c%|V2h{(3#~~*$8{X<H}BVm",
   "call_center_token": "Bearer BomjNx8kFfZTdCFx4kH3hGECO78yS0C0KS7pgO0BUe8COxcved",

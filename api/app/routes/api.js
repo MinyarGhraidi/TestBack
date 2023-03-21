@@ -82,7 +82,6 @@ let apiRouters = function (passport) {
     router.delete("/api/account/delete/:params", passport.authenticate('jwt', {session: false}), accountController.delete);
     router.post("/api/account/save", passport.authenticate('jwt', {session: false}), accountController.AddEditAccount);
     router.post("/api/account/deleteAccount", passport.authenticate('jwt', {session: false}), accountController.deleteAccount);
-    router.post("/api/account/signin", passport.authenticate('jwt', {session: false}), accountController.signIn);
     router.post("/api/account/getAccountByToken", passport.authenticate("jwt", {session: false}), accountController.getAccountByToken);
     router.post("/api/account/affectDomain", passport.authenticate("jwt", {session: false}), accountController.AffectAccountToDomain);
     router.post("/api/account/getAllUnaffectedDomains", passport.authenticate("jwt", {session: false}), accountController.getAllUnaffectedDomains);
@@ -135,7 +134,6 @@ let apiRouters = function (passport) {
     router.post("/api/user/getDataAgent", passport.authenticate('jwt', {session: false}), usersController.getDataAgent);
     router.post("/api/user/cloneSales", passport.authenticate('jwt', {session: false}), usersController.cloneSales);
     router.post("/api/user/updateAcc", passport.authenticate('jwt', {session: false}), usersController.updateAcc);
-    router.post("/api/signin", usersController.signIn);
     //agents routers
     router.post("/api/agent/find/:params?", passport.authenticate('jwt', {session: false}), agentsController.find);
     router.get("/api/agent/findById/:entity_id", passport.authenticate('jwt', {session: false}), agentsController.findById);
