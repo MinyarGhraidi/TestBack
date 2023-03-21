@@ -157,7 +157,6 @@ class callfiles extends baseModelbo {
         if (call_status && call_status.length !== 0) {
             extra_where += ' AND call_status in (:call_status) '
         }
-        //extra_where += ' AND listcallfile_id in (:listCallFiles_ids)'
         sqlLeads = sqlLeads.replace('EXTRA_WHERE', extra_where);
         sqlLeadsCount = sqlLeadsCount.replace('EXTRA_WHERE', extra_where);
         sqlListCallFiles = sqlListCallFiles.replace('EXTRA_WHERE', extra_where_ListCallFile);
