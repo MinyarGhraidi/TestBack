@@ -20,7 +20,7 @@ module.exports = {
       },
       active: {
         allowNull: true,
-        type: Sequelize.STRING,
+        type: Sequelize.STRING(1),
         defaultValue: 'Y'
       },
       created_at: {
@@ -40,7 +40,7 @@ module.exports = {
         type: Sequelize.JSONB,
       },
       status: {
-        type: Sequelize.STRING,
+        type: Sequelize.STRING(1),
         defaultValue: 'Y'
       },
     })

@@ -78,7 +78,7 @@ module.exports = {
             },
             {
               "lookup_id": 7,
-              "key": "B2B",
+              "key": "camp_queue_key_inbound",
               "value": {
                 "record": "true",
                 "options": {
@@ -97,6 +97,18 @@ module.exports = {
                   "max_wait_time_with_no_agent_time_reached": 5
                 },
                 "strategy": "longest-idle-agent"
+              },
+              "type" : null
+            },
+            {
+              "lookup_id": 8,
+              "key": "default_config_campaigns_dialer",
+              "value": {
+                "hooper": 30,
+                "list_mix": true,
+                "dial_level": 1,
+                "list_order": "up",
+                "dialtimeout": 60
               },
               "type" : null
             }

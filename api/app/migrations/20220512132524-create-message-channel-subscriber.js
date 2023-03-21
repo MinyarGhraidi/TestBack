@@ -27,7 +27,7 @@ module.exports = {
       },
       active: {
         allowNull: true,
-        type: Sequelize.STRING,
+        type: Sequelize.STRING(1),
         defaultValue: 'Y'
       },
       status_read:{

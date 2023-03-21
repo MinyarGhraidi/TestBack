@@ -18,7 +18,7 @@ module.exports = {
       },
       active: {
         allowNull: true,
-        type: Sequelize.STRING,
+        type: Sequelize.STRING(1),
         defaultValue: 'Y'
       },
       file_id: {
@@ -26,7 +26,7 @@ module.exports = {
       },
       status: {
         allowNull: true,
-        type: Sequelize.STRING,
+        type: Sequelize.STRING(1),
         defaultValue: 'Y'
       },
       mapping: {

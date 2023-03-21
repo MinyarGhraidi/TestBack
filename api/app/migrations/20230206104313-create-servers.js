@@ -19,11 +19,11 @@ module.exports = {
         type: Sequelize.STRING
       },
       active: {
-        type: Sequelize.STRING,
+        type: Sequelize.STRING(1),
         defaultValue: 'Y'
       },
       status: {
-        type: Sequelize.STRING,
+        type: Sequelize.STRING(1),
         defaultValue: 'Y'
       },
       created_at: {

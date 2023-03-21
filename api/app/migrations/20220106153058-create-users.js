@@ -38,13 +38,13 @@ module.exports = {
         type: Sequelize.JSONB
       },
       status: {
-        type: Sequelize.STRING,
+        type: Sequelize.STRING(1),
         defaultValue: 'Y',
         allowNull: true,
       },
       active: {
         allowNull: true,
-        type: Sequelize.STRING,
+        type: Sequelize.STRING(1),
         defaultValue: 'Y'
       },
       current_session_token: {
