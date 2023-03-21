@@ -150,7 +150,6 @@ let apiRouters = function (passport) {
     router.post("/api/agent/getConnectedAgents", passport.authenticate('jwt', {session: false}), agentsController.getConnectedAgents);
     router.post("/api/agent/filterDashboard", passport.authenticate('jwt', {session: false}), agentsController.filterDashboard);
     router.post("/api/agent/DisConnectAgent", passport.authenticate('jwt', {session: false}), agentsController.onDisconnectAgents)
-    router.post("/api/signin", agentsController.signIn);
     //Lookups
     // account routers
     router.post("/api/lookup/find", passport.authenticate("jwt", {session: false}), lookupController.find);

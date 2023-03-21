@@ -17,12 +17,7 @@ module.exports = {
     delete: function (req, res, next) {
         agentsDaoInst.delete(req, res, next);
     },
-    signUp: function (req, res, next) {
-        agentsDaoInst.signUp(req, res, next)
-    },
-    signIn: function (req, res, next) {
-        agentsDaoInst.signIn(req, res, next)
-    },
+
     saveAgent: function (req, res, next) {
         agentsDaoInst.saveUserAgent(req, res, next)
     },
