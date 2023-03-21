@@ -90,9 +90,9 @@ module.exports = {
               "first_name" : "admin",
               "last_name" : "1",
               "account_id" : 1,
-              "params" : {
+              "params" : JSON.stringify({
                 "pass": "Oxilog2022."
-              },
+              }),
               "status" : "Y",
               "isAssigned" : false,
               "role_crm_id" : 1
