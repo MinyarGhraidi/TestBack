@@ -15,6 +15,7 @@ const call_center_authorization = {
     headers: {Authorization: call_center_token}
 };
 const helpers = require('../helpers/helpers')
+const Op = require("sequelize/lib/operators");
 
 class users extends baseModelbo {
     constructor() {
@@ -864,26 +865,53 @@ class users extends baseModelbo {
 
     }
 
+
     verifyToken(req, res, next) {
         let _this = this;
-        const token = req.body.token || null;
+        let {token, user_id} = req.body;
+        if (!!!token || !!!user_id) {
+            return res.send({
+                success: false,
+                data: [],
+                message: 'Invalid token',
+            });
+        }
         jwt.verify(token, config.secret, (err, data) => {
             if (!err) {
-                res.send({
-                    success: true,
-                    data: data,
-                    message: 'Token valid',
-                });
-                // this.db['users'].findOne({where: {current_session_token: token, active: 'Y',status :'Y'}})
-                //     .then((result) => {
-                //         res.send({
-                //             success: !!!!result,
-                //             data: data,
-                //             message: 'Token valid',
-                //         });
-                //     }).catch(err => {
-                //     return _this.sendResponseError(res, ['Error.AnErrorHasOccurredGetUser', err], 1, 403);
-                // })
+                this.db['users'].findOne({
+                    where: {
+                        user_id: user_id,
+                        active: 'Y',
+                        status: 'Y',
+                        current_session_token: {[Op.not]: null}
+                    }, include: [db.roles_crms]
+                })
+                    .then((result) => {
+                        if (result && Object.keys(result).length > 0) {
+                            let user = result.toJSON();
+                            if ((user.roles_crm.value === 'agent' && user.current_session_token === token) || user.roles_crm.value !== 'agent') {
+                                res.send({
+                                    success: true,
+                                    data: data,
+                                    message: 'Valid token',
+                                });
+                            } else {
+                                res.send({
+                                    success: false,
+                                    data: [],
+                                    message: 'Invalid token',
+                                });
+                            }
+                        } else {
+                            res.send({
+                                success: false,
+                                data: [],
+                                message: 'User Not Found',
+                            });
+                        }
+                    }).catch(err => {
+                    return _this.sendResponseError(res, ['Error.AnErrorHasOccurredGetUser', err], 1, 403);
+                })
             } else {
                 res.send({
                     success: false,
@@ -894,6 +922,7 @@ class users extends baseModelbo {
 
         });
     }
+
 
     verifyTokenParam(token) {
         return new Promise((resolve, reject) => {
