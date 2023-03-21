@@ -49,15 +49,21 @@ class listcallfiles extends baseModelbo {
             _this.sendResponseError(res, ['Error.listCallFile_id is required'])
             return
         }
-        _this.getStatsCallStatusByLisCallFile(listCallfile_id).then(data_stats => {
-            res.send({
-                data: data_stats,
-                status: 200,
-                success: true
+        this.db['listcallfiles'].findOne({where : {listcallfile_id : listCallfile_id, active : 'Y'}}).then(LCF =>{
+            if(!!!LCF){
+             return _this.sendResponseError(res, ['Error.cannotFindListCallFile'], 1,403)
+            }
+            _this.getStatsCallStatusByLisCallFile(listCallfile_id,LCF.campaign_id).then(data_stats => {
+                res.send({
+                    data: data_stats,
+                    status: 200,
+                    success: true
+                })
+            }).catch(err => {
+                _this.sendResponseError(res, ['Error get stats callFiles by callStatus'], err)
             })
-        }).catch(err => {
-            _this.sendResponseError(res, ['Error get stats callFiles by callStatus'], err)
         })
+
     }
 
     getStatsListCallFileCallStatusCampaign(req, res, next) {
@@ -79,15 +85,13 @@ class listcallfiles extends baseModelbo {
                                     count(call_f.*) as count_call_status
                              FROM callstatuses as call_s
                                       LEFT JOIN callfiles as call_f
-                                                on call_f.call_status = call_s.code and call_f.to_treat = :active and
+                                                on call_f.call_status = call_s.code and call_f.to_treat = 'Y' and
                                                    call_f.active = :active
                                       LEFT JOIN listcallfiles as list_call_f
                                                 on list_call_f.listcallfile_id = call_f.listcallfile_id and
-                                                   list_call_f.active = 'Y' and call_f.active = :active
-                                      LEFT JOIN campaigns as camp
-                                                on camp.campaign_id = list_call_f.campaign_id and camp.active = :active
-                             WHERE call_s.active = 'Y'
-                               and camp.campaign_id = :campaign_id
+                                                   list_call_f.active = :active and call_f.active = :active
+                             WHERE call_s.active = :active
+                          and ( call_s.is_system = 'Y' or call_s.campaign_id = :campaign_id)
                              GROUP by code) as all_s on all_s.code = callstatuses.code`
         db.sequelize['crm-app'].query(sql_stats,
             {
@@ -98,16 +102,17 @@ class listcallfiles extends baseModelbo {
                 }
             })
             .then(statsListCallFiles => {
+                let Filtered =  statsListCallFiles.filter(stat => stat.count_call_status !== null)
                 res.send({
                     success: true,
-                    data: statsListCallFiles
+                    data: Filtered
                 })
             }).catch(err => {
             _this.sendResponseError(res, ['Error get stats callFiles by callStatus'], err)
         })
     }
 
-    getStatsCallStatusByLisCallFile(listCallfile_id) {
+    getStatsCallStatusByLisCallFile(listCallfile_id,campaign_id) {
         return new Promise((resolve, reject) => {
             let sqlStats = `SELECT code, count(call_f.*) as count_call_status
                             FROM callstatuses as call_s
@@ -115,6 +120,7 @@ class listcallfiles extends baseModelbo {
                                                on call_f.call_status = call_s.code and call_f.to_treat = :active and
                                                   call_f.active = :active and call_f.listcallfile_id = :listCallfile_id
                             WHERE call_s.active = :active
+                            and ( call_s.is_system = 'Y' or call_s.campaign_id = :campaign_id)
                             GROUP by code`
             db.sequelize['crm-app'].query(sqlStats,
                 {
@@ -122,6 +128,7 @@ class listcallfiles extends baseModelbo {
                     replacements: {
                         listCallfile_id: listCallfile_id,
                         active: 'Y',
+                        campaign_id : campaign_id
                     }
                 })
                 .then(statsListCallFiles => {

@@ -311,9 +311,17 @@ class users extends baseModelbo {
                 active: 'Y'
             }
         }).then((user) => {
+
             if (!user) {
-                _this.sendResponseError(res, ['Error.UserNotFound'], 0, 403);
-            } else {
+                return _this.sendResponseError(res, ['Error.UserNotFound'], 0, 403);
+            }
+            if(user.status === 'N'){
+                return res.send({
+                    success : false,
+                    status : 403,
+                    message : 'You have To enable this account first !'
+                })
+            }
                 this.db['has_permissions'].findAll({
                     include: [{
                         model: db.permissions_crms,
@@ -355,7 +363,6 @@ class users extends baseModelbo {
 
                     })
                 })
-            }
         }).catch((error) => {
             return _this.sendResponseError(res, ['Error.AnErrorHasOccurredUser', error], 1, 403);
         });
