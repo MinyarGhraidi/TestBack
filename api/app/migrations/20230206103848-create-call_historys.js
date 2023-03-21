@@ -22,7 +22,7 @@ module.exports = {
         type: Sequelize.DATE
       },
       active: {
-        type: Sequelize.STRING,
+        type: Sequelize.STRING(1),
         defaultValue: 'Y'
       },
       created_at: {

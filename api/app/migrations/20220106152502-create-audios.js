@@ -21,7 +21,7 @@ module.exports = {
       },
       active: {
         allowNull: true,
-        type: Sequelize.TEXT,
+        type: Sequelize.STRING(1),
         defaultValue: 'Y'
       },
       created_at: {

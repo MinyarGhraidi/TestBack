@@ -23,7 +23,7 @@ module.exports = {
         type: Sequelize.INTEGER
       },
       active: {
-        type: Sequelize.STRING,
+        type: Sequelize.STRING(1),
         defaultValue: 'Y'
       },
       address: {
@@ -51,8 +51,8 @@ module.exports = {
         defaultValue : 'N'
       },
       status: {
-        type: Sequelize.INTEGER,
-        defaultValue : 1
+        type: Sequelize.STRING(1),
+        defaultValue : 'Y'
       },
       campaign_id: {
         type: Sequelize.INTEGER,

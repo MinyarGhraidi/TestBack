@@ -19,7 +19,7 @@ module.exports = {
       },
       active: {
         allowNull: true,
-        type: Sequelize.STRING,
+        type: Sequelize.STRING(1),
         defaultValue : 'Y'
       },
       created_at: {

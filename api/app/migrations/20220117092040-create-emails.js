@@ -15,7 +15,7 @@ module.exports = {
         defaultValue: 'N'
       },
       active: {
-        type: Sequelize.STRING,
+        type: Sequelize.STRING(1),
         defaultValue: 'Y',
         allowNull: true
       },
