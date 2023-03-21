@@ -46,6 +46,30 @@ module.exports = {
         type: Sequelize.DATE,
         defaultValue: new Date(),
       },
+    }).then(() => {
+      queryInterface.bulkInsert("pausestatuses",
+          [
+            {
+              "code": "PD",
+              "label": "pause dej",
+              "isSystem": "Y",
+              "pause_type": null,
+              "campaign_id": null,
+              "duration": null,
+              "active": "Y",
+              "status": "Y"
+            },
+            {
+              "code": "PC",
+              "label": "pause café",
+              "isSystem": "Y",
+              "pause_type": null,
+              "campaign_id": null,
+              "duration": null,
+              "active": "Y",
+              "status": "Y"
+            }
+          ]);
     });
   },
   down: (queryInterface, Sequelize) => {

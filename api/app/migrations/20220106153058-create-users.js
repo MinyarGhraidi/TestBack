@@ -86,7 +86,6 @@ module.exports = {
       queryInterface.bulkInsert("users",
           [
             {
-              "user_id": 1,
               "username": "admin",
               "password_hash": "$2b$10$TOzGnzuUQjfTzmecOw7NKe0ub6zPrRREXPRgLNkRWeUJtMZ1KUoeq",
               "active": "Y",

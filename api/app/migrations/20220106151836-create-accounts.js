@@ -98,7 +98,6 @@ module.exports = {
             queryInterface.bulkInsert("accounts",
                 [
                     {
-                        "account_id": 1,
                         "account_code": "702344624950",
                         "first_name": "demo account",
                         "active": "Y",

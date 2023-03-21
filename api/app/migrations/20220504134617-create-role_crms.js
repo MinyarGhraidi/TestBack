@@ -5,7 +5,6 @@ module.exports = {
     return queryInterface.createTable('roles_crms', {
       id :{
         primaryKey: true,
-        autoIncrement: true,
         type: Sequelize.INTEGER
       },
       value: {
