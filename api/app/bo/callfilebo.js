@@ -1066,11 +1066,7 @@ class callfiles extends baseModelbo {
         let supSipUri = req.body.sip_uri
         let domain = req.body.domain
         if(!!!agent_id || !!!supSipUri || !!!domain){
-            res.send({
-                success: false,
-                message: 'agent id is null'
-            })
-            return
+            return this.sendResponseError(res, ['Error.dataAgentNUll'], 1, 403);
         }
         this.db['users'].findOne({
             where:{
@@ -1101,6 +1097,8 @@ class callfiles extends baseModelbo {
                 })
 
             }
+        }).catch(err=>{
+            return this.sendResponseError(res, ['Error.FindUser', err], 1, 403);
         })
     }
 
