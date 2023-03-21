@@ -43,9 +43,6 @@ module.exports = {
     changeStatus: function (req, res, next) {
         _itembo.changeStatus(req, res, next);
     },
-    authorize: function (req, res, next) {
-        _itembo.authorize(req, res, next);
-    },
     switchCampaignAgent: function (req, res, next) {
         _itembo.switchCampaignAgent(req, res, next)
     },
