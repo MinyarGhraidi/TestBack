@@ -2,7 +2,7 @@
 
 module.exports = {
   up: (queryInterface, Sequelize) => {
-    return queryInterface.createTable('user_data_index', {
+    return queryInterface.createTable('user_data_indexs', {
       user_data_index_id:{
         allowNull: false,
         autoIncrement: true,
