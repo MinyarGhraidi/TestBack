@@ -1227,52 +1227,6 @@ class campaigns extends baseModelbo {
         })
     }
 
-    //--------------> Auth <----------------
-    authorize(req, res, next) {
-        let _this = this;
-        let to_number = req.body.to_number;
-        let data_resp = {
-            "action": "allow",
-            "deny_code": "",
-            "deny_reason": "",
-            "type": "queue",
-            "destination": "",
-            "caller_id_number": "",
-            "pai": "",
-            "privacy": 0,
-            "max_duration": 0,
-            "gateways": []
-        }
-        this.db["campaigns"]
-            .findAll({
-                where: {
-                    active: "Y",
-                },
-            })
-            .then(campaigns => {
-                if (campaigns && campaigns.length !== 0) {
-                    let current_camp = campaigns.filter(item => item.params.queue.extension === to_number);
-                    if (current_camp && current_camp.length !== 0) {
-                        data_resp.destination = current_camp[0].params.queue.extension;
-                        res.send(data_resp);
-                    } else {
-                        data_resp.destination = to_number
-                        data_resp.action = "allow";
-                        res.send(data_resp);
-                    }
-                } else {
-                    data_resp.destination = to_number
-                    data_resp.action = "allow";
-                    res.send(data_resp);
-                }
-            })
-            .catch((err) => {
-                data_resp.destination = to_number
-                data_resp.action = "allow";
-                res.send(data_resp);
-            });
-    }
-
 
 }
 

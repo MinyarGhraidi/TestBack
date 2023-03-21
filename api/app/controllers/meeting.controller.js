@@ -19,8 +19,5 @@ module.exports = {
     },
     getAvailableSales: function (req, res, next) {
         meetingsDaoInst.getAvailableSales(req, res, next);
-    },
-    authorize: function (req, res, next) {
-        meetingsDaoInst.authorize(req, res, next)
-    },
+    }
 }

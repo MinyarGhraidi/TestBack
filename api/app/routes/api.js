@@ -65,10 +65,6 @@ ReminderController = require('../controllers/reminder.controller');
 let apiRouters = function (passport) {
 
     // Generic routers
-    router.get(
-        "/api/generateTokenForUser",
-        utilityController.generateTokenForUser
-    );
     router.post("/api/changeCrmStatus/",passport.authenticate('jwt', {session: false}), agentsController.changeCrmStatus);
     // notifications
     router.post("/api/notification/SaveNotification",passport.authenticate('jwt', {session: false}), NotificationsController.SaveNotification);
@@ -104,7 +100,6 @@ let apiRouters = function (passport) {
     router.post("/api/campaign/getAssignedAgents", passport.authenticate('jwt', {session: false}), campaignController.getAssignedAgents);
     router.post("/api/campaign/assignAgents", passport.authenticate('jwt', {session: false}), campaignController.assignAgents);
     router.post("/api/campaign/changeStatus", passport.authenticate('jwt', {session: false}), campaignController.changeStatus);
-    router.post("/api/callcennter/authorize", campaignController.authorize);
     router.post("/api/campaign/switchCampaignAgent", passport.authenticate('jwt', {session: false}), campaignController.switchCampaignAgent);
 
 
@@ -140,7 +135,6 @@ let apiRouters = function (passport) {
     router.post("/api/user/getDataAgent", passport.authenticate('jwt', {session: false}), usersController.getDataAgent);
     router.post("/api/user/cloneSales", passport.authenticate('jwt', {session: false}), usersController.cloneSales);
     router.post("/api/user/updateAcc", passport.authenticate('jwt', {session: false}), usersController.updateAcc);
-    router.post("/api/signup", usersController.signUp);
     router.post("/api/signin", usersController.signIn);
     //agents routers
     router.post("/api/agent/find/:params?", passport.authenticate('jwt', {session: false}), agentsController.find);
@@ -156,7 +150,6 @@ let apiRouters = function (passport) {
     router.post("/api/agent/getConnectedAgents", passport.authenticate('jwt', {session: false}), agentsController.getConnectedAgents);
     router.post("/api/agent/filterDashboard", passport.authenticate('jwt', {session: false}), agentsController.filterDashboard);
     router.post("/api/agent/DisConnectAgent", passport.authenticate('jwt', {session: false}), agentsController.onDisconnectAgents)
-    router.post("/api/signup", agentsController.signUp);
     router.post("/api/signin", agentsController.signIn);
     //Lookups
     // account routers
@@ -226,8 +219,8 @@ let apiRouters = function (passport) {
     router.get("/api/callfile/findById/:entity_id", passport.authenticate('jwt', {session: false}), callfileController.findById);
     router.put("/api/callfile/update", passport.authenticate('jwt', {session: false}), callfileController.update);
     router.delete("/api/callfile/delete/:params", passport.authenticate('jwt', {session: false}), callfileController.delete);
-    router.post("/api/callfile/save", callfileController.save);
-    router.post("/api/callfile/getEntityRevisionByModelId", callfileController.getEntityRevisionByModelId);
+    router.post("/api/callfile/save", passport.authenticate('jwt', {session: false}),callfileController.save);
+    router.post("/api/callfile/getEntityRevisionByModelId", passport.authenticate('jwt', {session: false}), callfileController.getEntityRevisionByModelId);
     router.get("/api/callfile/play", callfileController.playMediaMusic);
     router.get("/api/callHistory/play/:record_name", CallhistoryController.playMedia);
     router.get("/api/callfile/findCallFileById/:call_file_id", passport.authenticate('jwt', {session: false}), callfileController.findCalleFileById);
@@ -280,7 +273,7 @@ let apiRouters = function (passport) {
     router.put("/api/meeting/update", passport.authenticate('jwt', {session: false}), meetingsController.update);
     router.delete("/api/meeting/delete/:params", passport.authenticate('jwt', {session: false}), meetingsController.delete);
     router.post("/api/meeting/save", passport.authenticate('jwt', {session: false}), meetingsController.save);
-    router.post("/api/meeting/getAvailableSales", meetingsController.getAvailableSales);
+    router.post("/api/meeting/getAvailableSales", passport.authenticate('jwt', {session: false}), meetingsController.getAvailableSales);
 
     //roles_crm
     router.post("/api/roles_crm/find", passport.authenticate('jwt', {session: false}), roles_crmController.find);
@@ -304,9 +297,6 @@ let apiRouters = function (passport) {
 
     router.post("/api/sales/all_meetings", passport.authenticate('jwt', {session: false}), sales_Controller.getAllMeetings);
     router.post("/api/sales/agents_sales", passport.authenticate('jwt', {session: false}), sales_Controller.agents_for_sales)
-
-    router.post("/api/callcenter/authorize", meetingsController.authorize);
-
     router.post("/api/callstatus/changeStatus", passport.authenticate('jwt', {session: false}), callstatusController.changeStatus)
 
     //livecalls

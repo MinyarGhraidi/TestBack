@@ -845,68 +845,6 @@ class users extends baseModelbo {
             });
     }
 
-    signUp(req, res, next) {
-        const formData = req.body;
-
-        if (!formData.email || !formData.password) {
-
-            return this.sendResponseError(res, ['Error.EmptyFormData'], 0, 403);
-        }
-
-        if (!validateEmail(formData.email)) {
-
-            return this.sendResponseError(res, ['Error.InvalidEmail'], 0, 403);
-        }
-
-        if (
-            !!!formData.first_name
-            || !!!formData.last_name
-            || !!!formData.email
-            || !!!formData.username
-        ) {
-            return this.sendResponseError(res, ['Error.PleaseFillAllRequiredFields'], 0, 403);
-        }
-
-        if (
-            String(formData.password).length < 6
-        ) {
-            return this.sendResponseError(res, ['Error.PleaseEnterAStrongPassword'], 0, 403);
-        }
-
-        const {Op} = db.sequelize;
-        this.db['users'].findOne({
-            where: {
-                active: 'Y',
-                [Op.or]: {
-                    username: formData.username,
-                    email: formData.email,
-                }
-            }
-        }).then(user_item => {
-            if (user_item) {
-                return this.sendResponseError(res, ['Error.UserAlreadyExists'], 0, 403);
-            }
-
-            const user = db.users.build();
-            user.setPassword_hash(formData.password);
-            user.email = formData.email;
-            user.first_name = formData.first_name;
-            user.last_name = formData.last_name;
-            user.username = formData.username;
-            user.save().then(userSaved => {
-                res.send({
-                    success: true,
-                    user: userSaved,
-                    message: 'Account user created with success!'
-                });
-            }).catch((error) => {
-                return this.sendResponseError(res, ['Error.AnErrorHasOccurredSaveUser'], 1, 403);
-            });
-        }).catch((error) => {
-            return this.sendResponseError(res, ['Error.AnErrorHasOccurredUser'], 1, 403);
-        });
-    }
-
     getUserByToken(req, res, next) {
 
         jwt.verify(req.headers.authorization.replace('Bearer ', ''), config.secret, (err, decodedToken) => {

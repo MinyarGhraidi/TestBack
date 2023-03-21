@@ -17,9 +17,6 @@ module.exports = {
     delete: function (req, res, next) {
         _itembo.delete(req, res, next);
     },
-    signUp: function (req, res, next) {
-        _itembo.signUp(req, res, next)
-    },
     signIn: function (req, res, next) {
         _itembo.signIn(req, res, next)
     },
