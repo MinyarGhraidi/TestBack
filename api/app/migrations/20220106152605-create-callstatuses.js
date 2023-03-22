@@ -42,6 +42,11 @@ module.exports = {
         type: Sequelize.DATE,
         defaultValue: new Date(),
       },
+      status: {
+        allowNull: true,
+        type: Sequelize.STRING,
+        defaultValue: "Y",
+      }
     }).then(() => {
       queryInterface.bulkInsert("callstatuses",
           [

@@ -58,8 +58,8 @@ module.exports = {
       templates_id: {
         type: Sequelize.INTEGER,
       },
-      efile_id: {
-        type: Sequelize.INTEGER,
+      custom_fields: {
+        type: Sequelize.JSONB,
       }
     });
   },
