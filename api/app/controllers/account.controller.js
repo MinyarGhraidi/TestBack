@@ -20,9 +20,6 @@ module.exports = {
     delete: function (req, res, next) {
         _itembo.delete(req, res, next);
     },
-    signIn: function (req, res, next) {
-        _itembo.signIn(req, res, next);
-    },
     getAccountByToken: function (req, res, next) {
         _itembo.getAccountByToken(req, res, next);
     },

@@ -451,9 +451,15 @@ class baseModelbo {
         let _this = this;
         return new Promise(function (resolve, reject) {
             const obj_after =  typeof obj === 'object'? obj :obj.toJSON();
-            const fields_changed = diff(obj_before, obj_after);
-            console.log('fields_changedddd', fields_changed)
-            if (fields_changed && Object.keys(fields_changed).length > 0) {
+            let oldObj = obj_before;
+            let newObj = obj_after;
+            delete oldObj.updated_at;
+            delete oldObj.note;
+            delete oldObj.call_status;
+            delete newObj.updated_at;
+            delete newObj.note;
+            delete newObj.call_status;
+            const fields_changed = diff(oldObj, newObj);
                 _this.getUserFromToken(req).then(users => {
                     if (users && users.user_id) {
                         let entity_revision = {
@@ -471,9 +477,6 @@ class baseModelbo {
                         });
                     }
                 });
-            }else{
-                resolve(true)
-            }
         });
     }
     beforeUpdate(req, res) {

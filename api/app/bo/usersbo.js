@@ -55,7 +55,8 @@ class users extends baseModelbo {
                     }).catch((error) => {
                         return this.sendResponseError(res, ['Error.AnErrorHasOccurredUser'], 1, 403);
                     });
-                } else {
+                }
+                else {
                     this.db['accounts'].findOne({
                         where: {
                             web_domain: web_domain,
@@ -100,6 +101,15 @@ class users extends baseModelbo {
                 } else {
                     let user_info = user.toJSON();
                     if ((user_info && user_info.roles_crm && user_info.roles_crm.value === 'agent')) {
+                        if(user_info.current_session_token){
+                            return res.send({
+                                data: null,
+                                status: 403,
+                                success: false,
+                                message: 'Agent Already Connected !'
+                            })
+
+                        }
                         this.db['accounts'].findOne({
                             where: {
                                 account_id: user_info.account_id,
