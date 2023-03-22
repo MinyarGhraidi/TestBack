@@ -1135,7 +1135,6 @@ class agents extends baseModelbo {
                         }
                     }).then((listCallFiles) => {
                         listCallFiles_ids = listCallFiles.map(item_camp => item_camp.listcallfile_id)
-                        resolve(true);
                         if (call_status && call_status.length === 0) {
                             this.db['callstatuses'].findAll({
                                 where: {
@@ -1156,39 +1155,35 @@ class agents extends baseModelbo {
                                 }
                             }).then((call_status_list) => {
                                 call_status = call_status_list.map(item_cal => item_cal.callstatus_id);
-                                resolve(true);
+                                return resolve({...params, call_status : call_status, listCallFiles_ids : listCallFiles_ids})
                             })
+                        }else{
+                            return resolve({...params, listCallFiles_ids : listCallFiles_ids})
+
                         }
                     }).catch(err => {
                         reject(err);
                     })
                 } else {
-                    this.db['campaigns'].findAll({
-                        where: {
-                            active: 'Y',
-                            account_id: account_id
-                        }
-
-                    }).then((listCampaigns) => {
-                        campaign_ids = listCampaigns.map(item_camp => item_camp.campaign_id);
-                        resolve(true);
+                    this.getCampaignsIdsByAgentIds(agent_ids).then(resultCamps => {
+                        return resolve({...params, campaign_ids : resultCamps})
                     }).catch(err => {
                         reject(err);
                     })
                 }
             })
-            Promise.all([promiseParams]).then(() => {
+            Promise.all([promiseParams]).then((newParams) => {
                 let idx = 0;
                 let resultArray = [];
                 if (agent_ids && agent_ids.length === 0) {
-                    res.send({
+                    return res.send({
                         success: false,
                         data: [],
                         status: 200
                     })
                 }
                 agent_ids.forEach(agent => {
-                    this.getReportByOneAgent({...params, agent_id: agent}).then(result => {
+                    this.getReportByOneAgent({...newParams[0], agent_id: agent}).then(result => {
                         if (result.success) {
                             let currentAgent = dataAgents.filter((item) => item.user_id === agent)
                             resultArray.push({agent: currentAgent[0], data: result.data});
@@ -1196,7 +1191,7 @@ class agents extends baseModelbo {
                         if (idx < agent_ids.length - 1) {
                             idx++
                         } else {
-                            res.send({
+                            return res.send({
                                 success: true,
                                 data: resultArray,
                                 status: 200
@@ -1242,21 +1237,37 @@ class agents extends baseModelbo {
 
 
     }
-
+    removeDuplicates(arr) {
+        let resultArray = [...new Set(arr)];
+        return resultArray.filter(element => {
+            return element !== null && element !== undefined;
+        });
+    }
+    getCampaignsIdsByAgentIds(agentIDs){
+        return new Promise((resolve,reject)=>{
+            this.db['users'].findAll({
+                where: {user_id : agentIDs}
+            }).then((allAgents) => {
+                let campaignIds = allAgents.map(user => user.campaign_id);
+                resolve(this.removeDuplicates(campaignIds))
+            }).catch(() => resolve([]))
+        })
+    }
     getReportByOneAgent(params) {
         return new Promise((resolve, reject) => {
-            let {
-                dataAgents,
-                agent_id,
-                call_status,
-                campaign_ids,
-                dateSelected_from,
-                dateSelected_to,
-                end_time,
-                listCallFiles_ids,
-                start_time,
-                account_code
-            } = params;
+                let {
+                    dataAgents,
+                    agent_id,
+                    call_status,
+                    campaign_ids,
+                    dateSelected_from,
+                    dateSelected_to,
+                    end_time,
+                    listCallFiles_ids,
+                    start_time,
+                    account_code
+                } = params;
+
             let sqlCallsStats = `
                 select call_s.callstatus_id,
                        call_s.code,
@@ -1276,72 +1287,73 @@ class agents extends baseModelbo {
                         EXTRA_WHERE
                     group by callS.code, callS.callstatus_id)
                     as stats On stats.callstatus_id = call_s.callstatus_id
-                where (EXTRA_WHERE_CAMP)
-                  and call_s.active = 'Y' EXTRA_WHERE_STATUS
+                where call_s.active = 'Y' EXTRA_WHERE_WITHOUT_CAMP EXTRA_WHERE_CAMP EXTRA_WHERE_STATUS
                 order by total desc
             `
-            let extra_where = '';
-            let extra_where_camp = '';
-            let extra_where_status = '';
-            if (start_time && start_time !== '') {
-                extra_where += ' AND callH.started_at >= :start_time';
-            }
-            if (end_time && end_time !== '') {
-                extra_where += ' AND  callH.finished_at <=  :end_time';
-            }
-            if (agent_id) {
-                extra_where += ' AND callH.agent_id = :agent_id';
-            }
-
-            if (call_status && call_status !== '' && call_status.length !== 0) {
-                extra_where += ' AND callS.callstatus_id in (:call_status)';
-                extra_where_status += ' AND call_s.callstatus_id in (:call_status)';
-            }
-            if (listCallFiles_ids !== '' && listCallFiles_ids.length !== 0) {
-                extra_where += ' AND listCallF.listcallfile_id in(:listCallFiles_ids)';
-            }
-            if (campaign_ids !== '' && campaign_ids.length !== 0) {
-                extra_where_camp += "  call_s.campaign_id in(:campaign_ids) or  call_s.is_system = 'Y'"
-                extra_where += " AND (callS.campaign_id in(:campaign_ids) OR  callS.is_system = 'Y') "
-            } else {
-                extra_where_camp += " call_s.is_system = 'Y'"
-            }
-            sqlCallsStats = sqlCallsStats.replace('EXTRA_WHERE', extra_where);
-            sqlCallsStats = sqlCallsStats.replace('EXTRA_WHERE_CAMP', extra_where_camp);
-            sqlCallsStats = sqlCallsStats.replace('EXTRA_WHERE_STATUS', extra_where_status);
-            db.sequelize['crm-app'].query(sqlCallsStats, {
-                type: db.sequelize['crm-app'].QueryTypes.SELECT,
-                replacements: {
-                    start_time: dateSelected_from.concat(' ', start_time),
-                    end_time: dateSelected_to.concat(' ', end_time),
-                    agent_id: agent_id,
-                    account_code: account_code,
-                    listCallFiles_ids: listCallFiles_ids,
-                    call_status: call_status,
-                    campaign_ids: campaign_ids
+                let extra_where = '';
+                let extra_where_camp = '';
+                let extra_where_status = '';
+                let extra_where_without_camp = '';
+                if (start_time && start_time !== '') {
+                    extra_where += ' AND callH.started_at >= :start_time';
                 }
-            }).then(data_stats => {
-                let total = 0;
-                data_stats.map(item => {
-                    total += parseInt(item.total);
+                if (end_time && end_time !== '') {
+                    extra_where += ' AND  callH.finished_at <=  :end_time';
+                }
+                if (agent_id) {
+                    extra_where += ' AND callH.agent_id = :agent_id';
+                }
+
+                if (call_status && call_status !== '' && call_status.length !== 0) {
+                    extra_where += ' AND callS.callstatus_id in (:call_status)';
+                    extra_where_status += ' AND call_s.callstatus_id in (:call_status)';
+                }
+                if (listCallFiles_ids !== '' && listCallFiles_ids.length !== 0) {
+                    extra_where += ' AND listCallF.listcallfile_id in(:listCallFiles_ids)';
+                }
+                if (campaign_ids !== '' && campaign_ids.length !== 0) {
+                    extra_where_camp += "AND  (call_s.campaign_id in(:campaign_ids) or  call_s.is_system = 'Y')"
+                    extra_where += " AND (callS.campaign_id in(:campaign_ids) OR  callS.is_system = 'Y') "
+                }else{
+                    extra_where_without_camp += "AND (stats.total > 0 or call_s.is_system = 'Y')"
+                }
+                sqlCallsStats = sqlCallsStats.replace('EXTRA_WHERE', extra_where);
+                sqlCallsStats = sqlCallsStats.replace('EXTRA_WHERE_CAMP', extra_where_camp);
+                sqlCallsStats = sqlCallsStats.replace('EXTRA_WHERE_STATUS', extra_where_status);
+                sqlCallsStats = sqlCallsStats.replace('EXTRA_WHERE_WITHOUT_CAMP', extra_where_without_camp);
+                db.sequelize['crm-app'].query(sqlCallsStats, {
+                    type: db.sequelize['crm-app'].QueryTypes.SELECT,
+                    replacements: {
+                        start_time: dateSelected_from.concat(' ', start_time),
+                        end_time: dateSelected_to.concat(' ', end_time),
+                        agent_id: agent_id,
+                        account_code: account_code,
+                        listCallFiles_ids: listCallFiles_ids,
+                        call_status: call_status,
+                        campaign_ids: campaign_ids
+                    }
+                }).then(data_stats => {
+                    let total = 0;
+                    data_stats.map(item => {
+                        total += parseInt(item.total);
+                    })
+                    data_stats.push({
+                        'label': 'total',
+                        'code': 'total',
+                        'total': total
+                    })
+                    resolve({
+                        success: true,
+                        data: data_stats,
+                        status: 200
+                    })
+                }).catch(err => {
+                    reject({
+                        success: false,
+                        data: [],
+                        status: 403
+                    })
                 })
-                data_stats.push({
-                    'label': 'total',
-                    'code': 'total',
-                    'total': total
-                })
-                resolve({
-                    success: true,
-                    data: data_stats,
-                    status: 200
-                })
-            }).catch(err => {
-                reject({
-                    success: false,
-                    data: [],
-                    status: 403
-                })
-            })
         })
     }
 
