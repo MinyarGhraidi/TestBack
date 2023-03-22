@@ -42,6 +42,30 @@ module.exports = {
         type: Sequelize.DATE,
         defaultValue: new Date(),
       },
+    }).then(() => {
+      queryInterface.bulkInsert("callstatuses",
+          [
+            {
+              "code": "reminder",
+              "label": "reminder",
+              "is_default": "N",
+              "is_system": "Y",
+              "call_type": null,
+              "campaign_id": null,
+              "active": "Y",
+              "status": "Y"
+            },
+            {
+              "code": "AD",
+              "label": "dropped",
+              "is_default": "N",
+              "is_system": "Y",
+              "call_type": null,
+              "campaign_id": null,
+              "active": "Y",
+              "status": "Y"
+            },
+          ]);
     });
   },
   down: (queryInterface, Sequelize) => {

@@ -5,7 +5,6 @@ module.exports = {
         return queryInterface.createTable('has_permissions', {
             id: {
                 primaryKey: true,
-                autoIncrement: true,
                 type: Sequelize.INTEGER
             },
             roles_crm_id: {
@@ -109,6 +108,12 @@ module.exports = {
                     {
                         "id": 15,
                         "roles_crm_id": 2,
+                        "permission_crm_id": 14,
+                        "active": "Y"
+                    },
+                    {
+                        "id": 16,
+                        "roles_crm_id": 3,
                         "permission_crm_id": 14,
                         "active": "Y"
                     }
