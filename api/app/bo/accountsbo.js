@@ -246,6 +246,7 @@ class accounts extends baseModelbo {
         let bulkNum = req.body.bulkNum;
         let agent_options = req.body.agent_options;
         let Default_queue_options = req.body.Default_queue_options;
+        let role_crm = req.body.role_crm
         if (req.body.isChecked) {
             delete req.body.values.nbr_agents_account;
             delete req.body.values.Campaign_name
@@ -271,7 +272,7 @@ class accounts extends baseModelbo {
             role_crm_id: newAccount.role_crm_id[0],
             lang: newAccount.lang,
             code: newAccount.code,
-            domain_id: newAccount.role_crm_id[0] !== 1 ? newAccount.domain.value : null,
+            domain_id: role_crm !== 'superadmin' ? newAccount.domain.value : null,
             web_domain: newAccount.web_domain,
             nb_agents: newAccount.nb_agents,
         }
@@ -280,8 +281,8 @@ class accounts extends baseModelbo {
             || !!!newAccount.role_crm_id) {
             return _this.sendResponseError(res, 'Error.InvalidData');
         }
-        let sip_device = newAccount.role_crm_id[0] !== 1 ? JSON.parse(JSON.stringify(newAccount.user.sip_device)) : null;
-        let domain = newAccount.role_crm_id[0] !== 1 ? JSON.parse(JSON.stringify(newAccount.domain)): {};
+        let sip_device = role_crm !== 'superadmin' ? JSON.parse(JSON.stringify(newAccount.user.sip_device)) : null;
+        let domain = role_crm !== 'superadmin' ? JSON.parse(JSON.stringify(newAccount.domain)): {};
         let {password, options, status} = sip_device ? sip_device : {};
         let username = sip_device ? sip_device.username.username : {};
         if (newAccount.account_id) {
@@ -318,8 +319,8 @@ class accounts extends baseModelbo {
                                     plain: true
                                 }).then((account) => {
                                     let update_user = newAccount.user;
-                                    update_user.sip_device.uuid = newAccount.role_crm_id[0] !== 1 ? resultAgent.uuid : '';
-                                    update_user.sip_device.updated_at = newAccount.role_crm_id[0] !== 1 ?resultAgent.updated_at :null;
+                                    update_user.sip_device.uuid = role_crm !== 'superadmin' ? resultAgent.uuid : '';
+                                    update_user.sip_device.updated_at = role_crm !== 'superadmin' ?resultAgent.updated_at :null;
                                     update_user.account_id = newAccount.account_id;
                                     update_user.username = username
                                     _usersbo.saveUserFunction(update_user)
@@ -331,8 +332,6 @@ class accounts extends baseModelbo {
                                                 data: user
                                             })
                                         }).catch((err) => {
-                                        console.log('errrr', err)
-
                                         return _this.sendResponseError(res, ['Error.CannotUpdateUser'], 1, 403);
                                     })
                                 }).catch((err) => {
@@ -1072,7 +1071,6 @@ class accounts extends baseModelbo {
                             })
                         })
                     }).catch((err) => {
-                    console.log('errrree', err)
                     resolve({
                         success: false,
                         message: err.response.data
