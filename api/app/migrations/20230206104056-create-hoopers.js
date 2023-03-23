@@ -18,7 +18,7 @@ module.exports = {
             type: Sequelize.STRING
           },
           first_name: {
-            type: Sequelize.INTEGER
+            type: Sequelize.STRING
           },
           last_name: {
             type: Sequelize.STRING
