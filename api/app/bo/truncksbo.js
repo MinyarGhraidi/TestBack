@@ -148,6 +148,7 @@ class truncks extends baseModelbo {
                         });
                 })
                 .catch((err) => {
+
                     reject(err);
                 });
         })
