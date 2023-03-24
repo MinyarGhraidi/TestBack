@@ -223,7 +223,13 @@ class notifications extends baseModelbo {
                     }
                     res.send(data)
 
-                }).catch(err => res.send(err));
+                }).catch(() => {
+                    return res.send({
+                        success: false, status: 403, data: [], count: {
+                            all: 0, unread: 0
+                        }
+                    })
+                });
                 break;
             case 'call_file' :
                 this.db['campaigns'].findAll({
