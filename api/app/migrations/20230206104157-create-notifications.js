@@ -41,6 +41,10 @@ module.exports = {
         type: Sequelize.DATE,
         defaultValue: new Date(),
       },
+      reminder_id: {
+        type: Sequelize.INTEGER,
+        allowNull: true,
+      },
     })
 
   },
