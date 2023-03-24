@@ -8,7 +8,6 @@ module.exports = {
         autoIncrement: true,
         type: Sequelize.INTEGER
       },
-
       timestamp:{
         type: Sequelize.STRING
       } ,
@@ -18,40 +17,40 @@ module.exports = {
       callid :{
         type: Sequelize.STRING
       },
-      callDirection :{
+      calldirection :{
         type: Sequelize.STRING
       },
-      callStatus :{
+      callstatus :{
         type: Sequelize.STRING
       },
-      sipFromURI_CallCenter :{
+      sipfromuri_callcenter :{
         type: Sequelize.STRING
       },
-      sipFromTag_CallCenter:{
+      sipfromtag_callcenter:{
         type: Sequelize.STRING
       } ,
-      sipToURI_CallCenter :{
+      siptouri_callcenter :{
         type: Sequelize.STRING
       },
       sipToTag_CallCenter :{
         type: Sequelize.STRING
       },
-      hangupCause :{
+      hangupcause :{
         type: Sequelize.STRING
       },
       start_time :{
         type: Sequelize.STRING
       },
-      answerTime:{
+      answertime:{
         type: Sequelize.STRING
       } ,
       end_time :{
         type: Sequelize.STRING
       },
-      durationSec :{
+      durationsec :{
         type: Sequelize.STRING
       },
-      durationMsec :{
+      durationmsec :{
         type: Sequelize.STRING
       },
       privacy:{
@@ -66,7 +65,7 @@ module.exports = {
       callID :{
         type: Sequelize.STRING
       },
-      customVars :{
+      custom_vars :{
         type: Sequelize.STRING
       },
       agent :{
@@ -108,22 +107,35 @@ module.exports = {
       call_events: {
         type: Sequelize.JSONB
       },
-      debit: {
-        type: Sequelize.REAL
+      debit:{
+        type: Sequelize.STRING
       },
-      cost: {
-        type: Sequelize.REAL
+      cost:{
+        type: Sequelize.STRING
+      } ,
+      sip_code :{
+        type: Sequelize.STRING
+      },
+      sip_reason :{
+        type: Sequelize.STRING
+      },
+      src_user :{
+        type: Sequelize.STRING
+      },
+      dst_user :{
+        type: Sequelize.STRING
+      },
+      sip_reason_crm :{
+        type: Sequelize.STRING
+      },
+      is_treated :{
+        type: Sequelize.STRING
       }
     });
   },
 
   down: (queryInterface, Sequelize) => {
-    /*
-      Add reverting commands here.
-      Return a promise to correctly handle asynchronicity.
+    return queryInterface.dropTable('acc_cdrs');
 
-      Example:
-      return queryInterface.dropTable('users');
-    */
   }
 };
