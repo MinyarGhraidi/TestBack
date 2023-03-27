@@ -2,7 +2,7 @@
   "development": {
     "host": "92.222.147.156",
     "username": "postgres",
-    "password": "Oxilog2023.",
+    "password": "Oxilog2020.",
     "database": "cdr",
     "port": 5432,
     "dialect": "postgres",
