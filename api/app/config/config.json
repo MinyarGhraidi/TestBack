@@ -6,7 +6,7 @@
         "host": "92.222.227.221",
         "username": "postgres",
         "password": "postgres",
-        "database": "oxilog-crm-app",
+        "database": "oxilog-crm-app-v2",
         "port": 5432,
         "dialect": "postgres",
         "underscored": true,
