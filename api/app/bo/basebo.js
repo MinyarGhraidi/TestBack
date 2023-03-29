@@ -518,6 +518,9 @@ class baseModelbo {
         let params = req.body;
         this.setRequestParams(params);
         let query = {};
+        if(!!!params.meta_key_length){
+            params.meta_key_length = 3
+        }
         if (params.limit >= 1) {
             query.limit = params.limit;
         }
@@ -575,7 +578,7 @@ class baseModelbo {
             let defaultOperator = (params && params.filter && params.filter.length && typeof params.filter[0].operator !== "undefined") ? params.filter[0].operator : 'and';
             whereQuery[Op [defaultOperator]] = [whereQueryFilters];
         }
-        if (params.meta_key && params.meta_key.length >= 3) {
+        if (params.meta_key && params.meta_key.length >= params.meta_key_length) {
             let fieldsSearchMetas = [];
             if (params.fieldsSearchMetas && params.fieldsSearchMetas.length) {
                 fieldsSearchMetas = params.fieldsSearchMetas;
