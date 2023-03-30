@@ -52,7 +52,7 @@ class users extends baseModelbo {
                     }).then((user) => {
                         resolve(user)
 
-                    }).catch((error) => {
+                    }).catch(() => {
                         return this.sendResponseError(res, ['Error.AnErrorHasOccurredUser'], 1, 403);
                     });
                 }
@@ -200,7 +200,8 @@ class users extends baseModelbo {
                         }).catch((error) => {
                             return this.sendResponseError(res, ['Error.AnErrorHasOccurredUser'], 1, 403);
                         });
-                    } else if (user.password_hash && password && user.verifyPassword(password)) {
+                    }
+                    else if (user.password_hash && password && user.verifyPassword(password)) {
                         if (user.password_hash && password) {
                             this.db['has_permissions'].findAll({
                                 include: [{

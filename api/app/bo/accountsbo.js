@@ -1,6 +1,6 @@
 const {baseModelbo} = require('./basebo');
 let sequelize = require('sequelize');
-const Op = sequelize.Op;
+const Op = require("sequelize/lib/operators");
 let db = require('../models');
 const {appSecret} = require("../helpers/app");
 const jwt = require('jsonwebtoken');
@@ -296,150 +296,187 @@ class accounts extends baseModelbo {
                 if (!!!account) {
                     return this.sendResponseError(res, ['Error.UserNotFound'], 1, 403);
                 }
-                this.couldAffectDomain(domain).then((resultAffection) => {
-                    if (resultAffection || account.dataValues.domain_id === domain.value) {
-                        this.db['users'].findOne({
-                            where: {
-                                user_id: account.dataValues.user_id
-                            }
-                        }).then((user) => {
-                            let userData = user.dataValues;
-                            let {username} = newAccount.role_crm_id[0] !==1 ? userData.sip_device : {};
-                            this.EditSubscriberAgent(username, newAccount, userData,newAccount.role_crm_id[0] ).then(result_sub=>{
-                                let update_account = newAccount;
-                                let resultAgent = newAccount.role_crm_id[0] !==1 ? result_sub.data.data.agent: {};
-                                update_account.updated_at = new Date();
-                                update_account.role_crm_id = newAccount.role_crm_id[0];
-                                update_account.domain_id = newAccount.role_crm_id[0] !==1 ?domain.value : null
-                                this.db['accounts'].update(update_account, {
+                this.db['accounts'].findOne({
+                    where: {
+                        web_domain: newAccount.web_domain,
+                        active: 'Y',
+                        status: 'Y',
+                        account_id: {[Op.not]: newAccount.account_id}
+                    }
+                }).then((acc)=>{
+                    if(acc){
+                        return res.send({
+                            success: false,
+                            message: "web domain already affected to another account"
+                        })
+                    }else{
+                        this.couldAffectDomain(domain).then((resultAffection) => {
+                            if (resultAffection || account.dataValues.domain_id === domain.value) {
+                                this.db['users'].findOne({
                                     where: {
-                                        account_id: newAccount.account_id
-                                    },
-                                    returning: true,
-                                    plain: true
-                                }).then((account) => {
-                                    let update_user = newAccount.user;
-                                    update_user.sip_device.uuid = role_crm !== 'superadmin' ? resultAgent.uuid : '';
-                                    update_user.sip_device.updated_at = role_crm !== 'superadmin' ?resultAgent.updated_at :null;
-                                    update_user.account_id = newAccount.account_id;
-                                    update_user.username = username
-                                    _usersbo.saveUserFunction(update_user)
-                                        .then(user => {
-                                            res.send({
-                                                status: 200,
-                                                message: 'success',
-                                                success: true,
-                                                data: user
+                                        user_id: account.dataValues.user_id
+                                    }
+                                }).then((user) => {
+                                    let userData = user.dataValues;
+                                    let {username} = newAccount.role_crm_id[0] !==1 ? userData.sip_device : {};
+                                    this.EditSubscriberAgent(username, newAccount, userData,newAccount.role_crm_id[0] ).then(result_sub=>{
+                                        let update_account = newAccount;
+                                        let resultAgent = newAccount.role_crm_id[0] !==1 ? result_sub.data.data.agent: {};
+                                        update_account.updated_at = new Date();
+                                        update_account.role_crm_id = newAccount.role_crm_id[0];
+                                        update_account.domain_id = newAccount.role_crm_id[0] !==1 ?domain.value : null
+                                        this.db['accounts'].update(update_account, {
+                                            where: {
+                                                account_id: newAccount.account_id
+                                            },
+                                            returning: true,
+                                            plain: true
+                                        }).then((account) => {
+                                            let update_user = newAccount.user;
+                                            update_user.sip_device.uuid = role_crm !== 'superadmin' ? resultAgent.uuid : '';
+                                            update_user.sip_device.updated_at = role_crm !== 'superadmin' ?resultAgent.updated_at :null;
+                                            update_user.account_id = newAccount.account_id;
+                                            update_user.username = username
+                                            _usersbo.saveUserFunction(update_user)
+                                                .then(user => {
+                                                    res.send({
+                                                        status: 200,
+                                                        message: 'success',
+                                                        success: true,
+                                                        data: user
+                                                    })
+                                                }).catch((err) => {
+                                                return _this.sendResponseError(res, ['Error.CannotUpdateUser'], 1, 403);
                                             })
                                         }).catch((err) => {
-                                        return _this.sendResponseError(res, ['Error.CannotUpdateUser'], 1, 403);
+                                            return _this.sendResponseError(res, ['Error.CannotUpdateAccount'], 1, 403);
+                                        })
                                     })
                                 }).catch((err) => {
-                                    return _this.sendResponseError(res, ['Error.CannotUpdateAccount'], 1, 403);
+                                    return _this.sendResponseError(res, ['Error.CannotFindUser'], 1, 403);
                                 })
-                            })
+                            } else {
+                                return _this.sendResponseError(res, ['Error.CannotAffectDomain'], 1, 403);
+                            }
                         }).catch((err) => {
-                            return _this.sendResponseError(res, ['Error.CannotFindUser'], 1, 403);
+                            return _this.sendResponseError(res, ['Error.CannotAffectDomain'], 1, 403);
                         })
-                    } else {
-                        return _this.sendResponseError(res, ['Error.CannotAffectDomain'], 1, 403);
                     }
-                }).catch((err) => {
-                    return _this.sendResponseError(res, ['Error.CannotAffectDomain'], 1, 403);
+                }).catch(()=>{
+                    return _this.sendResponseError(res, ['Error.CannotGetWebDomain'], 1, 403);
                 })
+
+
             }).catch((err) => {
                 return _this.sendResponseError(res, ['Error.CannotFindAccount'], 1, 403);
             })
         } else {
+            this.db['accounts'].findOne({
+                where: {
+                    web_domain: newAccount.web_domain,
+                    active: 'Y',
+                    status: 'Y'
+                }
+            }).then((account_fetch)=>{
+                if(account_fetch){
+                    return res.send({
+                        success: false,
+                        message: "web domain already affected to another account"
+                    })
+                }else{
+                    this.couldAffectDomain(domain).then((resultAffection) => {
+                        if (resultAffection) {
+                            let data_subscriber = {
+                                username: username,
+                                domain_uuid: domain.uuid,
+                                password,
+                                domain: domain.label
+                            }
+                            this.AddSubscriberAgent(data_subscriber, newAccount, newAccount.role_crm_id[0],options, status).then(result_sub=>{
+                                if(result_sub.success){
+                                    let modalObj = this.db['accounts'].build(data_account);
+                                    modalObj.save().then(new_account => {
+                                        if (new_account) {
+                                            data_account.user = newAccount.user;
+                                            data_account.user.sip_device.uuid = newAccount.role_crm_id[0] !==1 ? result_sub.data.uuid : null;
+                                            data_account.user.sip_device.created_at = newAccount.role_crm_id[0] !==1 ? result_sub.data.created_at : null ;
+                                            data_account.user.sip_device.updated_at = newAccount.role_crm_id[0] !==1 ? result_sub.data.updated_at : null ;
+                                            data_account.user.account_id = new_account.dataValues.account_id;
+                                            data_account.user.sip_device.username = username;
 
-            this.couldAffectDomain(domain).then((resultAffection) => {
-                if (resultAffection) {
-                    let data_subscriber = {
-                        username: username,
-                        domain_uuid: domain.uuid,
-                        password,
-                        domain: domain.label
-                    }
-                    this.AddSubscriberAgent(data_subscriber, newAccount, newAccount.role_crm_id[0],options, status).then(result_sub=>{
-                        if(result_sub.success){
-                            let modalObj = this.db['accounts'].build(data_account);
-                            modalObj.save().then(new_account => {
-                                if (new_account) {
-                                    data_account.user = newAccount.user;
-                                    data_account.user.sip_device.uuid = newAccount.role_crm_id[0] !==1 ? result_sub.data.uuid : null;
-                                    data_account.user.sip_device.created_at = newAccount.role_crm_id[0] !==1 ? result_sub.data.created_at : null ;
-                                    data_account.user.sip_device.updated_at = newAccount.role_crm_id[0] !==1 ? result_sub.data.updated_at : null ;
-                                    data_account.user.account_id = new_account.dataValues.account_id;
-                                    data_account.user.sip_device.username = username;
-
-                                    _usersbo.saveUserFunction(data_account.user).then(new_user => {
-                                        this.db['accounts'].update({
-                                            user_id: new_user.user_id
-                                        }, {
-                                            where: {
-                                                account_id: new_account.dataValues.account_id
-                                            },
-                                            returning: true,
-                                            plain: true
-                                        }).then(update_account => {
-                                            if (isChecked) {
-                                                this.createCamp_Agent(Default_queue_options, Default_dialer_options, bulkNum, agent_options, camp_name, new_account, domain).then(result_camp_agent => {
-                                                    if (result_camp_agent.success) {
+                                            _usersbo.saveUserFunction(data_account.user).then(new_user => {
+                                                this.db['accounts'].update({
+                                                    user_id: new_user.user_id
+                                                }, {
+                                                    where: {
+                                                        account_id: new_account.dataValues.account_id
+                                                    },
+                                                    returning: true,
+                                                    plain: true
+                                                }).then(update_account => {
+                                                    if (isChecked) {
+                                                        this.createCamp_Agent(Default_queue_options, Default_dialer_options, bulkNum, agent_options, camp_name, new_account, domain).then(result_camp_agent => {
+                                                            if (result_camp_agent.success) {
+                                                                res.send({
+                                                                    status: 200,
+                                                                    message: 'success',
+                                                                    success: true,
+                                                                    data: new_user
+                                                                })
+                                                            } else {
+                                                                res.send({
+                                                                    status: 200,
+                                                                    message: result_camp_agent.message,
+                                                                    success: false,
+                                                                })
+                                                            }
+                                                        })
+                                                    } else {
                                                         res.send({
                                                             status: 200,
                                                             message: 'success',
                                                             success: true,
                                                             data: new_user
                                                         })
-                                                    } else {
-                                                        res.send({
-                                                            status: 200,
-                                                            message: result_camp_agent.message,
-                                                            success: false,
-                                                        })
                                                     }
-                                                })
-                                            } else {
-                                                res.send({
-                                                    status: 200,
-                                                    message: 'success',
-                                                    success: true,
-                                                    data: new_user
-                                                })
-                                            }
 
-                                        }).catch(err => {
-                                            return _this.sendResponseError(res, ['Error.AnErrorHasOccurredUser', err], 1, 403);
-                                        })
+                                                }).catch(err => {
+                                                    return _this.sendResponseError(res, ['Error.AnErrorHasOccurredUser', err], 1, 403);
+                                                })
+                                            }).catch(err => {
+                                                return _this.sendResponseError(res, ['Error.AnErrorHasOccurredUser', err], 2, 403);
+                                            })
+                                        } else {
+                                            return _this.sendResponseError(res, ['Error.AnErrorHasOccurredSaveAccount'], 1, 403);
+                                        }
+
                                     }).catch(err => {
-                                        return _this.sendResponseError(res, ['Error.AnErrorHasOccurredUser', err], 2, 403);
+                                        return _this.sendResponseError(res, ['Error.AnErrorHasOccurredUser', err], 3, 403);
                                     })
-                                } else {
-                                    return _this.sendResponseError(res, ['Error.AnErrorHasOccurredSaveAccount'], 1, 403);
                                 }
 
-                            }).catch(err => {
-                                return _this.sendResponseError(res, ['Error.AnErrorHasOccurredUser', err], 3, 403);
+                            })
+
+
+
+
+                        } else {
+                            res.send({
+                                success: false,
+                                message: "domain already affected to another account"
                             })
                         }
-
-                    })
-
-
-
-
-                } else {
-                    res.send({
-                        success: false,
-                        message: "domain already affected to another account"
+                    }).catch((err) => {
+                        res.send({
+                            success: false,
+                            message: err.response.data
+                        })
                     })
                 }
-            }).catch((err) => {
-                res.send({
-                    success: false,
-                    message: err.response.data
-                })
+            }).catch(()=>{
+                return _this.sendResponseError(res, ['Error.CannotGetWebDomain'], 1, 403);
             })
+
 
 
         }

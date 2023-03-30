@@ -6,6 +6,7 @@ const base_url_cc_kam = require(__dirname + '/../config/config.json')["base_url_
 const call_center_authorization = {
     headers: {Authorization: call_center_token}
 };
+const appSocket = new (require('../providers/AppSocket'))();
 
 class domains extends baseModelbo {
     constructor() {
@@ -50,7 +51,7 @@ class domains extends baseModelbo {
         let data = req.body
         let domain_id = data.domain_id;
         delete data.domain_id;
-
+        let idx = 0;
         if (!!!domain_id) {
             return this.sendResponseError(res, ['Error.Empty'], 1, 403);
         }
@@ -69,7 +70,7 @@ class domains extends baseModelbo {
                 axios
                     .get(`${base_url_cc_kam}api/v1/domains/${uuid}`, call_center_authorization).then((resp) => {
                     let dataToUpdate = data;
-                    dataToUpdate.updatedAt = new Date();
+                    dataToUpdate.updated_at = new Date();
                     if ("enabled" in data) {
                         dataToUpdate.status = data.enabled;
                     }
@@ -80,9 +81,45 @@ class domains extends baseModelbo {
                                 domain_id: domain_id,
                                 active: 'Y'
                             }
-                        }).then(result => {
-                            res.send({
-                                success: true
+                        }).then(() => {
+                            this.db['accounts'].findOne({
+                                where : {domain_id : domain_id, active : 'Y'}
+                            }).then((acc)=> {
+                                if(!!!acc){
+                                    return this.sendResponseError(res, ['Error.AccountNotFound'], 1, 403);
+                                }
+                                this.db['users'].findAll({ where : {
+                                        account_id : acc.account_id,
+                                        active : 'Y'
+                                    }}).then((users)=>{
+                                    if(users && users.length !== 0){
+                                        users.forEach(user =>{
+                                            this.db.users.update({updated_at : new Date(), sip_device : {...user.sip_device, domain : data.domain_name}}, {where : {
+                                                    user_id : user.user_id,
+                                                    active : 'Y'
+                                                }}).then(()=>{
+                                                    if(user.params.status !== 'logged-out'){
+                                                        appSocket.emit('destroy_session', {user_id: user.user_id, logged_out: true})
+                                                    }
+                                                if (idx < users.length - 1) {
+                                                    idx++;
+                                                } else {
+                                                    return res.send({
+                                                        success: true
+                                                    })
+                                                }
+                                            })
+                                        })
+                                    }else{
+                                        return res.send({
+                                            success: true
+                                        })
+                                    }
+                                }).catch(err => {
+                                    return this.sendResponseError(res, ['Error', err], 1, 403);
+                                })
+                            }).catch((err)=> {
+                                return this.sendResponseError(res, ['Error', err], 1, 403);
                             })
                         }).catch(err => {
                             return this.sendResponseError(res, ['Error', err], 1, 403);
