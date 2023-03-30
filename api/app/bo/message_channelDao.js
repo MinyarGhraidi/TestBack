@@ -729,25 +729,38 @@ class message_channelDao extends baseModelbo {
             sortDir: 'ASC'
         };
 
-        let sql = `SELECT mc.*, count(m.message_id) as total_messages, count(mr_count.message_id) as total_not_read, m_last.message_id as last_message_id, m_last.content as last_message_content
+        let sql = `SELECT distinct(mc.*), count(m.message_id) as total_messages, count(mr_count.message_id) as total_not_read, m_last.message_id as last_message_id, m_last.content as last_message_content
+                    ,case 
+                        WHEN mc.channel_type = 'S' 
+                            THEN 
+                                case 
+                                    WHEN mc.created_by_id = :user_id 
+                                        THEN 
+                                        CONCAT(u__subs.first_name , ' ' , u__subs.last_name) 
+                                        ELSE 
+                                        CONCAT(u.first_name , ' ' , u.last_name) 
+                                END 
+                            ELSE 
+                            mc.channel_name 
+                    END as conversation_name
                   , m_last.created_by_id as m_last_created_by_id ,  m_last.created_at as last_message_date    FROM message_channels as mc
                       LEFT JOIN message_channel_subscribers as mcs on mcs.active = :active and mcs.message_channel_id = mc.message_channel_id
                       LEFT JOIN message_channel_subscribers as mcs2 on mcs2.active = :active and mcs2.message_channel_id = mc.message_channel_id and mcs.user_id <> mcs2.user_id
                       LEFT JOIN messages as m on m.message_channel_id = mc.message_channel_id and m.active = :active
                       LEFT JOIN messages as m_last on m_last.message_channel_id = mc.message_channel_id and m_last.active = :active and m_last.message_id = (SELECT m_last_one.message_id FROM messages as m_last_one WHERE m_last_one.message_channel_id = mc.message_channel_id AND m_last_one.active = :active ORDER BY "m_last_one"."created_at" DESC LIMIT 1)
-                      LEFT JOIN users as u on u.user_id = m_last.created_by_id AND u.active = :active
+                      LEFT JOIN users as u on u.user_id = mc.created_by_id AND u.active = :active
                       LEFT JOIN users as u__subs on u__subs.user_id = mcs2.user_id AND u__subs.active = :active
                       LEFT JOIN message_readers as mr_count on mr_count.message_id = m_last.message_id and mr_count.active = :active AND mr_count.status_read <> :active AND mr_count.user_id = mcs.user_id
                       WHERE 1 = 1
                           AND mc.active = :active
                           AND mcs.user_id = :user_id
                         EXTRAWHERE
-                     GROUP BY mc.message_channel_id, mc.last_excerpt,  m_last.message_id , m_last.created_by_id
+                     GROUP BY mc.message_channel_id, mc.last_excerpt,  m_last.message_id , m_last.created_by_id, CONCAT(u.first_name , ' ' , u.last_name), CONCAT(u__subs.first_name , ' ' , u__subs.last_name)
                     ORDER BY mc.updated_at DESC
                     OFFSET :offset LIMIT :limit`;
         let extra_where = "";
-        if (channel_name) {
-            extra_where = extra_where + " AND mc.channel_name like :channel_name";
+        if (channel_name && channel_name !== '') {
+            extra_where = extra_where + " AND (case  WHEN mc.channel_type = 'S'  THEN  case WHEN mc.created_by_id = :user_id THEN LOWER(CONCAT(u__subs.first_name , ' ' , u__subs.last_name)) ELSE LOWER(CONCAT(u.first_name , ' ' , u.last_name)) END ELSE LOWER(mc.channel_name) END  like :channel_name )";
         }
         sql = sql.replace(/EXTRAWHERE/g, extra_where);
 
@@ -759,7 +772,7 @@ class message_channelDao extends baseModelbo {
                     offset: defaultParams.offset,
                     limit: defaultParams.limit,
                     active: 'Y',
-                    channel_name: channel_name ? channel_name.concat('%') : null
+                    channel_name: channel_name ? '%' + channel_name.concat('%') : null
                 }
             })
             .then(channels => {
