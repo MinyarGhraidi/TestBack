@@ -28,5 +28,8 @@ module.exports = {
     },
     getHeaderCallFile: function (req, res, next) {
         efilesDaoInst.getHeaderCallFile(req, res, next)
+    },
+    downloadFile: function (req, res, next) {
+        efilesDaoInst.downloadFile(req, res, next)
     }
 }

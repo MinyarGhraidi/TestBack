@@ -195,7 +195,7 @@ class message_channelDao extends baseModelbo {
             this.db['messages'].build({
                 created_by_id: message.created_by_id,
                 message_channel_id: message.message_channel_id,
-                //attachment_post_id: message.attachment_post_id,
+                attachment_post_id: message.attachment_post_id,
                 created_at: new Date(),
                 updated_at: new Date(),
                 content: message.content
@@ -208,8 +208,9 @@ class message_channelDao extends baseModelbo {
                             created_at: new Date(),
                             updated_at: new Date(),
                         }).save().then(save_message_attachment => {
+                            console.log('save_message_attachmentttt', save_message_attachment)
                             this.db['messages'].update({
-                                attachment_post_id: save_message_attachment.attachment_post_id
+                                attachment_post_id: save_message_attachment.attachment_efile_id
                             }, {
                                 where: {
                                     message_id: save_message.message_id
@@ -445,6 +446,7 @@ class message_channelDao extends baseModelbo {
         let content = req.body.content;
         let message_channel_id = req.body.message_channel_id;
         let attachment_post_id = req.body.attachment_post_id;
+        console.log('attachment_post_idddd', attachment_post_id)
         let created_by_id = req.body.created_by_id;
         let user_id = req.body.user_id;
         if ((!!!content || content === '') && !!!attachment_post_id) {
@@ -521,7 +523,7 @@ class message_channelDao extends baseModelbo {
                    
                                 LEFT JOIN message_readers as mr on mr.message_id = m.message_id and mr.active = :active and mr.user_id = :user_id
                                 LEFT JOIN message_channels as mc on mc.message_channel_id = m.message_channel_id and mc.active = :active
-                                LEFT JOIN message_attachments as ma on ma.attachment_post_id = m.attachment_post_id and ma.active = :active
+                                LEFT JOIN message_attachments as ma on ma.attachment_efile_id = m.attachment_post_id and ma.active = :active
                                 LEFT JOIN efiles as ef on ef.file_id = ma.attachment_efile_id and ef.active = :active
                     
                                 WHERE m.active = :active AND m.message_channel_id = :message_channel_id
@@ -539,6 +541,7 @@ class message_channelDao extends baseModelbo {
                         }
                     })
                     .then(messages => {
+                        console.log('messagessss', messages)
                         let sql_count = `
                         SELECT count(*) as totalItems FROM (
                             SELECT m.message_id

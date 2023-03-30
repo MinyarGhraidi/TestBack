@@ -3,10 +3,10 @@
     "dialect": "postgres",
     "databases": {
       "crm-app": {
-        "host": "92.222.147.156",
+        "host": "92.222.227.221",
         "username": "postgres",
-        "password": "Oxilog2020.",
-        "database": "oxilog-crm-app",
+        "password": "postgres",
+        "database": "oxilog-crm-app-v2",
         "port": 5432,
         "dialect": "postgres",
         "underscored": true,

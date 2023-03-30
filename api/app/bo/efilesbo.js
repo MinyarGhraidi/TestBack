@@ -16,6 +16,8 @@ class efiles extends baseModelbo {
     }
 
     upload(req, res, next) {
+        console.log('queryyyy', req.query)
+        console.log('fileeeeeee', req.file)
         if (!req.file) {
             return res.send({msg: 'File not exists'});
         } else {
@@ -282,6 +284,29 @@ class efiles extends baseModelbo {
             }
 
         })
+    }
+
+    downloadFile (req, res, next){
+        let _this = this;
+        let file_name = req.params.filename;
+        if (file_name && file_name !== 'undefined') {
+            const file = appDir + '/api/app/resources/qualificationListCallFile/' + file_name;
+            res.download(file, function (err) {
+                if (err) {
+                    _this.sendResponseError(res, err);
+                } else {
+                    fs.unlink(file, function (err) {
+                        if (err)
+                            throw(err)
+                    });
+                }
+            })
+        } else {
+            res.send({
+                success: false,
+                message: 'invalid file name'
+            })
+        }
     }
 }
 
