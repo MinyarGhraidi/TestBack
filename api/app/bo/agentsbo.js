@@ -282,48 +282,16 @@ class agents extends baseModelbo {
                                 .catch(err => {
                                     this.deleteSubScriberOrAgentByUUID(result.uuid,uuidAgent).then(()=>{
                                         reject(err)
-                                    })
+                                    }).catch(()=> reject(err))
                                 })
                         }).catch((err) => {
                         this.deleteSubScriberOrAgentByUUID(result.uuid,null).then(()=>{
                             reject(err)
-                        })
+                        }).catch(()=> reject(err))
                     })
                 }).catch((err) => {
                 reject(err)
             })
-        })
-    }
-
-    deleteSubScriberOrAgentByUUID(uuid_sub,uuid_agent){
-        return new Promise((resolve,reject)=>{
-            const delete_Agent = new Promise((resolve,reject)=> {
-                if(uuid_agent){
-                    axios.get(`${base_url_cc_kam}api/v1/agents/${uuid_agent}`, call_center_authorization).then(() => {
-                        axios.delete(`${base_url_cc_kam}api/v1/agents/${uuid_agent}`, call_center_authorization).then(() => {
-                            resolve(true)
-                        }).catch(()=> resolve(true))
-                    }).catch(()=>resolve(true))
-                }else{
-                    resolve(true)
-                }
-            })
-            const delete_Subscriber = new Promise((resolve,reject)=> {
-                if(uuid_sub){
-                    axios.get(`${base_url_cc_kam}api/v1/subscribers/${uuid_sub}`, call_center_authorization).then(() => {
-                        axios.delete(`${base_url_cc_kam}api/v1/subscribers/${uuid_sub}`, call_center_authorization).then(() => {
-                            resolve(true)
-                        }).catch(()=> resolve(true))
-                    }).catch(()=>resolve(true))
-                }else{
-                    resolve(true)
-                }
-            })
-            delete_Agent.then(()=>{
-                delete_Subscriber.then(()=>{
-                    resolve(true)
-                }).catch((err)=>reject(true))
-            }).catch((err)=>reject(true))
         })
     }
     //---------------> Update Agent <----------------------

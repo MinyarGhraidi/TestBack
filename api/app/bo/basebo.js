@@ -831,28 +831,23 @@ class baseModelbo {
                     axios.get(`${base_url_cc_kam}api/v1/agents/${uuid_agent}`, call_center_authorization).then(() => {
                         axios.delete(`${base_url_cc_kam}api/v1/agents/${uuid_agent}`, call_center_authorization).then(() => {
                             resolve(true)
-                        }).catch(()=> resolve(true))
-                    }).catch(()=>resolve(true))
+                        }).catch((err)=> reject(err))
+                    }).catch((err)=>reject(err))
                 }else{
                     resolve(true)
                 }
             })
-            const delete_Subscriber = new Promise((resolve,reject)=> {
+            Promise.all([delete_Agent]).then(data_user => {
                 if(uuid_sub){
                     axios.get(`${base_url_cc_kam}api/v1/subscribers/${uuid_sub}`, call_center_authorization).then(() => {
                         axios.delete(`${base_url_cc_kam}api/v1/subscribers/${uuid_sub}`, call_center_authorization).then(() => {
                             resolve(true)
-                        }).catch(()=> resolve(true))
-                    }).catch(()=>resolve(true))
+                        }).catch((err)=> reject(err))
+                    }).catch((err)=>reject(err))
                 }else{
                     resolve(true)
                 }
-            })
-            delete_Agent.then(()=>{
-                delete_Subscriber.then(()=>{
-                    resolve(true)
-                }).catch((err)=>reject(err))
-            }).catch((err)=>reject(err))
+            }).catch(err => reject(err))
         })
     }
     deleteDomainByUUID(domain_uuid){
@@ -860,8 +855,8 @@ class baseModelbo {
             axios.get(`${base_url_cc_kam}api/v1/domains/${domain_uuid}`, call_center_authorization).then(() => {
                 axios.delete(`${base_url_cc_kam}api/v1/domains/${domain_uuid}`, call_center_authorization).then(() => {
                     resolve(true)
-                }).catch(()=>resolve(true))
-            }).catch(()=>resolve(true))
+                }).catch((err)=>reject(err))
+            }).catch((err)=>reject(err))
         })
     }
 }

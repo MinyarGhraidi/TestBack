@@ -452,6 +452,8 @@ class accounts extends baseModelbo {
                                     }).catch(err => {
                                         this.deleteSubScriberOrAgentByUUID(result_sub.uuid_sub, result_sub.uuid_agent).then(() => {
                                             return _this.sendResponseError(res, ['Error.AnErrorHasOccurredUser', err], 3, 403);
+                                        }).catch(err => {
+                                            return _this.sendResponseError(res, ['Error.AnErrorHasOccurredUser', err], 3, 403);
                                         })
                                     })
                                 }
@@ -1103,6 +1105,11 @@ class accounts extends baseModelbo {
                                 })
                             }).catch(err => {
                             this.deleteSubScriberOrAgentByUUID(result.uuid, null).then(() => {
+                                resolve({
+                                    success: false,
+                                    message: err.response.data
+                                })
+                            }).catch(() => {
                                 resolve({
                                     success: false,
                                     message: err.response.data
