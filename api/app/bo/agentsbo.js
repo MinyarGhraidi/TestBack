@@ -90,10 +90,11 @@ class agents extends baseModelbo {
                                                 status: 200
                                             })
                                         }).catch((err) => {
+                                            console.log(err)
                                             res.send({
                                                 success: false,
                                                 status: 403,
-                                                message: err.response.data.errors.username[0] ? 'extension required !' : 'Failed Try Again'
+                                                message: 'Failed Try Again'
                                             })
                                         })
                                     }).catch((err) => {
