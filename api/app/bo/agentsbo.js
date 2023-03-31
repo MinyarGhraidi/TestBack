@@ -90,7 +90,6 @@ class agents extends baseModelbo {
                                                 status: 200
                                             })
                                         }).catch((err) => {
-                                            console.log(err)
                                             res.send({
                                                 success: false,
                                                 status: 403,
