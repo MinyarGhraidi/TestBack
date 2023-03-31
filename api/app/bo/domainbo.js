@@ -36,7 +36,10 @@ class domains extends baseModelbo {
                     message: 'Domain created with success!'
                 });
             }).catch((error) => {
-                return this.sendResponseError(res, ['Error.AnErrorHasOccurredSaveDomain'], 1, 403);
+                this.deleteDomainByUUID(params.uuid).then(()=>{
+                    return this.sendResponseError(res, ['Error.AnErrorHasOccurredSaveDomain'], 1, 403);
+                })
+
             });
         }).catch((err) => {
             res.send({
