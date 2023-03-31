@@ -39,6 +39,9 @@ class efiles extends baseModelbo {
                     if (extension === "mp3" || extension === "wav") {
                         dirType = "audios"
                     }
+                    if(req.body && req.body.chat){
+                        dirType = "chat"
+                    }
                     const file_uri = '/public/upload/' + dirType + "/" + new_file_name;
                     EFile.update({file_name: new_file_name, uri: file_uri},
                         {
@@ -282,6 +285,30 @@ class efiles extends baseModelbo {
             }
 
         })
+    }
+
+    downloadFile (req, res, next){
+        let _this = this;
+        let file_name = req.params.filename;
+        if (file_name && file_name !== 'undefined') {
+            const file = appDir + '/app/resources/efiles/public/upload/chat/' + file_name;
+
+            res.download(file, function (err) {
+                if (err) {
+                    _this.sendResponseError(res, err);
+                } else {
+                    fs.unlink(file, function (err) {
+                        if (err)
+                            throw(err)
+                    });
+                }
+            })
+        } else {
+            res.send({
+                success: false,
+                message: 'invalid file name'
+            })
+        }
     }
 }
 
