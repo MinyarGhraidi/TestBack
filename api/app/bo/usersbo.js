@@ -246,16 +246,44 @@ class users extends baseModelbo {
                                                 });
                                                 this.db['users'].update({current_session_token: token}, {where: {user_id: user.user_id}})
                                                     .then(() => {
+                                                        let permissions_user = [];
+                                                        let permissions = [];
+                                                        if(user.role_id){
+                                                            let default_permissions = [
+                                                                {
+                                                                    "lookups": [
+                                                                        {
+                                                                            "key": "add"
+                                                                        },
+                                                                        {
+                                                                            "key": "edit"
+                                                                        },
+                                                                        {
+                                                                            "key": "delete"
+                                                                        },
+                                                                        {
+                                                                            "key": "list"
+                                                                        }
+                                                                    ],
+                                                                    "permission_route": "user-settings"
+                                                                }
+                                                            ]
+                                                            let list_permissions = user.role.permission ;
+                                                            permissions_user = list_permissions.concat(default_permissions)
+                                                            permissions = data_perm.user_has_role_permission.concat('user-settings')
+                                                        }else{
+                                                            permissions = data_perm.permissions_values || []
+                                                        }
                                                         res.send({
                                                             message: 'Success',
                                                             user: user.toJSON(),
-                                                            permissions: user.role_id !== null ? data_perm.user_has_role_permission : data_perm.permissions_values || [],
+                                                            permissions: permissions,
                                                             permissions_route: data_perm.permissions_description || [],
                                                             success: true,
                                                             token: token,
                                                             result: 1,
                                                             accountcode: accountcode,
-                                                            list_permission: user.role_id !== null ? user.role.permission : [],
+                                                            list_permission: permissions_user,
                                                             domain_name: account.domain && account.domain.domain_name ? account.domain.domain_name: null
                                                         });
                                                     }).catch((error) => {
