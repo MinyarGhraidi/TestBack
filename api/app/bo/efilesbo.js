@@ -16,8 +16,6 @@ class efiles extends baseModelbo {
     }
 
     upload(req, res, next) {
-        console.log('queryyyy', req.query)
-        console.log('fileeeeeee', req.file)
         if (!req.file) {
             return res.send({msg: 'File not exists'});
         } else {
@@ -40,6 +38,9 @@ class efiles extends baseModelbo {
                     let dirType = "callfiles"
                     if (extension === "mp3" || extension === "wav") {
                         dirType = "audios"
+                    }
+                    if(req.body && req.body.chat){
+                        dirType = "chat"
                     }
                     const file_uri = '/public/upload/' + dirType + "/" + new_file_name;
                     EFile.update({file_name: new_file_name, uri: file_uri},
@@ -290,7 +291,8 @@ class efiles extends baseModelbo {
         let _this = this;
         let file_name = req.params.filename;
         if (file_name && file_name !== 'undefined') {
-            const file = appDir + '/api/app/resources/qualificationListCallFile/' + file_name;
+            const file = appDir + '/app/resources/efiles/public/upload/chat/' + file_name;
+
             res.download(file, function (err) {
                 if (err) {
                     _this.sendResponseError(res, err);
