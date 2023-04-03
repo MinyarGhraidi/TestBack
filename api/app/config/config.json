@@ -61,6 +61,68 @@
     "socketUrl": "https://ip221.ip-92-222-227.eu:3002",
     "TZ": "Europe/Paris"
   },
+  "production": {
+    "dialect": "postgres",
+    "databases": {
+      "crm-app": {
+        "host": "92.222.147.156",
+        "username": "postgres",
+        "password": "Oxilog2020.",
+        "database": "oxilog-crm-app",
+        "port": 5432,
+        "dialect": "postgres",
+        "underscored": true,
+        "define": {
+          "createdAt": "created_at",
+          "updatedAt": "updated_at"
+        },
+        "dialectOptions": {
+          "options": {
+            "requestTimeout": 30000
+          }
+        },
+        "pool": {
+          "acquire": 100000000,
+          "idle": 100000
+        }
+      },
+      "cdr-db": {
+        "host": "92.222.227.221",
+        "username": "postgres",
+        "password": "postgres",
+        "database": "cdr",
+        "port": 5432,
+        "dialect": "postgres",
+        "socketUrl": "https://ip221.ip-92-222-227.eu:3002",
+        "logging": true,
+        "define": {
+          "freezeTableName": true
+        },
+        "dialectOptions": {
+          "options": {
+            "requestTimeout": 30000
+          }
+        },
+        "pool": {
+          "max": 500,
+          "min": 0,
+          "acquire": 3000000,
+          "idle": 100000
+        }
+      }
+    },
+    "rabbitmq": {
+      "host": "92.222.227.221",
+      "login": "oxilog",
+      "password": "oxilog2021",
+      "port": "5009",
+      "queues": {
+        "exportCsv": "oxilog.exportCsv"
+      }
+    },
+    "socketUrl": "https://ip221.ip-92-222-227.eu:3002",
+    "TZ": "Europe/Paris"
+  },
 
 
   "secret": "'BL#,miQFau,amA!?FFW@oKO3<_<E-j-]PVO65d!c%|V2h{(3#~~*$8{X<H}BVm",

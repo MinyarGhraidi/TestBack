@@ -577,6 +577,7 @@
   },
   "scripts": {
     "start": "nodemon server.js",
+    "start:prod": "NODE_ENV=production nodemon server.js",
     "test": "mocha --exit -r 'test/**/*.js'  --grep",
     "saveCalls": "NODE_ENV=development nodemon SaveCallFile ",
     "startSip": "nodemon  --unhandled-rejections=strict --experimental-modules --es-module-specifier-resolution=node  ./app/sub-apps/sipConnect.js",
