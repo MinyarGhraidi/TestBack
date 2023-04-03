@@ -824,9 +824,9 @@ class message_channelDao extends baseModelbo {
             WhereQuery = {
                 [Op.or]:
                     [
-                        {'first_name': {[Sequelize.Op.iLike]: '%' + channel_key + '%'}}
+                        {'$user.first_name$': {[Sequelize.Op.iLike]: '%' + channel_key + '%'}}
                         ,
-                        {'last_name': {[Sequelize.Op.iLike]: '%' + channel_key + '%'}}
+                        {'$user.last_name$': {[Sequelize.Op.iLike]: '%' + channel_key + '%'}}
                     ]
                 ,
                 account_id: {[Op.not]: account_id},
@@ -853,11 +853,15 @@ class message_channelDao extends baseModelbo {
             }
         }
 
-        this.db['users'].findAll({
+        this.db['accounts'].findAll({
             include: [{
                 model: db.roles_crms,
                 required: false
-            }
+            },
+                {
+                    model: db.users,
+                    required: false
+                }
             ],
             where: WhereQuery
         }).then((result) => {
