@@ -296,11 +296,6 @@ class efiles extends baseModelbo {
             res.download(file, function (err) {
                 if (err) {
                     _this.sendResponseError(res, err);
-                } else {
-                    fs.unlink(file, function (err) {
-                        if (err)
-                            throw(err)
-                    });
                 }
             })
         } else {
