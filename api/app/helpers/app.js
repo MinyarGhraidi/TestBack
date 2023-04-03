@@ -23,13 +23,6 @@ const argv = require('yargs')
     .argv;
 
 const appDir = (argv && argv.path) ? argv.path : path.dirname(require.main.filename);
-const get_app_config = () => {
-    return require(__dirname + '/../config/config.json')[env];
-};
-const get_rabbitmq_url = () => {
-    const config = get_app_config();
-    return 'amqp://' + config.rabbitmq.login + ':' + config.rabbitmq.password + '@' + config.rabbitmq.host + ':' + config.rabbitmq.port;
-};
 
 module.exports = {
     appConfig: appConfig,
@@ -37,6 +30,5 @@ module.exports = {
     appDir: appDir,
     appSecret: appSecret,
     getCurrentDate: getCurrentDate,
-    getCurrentDateTime: getCurrentDateTime,
-    rabbitmq_url: get_rabbitmq_url(),
+    getCurrentDateTime: getCurrentDateTime
 };
