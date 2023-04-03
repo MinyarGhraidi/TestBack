@@ -208,7 +208,6 @@ class message_channelDao extends baseModelbo {
                             created_at: new Date(),
                             updated_at: new Date(),
                         }).save().then(save_message_attachment => {
-                            console.log('save_message_attachmentttt', save_message_attachment)
                             this.db['messages'].update({
                                 attachment_post_id: save_message_attachment.attachment_efile_id
                             }, {
@@ -515,7 +514,7 @@ class message_channelDao extends baseModelbo {
         let {message_channel_id, user_id} = req.body;
         this.user_has_access_to_channel(message_channel_id, user_id).then(result => {
             if (result.status === true) {
-                let sql = `SELECT m.*,ma.attachment_efile_id,ef.file_type ,mc.channel_type,
+                let sql = `SELECT m.*,ma.attachment_efile_id,ef.file_type ,ef.original_name,mc.channel_type,
                     u.first_name as user_firstname, u.username as user_lastname, u.profile_image_id as profile_picture_efile_id, mr.status_read
                                 FROM messages as m
                     
@@ -541,7 +540,6 @@ class message_channelDao extends baseModelbo {
                         }
                     })
                     .then(messages => {
-                        console.log('messagessss', messages)
                         let sql_count = `
                         SELECT count(*) as totalItems FROM (
                             SELECT m.message_id
