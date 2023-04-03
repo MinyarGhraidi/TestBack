@@ -49,15 +49,6 @@
         }
       }
     },
-    "rabbitmq": {
-      "host": "92.222.227.221",
-      "login": "oxilog",
-      "password": "oxilog2021",
-      "port": "5009",
-      "queues": {
-        "exportCsv": "oxilog.exportCsv"
-      }
-    },
     "socketUrl": "https://ip221.ip-92-222-227.eu:3002",
     "TZ": "Europe/Paris"
   },
@@ -109,15 +100,6 @@
           "acquire": 3000000,
           "idle": 100000
         }
-      }
-    },
-    "rabbitmq": {
-      "host": "92.222.227.221",
-      "login": "oxilog",
-      "password": "oxilog2021",
-      "port": "5009",
-      "queues": {
-        "exportCsv": "oxilog.exportCsv"
       }
     },
     "socketUrl": "https://ip158.ip-92-222-147.eu:3002",
