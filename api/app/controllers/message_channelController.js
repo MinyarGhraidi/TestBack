@@ -28,6 +28,9 @@ module.exports = {
     getMyChannel: function ( req, res, next){
         message_channelDaoInst.getMyChannel(req, res, next)
     },
+    getContactsChannel: function ( req, res, next){
+        message_channelDaoInst.getContactsChannel(req, res, next)
+    },
     getChannelMessages: function (req, res, next){
         message_channelDaoInst.getChannelMessages(req, res, next)
     },
