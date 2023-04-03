@@ -611,6 +611,8 @@ class message_channelDao extends baseModelbo {
                                     total: count_total[0].totalItems
                                 })
                             }
+                        }).catch(err => {
+                            reject(err)
                         })
                     }
 
@@ -666,7 +668,6 @@ class message_channelDao extends baseModelbo {
     channel_name(subscribers, channel, user_id) {
         return new Promise((resolve, reject) => {
             let new_channel_name = '';
-            let i = 0;
             subscribers.data.forEach(subscriber => {
                 if (channel.channel_type === 'G') {
                     new_channel_name = subscriber.user_familyname + ' ' + subscriber.user_name;
