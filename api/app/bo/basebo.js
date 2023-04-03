@@ -4,8 +4,13 @@ const config = require('../config/config.json');
 const diff = require("deep-object-diff").diff;
 const Sequelize = require('sequelize');
 const Op = require("sequelize/lib/operators");
+const {default: axios} = require("axios");
 const appSocket = new (require('../providers/AppSocket'))();
-
+const call_center_token = require(__dirname + '/../config/config.json')["call_center_token"];
+const base_url_cc_kam = require(__dirname + '/../config/config.json')["base_url_cc_kam"];
+const call_center_authorization = {
+    headers: {Authorization: call_center_token}
+};
 class baseModelbo {
     request = null;
     response = null;
@@ -818,6 +823,41 @@ class baseModelbo {
 
         })
 
+    }
+    deleteSubScriberOrAgentByUUID(uuid_sub,uuid_agent){
+        return new Promise((resolve,reject)=>{
+            const delete_Agent = new Promise((resolve,reject)=> {
+                if(uuid_agent){
+                    axios.get(`${base_url_cc_kam}api/v1/agents/${uuid_agent}`, call_center_authorization).then(() => {
+                        axios.delete(`${base_url_cc_kam}api/v1/agents/${uuid_agent}`, call_center_authorization).then(() => {
+                            resolve(true)
+                        }).catch((err)=> reject(err))
+                    }).catch((err)=>reject(err))
+                }else{
+                    resolve(true)
+                }
+            })
+            Promise.all([delete_Agent]).then(data_user => {
+                if(uuid_sub){
+                    axios.get(`${base_url_cc_kam}api/v1/subscribers/${uuid_sub}`, call_center_authorization).then(() => {
+                        axios.delete(`${base_url_cc_kam}api/v1/subscribers/${uuid_sub}`, call_center_authorization).then(() => {
+                            resolve(true)
+                        }).catch((err)=> reject(err))
+                    }).catch((err)=>reject(err))
+                }else{
+                    resolve(true)
+                }
+            }).catch(err => reject(err))
+        })
+    }
+    deleteDomainByUUID(domain_uuid){
+        return new Promise((resolve,reject)=> {
+            axios.get(`${base_url_cc_kam}api/v1/domains/${domain_uuid}`, call_center_authorization).then(() => {
+                axios.delete(`${base_url_cc_kam}api/v1/domains/${domain_uuid}`, call_center_authorization).then(() => {
+                    resolve(true)
+                }).catch((err)=>reject(err))
+            }).catch((err)=>reject(err))
+        })
     }
 }
 

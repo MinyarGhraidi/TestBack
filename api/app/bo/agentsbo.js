@@ -1,18 +1,12 @@
 const {baseModelbo} = require('./basebo');
 let db = require('../models');
-const {validateEmail} = require("../helpers/helpers");
-const config = require('../config/config.json');
-const jwt = require('jsonwebtoken');
 const {default: axios} = require("axios");
 let moment = require("moment");
-const tz = require(__dirname + '/../config/config.json')["tz"];
 const call_center_token = require(__dirname + '/../config/config.json')["call_center_token"];
 const base_url_cc_kam = require(__dirname + '/../config/config.json')["base_url_cc_kam"];
 const call_center_authorization = {
     headers: {Authorization: call_center_token}
 };
-const PromiseBB = require("bluebird");
-const salt = require("../config/config.json")["salt"]
 
 const usersbo = require('./usersbo');
 const callfilebo = require('./callfilebo');
@@ -21,10 +15,7 @@ let _usersbo = new usersbo;
 let _callfilebo = new callfilebo;
 let _callhistorybo = new callhistorybo;
 const appSocket = new (require('../providers/AppSocket'))();
-const appHelper = require("../helpers/app");
 const Op = require("sequelize/lib/operators");
-const bcrypt = require("bcrypt");
-const app_config = appHelper.appConfig;
 
 class agents extends baseModelbo {
     constructor() {
@@ -93,7 +84,7 @@ class agents extends baseModelbo {
                                             res.send({
                                                 success: false,
                                                 status: 403,
-                                                message: err.response.data.errors.username[0] ? 'extension required !' : 'Failed Try Again'
+                                                message: 'Failed Try Again'
                                             })
                                         })
                                     }).catch((err) => {
@@ -289,17 +280,20 @@ class agents extends baseModelbo {
                                     }
                                 })
                                 .catch(err => {
-                                    reject(err)
+                                    this.deleteSubScriberOrAgentByUUID(result.uuid,uuidAgent).then(()=>{
+                                        reject(err)
+                                    }).catch(()=> reject(err))
                                 })
                         }).catch((err) => {
-                        reject(err)
+                        this.deleteSubScriberOrAgentByUUID(result.uuid,null).then(()=>{
+                            reject(err)
+                        }).catch(()=> reject(err))
                     })
                 }).catch((err) => {
                 reject(err)
             })
         })
     }
-
     //---------------> Update Agent <----------------------
     updateAgent(req, res, next) {
         let _this = this;
