@@ -7,13 +7,13 @@ const usersbo = require('./usersbo');
 const agentsbo = require('../bo/agentsbo');
 const campaignsbo = require('../bo/campaignbo');
 const trunksbo = require('../bo/truncksbo');
-const Roles_crm = require('../bo/roles_crmbo');
+const messageDao = require('../bo/messageDao');
 const {default: axios} = require("axios");
 let _usersbo = new usersbo();
 let _agentsbo = new agentsbo();
 let _campaignsbo = new campaignsbo();
 let _trunksbo = new trunksbo();
-let _roles_crmbo = new Roles_crm();
+let _messageDao = new messageDao();
 const call_center_token = require(__dirname + '/../config/config.json')["call_center_token"];
 const base_url_cc_kam = require(__dirname + '/../config/config.json')["base_url_cc_kam"];
 const call_center_authorization = {
@@ -707,17 +707,22 @@ class accounts extends baseModelbo {
                 this.deleteAllRelativeTrunks(account_id).then(() => {
                     this.deleteAllRelativeCampaigns(account_id).then(() => {
                         this.deleteAllAccountRelative(account_id).then(() => {
-                            this.db['accounts']
-                                .update({active: 'N', domain_id: null}, {where: {account_id: account_id}})
-                                .then(() => {
-                                    res.send({
-                                        status: 200,
-                                        message: 'account deleted with success'
+                            _messageDao.deleteMessageCascade(usersIds).then(()=>{
+                                this.db['accounts']
+                                    .update({active: 'N', domain_id: null}, {where: {account_id: account_id}})
+                                    .then(() => {
+                                        res.send({
+                                            status: 200,
+                                            message: 'account deleted with success'
+                                        })
                                     })
-                                })
-                                .catch(err => {
-                                    return _this.sendResponseError(res, ['Error.CannotDeleteAccountFromDB', err], 1, 403);
-                                })
+                                    .catch(err => {
+                                        return _this.sendResponseError(res, ['Error.CannotDeleteAccountFromDB', err], 1, 403);
+                                    })
+                            }).catch(err => {
+                                console.log(err)
+                                return _this.sendResponseError(res, ['Error.CannotDeleteMessages', err], 1, 403);
+                            })
                         }).catch((err) => {
                             return _this.sendResponseError(res, ['Error.CannotDeleteEntities', err], 1, 403);
                         })

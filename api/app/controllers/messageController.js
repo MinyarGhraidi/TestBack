@@ -18,6 +18,6 @@ module.exports = {
     },
     delete: function (req, res, next) {
         messageDaoInst.delete(req, res, next);
-    },
+    }
 };
 
