@@ -55,7 +55,8 @@
     "dialer_token": "Bearer LucH6JQhHjpXVhP8K6buVmGFrrYrQ9jR56Zx5Ftcq2X93fXcxRfFwrQU2Ka7J8Mr",
     "base_url_dailer": "http://5.135.68.122:8091/",
     "base_url_cc_fs": "https://occ.oxilog.net:1443/",
-    "base_url_cc_kam": "https://sip-crm.oxilog-telecom.net:1443/"
+    "base_url_cc_kam": "https://sip-crm.oxilog-telecom.net:1443/",
+    "secret": "'BL#,miQFau,amA!?FFW@oKO3<_<E-j-]PVO65d!c%|V2h{(3#~~*$8{X<H}BVm"
   },
   "production": {
     "dialect": "postgres",
@@ -113,7 +114,8 @@
     "dialer_token": "Bearer LucH6JQhHjpXVhP8K6buVmGFrrYrQ9jR56Zx5Ftcq2X93fXcxRfFwrQU2Ka7J8Mr",
     "base_url_dailer": "http://92.222.147.159:8091/",
     "base_url_cc_fs": "https://occ.oxilog.net:1443/",
-    "base_url_cc_kam": "https://92.222.147.159:1443/"
+    "base_url_cc_kam": "https://92.222.147.159:1443/",
+    "secret": "'BL#,miQFau,amA!?FFW@oKO3<_<E-j-]PVO65d!c%|V2h{(3#~~*$8{X<H}BVm"
   },
   "tz": "Europe/Paris",
   "salt": "$2b$10$TOzGnzuUQjfTzmecOw7NKe"
