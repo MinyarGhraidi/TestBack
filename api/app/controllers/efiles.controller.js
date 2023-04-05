@@ -31,8 +31,5 @@ module.exports = {
     },
     downloadFile: function (req, res, next) {
         efilesDaoInst.downloadFile(req, res, next)
-    },
-    GetFile: function (req, res, next){
-        efilesDaoInst.GetFile(req, res, next)
     }
 }

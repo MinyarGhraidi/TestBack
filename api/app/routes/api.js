@@ -173,7 +173,6 @@ let apiRouters = function (passport) {
     router.get("/api/efile/getListCallFiles/:file_id", passport.authenticate('jwt', {session: false}), efilesController.getListCallFiles);
     router.post("/api/efile/getHeaderCallFile", passport.authenticate('jwt', {session: false}), efilesController.getHeaderCallFile);
     router.get("/api/efile/downloadFile/:filename",passport.authenticate('jwt', {session: false}), efilesController.downloadFile);
-    router.get("/api/file/getFile/:file_id",passport.authenticate('jwt', {session: false}), efilesController.GetFile);
 
     //listcallfiles routers
     router.post("/api/listcallfile/find/:params?", passport.authenticate('jwt', {session: false}), listcallfilesController.find);
