@@ -570,25 +570,28 @@ class message_channelDao extends baseModelbo {
                             .then(count_total => {
                                 let has_no_readed_msgs = false;
                                 this.AllMessage(messages, has_no_readed_msgs, message_channel_id, user_id, count_total).then(all_message => {
-                                    if (all_message.success === true) {
-
-                                        this.checkFile(messages).then(msgFile=>{
-                                            if(msgFile.success){
-                                                res.send({
-                                                    data: msgFile.data,
-                                                    success: true,
-                                                    total: count_total[0].totalItems
-                                                })
-                                            }
+                                    this.checkFile(messages).then(msgFile => {
+                                        res.send({
+                                            data: msgFile.data,
+                                            success: true,
+                                            total: count_total[0].totalItems
                                         })
+                                    }).catch(err => {
+                                        this.sendResponseError(res, ['Error_get_channel_message'])
+                                    })
 
-                                    }
+                                }).catch(err => {
+                                    this.sendResponseError(res, ['Error_get_channel_message'])
                                 })
 
 
-                            })
+                            }).catch(err => {
+                            this.sendResponseError(res, ['Error_get_channel_message'])
+                        })
 
-                    })
+                    }).catch(err => {
+                    this.sendResponseError(res, ['Error_get_channel_message'])
+                })
 
             } else {
                 res.send({
@@ -973,31 +976,47 @@ class message_channelDao extends baseModelbo {
     }
 
     checkFile (messages){
-        return new Promise((resolve, reject)=>{
-            let index =0
-            let msgFile = messages.filter(item => item.attachment_efile_id && item.file_type && item.file_type.includes('application'))
-            messages.map(msg=>{
-                if(msg.attachment_efile_id && msg.file_type ){
-                    EFile.findById(msg.attachment_efile_id).then(efile => {
-                        if (!efile) {
-                            msg.invalidFile = true
-                        } else {
-                            const file_path = appDir + '/app/resources/efiles/' + efile.uri;
-                            msg.invalidFile = !fs.existsSync(file_path);
-                        }
-                        if(index <= msgFile.length -1 ){
+        return new Promise((resolve, reject)=> {
+            let index = 0
+            if (messages && messages.length) {
+                messages.map(msg => {
+                    if (msg.attachment_efile_id && msg.file_type) {
+                        EFile.findById(msg.attachment_efile_id).then(efile => {
+                            if (!efile) {
+                                msg.invalidFile = true
+                            } else {
+                                const file_path = appDir + '/app/resources/efiles/' + efile.uri;
+                                msg.invalidFile = !fs.existsSync(file_path);
+                            }
+                            if (index < messages.length - 1) {
+                                index++
+                            } else {
+                                console.log('resolve')
+                                resolve({
+                                    success: true,
+                                    data: messages
+                                })
+                            }
+                        }).catch(err => {
+                            reject(err)
+                        });
+                    } else {
+                        if (index < messages.length - 1) {
                             index++
-                        }else{
+                        } else {
                             resolve({
                                 success: true,
                                 data: messages
                             })
                         }
-                    }).catch(err => {
-                         reject(err)
-                    });
-                }
-            })
+                    }
+                })
+            } else {
+                resolve({
+                    success: true,
+                    data: messages
+                })
+            }
         })
     }
 }
