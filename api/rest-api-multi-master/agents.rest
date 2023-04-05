@@ -1,0 +1,122 @@
+#GET ALL AGENTS
+GET https://92.222.147.159:1443/api/v1/agents
+Content-Type: application/json
+Authorization: Bearer BomjNx8kFfZTdCFx4kH3hGECO78yS0C0KS7pgO0BUe8COxcved
+
+###
+#GET AGENT BY ID
+GET https://92.222.147.159:1443/api/v1/agents/28379d77-96a5-4b81-969e-1109fe7e7893
+Content-Type: application/json
+Authorization: Bearer BomjNx8kFfZTdCFx4kH3hGECO78yS0C0KS7pgO0BUe8COxcved
+
+###
+#CREATE AGENT
+POST https://92.222.147.159:1443/api/v1/agents
+Content-Type: application/json
+Authorization: Bearer BomjNx8kFfZTdCFx4kH3hGECO78yS0C0KS7pgO0BUe8COxcved
+
+{
+    "name": "Anis",
+	"domain_uuid": "98d96541-19e5-4e50-8406-76ba8ee8bbf4",
+    "subscriber_uuid": "98d97201-4f74-443e-9e7f-c605c5282308",
+    "options": {
+        "call_timeout": 60,
+        "max_no_answer": 0,
+        "wrap_up_time": 10,
+        "reject_delay_time": 90,
+        "busy_delay_time": 90,
+        "no_answer_delay_time": 20
+    },
+    "queues": []
+}
+
+###
+#CREATE AGENT
+POST https://92.222.147.159:1443/api/v1/agents
+Content-Type: application/json
+Authorization: Bearer BomjNx8kFfZTdCFx4kH3hGECO78yS0C0KS7pgO0BUe8COxcved
+
+{
+    "name": "Anis",
+	"domain_uuid": "98d96541-19e5-4e50-8406-76ba8ee8bbf4",
+    "subscriber_uuid": "97b427f6-0f31-485d-b85e-91f15ee0b088",
+    "status": "available",
+    "options": {
+        "call_timeout": 60,
+        "max_no_answer": 0,
+        "wrap_up_time": 10,
+        "reject_delay_time": 90,
+        "busy_delay_time": 90,
+        "no_answer_delay_time": 20
+    },
+    "queues": [
+        {
+            "queue_uuid": "ecb6d249-436e-44c4-82bd-36cde3f5b0a4",
+            "tier_level": 1,
+            "tier_position": 1
+        }
+    ]
+}
+
+###
+#UPDATE AGENT
+PUT https://92.222.147.159:1443/api/v1/agents/afb594fe-44e4-4328-9f67-ba68d0440b88
+Content-Type: application/json
+Authorization: Bearer BomjNx8kFfZTdCFx4kH3hGECO78yS0C0KS7pgO0BUe8COxcved
+
+{
+    "name": "Anis",
+	"domain_uuid": "98d96541-19e5-4e50-8406-76ba8ee8bbf4",
+    "subscriber_uuid": "97b427f6-0f31-485d-b85e-91f15ee0b088",
+    "status": "available",
+    "enabled": true,
+    "options": {
+        "call_timeout": 60,
+        "max_no_answer": 0,
+        "wrap_up_time": 10,
+        "reject_delay_time": 90,
+        "busy_delay_time": 90,
+        "no_answer_delay_time": 20
+    }
+}
+
+###
+#GET AGENT SIPINFO BY ID
+GET https://92.222.147.159:1443/api/v1/agents/20b61f6e-0994-4ce3-a851-b79e3d5d61eb/sipinfo
+Content-Type: application/json
+Authorization: Bearer BomjNx8kFfZTdCFx4kH3hGECO78yS0C0KS7pgO0BUe8COxcved
+
+###
+#GET AGENT TIERS BY ID
+GET https://92.222.147.159:1443/api/v1/agents/28379d77-96a5-4b81-969e-1109fe7e7893/tiers
+Content-Type: application/json
+Authorization: Bearer BomjNx8kFfZTdCFx4kH3hGECO78yS0C0KS7pgO0BUe8COxcved
+
+###
+#UPDATE AGENT level & position on a queue
+PUT https://92.222.147.159:1443/api/v1/agents/b3463bca-01f9-4830-8094-5f4e1c486a3b/tier
+Content-Type: application/json
+Authorization: Bearer BomjNx8kFfZTdCFx4kH3hGECO78yS0C0KS7pgO0BUe8COxcved
+
+{
+    "queue_uuid": "0e4c3448-dff9-4381-a38d-800635f16c45",
+    "tier_level": 1,
+    "tier_position": 1
+}
+
+###
+#UPDATE AGENT STATUS
+PUT https://92.222.147.159:1443/api/v1/agents/28379d77-96a5-4b81-969e-1109fe7e7893/status
+Content-Type: application/json
+Authorization: Bearer BomjNx8kFfZTdCFx4kH3hGECO78yS0C0KS7pgO0BUe8COxcved
+
+{
+    "status": "available"
+}
+
+###
+#DELETE AGENT
+DELETE https://92.222.147.159:1443/api/v1/agents/1
+Content-Type: application/json
+Authorization: Bearer BomjNx8kFfZTdCFx4kH3hGECO78yS0C0KS7pgO0BUe8COxcved
+

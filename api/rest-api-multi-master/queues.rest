@@ -1,0 +1,139 @@
+#GET ALL QUEUES
+GET https://92.222.147.159:1443/api/v1/queues
+Content-Type: application/json
+Authorization: Bearer BomjNx8kFfZTdCFx4kH3hGECO78yS0C0KS7pgO0BUe8COxcved
+
+###
+#GET QUEUE BY ID
+GET https://92.222.147.159:1443/api/v1/queues/8ea75643-9815-4b3e-ae69-be1255260caf
+Content-Type: application/json
+Authorization: Bearer BomjNx8kFfZTdCFx4kH3hGECO78yS0C0KS7pgO0BUe8COxcved
+
+###
+#CREATE NEW QUEUE
+
+POST https://92.222.147.159:1443/api/v1/queues
+Content-Type: application/json
+Authorization: Bearer BomjNx8kFfZTdCFx4kH3hGECO78yS0C0KS7pgO0BUe8COxcved
+
+{
+    "name": "Q1",
+    "extension": "1111",
+	"domain_uuid": "98d96541-19e5-4e50-8406-76ba8ee8bbf4",
+    "strategy": "ring-all",
+    "greetings": [],
+    "hold_music": [],
+    "record": true,
+    "options": {
+        "time_base_score": "queue",
+        "tier_rules_apply": "false",
+        "tier_rule_wait_second": 300,
+        "tier_rule_wait_multiply_level": "false",
+        "tier_rule_no_agent_no_wait": "true",
+        "discard_abandoned_after": 900,
+        "abandoned_resume_allowed": "true",
+        "max_wait_time": 0,
+        "max_wait_time_with_no_agent": 120,
+        "max_wait_time_with_no_agent_time_reached": 5,
+        "ring_progressively_delay": 10,
+		"skip_agents_with_external_calls": "false",
+		"agent_no_answer_status": "on-break"
+    }
+}
+
+
+###
+#UPDATE QUEUE
+
+PUT https://92.222.147.159:1443/api/v1/queues/8ea75643-9815-4b3e-ae69-be1255260caf
+Content-Type: application/json
+Authorization: Bearer BomjNx8kFfZTdCFx4kH3hGECO78yS0C0KS7pgO0BUe8COxcved
+
+{
+    "name": "662947818873",
+    "extension": "775538738221",
+	"domain_uuid": "97c1bd03-a4fc-4af8-b778-1bf6828caf35",
+    "strategy": "ring-all",
+    "greetings": ["/usr/share/freeswitch/sounds/callcenter/confirm_appel.wav"],
+    "hold_music": ["/usr/share/freeswitch/sounds/callcenter/attente-longue.wav"],
+    "record": true,
+    "enabled": true,
+    "options": {
+        "time_base_score": "queue",
+        "tier_rules_apply": "false",
+        "tier_rule_wait_second": 300,
+        "tier_rule_wait_multiply_level": "false",
+        "tier_rule_no_agent_no_wait": "true",
+        "discard_abandoned_after": 900,
+        "abandoned_resume_allowed": "true",
+        "max_wait_time": 0,
+        "max_wait_time_with_no_agent": 120,
+        "max_wait_time_with_no_agent_time_reached": 5,
+        "ring_progressively_delay": 10,
+		"skip_agents_with_external_calls": "true",
+		"agent_no_answer_status": "on-break"
+    }
+}
+
+
+###
+#DELETE QUEUE
+
+
+DELETE https://92.222.147.159:1443/api/v1/queues/a07824be-fc31-4495-bed6-ba5ba7bb1734
+Content-Type: application/json
+Authorization: Bearer BomjNx8kFfZTdCFx4kH3hGECO78yS0C0KS7pgO0BUe8COxcved
+
+###
+#GET QUEUE TIERS
+
+GET https://92.222.147.159:1443/api/v1/queues/41ee100d-086f-49dc-afa1-6b74f7221653/tiers
+Content-Type: application/json
+Authorization: Bearer BomjNx8kFfZTdCFx4kH3hGECO78yS0C0KS7pgO0BUe8COxcved
+
+###
+#ADD/UPDATE QUEUE TIERS
+
+POST https://92.222.147.159:1443/api/v1/queues/0e4c3448-dff9-4381-a38d-800635f16c45/tiers
+Content-Type: application/json
+Authorization: Bearer BomjNx8kFfZTdCFx4kH3hGECO78yS0C0KS7pgO0BUe8COxcved
+
+{
+    "tiers": [
+        {
+            "agent_uuid": "b3463bca-01f9-4830-8094-5f4e1c486a3b",
+            "tier_level": 1,
+            "tier_position": 1
+        }
+    ]
+}
+
+###
+#DELETE QUEUE TIERS
+
+POST https://92.222.147.159:1443/api/v1/queues/41ee100d-086f-49dc-afa1-6b74f7221653/tiers/delete
+Content-Type: application/json
+Authorization: Bearer BomjNx8kFfZTdCFx4kH3hGECO78yS0C0KS7pgO0BUe8COxcved
+
+{
+    "agents": ["28379d77-96a5-4b81-969e-1109fe7e7893", "c426c0e5-dd20-4fd1-8297-a6e078f9d505"]
+}
+
+
+###
+#DELETE ALL QUEUE TIERS AT ONCE
+
+POST https://92.222.147.159:1443/api/v1/queues/deaa7ce4-9078-47b7-aee3-d15bc21e3870/tiers/delete
+Content-Type: application/json
+Authorization: Bearer BomjNx8kFfZTdCFx4kH3hGECO78yS0C0KS7pgO0BUe8COxcved
+
+{
+    "agents": ["*"]
+}
+
+
+###
+#CLEAR QUEUE CALLS
+GET https://92.222.147.159:1443/api/v1/queues/8ea75643-9815-4b3e-ae69-be1255260caf/clear
+Content-Type: application/json
+Authorization: Bearer BomjNx8kFfZTdCFx4kH3hGECO78yS0C0KS7pgO0BUe8COxcved
