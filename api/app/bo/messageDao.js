@@ -4,6 +4,7 @@ const Op = require("sequelize/lib/operators");
 const moment = require("moment");
 const fs = require("fs");
 const {appDir} = require("../helpers/app");
+const appSocket = new (require("../providers/AppSocket"))();
 
 class messageDao extends baseModelbo {
     constructor() {
@@ -32,6 +33,14 @@ class messageDao extends baseModelbo {
                     let ids_G = [];
                     if (filtering_G && filtering_G.length !== 0) {
                         ids_G = filtering_G.map(filter => filter.message_channel_id)
+                        this.deleteGroups(ids_G).then(G_ids => {
+                            const new_S = ids_S.concat(G_ids);
+                            const set = new Set(G_ids);
+                            const new_G =  ids_G.filter((el) => !set.has(el));
+                            return resolve({
+                                channel_ids_S: new_S, channel_ids_G: new_G
+                            })
+                        })
                     }
                     resolve({
                         channel_ids_S: ids_S, channel_ids_G: ids_G
@@ -44,7 +53,25 @@ class messageDao extends baseModelbo {
             }).catch(err => reject(err))
         })
     }
+    deleteGroups(group_ids){
+        return new Promise((resolve,reject)=>{
 
+            let toDelete = []
+            let idx = 0;
+            group_ids.forEach(group_id => {
+                this.db['message_channel_subscribers'].findAll({where : {active  :'Y', message_channel_id : group_id}}).then(res => {
+                    if(res && res.length <= 2){
+                        toDelete.push(group_id);
+                    }
+                    if (idx < group_ids.length - 1) {
+                        idx++;
+                    } else {
+                        resolve(toDelete)
+                    }
+                }).catch(err => reject(err))
+            })
+        })
+    }
     getMessageIDsByChannelIDs(mc_id_s, user_id) {
         return new Promise((resolve, reject) => {
             this.db['messages'].findAll({
@@ -64,10 +91,19 @@ class messageDao extends baseModelbo {
 
     deleteCascadeMessagesByTableName(tableName, mc_id_sT, user_idT, mc_id_s, user_id) {
         return new Promise((resolve, reject) => {
-            let WhereQuery = {}
-            WhereQuery['active'] = 'Y'
-            WhereQuery[mc_id_sT] = {[Op.in]: mc_id_s}
-            WhereQuery[user_idT] = user_id
+            let subs_mc_id_sT = {}
+            let subs_user_idT = {}
+            subs_mc_id_sT[mc_id_sT] = {[Op.in]: mc_id_s}
+            subs_user_idT[user_idT] = user_id
+            let WhereQuery = {
+                active : 'Y',
+                [Op.or]: [
+                    subs_mc_id_sT,
+                    subs_user_idT
+                ]
+            }
+
+
             this.db[tableName].update({updated_at: moment(new Date()), active: 'N'}, {
                 where: WhereQuery
             }).then(() => {
@@ -115,15 +151,14 @@ class messageDao extends baseModelbo {
             }).then(efiles => {
                 if (efiles && efiles.length !== 0) {
                     let idx = 0;
-                    const file_names = efiles.map(efile => efile.file_name);
+                    const file_paths = efiles.map(efile => efile.uri);
                     this.db['efiles'].update({updated_at: moment(new Date()), active: 'N'}, {
                         where: {active: 'Y', file_id: {[Op.in]: attachment_efiles_ids}}
                     }).then(() => {
-                        file_names.forEach(file_name => {
-                            let file_path = appDir + '/app/resources/efiles/' + file_name;
-                            console.log(file_path);
+                        file_paths.forEach(file_uri => {
+                            let file_path = appDir + '/app/resources/efiles/' + file_uri;
                               this.deleteFileIfExists(file_path).then(() => {
-                            if (idx < file_names.length - 1) idx++; else resolve(true)
+                            if (idx < file_paths.length - 1) idx++; else resolve(true)
                               }).catch(err => reject(err))
 
                         })
@@ -168,15 +203,19 @@ class messageDao extends baseModelbo {
 
     deleteMessageCascade(user_ids) {
         return new Promise((resolve,reject)=>{
+            if(!!!user_ids || user_ids.length === 0){
+                return resolve(true)
+            }
             let idx = 0;
             user_ids.forEach(user_id => {
-                this.getMessageChannelIDsByUserId(user_id).then(res_channel_ids => {
-                    this.getMessageIDsByChannelIDs(res_channel_ids.channel_ids_S, user_id).then(res_message_ids => {
-                        this.deleteCascadeMessagesByTableName('message_channel_subscribers', 'message_channel_id', 'user_id', res_channel_ids.channel_ids_S, user_id).then(() => {
-                            this.deleteCascadeMessagesByTableName('message_channels', 'message_channel_id', 'created_by_id', res_channel_ids.channel_ids_S, user_id).then(() => {
-                                this.deleteCascadeMessagesByTableName('message_readers', 'message_id', 'user_id', res_message_ids, user_id).then(() => {
+                this.getMessageChannelIDsByUserId(user_id.user_id).then(res_channel_ids => {
+                    this.getMessageIDsByChannelIDs(res_channel_ids.channel_ids_S, user_id.user_id).then(res_message_ids => {
+                        this.deleteCascadeMessagesByTableName('message_channel_subscribers', 'message_channel_id', 'user_id', res_channel_ids.channel_ids_S, user_id.user_id).then(() => {
+                            this.deleteCascadeMessagesByTableName('message_channels', 'message_channel_id', 'created_by_id', res_channel_ids.channel_ids_S, user_id.user_id).then(() => {
+                                this.deleteCascadeMessagesByTableName('message_readers', 'message_id', 'user_id', res_message_ids, user_id.user_id).then(() => {
                                     this.deleteMessageAttachments_Efiles(res_message_ids).then(() => {
                                         this.deleteMessages(res_message_ids).then(() => {
+                                            appSocket.emit('channel_deleted', {})
                                             if(idx < user_ids.length -1){
                                                 idx++;
                                             }else{

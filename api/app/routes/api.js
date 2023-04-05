@@ -325,6 +325,7 @@ let apiRouters = function (passport) {
     router.post('/api/message_channel/sendNewMessage', passport.authenticate('jwt', {session: false}), MessageChannelController.sendNewMessage);
     router.post('/api/message_channel/getMyChannel', passport.authenticate('jwt', {session: false}), MessageChannelController.getMyChannel);
     router.post('/api/message_channel/getContactsChannel', passport.authenticate('jwt', {session: false}), MessageChannelController.getContactsChannel);
+    router.post('/api/message_channel/getAllUsersChannel', passport.authenticate('jwt', {session: false}), MessageChannelController.getAllUsersChannel);
     router.post('/api/message_channel/getMessageChannel', passport.authenticate('jwt', {session: false}), MessageChannelController.getChannelMessages);
     router.post('/api/message_channel/updateMessageChannelSubscribes', passport.authenticate('jwt', {session: false}), MessageChannelController.updateMessageChannelSubscribes);
     router.post('/api/message_channel/addSubscribersToChannel', passport.authenticate('jwt', {session: false}), MessageChannelController.addSubscribersToChannel);

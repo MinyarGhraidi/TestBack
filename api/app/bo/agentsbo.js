@@ -11,9 +11,11 @@ const call_center_authorization = {
 const usersbo = require('./usersbo');
 const callfilebo = require('./callfilebo');
 const callhistorybo = require('./callhistorybo');
+const messageDao = require('./messageDao');
 let _usersbo = new usersbo;
 let _callfilebo = new callfilebo;
 let _callhistorybo = new callhistorybo;
+let _messageDao = new messageDao;
 const appSocket = new (require('../providers/AppSocket'))();
 const Op = require("sequelize/lib/operators");
 
@@ -407,16 +409,21 @@ class agents extends baseModelbo {
     deleteAgent(req, res, next) {
         let _this = this;
         let agent_id = req.body.user_id;
-        this.deleteAgentWithSub(agent_id,true)
-            .then(result => {
-                res.send({
-                    succes: 200,
-                    message: "Agent has been deleted with success"
+        _messageDao.deleteMessageCascade([{user_id : agent_id}]).then(()=>{
+            this.deleteAgentWithSub(agent_id,true)
+                .then(() => {
+                    res.send({
+                        succes: 200,
+                        message: "Agent has been deleted with success"
+                    })
                 })
-            })
-            .catch((err) => {
-                return _this.sendResponseError(res, ['Error.AnErrorHasOccurredUser', err], 1, 403);
-            });
+                .catch((err) => {
+                    return _this.sendResponseError(res, ['Error.AnErrorHasOccurredUser', err], 1, 403);
+                });
+        }).catch(err => {
+            return _this.sendResponseError(res, ['Error.CannotDeleteMessages', err], 1, 403);
+        })
+
     }
 
     deleteAgentWithSub(user_id,isNotSuperAdmin) {
