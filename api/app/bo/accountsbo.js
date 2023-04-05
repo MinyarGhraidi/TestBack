@@ -8,15 +8,15 @@ const usersbo = require('./usersbo');
 const agentsbo = require('../bo/agentsbo');
 const campaignsbo = require('../bo/campaignbo');
 const trunksbo = require('../bo/truncksbo');
-const Roles_crm = require('../bo/roles_crmbo');
+const messageDao = require('../bo/messageDao');
 const {default: axios} = require("axios");
 let _usersbo = new usersbo();
 let _agentsbo = new agentsbo();
 let _campaignsbo = new campaignsbo();
 let _trunksbo = new trunksbo();
-let _roles_crmbo = new Roles_crm();
-const call_center_token = require(__dirname + '/../config/config.json')[env]["call_center_token"];
-const base_url_cc_kam = require(__dirname + '/../config/config.json')[env]["base_url_cc_kam"];
+let _messageDao = new messageDao();
+const call_center_token = require(__dirname + '/../config/config.json')["call_center_token"];
+const base_url_cc_kam = require(__dirname + '/../config/config.json')["base_url_cc_kam"];
 const call_center_authorization = {
     headers: {Authorization: call_center_token}
 };
@@ -333,7 +333,7 @@ class accounts extends baseModelbo {
                                             plain: true
                                         }).then(() => {
                                             let update_user = newAccount.user;
-                                            if(isNotSuperAdmin){
+                                            if (isNotSuperAdmin) {
                                                 update_user.sip_device.uuid = isNotSuperAdmin ? resultAgent.uuid : '';
                                                 update_user.sip_device.updated_at = isNotSuperAdmin ? resultAgent.updated_at : null;
                                             }
@@ -370,8 +370,7 @@ class accounts extends baseModelbo {
             }).catch(() => {
                 return _this.sendResponseError(res, ['Error.CannotFindAccount'], 1, 403);
             })
-        }
-        else {
+        } else {
             this.db['accounts'].findOne({
                 where: {
                     web_domain: newAccount.web_domain,
@@ -400,8 +399,11 @@ class accounts extends baseModelbo {
                                         if (new_account) {
                                             data_account.user = newAccount.user;
                                             data_account.user.account_id = new_account.dataValues.account_id;
-                                            if(isNotSuperAdmin){
+                                            if (isNotSuperAdmin) {
                                                 data_account.user.sip_device.username = username;
+                                                data_account.user.sip_device.uuid = result_sub.data.uuid;
+                                                data_account.user.sip_device.created_at = result_sub.data.created_at;
+                                                data_account.user.sip_device.updated_at = result_sub.data.updated_at;
                                             }
 
                                             _usersbo.saveUserFunction(data_account.user).then(new_user => {
@@ -704,33 +706,38 @@ class accounts extends baseModelbo {
         let account_id = req.body.account_id;
 
         this.getAllUserIdsByAccountId(account_id).then((usersIds) => {
-            this.deleteMultiUsers(usersIds).then(() => {
-                this.deleteAllRelativeTrunks(account_id).then(() => {
-                    this.deleteAllRelativeCampaigns(account_id).then(() => {
-                        this.deleteAllAccountRelative(account_id).then(() => {
-                            this.db['accounts']
-                                .update({active: 'N', domain_id: null}, {where: {account_id: account_id}})
-                                .then(() => {
-                                    res.send({
-                                        status: 200,
-                                        message: 'account deleted with success'
+            this.deleteAllRelativeTrunks(account_id).then(() => {
+                this.deleteAllRelativeCampaigns(account_id).then(() => {
+                    this.deleteAllAccountRelative(account_id).then(() => {
+                        _messageDao.deleteMessageCascade(usersIds).then(() => {
+                            this.deleteMultiUsers(usersIds).then(() => {
+                                this.db['accounts']
+                                    .update({active: 'N', domain_id: null}, {where: {account_id: account_id}})
+                                    .then(() => {
+                                        res.send({
+                                            status: 200,
+                                            message: 'account deleted with success'
+                                        })
                                     })
-                                })
-                                .catch(err => {
-                                    return _this.sendResponseError(res, ['Error.CannotDeleteAccountFromDB', err], 1, 403);
-                                })
-                        }).catch((err) => {
-                            return _this.sendResponseError(res, ['Error.CannotDeleteEntities', err], 1, 403);
+                                    .catch(err => {
+                                        return _this.sendResponseError(res, ['Error.CannotDeleteAccountFromDB', err], 1, 403);
+                                    })
+                            }).catch((err) => {
+                                return _this.sendResponseError(res, ['Error.CannotDeleteUsers', err], 1, 403);
+                            })
+                        }).catch(err => {
+                            return _this.sendResponseError(res, ['Error.CannotDeleteMessages', err], 1, 403);
                         })
                     }).catch((err) => {
-                        return _this.sendResponseError(res, ['Error.CannotDeleteCampaigns', err], 1, 403);
+                        return _this.sendResponseError(res, ['Error.CannotDeleteEntities', err], 1, 403);
                     })
                 }).catch((err) => {
-                    return _this.sendResponseError(res, ['Error.CannotDeleteTrunks', err], 1, 403);
+                    return _this.sendResponseError(res, ['Error.CannotDeleteCampaigns', err], 1, 403);
                 })
             }).catch((err) => {
-                return _this.sendResponseError(res, ['Error.CannotDeleteUsers', err], 1, 403);
+                return _this.sendResponseError(res, ['Error.CannotDeleteTrunks', err], 1, 403);
             })
+
         }).catch((err) => {
             return _this.sendResponseError(res, ['Error.CannotGetUsersByAccount_id', err], 1, 403);
         });
@@ -1083,6 +1090,7 @@ class accounts extends baseModelbo {
     }
 
     AddSubscriberAgent(data_subscriber, newAccount, isNotSuperAdmin, options, status) {
+
         return new Promise((resolve, reject) => {
             if (isNotSuperAdmin) {
                 axios
