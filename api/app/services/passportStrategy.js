@@ -1,7 +1,8 @@
 const JWTStrategy = require('passport-jwt').Strategy;
 const ExtractJwt = require('passport-jwt').ExtractJwt;
 const db = require('../models');
-const config = require('../config/config.json');
+const env = process.env.NODE_ENV || 'development';
+const config = require('../config/config.json')[env];
 
 const hookJWTStrategy = (passport) => {
     let options = {};
