@@ -2,7 +2,8 @@ const {baseModelbo} = require('./basebo');
 const Op = require("sequelize/lib/operators");
 let db = require('../models');
 const jwt = require('jsonwebtoken');
-const config = require('../config/config.json');
+const env = process.env.NODE_ENV || 'development';
+const config = require('../config/config.json')[env];
 const usersbo = require('./usersbo');
 const agentsbo = require('../bo/agentsbo');
 const campaignsbo = require('../bo/campaignbo');
@@ -14,8 +15,8 @@ let _agentsbo = new agentsbo();
 let _campaignsbo = new campaignsbo();
 let _trunksbo = new trunksbo();
 let _roles_crmbo = new Roles_crm();
-const call_center_token = require(__dirname + '/../config/config.json')["call_center_token"];
-const base_url_cc_kam = require(__dirname + '/../config/config.json')["base_url_cc_kam"];
+const call_center_token = require(__dirname + '/../config/config.json')[env]["call_center_token"];
+const base_url_cc_kam = require(__dirname + '/../config/config.json')[env]["base_url_cc_kam"];
 const call_center_authorization = {
     headers: {Authorization: call_center_token}
 };

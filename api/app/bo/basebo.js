@@ -1,13 +1,14 @@
 const moment = require('moment');
 const jwt = require('jsonwebtoken');
-const config = require('../config/config.json');
 const diff = require("deep-object-diff").diff;
 const Sequelize = require('sequelize');
 const Op = require("sequelize/lib/operators");
 const {default: axios} = require("axios");
 const appSocket = new (require('../providers/AppSocket'))();
-const call_center_token = require(__dirname + '/../config/config.json')["call_center_token"];
-const base_url_cc_kam = require(__dirname + '/../config/config.json')["base_url_cc_kam"];
+const env = process.env.NODE_ENV || 'development';
+const config = require('../config/config.json')[env];
+const call_center_token = require(__dirname + '/../config/config.json')[env]["call_center_token"];
+const base_url_cc_kam = require(__dirname + '/../config/config.json')[env]["base_url_cc_kam"];
 const call_center_authorization = {
     headers: {Authorization: call_center_token}
 };

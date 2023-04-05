@@ -1,7 +1,6 @@
 const {baseModelbo} = require('./basebo');
 let db = require('../models');
 const {validateEmail} = require("../helpers/helpers");
-const config = require('../config/config.json');
 const jwt = require('jsonwebtoken');
 const salt = require("../config/config.json")["salt"]
 const bcrypt = require("bcrypt");
@@ -9,8 +8,10 @@ const {Sequelize} = require("sequelize");
 const moment = require("moment");
 const {default: axios} = require("axios");
 const appSocket = new (require('../providers/AppSocket'))();
-const call_center_token = require(__dirname + '/../config/config.json')["call_center_token"];
-const base_url_cc_kam = require(__dirname + '/../config/config.json')["base_url_cc_kam"];
+const env = process.env.NODE_ENV || 'development';
+const config = require('../config/config.json')[env];
+const call_center_token = require(__dirname + '/../config/config.json')[env]["call_center_token"];
+const base_url_cc_kam = require(__dirname + '/../config/config.json')[env]["base_url_cc_kam"];
 const call_center_authorization = {
     headers: {Authorization: call_center_token}
 };

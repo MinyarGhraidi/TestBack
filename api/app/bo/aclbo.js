@@ -1,8 +1,9 @@
 const {baseModelbo} = require("./basebo");
 const {default: axios} = require("axios");
 const db = require("../models");
-const call_center_token = require(__dirname + '/../config/config.json')["call_center_token"];
-const base_url_cc_kam = require(__dirname + '/../config/config.json')["base_url_cc_kam"];
+const env = process.env.NODE_ENV || 'development';
+const call_center_token = require(__dirname + '/../config/config.json')[env]["call_center_token"];
+const base_url_cc_kam = require(__dirname + '/../config/config.json')[env]["base_url_cc_kam"];
 const call_center_authorization = {
     headers: {Authorization: call_center_token}
 };
