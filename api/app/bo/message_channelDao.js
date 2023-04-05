@@ -957,7 +957,7 @@ class message_channelDao extends baseModelbo {
             let index =0
             let msgFile = messages.filter(item => item.attachment_efile_id && item.file_type && item.file_type.includes('application'))
             messages.map(msg=>{
-                if(msg.attachment_efile_id && msg.file_type && msg.file_type.includes('application')){
+                if(msg.attachment_efile_id && msg.file_type ){
                     EFile.findById(msg.attachment_efile_id).then(efile => {
                         if (!efile) {
                             msg.invalidFile = true
@@ -965,7 +965,7 @@ class message_channelDao extends baseModelbo {
                             const file_path = appDir + '/app/resources/efiles/' + efile.uri;
                             msg.invalidFile = !fs.existsSync(file_path);
                         }
-                        if(index < msgFile.length -1 ){
+                        if(index <= msgFile.length -1 ){
                             index++
                         }else{
                             resolve({
