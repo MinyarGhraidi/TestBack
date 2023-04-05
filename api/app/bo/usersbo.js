@@ -1,6 +1,5 @@
 const {baseModelbo} = require('./basebo');
 let db = require('../models');
-const {validateEmail} = require("../helpers/helpers");
 const jwt = require('jsonwebtoken');
 const salt = require("../config/config.json")["salt"]
 const bcrypt = require("bcrypt");

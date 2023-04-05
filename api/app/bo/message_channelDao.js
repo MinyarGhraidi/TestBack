@@ -451,7 +451,6 @@ class message_channelDao extends baseModelbo {
         let content = req.body.content;
         let message_channel_id = req.body.message_channel_id;
         let attachment_post_id = req.body.attachment_post_id;
-        console.log('attachment_post_idddd', attachment_post_id)
         let created_by_id = req.body.created_by_id;
         let user_id = req.body.user_id;
         if ((!!!content || content === '') && !!!attachment_post_id) {
@@ -754,7 +753,8 @@ class message_channelDao extends baseModelbo {
                                 END 
                             ELSE 
                             mc.channel_name 
-                    END as conversation_name
+                    END as conversation_name,
+                     r.value as role
                   , m_last.created_by_id as m_last_created_by_id ,  m_last.created_at as last_message_date    FROM message_channels as mc
                       LEFT JOIN message_channel_subscribers as mcs on mcs.active = :active and mcs.message_channel_id = mc.message_channel_id
                       LEFT JOIN message_channel_subscribers as mcs2 on mcs2.active = :active and mcs2.message_channel_id = mc.message_channel_id and mcs.user_id <> mcs2.user_id
@@ -762,12 +762,13 @@ class message_channelDao extends baseModelbo {
                       LEFT JOIN messages as m_last on m_last.message_channel_id = mc.message_channel_id and m_last.active = :active and m_last.message_id = (SELECT m_last_one.message_id FROM messages as m_last_one WHERE m_last_one.message_channel_id = mc.message_channel_id AND m_last_one.active = :active ORDER BY "m_last_one"."created_at" DESC LIMIT 1)
                       LEFT JOIN users as u on u.user_id = mc.created_by_id AND u.active = :active
                       LEFT JOIN users as u__subs on u__subs.user_id = mcs2.user_id AND u__subs.active = :active
+                      LEFT JOIN roles_crms as r on u__subs.role_crm_id = r.id
                       LEFT JOIN message_readers as mr_count on mr_count.message_id = m_last.message_id and mr_count.active = :active AND mr_count.status_read <> :active AND mr_count.user_id = mcs.user_id
                       WHERE 1 = 1
                           AND mc.active = :active
                           AND mcs.user_id = :user_id
                         EXTRAWHERE
-                     GROUP BY mc.message_channel_id, mc.last_excerpt,  m_last.message_id , m_last.created_by_id, CONCAT(u.first_name , ' ' , u.last_name), CONCAT(u__subs.first_name , ' ' , u__subs.last_name)
+                     GROUP BY r.value, mc.message_channel_id, mc.last_excerpt,  m_last.message_id , m_last.created_by_id, CONCAT(u.first_name , ' ' , u.last_name), CONCAT(u__subs.first_name , ' ' , u__subs.last_name)
                     ORDER BY mc.updated_at DESC
                     OFFSET :offset LIMIT :limit`;
             let extra_where = "";
@@ -819,68 +820,87 @@ class message_channelDao extends baseModelbo {
                 }).catch(err => {
                 this.sendResponseError(res, ['Error.getDataChannel'], err);
             })
+        }).catch(err => {
+            this.sendResponseError(res, ['Error.CannotgetIdRoleCrmByValue'], err);
         })
     }
 
-    getContactsChannel(req, res, next) {
-        let {account_id, isSuperAdmin, user_id, channel_key, reformattedUserIds} = req.body
-        if(!!!reformattedUserIds){
-            reformattedUserIds = []
-        }
-        reformattedUserIds.push(user_id)
-        let WhereQuery = {}
-        if (channel_key && channel_key !== '') {
-            WhereQuery = {
-                [Op.or]:
-                    [
-                        {'$user.first_name$': {[Sequelize.Op.iLike]: '%' + channel_key + '%'}}
-                        ,
-                        {'$user.last_name$': {[Sequelize.Op.iLike]: '%' + channel_key + '%'}}
-                    ]
-                ,
-                account_id: {[Op.not]: account_id},
-                user_id: {[Op.notIn]: reformattedUserIds},
-                active: 'Y'
+    getUsersChannel(account_id, isSuperAdmin, user_id, channel_key, reformattedUserIds,isAdmin){
+        return new Promise((resolve,reject)=>{
+            if (!!!reformattedUserIds) {
+                reformattedUserIds = []
             }
-            if(isSuperAdmin){
-                WhereQuery['$roles_crm.description$'] = {[Op.in]: ['admin', 'super admin']}
-            }
-        }else{
-            if (isSuperAdmin) {
+            let isRoot = isSuperAdmin || isAdmin;
+            let roles = isRoot ? isSuperAdmin ? ['admin', 'super admin'] : ['agent','user','sales'] : null
+            reformattedUserIds.push(user_id)
+            let WhereQuery = {}
+            if (channel_key && channel_key !== '') {
                 WhereQuery = {
-                    account_id : {[Op.not]: account_id},
-                    user_id : {[Op.notIn]: reformattedUserIds},
-                    active : 'Y',
-                    '$roles_crm.description$' : {[Op.in]: ['admin','super admin']}
+                    [Op.or]:
+                        [
+                            {'$users.first_name$': {[Sequelize.Op.iLike]: '%' + channel_key + '%'}}
+                            ,
+                            {'$users.last_name$': {[Sequelize.Op.iLike]: '%' + channel_key + '%'}}
+                        ]
+                    ,
+                    account_id: isSuperAdmin ? {[Op.not] : account_id } : account_id,
+                    user_id: {[Op.notIn]: reformattedUserIds},
+                    active: 'Y'
+                }
+                if (isRoot) {
+                    WhereQuery['$roles_crm.description$'] = {[Op.in]: roles}
                 }
             } else {
                 WhereQuery = {
-                    account_id : account_id,
-                    user_id : {[Op.notIn]: reformattedUserIds},
-                    active : 'Y'
+                    account_id: isSuperAdmin ? {[Op.not] : account_id } : account_id,
+                    user_id: {[Op.notIn]: reformattedUserIds},
+                    active: 'Y'
+                }
+                if (isRoot) {
+                    WhereQuery['$roles_crm.description$'] = {[Op.in]: roles}
                 }
             }
-        }
-
-        this.db['accounts'].findAll({
-            include: [{
+            let table = isSuperAdmin ? "accounts" : "users";
+            let includes = isSuperAdmin ? [{
                 model: db.roles_crms,
                 required: false
             },
                 {
                     model: db.users,
                     required: false
-                }
-            ],
-            where: WhereQuery
-        }).then((result) => {
-            res.send({
-                success: true,
-                status: 200,
-                data: result
+                }] : [{
+                model: db.roles_crms,
+                required: false
+            }]
+            this.db[table].findAll({
+                include: includes,
+                where: WhereQuery
+            }).then((result) => {
+                resolve({
+                    success: true,
+                    status: 200,
+                    data: result
+                })
+            }).catch(err => {
+                return reject(err)
             })
+        })
+    }
+    getContactsChannel(req, res, next) {
+        let {account_id, isSuperAdmin, user_id, channel_key, reformattedUserIds,isAdmin} = req.body
+        this.getUsersChannel(account_id, isSuperAdmin, user_id, channel_key, reformattedUserIds,isAdmin).then((users)=>{
+            res.send(users)
         }).catch(err => {
-            return this.sendResponseError(res, ['cannotGetContacts', err], 1, 403)
+            this.sendResponseError(res,['Cannot.getContacts',err],1,403)
+        })
+    }
+
+    getAllUsersChannel(req, res, next) {
+        let {account_id, isSuperAdmin, user_id,isAdmin} = req.body
+        this.getUsersChannel(account_id, isSuperAdmin, user_id,null,[],isAdmin).then((users)=>{
+            return res.send(users)
+        }).catch(err => {
+            this.sendResponseError(res,['Cannot.getAllUsers',err],1,403)
         })
     }
 
