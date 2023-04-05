@@ -570,8 +570,6 @@ class message_channelDao extends baseModelbo {
                             .then(count_total => {
                                 let has_no_readed_msgs = false;
                                 this.AllMessage(messages, has_no_readed_msgs, message_channel_id, user_id, count_total).then(all_message => {
-                                    if (all_message.success === true) {
-
                                         this.checkFile(messages).then(msgFile => {
                                             if (msgFile.success) {
                                                 console.log('msgFile.dataaaaaa', msgFile.data)
@@ -585,12 +583,9 @@ class message_channelDao extends baseModelbo {
                                         }).catch(err => {
                                             this.sendResponseError(res, ['Error_get_channel_message'])
                                         })
-                                    }
                                 }).catch(err => {
                                     this.sendResponseError(res, ['Error_get_channel_message'])
                                 })
-
-
                             }).catch(err => {
                             this.sendResponseError(res, ['Error_get_channel_message'])
                         })
