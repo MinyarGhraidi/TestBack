@@ -574,6 +574,7 @@ class message_channelDao extends baseModelbo {
 
                                         this.checkFile(messages).then(msgFile=>{
                                             if(msgFile.success){
+                                                console.log('msgFile.dataaaaaa', msgFile.data)
                                                 res.send({
                                                     data: msgFile.data,
                                                     success: true,
@@ -975,17 +976,32 @@ class message_channelDao extends baseModelbo {
     checkFile (messages){
         return new Promise((resolve, reject)=>{
             let index =0
-            let msgFile = messages.filter(item => item.attachment_efile_id && item.file_type && item.file_type.includes('application'))
-            messages.map(msg=>{
-                if(msg.attachment_efile_id && msg.file_type ){
-                    EFile.findById(msg.attachment_efile_id).then(efile => {
-                        if (!efile) {
-                            msg.invalidFile = true
-                        } else {
-                            const file_path = appDir + '/app/resources/efiles/' + efile.uri;
-                            msg.invalidFile = !fs.existsSync(file_path);
-                        }
-                        if(index <= msgFile.length -1 ){
+            let msgFile = messages.filter(item => item.attachment_efile_id && item.file_type)
+            if(messages.length !== 0){
+                messages.map(msg=>{
+                    if(msg.attachment_efile_id && msg.file_type ){
+                        EFile.findById(msg.attachment_efile_id).then(efile => {
+                            if (!efile) {
+                                msg['invalidFile'] = true
+                            } else {
+                                const file_path = appDir + '/app/resources/efiles/' + efile.uri;
+                                msg['invalidFile'] = !fs.existsSync(file_path);
+                            }
+                            console.log('indexxx', index, messages.length -1)
+                            if(index <= messages.length -1 ){
+                                index++
+                            }else{
+                                resolve({
+                                    success: true,
+                                    data: messages
+                                })
+                            }
+                        }).catch(err => {
+                            reject(err)
+                        });
+                    }else{
+                        console.log('indexxx1111', index, messages.length -1)
+                        if(index <= messages.length -1 ){
                             index++
                         }else{
                             resolve({
@@ -993,11 +1009,15 @@ class message_channelDao extends baseModelbo {
                                 data: messages
                             })
                         }
-                    }).catch(err => {
-                         reject(err)
-                    });
-                }
-            })
+                    }
+                })
+            }else{
+                resolve({
+                    success: true,
+                    data: []
+                })
+            }
+
         })
     }
 }
