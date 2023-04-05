@@ -305,6 +305,33 @@ class efiles extends baseModelbo {
             })
         }
     }
+
+    GetFile (req, res, next){
+        let _this = this;
+        if (!parseInt(req.params.file_id)) {
+            return res.send({
+                success: false
+            })
+        }
+        EFile.findById(req.params.file_id).then(efile => {
+            if (!efile) {
+                this.return_default_image(res);
+            } else {
+                const file_path = appDir + '/app/resources/efiles/' + efile.uri;
+                if (fs.existsSync(file_path)) {
+                    res.send({
+                        success: true
+                    })
+                } else {
+                    res.send({
+                        success: false
+                    })
+                }
+            }
+        }).catch(err => {
+            _this.sendResponseError(res, ['Error get data file'])
+        });
+    }
 }
 
 module.exports = efiles;

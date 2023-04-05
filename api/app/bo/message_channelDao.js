@@ -1,7 +1,9 @@
 const {baseModelbo} = require('./basebo');
 const db = require('../models');
+const {appDir} = require("../helpers/app");
+const fs = require("fs");
 const appSocket = new (require('../providers/AppSocket'))();
-
+const EFile = db.efiles;
 
 class message_channelDao extends baseModelbo {
     constructor() {
@@ -527,7 +529,7 @@ class message_channelDao extends baseModelbo {
                     
                                 WHERE m.active = :active AND m.message_channel_id = :message_channel_id
                                         
-                                GROUP BY m.message_id,u.first_name,u.username,u.profile_image_id,mr.status_read, ma.attachment_efile_id, ef.file_type, mc.channel_type
+                                GROUP BY m.message_id,u.first_name,u.username,u.profile_image_id,mr.status_read, ma.attachment_efile_id, ef.file_type,ef.original_name, mc.channel_type
                     
                                 ORDER BY m.updated_at ASC`;
                 db.sequelize['crm-app'].query(sql,
@@ -566,11 +568,17 @@ class message_channelDao extends baseModelbo {
                                 let has_no_readed_msgs = false;
                                 this.AllMessage(messages, has_no_readed_msgs, message_channel_id, user_id, count_total).then(all_message => {
                                     if (all_message.success === true) {
-                                        res.send({
-                                            data: messages,
-                                            success: true,
-                                            total: count_total[0].totalItems
+
+                                        this.checkFile(messages).then(msgFile=>{
+                                            if(msgFile.success){
+                                                res.send({
+                                                    data: msgFile.data,
+                                                    success: true,
+                                                    total: count_total[0].totalItems
+                                                })
+                                            }
                                         })
+
                                     }
                                 })
 
@@ -868,6 +876,35 @@ class message_channelDao extends baseModelbo {
             })
         }).catch(err => {
             _this.sendResponseError(res, ['An Error has occurred please try again'])
+        })
+    }
+
+    checkFile (messages){
+        return new Promise((resolve, reject)=>{
+            let index =0
+            let msgFile = messages.filter(item => item.attachment_efile_id && item.file_type && item.file_type.includes('application'))
+            messages.map(msg=>{
+                if(msg.attachment_efile_id && msg.file_type && msg.file_type.includes('application')){
+                    EFile.findById(msg.attachment_efile_id).then(efile => {
+                        if (!efile) {
+                            msg.invalidFile = true
+                        } else {
+                            const file_path = appDir + '/app/resources/efiles/' + efile.uri;
+                            msg.invalidFile = !fs.existsSync(file_path);
+                        }
+                        if(index < msgFile.length -1 ){
+                            index++
+                        }else{
+                            resolve({
+                                success: true,
+                                data: messages
+                            })
+                        }
+                    }).catch(err => {
+                         reject(err)
+                    });
+                }
+            })
         })
     }
 }
