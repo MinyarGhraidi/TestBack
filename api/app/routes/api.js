@@ -171,7 +171,6 @@ let apiRouters = function (passport) {
     router.post("/api/uploadFile", passport.authenticate('jwt', {session: false}), upload.single("file"), efilesController.upload);
     router.get("/api/file/thumb/full/:file_id/", efilesController.getImageByStyle);
     router.get("/api/efile/getListCallFiles/:file_id", passport.authenticate('jwt', {session: false}), efilesController.getListCallFiles);
-    //router.post("/api/efile/getHeaderCallFile", passport.authenticate('jwt', {session: false}), efilesController.getHeaderCallFile);
     router.get("/api/efile/downloadFile/:filename",passport.authenticate('jwt', {session: false}), efilesController.downloadFile);
 
 
