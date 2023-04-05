@@ -570,16 +570,22 @@ class message_channelDao extends baseModelbo {
                             .then(count_total => {
                                 let has_no_readed_msgs = false;
                                 this.AllMessage(messages, has_no_readed_msgs, message_channel_id, user_id, count_total).then(all_message => {
-                                    this.checkFile(messages).then(msgFile => {
-                                        res.send({
-                                            data: msgFile.data,
-                                            success: true,
-                                            total: count_total[0].totalItems
-                                        })
-                                    }).catch(err => {
-                                        this.sendResponseError(res, ['Error_get_channel_message'])
-                                    })
+                                    if (all_message.success === true) {
 
+                                        this.checkFile(messages).then(msgFile => {
+                                            if (msgFile.success) {
+                                                console.log('msgFile.dataaaaaa', msgFile.data)
+                                                res.send({
+                                                    data: msgFile.data,
+                                                    success: true,
+                                                    total: count_total[0].totalItems
+                                                })
+                                            }
+
+                                        }).catch(err => {
+                                            this.sendResponseError(res, ['Error_get_channel_message'])
+                                        })
+                                    }
                                 }).catch(err => {
                                     this.sendResponseError(res, ['Error_get_channel_message'])
                                 })
@@ -976,6 +982,7 @@ class message_channelDao extends baseModelbo {
     }
 
     checkFile (messages){
+
         return new Promise((resolve, reject)=> {
             let index = 0
             if (messages && messages.length) {
@@ -991,7 +998,6 @@ class message_channelDao extends baseModelbo {
                             if (index < messages.length - 1) {
                                 index++
                             } else {
-                                console.log('resolve')
                                 resolve({
                                     success: true,
                                     data: messages
