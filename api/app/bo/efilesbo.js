@@ -133,54 +133,6 @@ class efiles extends baseModelbo {
 
     }
 
-    getHeaderCallFile(req, res, next) {
-        let {file_id} = req.body;
-        if (file_id) {
-            EFile.findById(file_id).then(efile => {
-                if (efile) {
-                    let path = appDir + '/app/resources/efiles' + efile.uri;
-                    if (efile.file_extension === 'csv' || efile.file_extension === 'xls' || efile.file_extension === 'xlsx') {
-                        if (fs.existsSync(path)) {
-                            const workbookHeaders = xlsx.readFile(path, {sheetRows: 1});
-                            const headers = Object.values(Object.values(workbookHeaders.Sheets)[0]).map(el => el.v);
-                            res.send({
-                                status: 200,
-                                success: true,
-                                messages: "Success",
-                                data: headers
-                            })
-                        } else {
-                            res.send({
-                                status: 200,
-                                success: true,
-                                messages: ({
-                                    internal_message: 'file not exist'
-                                })
-                            })
-                        }
-                    } else {
-                        res.send({
-                            status: 200,
-                            success: true,
-                            messages: ({
-                                internal_message: 'file not exist'
-                            })
-                        })
-                    }
-                } else {
-                    res.send({
-                        status: 200,
-                        success: true,
-                        messages: ({
-                            internal_message: 'file not exist'
-                        })
-                    })
-                }
-            });
-        }
-
-    }
-
     allEqual = (arr) => arr.every(val => !!!val);
 
     checkOneFile(efile_id, account_id) {

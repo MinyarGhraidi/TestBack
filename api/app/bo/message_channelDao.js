@@ -4,6 +4,10 @@ const {appDir} = require("../helpers/app");
 const fs = require("fs");
 const appSocket = new (require('../providers/AppSocket'))();
 const EFile = db.efiles;
+const Roles_crm = require("./roles_crmbo");
+const Op = require("sequelize/lib/operators");
+const {Sequelize} = require("sequelize");
+let _roles_crmbo = new Roles_crm();
 
 class message_channelDao extends baseModelbo {
     constructor() {
@@ -615,6 +619,8 @@ class message_channelDao extends baseModelbo {
                                     total: count_total[0].totalItems
                                 })
                             }
+                        }).catch(err => {
+                            reject(err)
                         })
                     }
 
@@ -648,7 +654,7 @@ class message_channelDao extends baseModelbo {
                     }
                 })
                 .then(subscribers => {
-                    if (subscribers && subscribers.length !==0) {
+                    if (subscribers && subscribers.length !== 0) {
                         resolve({
                             data: subscribers,
                             status: true
@@ -670,7 +676,6 @@ class message_channelDao extends baseModelbo {
     channel_name(subscribers, channel, user_id) {
         return new Promise((resolve, reject) => {
             let new_channel_name = '';
-            let i = 0;
             subscribers.data.forEach(subscriber => {
                 if (channel.channel_type === 'G') {
                     new_channel_name = subscriber.user_familyname + ' ' + subscriber.user_name;
@@ -708,7 +713,7 @@ class message_channelDao extends baseModelbo {
                             reject(err);
                         })
                     } else {
-                        channels.splice(idxC,1)
+                        channels.splice(idxC, 1)
                         if (idx === channels.length - 1) {
                             resolve({
                                 data: channels
@@ -725,6 +730,7 @@ class message_channelDao extends baseModelbo {
     }
 
     getMyChannel(req, res, next) {
+        let isSuperAdmin = req.body.isSuperAdmin
         let user_id = req.body.user_id;
         let channel_name = req.body.channel_key
         const defaultParams = {
@@ -734,8 +740,8 @@ class message_channelDao extends baseModelbo {
             sortBy: this.primaryKey,
             sortDir: 'ASC'
         };
-
-        let sql = `SELECT distinct(mc.*), count(m.message_id) as total_messages, count(mr_count.message_id) as total_not_read, m_last.message_id as last_message_id, m_last.content as last_message_content
+        _roles_crmbo.getIdRoleCrmByValue(['superadmin', 'admin']).then(ids_role_crms => {
+            let sql = `SELECT distinct(mc.*), count(m.message_id) as total_messages, count(mr_count.message_id) as total_not_read, m_last.message_id as last_message_id, m_last.content as last_message_content
                     ,case 
                         WHEN mc.channel_type = 'S' 
                             THEN 
@@ -764,50 +770,117 @@ class message_channelDao extends baseModelbo {
                      GROUP BY mc.message_channel_id, mc.last_excerpt,  m_last.message_id , m_last.created_by_id, CONCAT(u.first_name , ' ' , u.last_name), CONCAT(u__subs.first_name , ' ' , u__subs.last_name)
                     ORDER BY mc.updated_at DESC
                     OFFSET :offset LIMIT :limit`;
-        let extra_where = "";
-        if (channel_name && channel_name !== '') {
-            extra_where = extra_where + " AND (case  WHEN mc.channel_type = 'S'  THEN  case WHEN mc.created_by_id = :user_id THEN LOWER(CONCAT(u__subs.first_name , ' ' , u__subs.last_name)) ELSE LOWER(CONCAT(u.first_name , ' ' , u.last_name)) END ELSE LOWER(mc.channel_name) END  like :channel_name )";
-        }
-        sql = sql.replace(/EXTRAWHERE/g, extra_where);
+            let extra_where = "";
+            if (channel_name && channel_name !== '') {
+                extra_where = extra_where + " AND (case  WHEN mc.channel_type = 'S'  THEN  case WHEN mc.created_by_id = :user_id THEN LOWER(CONCAT(u__subs.first_name , ' ' , u__subs.last_name)) ELSE LOWER(CONCAT(u.first_name , ' ' , u.last_name)) END ELSE LOWER(mc.channel_name) END  like :channel_name )";
+            }
+            if (isSuperAdmin) {
+                extra_where = extra_where + " AND u.role_crm_id in (:role_crm_ids) AND u__subs.role_crm_id in (:role_crm_ids)";
+            }
+            sql = sql.replace(/EXTRAWHERE/g, extra_where);
 
-        db.sequelize['crm-app'].query(sql,
-            {
-                type: db.sequelize['crm-app'].QueryTypes.SELECT,
-                replacements: {
-                    user_id: user_id,
-                    offset: defaultParams.offset,
-                    limit: defaultParams.limit,
-                    active: 'Y',
-                    channel_name: channel_name ? '%' + channel_name.concat('%') : null
-                }
+            db.sequelize['crm-app'].query(sql,
+                {
+                    type: db.sequelize['crm-app'].QueryTypes.SELECT,
+                    replacements: {
+                        user_id: user_id,
+                        offset: defaultParams.offset,
+                        limit: defaultParams.limit,
+                        active: 'Y',
+                        channel_name: channel_name ? '%' + channel_name.concat('%') : null,
+                        role_crm_ids: isSuperAdmin ? ids_role_crms : null
+                    }
+                })
+                .then(channels => {
+                    if (channels && channels.length !== 0) {
+                        this.updateChannel(channels, user_id).then(result => {
+                            if (result) {
+                                res.send({
+                                    success: true,
+                                    status: 200,
+                                    data: result.data
+                                })
+                            } else {
+                                res.send({
+                                    success: true,
+                                    status: 200,
+                                    data: []
+                                })
+                            }
+
+                        }).catch(err => {
+                            this.sendResponseError(res, ['Error.getDataChannel'], err);
+                        })
+                    } else {
+                        res.send({
+                            data: []
+                        })
+                    }
+                }).catch(err => {
+                this.sendResponseError(res, ['Error.getDataChannel'], err);
             })
-            .then(channels => {
-                if (channels && channels.length !== 0) {
-                    this.updateChannel(channels, user_id).then(result => {
-                        if (result) {
-                            res.send({
-                                success: true,
-                                status: 200,
-                                data: result.data
-                            })
-                        } else {
-                            res.send({
-                                success: true,
-                                status: 200,
-                                data: []
-                            })
-                        }
+        })
+    }
 
-                    }).catch(err => {
-                        this.sendResponseError(res, ['Error.getDataChannel'], err);
-                    })
-                } else {
-                    res.send({
-                        data: []
-                    })
+    getContactsChannel(req, res, next) {
+        let {account_id, isSuperAdmin, user_id, channel_key, reformattedUserIds} = req.body
+        if(!!!reformattedUserIds){
+            reformattedUserIds = []
+        }
+        reformattedUserIds.push(user_id)
+        let WhereQuery = {}
+        if (channel_key && channel_key !== '') {
+            WhereQuery = {
+                [Op.or]:
+                    [
+                        {'$user.first_name$': {[Sequelize.Op.iLike]: '%' + channel_key + '%'}}
+                        ,
+                        {'$user.last_name$': {[Sequelize.Op.iLike]: '%' + channel_key + '%'}}
+                    ]
+                ,
+                account_id: {[Op.not]: account_id},
+                user_id: {[Op.notIn]: reformattedUserIds},
+                active: 'Y'
+            }
+            if(isSuperAdmin){
+                WhereQuery['$roles_crm.description$'] = {[Op.in]: ['admin', 'super admin']}
+            }
+        }else{
+            if (isSuperAdmin) {
+                WhereQuery = {
+                    account_id : {[Op.not]: account_id},
+                    user_id : {[Op.notIn]: reformattedUserIds},
+                    active : 'Y',
+                    '$roles_crm.description$' : {[Op.in]: ['admin','super admin']}
                 }
-            }).catch(err => {
-            this.sendResponseError(res, ['Error.getDataChannel'], err);
+            } else {
+                WhereQuery = {
+                    account_id : account_id,
+                    user_id : {[Op.notIn]: reformattedUserIds},
+                    active : 'Y'
+                }
+            }
+        }
+
+        this.db['accounts'].findAll({
+            include: [{
+                model: db.roles_crms,
+                required: false
+            },
+                {
+                    model: db.users,
+                    required: false
+                }
+            ],
+            where: WhereQuery
+        }).then((result) => {
+            res.send({
+                success: true,
+                status: 200,
+                data: result
+            })
+        }).catch(err => {
+            return this.sendResponseError(res, ['cannotGetContacts', err], 1, 403)
         })
     }
 

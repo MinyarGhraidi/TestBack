@@ -249,6 +249,7 @@ class accounts extends baseModelbo {
             delete req.body.values.nbr_agents_account;
             delete req.body.values.Campaign_name
         }
+        const isNotSuperAdmin = role_crm !== 'superadmin';
         let newAccount = req.body.values;
 
         let data_account = {
@@ -267,20 +268,20 @@ class accounts extends baseModelbo {
             white_label: null,
             log: null,
             white_label_app_name: null,
-            role_crm_id: newAccount.role_crm_id[0],
+            role_crm_id: newAccount.role_crm_id,
             lang: newAccount.lang,
-            code: newAccount.code,
-            domain_id: role_crm !== 'superadmin' ? newAccount.domain.value : null,
-            web_domain: newAccount.web_domain,
-            nb_agents: newAccount.nb_agents,
+            domain_id: isNotSuperAdmin ? newAccount.domain.value : null,
+            web_domain: isNotSuperAdmin ? newAccount.web_domain : null,
+            nb_agents: isNotSuperAdmin ? newAccount.nb_agents : null,
         }
         if (!!!newAccount
             || !!!newAccount.user
             || !!!newAccount.role_crm_id) {
             return _this.sendResponseError(res, 'Error.InvalidData');
         }
-        let sip_device = role_crm !== 'superadmin' ? JSON.parse(JSON.stringify(newAccount.user.sip_device)) : null;
-        let domain = role_crm !== 'superadmin' ? JSON.parse(JSON.stringify(newAccount.domain)) : {};
+        let sip_device = isNotSuperAdmin ? JSON.parse(JSON.stringify(newAccount.user.sip_device)) : null;
+        let domain = isNotSuperAdmin ? JSON.parse(JSON.stringify(newAccount.domain)) : {};
+
         let {password, options, status} = sip_device ? sip_device : {};
         let username = sip_device ? sip_device.username.username : {};
         if (newAccount.account_id) {
@@ -316,23 +317,25 @@ class accounts extends baseModelbo {
                                     }
                                 }).then((user) => {
                                     let userData = user.dataValues;
-                                    let {username} = newAccount.role_crm_id[0] !== 1 ? userData.sip_device : {};
-                                    this.EditSubscriberAgent(username, newAccount, userData, newAccount.role_crm_id[0]).then(result_sub => {
+                                    let {username} = isNotSuperAdmin ? userData.sip_device : {};
+                                    this.EditSubscriberAgent(username, newAccount, userData, isNotSuperAdmin).then(result_sub => {
                                         let update_account = newAccount;
-                                        let resultAgent = newAccount.role_crm_id[0] !== 1 ? result_sub.data.data.agent : {};
+                                        let resultAgent = isNotSuperAdmin ? result_sub.data.data.agent : {};
                                         update_account.updated_at = new Date();
-                                        update_account.role_crm_id = newAccount.role_crm_id[0];
-                                        update_account.domain_id = newAccount.role_crm_id[0] !== 1 ? domain.value : null
+                                        update_account.role_crm_id = newAccount.role_crm_id;
+                                        update_account.domain_id = isNotSuperAdmin ? domain.value : null
                                         this.db['accounts'].update(update_account, {
                                             where: {
                                                 account_id: newAccount.account_id
                                             },
                                             returning: true,
                                             plain: true
-                                        }).then((account) => {
+                                        }).then(() => {
                                             let update_user = newAccount.user;
-                                            update_user.sip_device.uuid = role_crm !== 'superadmin' ? resultAgent.uuid : '';
-                                            update_user.sip_device.updated_at = role_crm !== 'superadmin' ? resultAgent.updated_at : null;
+                                            if(isNotSuperAdmin){
+                                                update_user.sip_device.uuid = isNotSuperAdmin ? resultAgent.uuid : '';
+                                                update_user.sip_device.updated_at = isNotSuperAdmin ? resultAgent.updated_at : null;
+                                            }
                                             update_user.account_id = newAccount.account_id;
                                             update_user.username = username
                                             _usersbo.saveUserFunction(update_user)
@@ -343,32 +346,31 @@ class accounts extends baseModelbo {
                                                         success: true,
                                                         data: user
                                                     })
-                                                }).catch((err) => {
+                                                }).catch(() => {
                                                 return _this.sendResponseError(res, ['Error.CannotUpdateUser'], 1, 403);
                                             })
-                                        }).catch((err) => {
+                                        }).catch(() => {
                                             return _this.sendResponseError(res, ['Error.CannotUpdateAccount'], 1, 403);
                                         })
                                     })
-                                }).catch((err) => {
+                                }).catch(() => {
                                     return _this.sendResponseError(res, ['Error.CannotFindUser'], 1, 403);
                                 })
                             } else {
                                 return _this.sendResponseError(res, ['Error.CannotAffectDomain'], 1, 403);
                             }
-                        }).catch((err) => {
+                        }).catch(() => {
                             return _this.sendResponseError(res, ['Error.CannotAffectDomain'], 1, 403);
                         })
                     }
                 }).catch(() => {
                     return _this.sendResponseError(res, ['Error.CannotGetWebDomain'], 1, 403);
                 })
-
-
-            }).catch((err) => {
+            }).catch(() => {
                 return _this.sendResponseError(res, ['Error.CannotFindAccount'], 1, 403);
             })
-        } else {
+        }
+        else {
             this.db['accounts'].findOne({
                 where: {
                     web_domain: newAccount.web_domain,
@@ -390,79 +392,74 @@ class accounts extends baseModelbo {
                                 password,
                                 domain: domain.label
                             }
-                            _roles_crmbo.getIdRoleCrmByValue('superadmin').then(role_id => {
-                                this.AddSubscriberAgent(data_subscriber, newAccount, newAccount.role_crm_id[0] === role_id, options, status).then(result_sub => {
-                                    if (result_sub.success) {
-                                        let modalObj = this.db['accounts'].build(data_account);
-                                        modalObj.save().then(new_account => {
-                                            if (new_account) {
-                                                data_account.user = newAccount.user;
-                                                data_account.user.sip_device.uuid = newAccount.role_crm_id[0] !== role_id ? result_sub.data.uuid : null;
-                                                data_account.user.sip_device.created_at = newAccount.role_crm_id[0] !== role_id ? result_sub.data.created_at : null;
-                                                data_account.user.sip_device.updated_at = newAccount.role_crm_id[0] !== role_id ? result_sub.data.updated_at : null;
-                                                data_account.user.account_id = new_account.dataValues.account_id;
+                            this.AddSubscriberAgent(data_subscriber, newAccount, isNotSuperAdmin, options, status).then(result_sub => {
+                                if (result_sub.success) {
+                                    let modalObj = this.db['accounts'].build(data_account);
+                                    modalObj.save().then(new_account => {
+                                        if (new_account) {
+                                            data_account.user = newAccount.user;
+                                            data_account.user.account_id = new_account.dataValues.account_id;
+                                            if(isNotSuperAdmin){
                                                 data_account.user.sip_device.username = username;
+                                            }
 
-                                                _usersbo.saveUserFunction(data_account.user).then(new_user => {
-                                                    this.db['accounts'].update({
-                                                        user_id: new_user.user_id
-                                                    }, {
-                                                        where: {
-                                                            account_id: new_account.dataValues.account_id
-                                                        },
-                                                        returning: true,
-                                                        plain: true
-                                                    }).then(update_account => {
-                                                        if (isChecked) {
-                                                            this.createCamp_Agent(Default_queue_options, Default_dialer_options, bulkNum, agent_options, camp_name, new_account, domain).then(result_camp_agent => {
-                                                                if (result_camp_agent.success) {
-                                                                    res.send({
-                                                                        status: 200,
-                                                                        message: 'success',
-                                                                        success: true,
-                                                                        data: new_user
-                                                                    })
-                                                                } else {
-                                                                    res.send({
-                                                                        status: 200,
-                                                                        message: result_camp_agent.message,
-                                                                        success: false,
-                                                                    })
-                                                                }
-                                                            })
-                                                        } else {
-                                                            res.send({
-                                                                status: 200,
-                                                                message: 'success',
-                                                                success: true,
-                                                                data: new_user
-                                                            })
-                                                        }
+                                            _usersbo.saveUserFunction(data_account.user).then(new_user => {
+                                                this.db['accounts'].update({
+                                                    user_id: new_user.user_id
+                                                }, {
+                                                    where: {
+                                                        account_id: new_account.dataValues.account_id
+                                                    },
+                                                    returning: true,
+                                                    plain: true
+                                                }).then(update_account => {
+                                                    if (isChecked) {
+                                                        this.createCamp_Agent(Default_queue_options, Default_dialer_options, bulkNum, agent_options, camp_name, new_account, domain).then(result_camp_agent => {
+                                                            if (result_camp_agent.success) {
+                                                                res.send({
+                                                                    status: 200,
+                                                                    message: 'success',
+                                                                    success: true,
+                                                                    data: new_user
+                                                                })
+                                                            } else {
+                                                                res.send({
+                                                                    status: 200,
+                                                                    message: result_camp_agent.message,
+                                                                    success: false,
+                                                                })
+                                                            }
+                                                        })
+                                                    } else {
+                                                        res.send({
+                                                            status: 200,
+                                                            message: 'success',
+                                                            success: true,
+                                                            data: new_user
+                                                        })
+                                                    }
 
-                                                    }).catch(err => {
-                                                        return _this.sendResponseError(res, ['Error.AnErrorHasOccurredUser', err], 1, 403);
-                                                    })
                                                 }).catch(err => {
                                                     return _this.sendResponseError(res, ['Error.AnErrorHasOccurredUser', err], 1, 403);
                                                 })
-                                            } else {
-                                                return _this.sendResponseError(res, ['Error.AnErrorHasOccurredSaveAccount'], 1, 403);
-                                            }
-                                        }).catch(err => {
-                                            this.deleteSubScriberOrAgentByUUID(result_sub.uuid_sub, result_sub.uuid_agent).then(() => {
-                                                return _this.sendResponseError(res, ['Error.AnErrorHasOccurredUser', err], 3, 403);
                                             }).catch(err => {
-                                                return _this.sendResponseError(res, ['Error.AnErrorHasOccurredUser', err], 3, 403);
+                                                return _this.sendResponseError(res, ['Error.AnErrorHasOccurredUser', err], 1, 403);
                                             })
+                                        } else {
+                                            return _this.sendResponseError(res, ['Error.AnErrorHasOccurredSaveAccount'], 1, 403);
+                                        }
+                                    }).catch(err => {
+                                        this.deleteSubScriberOrAgentByUUID(result_sub.uuid_sub, result_sub.uuid_agent).then(() => {
+                                            return _this.sendResponseError(res, ['Error.AnErrorHasOccurredUser', err], 3, 403);
+                                        }).catch(err => {
+                                            return _this.sendResponseError(res, ['Error.AnErrorHasOccurredUser', err], 3, 403);
                                         })
-                                    }
+                                    })
+                                } else {
+                                    return _this.sendResponseError(res, ['Error.AddToTelco', result_sub.message], 1, 403);
+                                }
 
-                                })
-                            }).catch(err => {
-                                return _this.sendResponseError(res, ['Error.CannotGetSuperAdminRoleCRM'], 1, 403);
                             })
-
-
                         } else {
                             res.send({
                                 success: false,
@@ -661,10 +658,15 @@ class accounts extends baseModelbo {
 
     getAllUserIdsByAccountId(account_id) {
         return new Promise((resolve, reject) => {
-            this.db['users'].findAll({where: {account_id: account_id, active: 'Y'}}).then((result) => {
+            this.db['users'].findAll({
+                include: [{
+                    model: db.roles_crms,
+                }], where: {account_id: account_id, active: 'Y'}
+            }).then((result) => {
+
                 let usersIds = [];
                 result.map((user) => {
-                    usersIds.push(user.dataValues.user_id);
+                    usersIds.push({user_id: user.dataValues.user_id, role_crm_value: user.dataValues.roles_crm.value});
                 })
                 resolve(usersIds);
             }).catch((err) => {
@@ -677,8 +679,8 @@ class accounts extends baseModelbo {
         let index = 0;
         return new Promise((resolve, reject) => {
             if (users && users.length !== 0) {
-                users.forEach(user_id => {
-                    _agentsbo.deleteAgentWithSub(user_id)
+                users.forEach(user => {
+                    _agentsbo.deleteAgentWithSub(user.user_id, user.role_crm_value !== 'superadmin')
                         .then(() => {
                             if (index < users.length - 1) {
                                 index++;
@@ -1079,9 +1081,9 @@ class accounts extends baseModelbo {
         })
     }
 
-    AddSubscriberAgent(data_subscriber, newAccount, is_superAdmin, options, status) {
+    AddSubscriberAgent(data_subscriber, newAccount, isNotSuperAdmin, options, status) {
         return new Promise((resolve, reject) => {
-            if (!is_superAdmin) {
+            if (isNotSuperAdmin) {
                 axios
                     .post(`${base_url_cc_kam}api/v1/subscribers`,
                         data_subscriber,
@@ -1089,7 +1091,7 @@ class accounts extends baseModelbo {
                     .then((resp) => {
                         let result = resp.data.result;
                         let data_agent = {
-                            name: newAccount.first_name + " " + data_subscriber.last_name,
+                            name: newAccount.first_name + " " + newAccount.last_name,
                             domain_uuid: result.domain_uuid,
                             subscriber_uuid: result.uuid,
                             options,
@@ -1134,9 +1136,9 @@ class accounts extends baseModelbo {
         })
     }
 
-    EditSubscriberAgent(username, newAccount, userData, role_crm) {
+    EditSubscriberAgent(username, newAccount, userData, isNotSuperAdmin) {
         return new Promise((resolve, reject) => {
-            if (role_crm !== 1) {
+            if (isNotSuperAdmin) {
                 axios
                     .get(`${base_url_cc_kam}api/v1/subscribers/username/${username}`,
                         call_center_authorization)

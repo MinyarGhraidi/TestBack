@@ -1,20 +1,17 @@
 const {baseModelbo} = require('./basebo');
-let sequelize = require('sequelize');
-let db = require('../models');
 const {default: axios} = require("axios");
-const call_center_token = require(__dirname + '/../config/config.json')["call_center_token"];
-const dialer_token = require(__dirname + '/../config/config.json')["dialer_token"];
-const base_url_cc_kam = require(__dirname + '/../config/config.json')["base_url_cc_kam"];
+const env = process.env.NODE_ENV || 'development';
+const call_center_token = require(__dirname + '/../config/config.json')[env]["call_center_token"];
+console.log('call_center_token',call_center_token)
+const dialer_token = require(__dirname + '/../config/config.json')[env]["dialer_token"];
+const base_url_cc_kam = require(__dirname + '/../config/config.json')[env]["base_url_cc_kam"];
 const call_center_authorization = {
     headers: {Authorization: call_center_token}
 };
-const base_url_dailer = require(__dirname + '/../config/config.json')["base_url_dailer"];
+const base_url_dailer = require(__dirname + '/../config/config.json')[env]["base_url_dailer"];
 const dialer_authorization = {
     headers: {Authorization: dialer_token}
 }
-;const { Op } = require("sequelize");
-
-
 class truncks extends baseModelbo {
     constructor() {
         super('truncks', 'trunck_id');

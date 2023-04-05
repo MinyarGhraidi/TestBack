@@ -1,0 +1,50 @@
+
+GET https://92.222.147.159:1443/api/v1/domains
+Content-Type: application/json
+Authorization: Bearer BomjNx8kFfZTdCFx4kH3hGECO78yS0C0KS7pgO0BUe8COxcved
+
+###
+#GET DOMAIN BY ID
+GET https://92.222.147.159:1443/api/v1/domains/97c1bd03-a4fc-4af8-b778-1bf6828caf35
+Content-Type: application/json
+Authorization: Bearer BomjNx8kFfZTdCFx4kH3hGECO78yS0C0KS7pgO0BUe8COxcved
+###
+
+###
+#GET DOMAIN BY Name
+GET https://92.222.147.159:1443/api/v1/domains/92.222.147.159
+Content-Type: application/json
+Authorization: Bearer BomjNx8kFfZTdCFx4kH3hGECO78yS0C0KS7pgO0BUe8COxcved
+
+###
+
+###
+#CREATE DOMAIN
+POST https://92.222.147.159:1443/api/v1/domains
+Content-Type: application/json
+Authorization: Bearer BomjNx8kFfZTdCFx4kH3hGECO78yS0C0KS7pgO0BUe8COxcved
+
+{
+    "server_uuid":"98d9429a-1939-47f5-9c1e-39643a623a90",
+    "domain_name":"sip-preaconis.skycrm360.io",
+    "description":""
+}
+
+###
+#UPDATE DOMAIN
+PUT https://92.222.147.159:1443/api/v1/domains/98d94348-abcb-402a-8040-e3ebf1f681fd
+Content-Type: application/json
+Authorization: Bearer BomjNx8kFfZTdCFx4kH3hGECO78yS0C0KS7pgO0BUe8COxcved
+
+{
+    "server_uuid":"98d9429a-1939-47f5-9c1e-39643a623a90",
+    "domain_name":"92.222.147.159",
+    "description":"dummy",
+    "enabled": false
+}
+
+###
+#DELETE DOMAIN BY ID
+DELETE https://92.222.147.159:1443/api/v1/domains/98d94348-abcb-402a-8040-e3ebf1f681fd
+Content-Type: application/json
+Authorization: Bearer BomjNx8kFfZTdCFx4kH3hGECO78yS0C0KS7pgO0BUe8COxcved

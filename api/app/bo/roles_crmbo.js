@@ -7,13 +7,22 @@ class Roles_crm extends baseModelbo {
         this.primaryKey = 'id';
     }
 
-    getIdRoleCrmByValue(value){
+    getIdRoleCrmByValue(array_values){
         return new Promise((resolve,reject)=>{
-            this.db['roles_crms'].findOne({
-                where: {value: value, active: 'Y'}
-            }).then(role => {
-                resolve(role.id)
-            }).catch(err => reject(err))
+            let idx = 0;
+            let resultValues = []
+            array_values.forEach(value => {
+                this.db['roles_crms'].findOne({
+                    where: {value: value, active: 'Y'}
+                }).then(role => {
+                    resultValues.push(role.id)
+                    if (idx < array_values.length - 1) {
+                        idx++;
+                    } else {
+                        resolve(resultValues)
+                    }
+                }).catch(err => reject(err))
+            })
         })
     }
 }

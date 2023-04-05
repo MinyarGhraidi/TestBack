@@ -171,8 +171,9 @@ let apiRouters = function (passport) {
     router.post("/api/uploadFile", passport.authenticate('jwt', {session: false}), upload.single("file"), efilesController.upload);
     router.get("/api/file/thumb/full/:file_id/", efilesController.getImageByStyle);
     router.get("/api/efile/getListCallFiles/:file_id", passport.authenticate('jwt', {session: false}), efilesController.getListCallFiles);
-    router.post("/api/efile/getHeaderCallFile", passport.authenticate('jwt', {session: false}), efilesController.getHeaderCallFile);
+    //router.post("/api/efile/getHeaderCallFile", passport.authenticate('jwt', {session: false}), efilesController.getHeaderCallFile);
     router.get("/api/efile/downloadFile/:filename",passport.authenticate('jwt', {session: false}), efilesController.downloadFile);
+
 
     //listcallfiles routers
     router.post("/api/listcallfile/find/:params?", passport.authenticate('jwt', {session: false}), listcallfilesController.find);
@@ -324,6 +325,7 @@ let apiRouters = function (passport) {
     router.post('/api/message_channel/createNewChannel', passport.authenticate('jwt', {session: false}), MessageChannelController.createNewChannel);
     router.post('/api/message_channel/sendNewMessage', passport.authenticate('jwt', {session: false}), MessageChannelController.sendNewMessage);
     router.post('/api/message_channel/getMyChannel', passport.authenticate('jwt', {session: false}), MessageChannelController.getMyChannel);
+    router.post('/api/message_channel/getContactsChannel', passport.authenticate('jwt', {session: false}), MessageChannelController.getContactsChannel);
     router.post('/api/message_channel/getMessageChannel', passport.authenticate('jwt', {session: false}), MessageChannelController.getChannelMessages);
     router.post('/api/message_channel/updateMessageChannelSubscribes', passport.authenticate('jwt', {session: false}), MessageChannelController.updateMessageChannelSubscribes);
     router.post('/api/message_channel/addSubscribersToChannel', passport.authenticate('jwt', {session: false}), MessageChannelController.addSubscribersToChannel);
