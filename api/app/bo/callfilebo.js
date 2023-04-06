@@ -5,7 +5,6 @@ const {reject} = require("bcrypt/promises");
 const efilesBo = require('./efilesbo');
 const moment = require("moment");
 const _efilebo = new efilesBo;
-const request = require('request');
 const env = process.env.NODE_ENV || 'development';
 const call_center_token = require(__dirname + '/../config/config.json')[env]["call_center_token"];
 const base_url_cc_kam = require(__dirname + '/../config/config.json')[env]["base_url_cc_kam"];

@@ -58,6 +58,7 @@ DomainController = require('../controllers/domain.controller');
 AclController = require('../controllers/acl.controller');
 AclNodesController = require('../controllers/acl_nodes.controller');
 ServersController = require('../controllers/server.controller');
+EslServersController = require('../controllers/esl_server.controller');
 CallhistoryController = require('../controllers/callhistory.controller');
 NotificationsController = require('../controllers/notifications.controller');
 ReminderController = require('../controllers/reminder.controller');
@@ -384,6 +385,13 @@ let apiRouters = function (passport) {
     router.get('/api/server/findById/:entity_id', passport.authenticate('jwt', {session: false}), ServersController.findById);
     router.put('/api/server/update',passport.authenticate('jwt', {session: false}), ServersController.editServer);
     router.delete('/api/server/delete/:server_id',passport.authenticate('jwt', {session: false}), ServersController.deleteServer);
+
+//-----------------------> ESL SERVERS API  addEslServer
+    router.post('/api/esl_server/save',passport.authenticate('jwt', {session: false}), EslServersController.addEslServer);
+    router.post('/api/esl_server/find',passport.authenticate('jwt', {session: false}), EslServersController.find);
+    router.get('/api/esl_server/findById/:entity_id', passport.authenticate('jwt', {session: false}), EslServersController.findById);
+    router.put('/api/esl_server/update',passport.authenticate('jwt', {session: false}), EslServersController.editEslServer);
+    router.delete('/api/esl_server/delete/:esl_server_id',passport.authenticate('jwt', {session: false}), EslServersController.deleteEslServer);
 
     router.put('/api/callhistory/update',passport.authenticate('jwt', {session: false}),CallhistoryController.update);
     router.post('/api/callhistory/updateCallhistory',passport.authenticate('jwt', {session: false}),CallhistoryController.updateCall);
