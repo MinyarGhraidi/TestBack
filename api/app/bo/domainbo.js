@@ -30,6 +30,7 @@ class domains extends baseModelbo {
             domain.domain_name = formData.domain_name;
             domain.description = formData.description;
             domain.params = params;
+            domain.server_id = formData.server_id
             domain.save().then(domainSaved => {
                 res.send({
                     success: true,

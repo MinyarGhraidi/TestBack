@@ -42,6 +42,9 @@ module.exports = {
       sip_device: {
         type: Sequelize.JSONB
       },
+      server_id:{
+        type: Sequelize.INTEGER
+      },
     })
 
   },

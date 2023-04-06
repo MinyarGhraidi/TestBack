@@ -1065,7 +1065,7 @@ class callfiles extends baseModelbo {
         let supSipUri = req.body.sip_uri
         let domain = req.body.domain
         let server_uuid = req.body.server_uuid
-        if(!!!agent_id || !!!supSipUri || !!!domain){
+        if(!!!agent_id || !!!supSipUri || !!!domain || !!!server_uuid){
             return this.sendResponseError(res, ['Error.dataAgentNUll'], 1, 403);
         }
         this.db['users'].findOne({
@@ -1075,7 +1075,9 @@ class callfiles extends baseModelbo {
                 status: 'Y'
             }
         }).then(agent=>{
-            if (agent && agent.channel_uuid){
+            if (!!!agent || !!!agent.channel_uuid){
+                return this.sendResponseError(res, ['Error.dataAgentNUll'], 1, 403);
+            }else{
                 let obj={
                     "channelUuid": agent.channel_uuid,
                     "supervisorSipUri": supSipUri+"@"+domain,
