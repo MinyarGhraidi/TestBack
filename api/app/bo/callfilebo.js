@@ -1065,6 +1065,7 @@ class callfiles extends baseModelbo {
         let agent_id = req.body.agent_id;
         let supSipUri = req.body.sip_uri
         let domain = req.body.domain
+        let server_uuid = req.body.server_uuid
         if(!!!agent_id || !!!supSipUri || !!!domain){
             return this.sendResponseError(res, ['Error.dataAgentNUll'], 1, 403);
         }
@@ -1079,7 +1080,8 @@ class callfiles extends baseModelbo {
                 let obj={
                     "channelUuid": agent.channel_uuid,
                     "supervisorSipUri": supSipUri+"@"+domain,
-                    "callerIdNumber": "33980762256"
+                    "callerIdNumber": "33980762256",
+                    "server_uuid": server_uuid
                 }
                 axios.post(`${base_url_cc_kam}api/v1/commands/eavesdrop`,obj,call_center_authorization).then(result=>{
                     if(result.data && result.data.status === 'success'){
