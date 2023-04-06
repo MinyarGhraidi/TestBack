@@ -60,6 +60,11 @@ module.exports =(sequelize, Sequelize) =>{
         'port',
         'description'
     ];
+    servers.associate = function (models) {
+        servers.hasMany(models.domains, {
+            foreignKey: 'esl_server_id'
+        })
+    }
 
     return servers;
 

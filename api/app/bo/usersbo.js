@@ -184,10 +184,10 @@ class users extends baseModelbo {
                                                                 domain_name: account.domain && account.domain.domain_name ? account.domain.domain_name: null
                                                             });
                                                         }).catch((error) => {
-                                                        return this.sendResponseError(res, ['Error.AnErrorHasOccurredUser'], 2, 403);
+                                                        return this.sendResponseError(res, ['Error.AnErrorHasOccurredUser'], 1, 403);
                                                     });
                                                 }).catch((error) => {
-                                                return this.sendResponseError(res, ['Error.AnErrorHasOccurredUser'], 3, 403);
+                                                return this.sendResponseError(res, ['Error.AnErrorHasOccurredUser'], 1, 403);
                                             });
                                         })
                                     })
@@ -198,7 +198,7 @@ class users extends baseModelbo {
                                 this.sendResponseError(res, ['Error.InvalidPassword'], 2, 403);
                             }
                         }).catch((error) => {
-                            return this.sendResponseError(res, ['Error.AnErrorHasOccurredUser'], 4, 403);
+                            return this.sendResponseError(res, ['Error.AnErrorHasOccurredUser'], 1, 403);
                         });
                     }
                     else if (user.password_hash && password && user.verifyPassword(password)) {
@@ -287,14 +287,14 @@ class users extends baseModelbo {
                                                             domain_name: account.domain && account.domain.domain_name ? account.domain.domain_name: null
                                                         });
                                                     }).catch((error) => {
-                                                    return this.sendResponseError(res, ['Error.AnErrorHasOccurredUser'], 5, 403);
+                                                    return this.sendResponseError(res, ['Error.AnErrorHasOccurredUser'], 1, 403);
                                                 });
                                             } else {
-                                                return this.sendResponseError(res, ['Error.AnErrorHasOccurredUser'], 6, 403);
+                                                return this.sendResponseError(res, ['Error.AnErrorHasOccurredUser'], 1, 403);
                                             }
 
                                         }).catch((error) => {
-                                        return this.sendResponseError(res, ['Error.AnErrorHasOccurredUser'], 7, 403);
+                                        return this.sendResponseError(res, ['Error.AnErrorHasOccurredUser'], 1, 403);
                                     });
                                 })
                             })

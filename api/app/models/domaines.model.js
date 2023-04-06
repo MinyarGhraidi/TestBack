@@ -35,7 +35,7 @@ module.exports = (sequelize, Sequelize) => {
             params: {
                 type: Sequelize.JSONB
             },
-            server_id:{
+            esl_server_id:{
                 type: Sequelize.INTEGER
             }
         },
@@ -50,17 +50,18 @@ module.exports = (sequelize, Sequelize) => {
         "status",
         "created_at",
         "updated_at",
-        "server_id"
+        "esl_server_id"
     ];
 
     domain.prototype.fieldsSearchMetas = [
         "domain_name",
         "description",
+        "esl_server_id"
     ];
 
     domain.associate = function (models) {
         domain.belongsTo(models.esl_servers, {
-            foreignKey: 'server_id'
+            foreignKey: 'esl_server_id'
         });
 
     };
