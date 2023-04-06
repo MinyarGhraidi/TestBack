@@ -36,7 +36,10 @@ module.exports = {
       },
       params: {
         type: Sequelize.JSONB
-      }
+      },
+        esl_server_id:{
+            type: Sequelize.INTEGER
+        }
     })
 
   },
