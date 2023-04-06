@@ -1,5 +1,10 @@
 {
   "development": {
+    "host": "92.222.147.156",
+    "username": "postgres",
+    "password": "Oxilog2020.",
+    "database": "oxilog-crm-app",
+    "port": 5432,
     "dialect": "postgres",
     "databases": {
       "crm-app": {

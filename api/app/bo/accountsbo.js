@@ -15,8 +15,8 @@ let _agentsbo = new agentsbo();
 let _campaignsbo = new campaignsbo();
 let _trunksbo = new trunksbo();
 let _messageDao = new messageDao();
-const call_center_token = require(__dirname + '/../config/config.json')["call_center_token"];
-const base_url_cc_kam = require(__dirname + '/../config/config.json')["base_url_cc_kam"];
+const call_center_token = require(__dirname + '/../config/config.json')[env]["call_center_token"];
+const base_url_cc_kam = require(__dirname + '/../config/config.json')[env]["base_url_cc_kam"];
 const call_center_authorization = {
     headers: {Authorization: call_center_token}
 };
