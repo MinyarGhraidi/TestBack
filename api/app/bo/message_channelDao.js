@@ -757,14 +757,14 @@ class message_channelDao extends baseModelbo {
                             ELSE 
                             mc.channel_name 
                     END as conversation_name,
-                     r.value as role
+                     case when mc.channel_type = 'S' then r.value else '' end as role
                   , m_last.created_by_id as m_last_created_by_id ,  m_last.created_at as last_message_date    FROM message_channels as mc
                       LEFT JOIN message_channel_subscribers as mcs on mcs.active = :active and mcs.message_channel_id = mc.message_channel_id
                       LEFT JOIN message_channel_subscribers as mcs2 on mcs2.active = :active and mcs2.message_channel_id = mc.message_channel_id and mcs.user_id <> mcs2.user_id
                       LEFT JOIN messages as m on m.message_channel_id = mc.message_channel_id and m.active = :active
                       LEFT JOIN messages as m_last on m_last.message_channel_id = mc.message_channel_id and m_last.active = :active and m_last.message_id = (SELECT m_last_one.message_id FROM messages as m_last_one WHERE m_last_one.message_channel_id = mc.message_channel_id AND m_last_one.active = :active ORDER BY "m_last_one"."created_at" DESC LIMIT 1)
                       LEFT JOIN users as u on u.user_id = mc.created_by_id AND u.active = :active
-                      LEFT JOIN users as u__subs on u__subs.user_id = mcs2.user_id AND u__subs.active = :active
+                      INNER JOIN users as u__subs on u__subs.user_id = mcs2.user_id AND u__subs.active = :active
                       LEFT JOIN roles_crms as r on u__subs.role_crm_id = r.id
                       LEFT JOIN message_readers as mr_count on mr_count.message_id = m_last.message_id and mr_count.active = :active AND mr_count.status_read <> :active AND mr_count.user_id = mcs.user_id
                       WHERE 1 = 1
