@@ -16,20 +16,22 @@ class esl_servers extends baseModelbo {
     }
 
     addEslServer(req,res,next){
-        let data = req.body;
-
+        let {ip,port,password,description} = req.body;
+                if(!!!ip || !!!port || !!!password || !!!description){
+                    return this.sendResponseError(res, ['Error.EmptyFormData'], 0, 403);
+                }
             let Server = {
-                ip_addr: data.ip,
-                esl_port: data.port,
-                esl_pwd: data.password,
-                description: data.description,
+                ip_addr: ip,
+                esl_port: port,
+                esl_pwd: password,
+                description: description,
                 created_at : moment(new Date()),
                 updated_at : moment(new Date()),
             }
         axios
             .post(`${base_url_cc_kam}api/v1/servers`,Server, call_center_authorization).then((resp)=>{
             let sip_device = resp.data.result;
-            const server = this.db['esl_servers'].build(data);
+            const server = this.db['esl_servers'].build(req.body);
             server.updated_at = moment(new Date());
             server.created_at = moment(new Date());
             server.sip_device = sip_device;
@@ -53,6 +55,9 @@ class esl_servers extends baseModelbo {
 
     editEslServer(req,res,next){
         let data = req.body;
+        if(!!!data.esl_server_id){
+            return this.sendResponseError(res, ['Error.EmptyFormData'], 0, 403);
+        }
         let ServerData = {}
         this.db['esl_servers'].findOne({where : {esl_server_id: data.esl_server_id}}).then((serverResp)=>{
             let sip_device = serverResp.dataValues.sip_device;
