@@ -1660,6 +1660,13 @@ class agents extends baseModelbo {
                             pauseStatus: pauseStatus,
                         }
                     }).then(data_stats => {
+                        if(!!!data_stats || data_stats.length === 0){
+                            return res.send({
+                                success: false,
+                                data: [],
+                                status: 403
+                            })
+                        }
                         let dataArray = [];
                         AllU.forEach((user, index) => {
                             let SQ_Demo = SqueletteQuery[0];

@@ -74,9 +74,15 @@ class messageDao extends baseModelbo {
     }
     getMessageIDsByChannelIDs(mc_id_s, user_id) {
         return new Promise((resolve, reject) => {
+            if(!!!mc_id_s || mc_id_s.length === 0){
+                return resolve([])
+            }
             this.db['messages'].findAll({
                 where: {
-                    active: 'Y', message_channel_id: {[Op.in]: mc_id_s}, created_by_id: user_id
+                    active: 'Y',
+                    [Op.or] : [
+                        {message_channel_id: {[Op.in]: mc_id_s}}, {created_by_id: user_id}
+                    ]
                 }
             }).then(data => {
                 if (data && data.length !== 0) {
@@ -91,6 +97,9 @@ class messageDao extends baseModelbo {
 
     deleteCascadeMessagesByTableName(tableName, mc_id_sT, user_idT, mc_id_s, user_id) {
         return new Promise((resolve, reject) => {
+            if(!!!mc_id_s || mc_id_s.length === 0){
+                resolve(true)
+            }
             let subs_mc_id_sT = {}
             let subs_user_idT = {}
             subs_mc_id_sT[mc_id_sT] = {[Op.in]: mc_id_s}
@@ -207,18 +216,19 @@ class messageDao extends baseModelbo {
                 return resolve(true)
             }
             let idx = 0;
-            user_ids.forEach(user_id => {
-                this.getMessageChannelIDsByUserId(user_id.user_id).then(res_channel_ids => {
-                    this.getMessageIDsByChannelIDs(res_channel_ids.channel_ids_S, user_id.user_id).then(res_message_ids => {
-                        this.deleteCascadeMessagesByTableName('message_channel_subscribers', 'message_channel_id', 'user_id', res_channel_ids.channel_ids_S, user_id.user_id).then(() => {
-                            this.deleteCascadeMessagesByTableName('message_channels', 'message_channel_id', 'created_by_id', res_channel_ids.channel_ids_S, user_id.user_id).then(() => {
-                                this.deleteCascadeMessagesByTableName('message_readers', 'message_id', 'user_id', res_message_ids, user_id.user_id).then(() => {
+            const user_IDS = user_ids.map(item => item.user_id)
+            user_IDS.forEach(user_id => {
+                this.getMessageChannelIDsByUserId(user_id).then(res_channel_ids => {
+                    this.getMessageIDsByChannelIDs(res_channel_ids.channel_ids_S, user_id).then(res_message_ids => {
+                        this.deleteCascadeMessagesByTableName('message_channel_subscribers', 'message_channel_id', 'user_id', res_channel_ids.channel_ids_S, user_id).then(() => {
+                            this.deleteCascadeMessagesByTableName('message_channels', 'message_channel_id', 'created_by_id', res_channel_ids.channel_ids_S, user_id).then(() => {
+                                this.deleteCascadeMessagesByTableName('message_readers', 'message_id', 'user_id', res_message_ids, user_id).then(() => {
                                     this.deleteMessageAttachments_Efiles(res_message_ids).then(() => {
                                         this.deleteMessages(res_message_ids).then(() => {
-                                            appSocket.emit('channel_deleted', {})
-                                            if(idx < user_ids.length -1){
+                                            if(idx < user_IDS.length -1){
                                                 idx++;
                                             }else{
+                                                appSocket.emit('channel_deleted', {message_channel_ids : res_channel_ids.channel_ids_S, user_ids : user_IDS})
                                                 return resolve(true)
                                             }
                                         }).catch(err => {

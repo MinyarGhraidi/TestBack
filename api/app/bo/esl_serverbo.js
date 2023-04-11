@@ -2,10 +2,11 @@ const {baseModelbo} = require("./basebo");
 const {default: axios} = require("axios");
 const moment = require("moment");
 const env = process.env.NODE_ENV || 'development';
-const multi_master_token = require(__dirname + '/../config/config.json')[env]["multi_master_token"];
-const base_url_multi_master = require(__dirname + '/../config/config.json')[env]["base_url_multi_master"];
-const multi_master_authorization = {
-    headers: {Authorization: multi_master_token}
+
+const call_center_token = require(__dirname + '/../config/config.json')[env]["call_center_token"];
+const base_url_cc_kam = require(__dirname + '/../config/config.json')[env]["base_url_cc_kam"];
+const call_center_authorization = {
+    headers: {Authorization: call_center_token}
 };
 
 class esl_servers extends baseModelbo {
@@ -27,7 +28,7 @@ class esl_servers extends baseModelbo {
                 updated_at : moment(new Date()),
             }
         axios
-            .post(`${base_url_multi_master}api/v1/servers`,Server, multi_master_authorization).then((resp)=>{
+            .post(`${base_url_cc_kam}api/v1/servers`,Server, call_center_authorization).then((resp)=>{
             let sip_device = resp.data.result;
             const server = this.db['esl_servers'].build(data);
             server.updated_at = moment(new Date());
@@ -46,7 +47,7 @@ class esl_servers extends baseModelbo {
             })
 
         }).catch(err=>{
-            console.log('errr',err)
+            console.log('errr',err.response.data.errors)
             this.sendResponseError(res,['Error.CannotAddServerTelco',err],1,403)
         })
 
@@ -85,7 +86,7 @@ class esl_servers extends baseModelbo {
                 updated_at : moment(new Date()),
             }
                 axios
-                    .put(`${base_url_multi_master}api/v1/servers/${uuid_server}`,Server, multi_master_authorization).then((resp)=>{
+                    .put(`${base_url_cc_kam}api/v1/servers/${uuid_server}`,Server, call_center_authorization).then((resp)=>{
                     ServerData.sip_device = resp.data.result;
                     ServerData.status = data.status;
                     this.db['esl_servers'].update(ServerData, {
@@ -118,7 +119,7 @@ class esl_servers extends baseModelbo {
             let sip_device = serverResp.sip_device;
             const uuid_server = sip_device.uuid;
             axios
-        .delete(`${base_url_multi_master}api/v1/servers/${uuid_server}`, multi_master_authorization).then((resp) => {
+        .delete(`${base_url_cc_kam}api/v1/servers/${uuid_server}`, call_center_authorization).then((resp) => {
             this.db['esl_servers'].update({active : 'N'},{where : {esl_server_id : esl_server_id}}).then(()=>{
                 res.send({
                     success : true,

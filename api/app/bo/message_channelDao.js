@@ -248,22 +248,24 @@ class message_channelDao extends baseModelbo {
                                                                 }
                                                             }).then(all_messages => {
                                                                 if (subscriber.user_id !== save_message.created_by_id) {
-                                                                    this.update_user_total_messages_not_readed(subscriber.user_id).then(res => {
-                                                                        if (res.status === true) {
-                                                                            resolve({
-                                                                                status: true,
-                                                                                data: save_message,
-                                                                                all_messages: all_messages
-                                                                            })
-                                                                        } else {
-                                                                            resolve({
-                                                                                status: false,
-                                                                                data: null
-                                                                            })
-                                                                        }
+                                                                    this._getTotalUnreadMessages(subscriber.user_id).then(totalUnreadMessagesCount => {
+                                                                        this.update_user_total_messages_not_readed(subscriber.user_id, totalUnreadMessagesCount.count).then(res => {
+                                                                            if (res.status === true) {
+                                                                                resolve({
+                                                                                    status: true,
+                                                                                    data: save_message,
+                                                                                    all_messages: all_messages
+                                                                                })
+                                                                            } else {
+                                                                                resolve({
+                                                                                    status: false,
+                                                                                    data: null
+                                                                                })
+                                                                            }
 
-                                                                    }).catch(err => {
-                                                                        reject(err)
+                                                                        }).catch(err => {
+                                                                            reject(err)
+                                                                        })
                                                                     })
                                                                 }
                                                             }).catch(err => {
@@ -320,20 +322,24 @@ class message_channelDao extends baseModelbo {
                                                         }
                                                     }).then(all_messages => {
                                                         if (subscriber.user_id !== save_message.created_by_id) {
-                                                            this.update_user_total_messages_not_readed(subscriber.user_id).then(res => {
-                                                                if (res.status === true) {
-                                                                    resolve({
-                                                                        status: true,
-                                                                        data: save_message,
-                                                                        all_messages: all_messages
-                                                                    })
-                                                                } else {
-                                                                    resolve({
-                                                                        status: false,
-                                                                        data: null
-                                                                    })
-                                                                }
+                                                            this._getTotalUnreadMessages(subscriber.user_id).then(totalUnreadMessagesCount => {
+                                                                this.update_user_total_messages_not_readed(subscriber.user_id,totalUnreadMessagesCount.count).then(res => {
+                                                                    if (res.status === true) {
+                                                                        resolve({
+                                                                            status: true,
+                                                                            data: save_message,
+                                                                            all_messages: all_messages
+                                                                        })
+                                                                    } else {
+                                                                        resolve({
+                                                                            status: false,
+                                                                            data: null
+                                                                        })
+                                                                    }
 
+                                                                }).catch(err => {
+                                                                    reject(err)
+                                                                })
                                                             }).catch(err => {
                                                                 reject(err)
                                                             })
@@ -374,75 +380,80 @@ class message_channelDao extends baseModelbo {
         })
     }
 
-    update_user_total_messages_not_readed(user_id) {
+    update_user_total_messages_not_readed(user_id, Total) {
         return new Promise((resolve, reject) => {
-            let sql = `
-            SELECT count(mr.message_reader_id) as count
-            FROM message_readers as mr
-            INNER JOIN messages as m on m.message_id = mr.message_id AND m.active = :active
-            INNER JOIN message_channels as mc on mc.message_channel_id = m.message_channel_id AND mc.active = :active
-            WHERE mr.active = :active
-                AND mr.status_read <> 'Y'
-                AND mr.user_id = :user_id
-            `;
-            db.sequelize['crm-app'].query(sql,
-                {
-                    type: db.sequelize['crm-app'].QueryTypes.SELECT,
-                    replacements: {
-                        user_id: user_id,
-                        active: 'Y',
+            // let sql = `
+            // SELECT count(mr.message_reader_id) as count
+            // FROM message_readers as mr
+            // INNER JOIN messages as m on m.message_id = mr.message_id AND m.active = :active
+            // INNER JOIN message_channels as mc on mc.message_channel_id = m.message_channel_id AND mc.active = :active
+            // WHERE mr.active = :active
+            //     AND mr.status_read <> 'Y'
+            //     AND mr.user_id = :user_id
+            // `;
+            // db.sequelize['crm-app'].query(sql,
+            //     {
+            //         type: db.sequelize['crm-app'].QueryTypes.SELECT,
+            //         replacements: {
+            //             user_id: user_id,
+            //             active: 'Y',
+            //         }
+            //     }).then(count_total => {
+            if (Total !== null) {
+                this.db['user_data_indexs'].findOne({
+                    where: {
+                        user_id: user_id
                     }
-                }).then(count_total => {
-                if (count_total[0] !== null) {
-                    this.db['user_data_indexs'].findOne({
-                        where: {
-                            user_id: user_id
-                        }
-                    }).then(user_data_index => {
-                        if (user_data_index) {
-                            this.db['user_data_indexs'].update({
-                                total_message_not_readed: count_total[0].count,
-                                updated_at: new Date(),
-                            }, {
-                                where: {
-                                    user_id: user_id
-                                }
-                            }).then(update_user_data => {
-                                if (update_user_data) {
-                                    resolve({
-                                        status: true,
-                                        message: 'update user data index'
-                                    })
-                                }
-                            }).catch(err => {
-                                reject(err)
-                            })
-                        } else {
-                            this.db['user_data_indexs'].build({
-                                user_id: user_id,
-                                total_message_not_readed: count_total[0].count,
-                                created_at: new Date(),
-                                updated_at: new Date(),
-                                active: 'Y'
+                }).then(user_data_index => {
+                    if (user_data_index) {
+                        this.db['user_data_indexs'].update({
+                            total_message_not_readed: Total,
+                            updated_at: new Date(),
+                        }, {
+                            where: {
+                                user_id: user_id
+                            }
+                        }).then(update_user_data => {
+                            if (update_user_data) {
+                                resolve({
+                                    status: true,
+                                    message: 'update user data index'
+                                })
+                            }
+                        }).catch(err => {
+                            reject(err)
+                        })
+                    } else {
+                        this.db['user_data_indexs'].build({
+                            user_id: user_id,
+                            total_message_not_readed: Total,
+                            created_at: new Date(),
+                            updated_at: new Date(),
+                            active: 'Y'
 
-                            }).save().then(save_user_data_index => {
-                                if (save_user_data_index) {
-                                    resolve({
-                                        status: true,
-                                        message: 'save user data index'
-                                    })
-                                }
-                            }).catch(err => {
-                                reject(err)
-                            })
-                        }
-                    }).catch(err => {
-                        reject(err)
-                    })
-                }
-            }).catch(err => {
-                reject(err)
-            })
+                        }).save().then(save_user_data_index => {
+                            if (save_user_data_index) {
+                                resolve({
+                                    status: true,
+                                    message: 'save user data index'
+                                })
+                            }
+                        }).catch(err => {
+                            reject(err)
+                        })
+                    }
+                }).catch(err => {
+                    reject(err)
+                })
+            } else {
+                resolve({
+                    status: false,
+                    message: 'failed'
+                })
+            }
+            // }).catch(err => {
+            //     reject(err)
+            // })
         })
 
     }
@@ -464,7 +475,6 @@ class message_channelDao extends baseModelbo {
             });
             return;
         }
-
         this.user_has_access_to_channel(message_channel_id, user_id).then(result => {
             if (result.status === true) {
                 this.newMessage(req.body).then(new_message => {
@@ -486,11 +496,12 @@ class message_channelDao extends baseModelbo {
 
     set_message_channel_as_read(message_channel_id, user_id) {
         return new Promise((resolve, reject) => {
-            let sql = `UPDATE message_readers
-                         SET status_read = 'Y'
-                          FROM message_readers mr
-                          INNER JOIN messages as m on m.message_id = mr.message_id AND m.active = 'Y'
-                           WHERE mr.user_id = :user_id AND m.message_channel_id = :message_channel_id AND mr.status_read <> 'Y'`;
+            let sql = ` UPDATE message_readers SET status_read = :status_read_Y
+                WHERE message_reader_id in (
+                                                select distinct message_reader_id 
+                                                from message_readers as mr 
+                                                INNER JOIN messages as m on m.message_id = mr.message_id 
+                                                AND m.active = :active WHERE mr.user_id = :user_id AND m.message_channel_id = :message_channel_id AND mr.status_read = :status_read_N)`;
 
             db.sequelize['crm-app'].query(sql,
                 {
@@ -499,8 +510,8 @@ class message_channelDao extends baseModelbo {
                         message_channel_id: message_channel_id,
                         user_id: user_id,
                         active: 'Y',
-                        status_read_new: 'Y',
-                        status_read_old: 'Y'
+                        status_read_N: 'N',
+                        status_read_Y: 'Y'
                     }
                 })
                 .then(result => {
@@ -570,18 +581,18 @@ class message_channelDao extends baseModelbo {
                             .then(count_total => {
                                 let has_no_readed_msgs = false;
                                 this.AllMessage(messages, has_no_readed_msgs, message_channel_id, user_id, count_total).then(all_message => {
-                                        this.checkFile(messages).then(msgFile => {
-                                            if (msgFile.success) {
-                                                res.send({
-                                                    data: msgFile.data,
-                                                    success: true,
-                                                    total: count_total[0].totalItems
-                                                })
-                                            }
+                                    this.checkFile(messages).then(msgFile => {
+                                        if (msgFile.success) {
+                                            res.send({
+                                                data: msgFile.data,
+                                                success: true,
+                                                total: all_message.total
+                                            })
+                                        }
 
-                                        }).catch(err => {
-                                            this.sendResponseError(res, ['Error_get_channel_message'])
-                                        })
+                                    }).catch(err => {
+                                        this.sendResponseError(res, ['Error_get_channel_message'])
+                                    })
                                 }).catch(err => {
                                     this.sendResponseError(res, ['Error_get_channel_message'])
                                 })
@@ -613,17 +624,22 @@ class message_channelDao extends baseModelbo {
             if (has_no_readed_msgs) {
                 this.set_message_channel_as_read(message_channel_id, user_id).then(update_message_channel => {
                     if (update_message_channel.status === true) {
-                        this.update_user_total_messages_not_readed(user_id).then(update_user_msg => {
-                            if (update_user_msg.status === true) {
-                                resolve({
-                                    data: messages,
-                                    success: true,
-                                    total: count_total[0].totalItems
-                                })
-                            }
+                        this._getTotalUnreadMessages(user_id).then(totalUnreadMessagesCount => {
+                            this.update_user_total_messages_not_readed(user_id, totalUnreadMessagesCount.count).then(update_user_msg => {
+                                if (update_user_msg.status === true) {
+                                    resolve({
+                                        data: messages,
+                                        success: true,
+                                        total: totalUnreadMessagesCount.count
+                                    })
+                                }
+                            }).catch(err => {
+                                reject(err)
+                            })
                         }).catch(err => {
                             reject(err)
                         })
+
                     }
 
                 })
@@ -632,7 +648,7 @@ class message_channelDao extends baseModelbo {
                 resolve({
                     data: messages,
                     success: true,
-                    total: count_total[0].totalItems
+                    total: null
                 })
             }
         })
@@ -731,6 +747,36 @@ class message_channelDao extends baseModelbo {
         })
     }
 
+    get_unreadMessages(data) {
+        return new Promise((resolve, reject) => {
+            const {message_id, user_id, message_channel_id} = data
+            if (!!!message_id) {
+                return resolve(0)
+            }
+            let sql = `
+            SELECT COUNT(*) AS total_unread 
+            FROM message_readers AS mr 
+            INNER JOIN messages AS m ON mr.message_id = m.message_id AND m.active = :active AND m.message_channel_id = :message_channel_id
+            WHERE mr.message_id <= :message_id AND mr.active = :active AND mr.status_read = :status_read AND mr.user_id = :user_id
+            `;
+
+            db.sequelize['crm-app'].query(sql,
+                {
+                    type: db.sequelize['crm-app'].QueryTypes.SELECT,
+                    replacements: {
+                        message_id: message_id,
+                        active: 'Y',
+                        message_channel_id: message_channel_id,
+                        status_read: 'N',
+                        user_id: user_id
+                    }
+                })
+                .then(result => {
+                    return resolve(parseInt(result[0].total_unread))
+                }).catch(err => reject(err))
+        })
+    }
+
     getMyChannel(req, res, next) {
         let isSuperAdmin = req.body.isSuperAdmin
         let user_id = req.body.user_id;
@@ -742,8 +788,9 @@ class message_channelDao extends baseModelbo {
             sortBy: this.primaryKey,
             sortDir: 'ASC'
         };
+        let idx = 0;
         _roles_crmbo.getIdRoleCrmByValue(['superadmin', 'admin']).then(ids_role_crms => {
-            let sql = `SELECT distinct(mc.*), count(m.message_id) as total_messages, count(mr_count.message_id) as total_not_read, m_last.message_id as last_message_id, m_last.content as last_message_content
+            let sql = `SELECT distinct(mc.*), count(m.message_id) as total_messages, m_last.message_id as last_message_id, m_last.content as last_message_content
                     ,case 
                         WHEN mc.channel_type = 'S' 
                             THEN 
@@ -757,16 +804,15 @@ class message_channelDao extends baseModelbo {
                             ELSE 
                             mc.channel_name 
                     END as conversation_name,
-                     r.value as role
+                     case when mc.channel_type = 'S' then r.value else '' end as role
                   , m_last.created_by_id as m_last_created_by_id ,  m_last.created_at as last_message_date    FROM message_channels as mc
                       LEFT JOIN message_channel_subscribers as mcs on mcs.active = :active and mcs.message_channel_id = mc.message_channel_id
                       LEFT JOIN message_channel_subscribers as mcs2 on mcs2.active = :active and mcs2.message_channel_id = mc.message_channel_id and mcs.user_id <> mcs2.user_id
                       LEFT JOIN messages as m on m.message_channel_id = mc.message_channel_id and m.active = :active
                       LEFT JOIN messages as m_last on m_last.message_channel_id = mc.message_channel_id and m_last.active = :active and m_last.message_id = (SELECT m_last_one.message_id FROM messages as m_last_one WHERE m_last_one.message_channel_id = mc.message_channel_id AND m_last_one.active = :active ORDER BY "m_last_one"."created_at" DESC LIMIT 1)
                       LEFT JOIN users as u on u.user_id = mc.created_by_id AND u.active = :active
-                      LEFT JOIN users as u__subs on u__subs.user_id = mcs2.user_id AND u__subs.active = :active
+                      INNER JOIN users as u__subs on u__subs.user_id = mcs2.user_id AND u__subs.active = :active
                       LEFT JOIN roles_crms as r on u__subs.role_crm_id = r.id
-                      LEFT JOIN message_readers as mr_count on mr_count.message_id = m_last.message_id and mr_count.active = :active AND mr_count.status_read <> :active AND mr_count.user_id = mcs.user_id
                       WHERE 1 = 1
                           AND mc.active = :active
                           AND mcs.user_id = :user_id
@@ -797,24 +843,38 @@ class message_channelDao extends baseModelbo {
                 })
                 .then(channels => {
                     if (channels && channels.length !== 0) {
-                        this.updateChannel(channels, user_id).then(result => {
-                            if (result) {
-                                res.send({
-                                    success: true,
-                                    status: 200,
-                                    data: result.data
-                                })
-                            } else {
-                                res.send({
-                                    success: true,
-                                    status: 200,
-                                    data: []
-                                })
-                            }
+                        channels.forEach(channel => {
+                            this.get_unreadMessages({
+                                message_id: channel.last_message_id,
+                                user_id,
+                                message_channel_id: channel.message_channel_id
+                            }).then(unread_messages => {
+                                channel.total_not_read = unread_messages;
+                                if (idx < channels.length - 1) {
+                                    idx++;
+                                } else {
+                                    this.updateChannel(channels, user_id).then(result => {
+                                        if (result) {
+                                            res.send({
+                                                success: true,
+                                                status: 200,
+                                                data: result.data
+                                            })
+                                        } else {
+                                            res.send({
+                                                success: true,
+                                                status: 200,
+                                                data: []
+                                            })
+                                        }
 
-                        }).catch(err => {
-                            this.sendResponseError(res, ['Error.getDataChannel'], err);
+                                    }).catch(err => {
+                                        this.sendResponseError(res, ['Error.getDataChannel'], err);
+                                    })
+                                }
+                            })
                         })
+
                     } else {
                         res.send({
                             data: []
@@ -828,13 +888,43 @@ class message_channelDao extends baseModelbo {
         })
     }
 
-    getUsersChannel(account_id, isSuperAdmin, user_id, channel_key, reformattedUserIds,isAdmin){
-        return new Promise((resolve,reject)=>{
+    _getTotalUnreadMessages(user_id) {
+        return new Promise((resolve, reject) => {
+            if (!!!user_id) {
+                return reject(false)
+            }
+            let sql = `
+        SELECT COUNT(DISTINCT(m.message_channel_id)) as count FROM messages as m
+        LEFT JOIN message_readers AS mr ON mr.message_id = m.message_id 
+        WHERE m.active = :active AND mr.active = :active AND mr.status_read = :status_read AND mr.user_id = :user_id `;
+            db.sequelize['crm-app'].query(sql,
+                {
+                    type: db.sequelize['crm-app'].QueryTypes.SELECT,
+                    replacements: {
+                        active: 'Y',
+                        status_read: 'N',
+                        user_id: user_id
+                    }
+                })
+                .then(result => {
+                    return resolve({
+                        status: 200,
+                        success: true,
+                        count: parseInt(result[0].count)
+                    })
+                }).catch(err => {
+                return reject(err)
+            })
+        })
+    }
+
+    getUsersChannel(account_id, isSuperAdmin, user_id, channel_key, reformattedUserIds, isAdmin) {
+        return new Promise((resolve, reject) => {
             if (!!!reformattedUserIds) {
                 reformattedUserIds = []
             }
             let isRoot = isSuperAdmin || isAdmin;
-            let roles = isRoot ? isSuperAdmin ? ['admin', 'super admin'] : ['agent','user','sales'] : null
+            let roles = isRoot ? isSuperAdmin ? ['admin', 'super admin'] : ['agent', 'user', 'sales'] : null
             reformattedUserIds.push(user_id)
             let WhereQuery = {}
             if (channel_key && channel_key !== '') {
@@ -846,7 +936,7 @@ class message_channelDao extends baseModelbo {
                             {'$users.last_name$': {[Sequelize.Op.iLike]: '%' + channel_key + '%'}}
                         ]
                     ,
-                    account_id: isSuperAdmin ? {[Op.not] : account_id } : account_id,
+                    account_id: isSuperAdmin ? {[Op.not]: account_id} : account_id,
                     user_id: {[Op.notIn]: reformattedUserIds},
                     active: 'Y'
                 }
@@ -855,7 +945,7 @@ class message_channelDao extends baseModelbo {
                 }
             } else {
                 WhereQuery = {
-                    account_id: isSuperAdmin ? {[Op.not] : account_id } : account_id,
+                    account_id: isSuperAdmin ? {[Op.not]: account_id} : account_id,
                     user_id: {[Op.notIn]: reformattedUserIds},
                     active: 'Y'
                 }
@@ -889,21 +979,22 @@ class message_channelDao extends baseModelbo {
             })
         })
     }
+
     getContactsChannel(req, res, next) {
-        let {account_id, isSuperAdmin, user_id, channel_key, reformattedUserIds,isAdmin} = req.body
-        this.getUsersChannel(account_id, isSuperAdmin, user_id, channel_key, reformattedUserIds,isAdmin).then((users)=>{
+        let {account_id, isSuperAdmin, user_id, channel_key, reformattedUserIds, isAdmin} = req.body
+        this.getUsersChannel(account_id, isSuperAdmin, user_id, channel_key, reformattedUserIds, isAdmin).then((users) => {
             res.send(users)
         }).catch(err => {
-            this.sendResponseError(res,['Cannot.getContacts',err],1,403)
+            this.sendResponseError(res, ['Cannot.getContacts', err], 1, 403)
         })
     }
 
     getAllUsersChannel(req, res, next) {
-        let {account_id, isSuperAdmin, user_id,isAdmin} = req.body
-        this.getUsersChannel(account_id, isSuperAdmin, user_id,null,[],isAdmin).then((users)=>{
+        let {account_id, isSuperAdmin, user_id, isAdmin} = req.body
+        this.getUsersChannel(account_id, isSuperAdmin, user_id, null, [], isAdmin).then((users) => {
             return res.send(users)
         }).catch(err => {
-            this.sendResponseError(res,['Cannot.getAllUsers',err],1,403)
+            this.sendResponseError(res, ['Cannot.getAllUsers', err], 1, 403)
         })
     }
 
@@ -975,9 +1066,9 @@ class message_channelDao extends baseModelbo {
         })
     }
 
-    checkFile (messages){
+    checkFile(messages) {
 
-        return new Promise((resolve, reject)=> {
+        return new Promise((resolve, reject) => {
             let index = 0
             if (messages && messages.length) {
                 messages.map(msg => {

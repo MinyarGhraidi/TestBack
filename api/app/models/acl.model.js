@@ -34,6 +34,9 @@ module.exports = (sequelize, Sequelize) => {
             params: {
                 type: Sequelize.JSONB
             },
+            server_id: {
+                type: Sequelize.INTEGER
+            },
         },
         {timestamps: false}
     );
@@ -45,7 +48,8 @@ module.exports = (sequelize, Sequelize) => {
         "description",
         "created_at",
         "updated_at",
-        "active"
+        "active",
+        "server_id"
     ];
 
     acls.prototype.fieldsSearchMetas = [
@@ -53,5 +57,14 @@ module.exports = (sequelize, Sequelize) => {
         "description",
         "default"
     ];
+    acls.prototype.getModelIncludes = function () {
+        return ['esl_servers'];
+    };
+
+    acls.associate = function (models) {
+        acls.belongsTo(models.esl_servers, {
+            foreignKey: 'server_id'
+        });
+    }
     return acls;
 };
