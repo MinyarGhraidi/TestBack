@@ -12,12 +12,6 @@ const base_url_cc_kam = require(__dirname + '/../config/config.json')[env]["base
 const call_center_authorization = {
     headers: {Authorization: call_center_token}
 };
-
-const multi_master_token = require(__dirname + '/../config/config.json')[env]["multi_master_token"];
-const base_url_multi_master = require(__dirname + '/../config/config.json')[env]["base_url_multi_master"];
-const multi_master_authorization = {
-    headers: {Authorization: multi_master_token}
-};
 class baseModelbo {
     request = null;
     response = null;
@@ -868,8 +862,8 @@ class baseModelbo {
     }
     deleteEslServerByUUID(esl_server_uuid){
         return new Promise((resolve,reject)=> {
-            axios.get(`${base_url_multi_master}api/v1/servers/${esl_server_uuid}`, multi_master_authorization).then(() => {
-                axios.delete(`${base_url_multi_master}api/v1/servers/${esl_server_uuid}`, multi_master_authorization).then(() => {
+            axios.get(`${base_url_cc_kam}api/v1/servers/${esl_server_uuid}`, call_center_authorization).then(() => {
+                axios.delete(`${base_url_cc_kam}api/v1/servers/${esl_server_uuid}`, call_center_authorization).then(() => {
                     resolve(true)
                 }).catch((err)=>reject(err))
             }).catch((err)=>reject(err))

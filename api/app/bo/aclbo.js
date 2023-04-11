@@ -2,11 +2,12 @@ const {baseModelbo} = require("./basebo");
 const {default: axios} = require("axios");
 const db = require("../models");
 const env = process.env.NODE_ENV || 'development';
-const multi_master_token = require(__dirname + '/../config/config.json')[env]["multi_master_token"];
-const base_url_multi_master = require(__dirname + '/../config/config.json')[env]["base_url_multi_master"];
-const multi_master_authorization = {
-    headers: {Authorization: multi_master_token}
+const call_center_token = require(__dirname + '/../config/config.json')[env]["call_center_token"];
+const base_url_cc_kam = require(__dirname + '/../config/config.json')[env]["base_url_cc_kam"];
+const call_center_authorization = {
+    headers: {Authorization: call_center_token}
 };
+
 
 class acls extends baseModelbo {
     constructor() {
@@ -23,7 +24,7 @@ class acls extends baseModelbo {
         }
 
         axios
-            .get(`${base_url_multi_master}api/v1/servers/${formData.server_uuid}`, multi_master_authorization).then((resp) => {
+            .get(`${base_url_cc_kam}api/v1/servers/${formData.server_uuid}`, call_center_authorization).then((resp) => {
             if (!!!resp) {
                 return res.send({
                     success: false,
@@ -33,7 +34,7 @@ class acls extends baseModelbo {
             const server_id = formData.server_id;
             delete formData.server_id;
             axios
-                .post(`${base_url_multi_master}api/v1/acls`, formData, multi_master_authorization).then((resp) => {
+                .post(`${base_url_cc_kam}api/v1/acls`, formData, call_center_authorization).then((resp) => {
                 let params = resp.data.result;
                 const acl = db.acls.build();
                 acl.server_id = server_id;
@@ -87,7 +88,7 @@ class acls extends baseModelbo {
                     return this.sendResponseError(res, ['Error.uuidNotFound'], 1, 403);
                 }
                 axios
-                    .get(`${base_url_multi_master}api/v1/servers/${data.server_uuid}`, multi_master_authorization).then((resp) => {
+                    .get(`${base_url_cc_kam}api/v1/servers/${data.server_uuid}`, call_center_authorization).then((resp) => {
                     if (!!!resp) {
                         return res.send({
                             success: false,
@@ -95,11 +96,11 @@ class acls extends baseModelbo {
                         })
                     }
                     axios
-                        .get(`${base_url_multi_master}api/v1/acls/${uuid}`, multi_master_authorization).then((resp) => {
+                        .get(`${base_url_cc_kam}api/v1/acls/${uuid}`, call_center_authorization).then((resp) => {
                         let dataToUpdate = data;
                         dataToUpdate.updated_at = new Date();
                         axios
-                            .put(`${base_url_multi_master}api/v1/acls/${uuid}`, dataToUpdate, multi_master_authorization).then((resp) => {
+                            .put(`${base_url_cc_kam}api/v1/acls/${uuid}`, dataToUpdate, call_center_authorization).then((resp) => {
                             this.db.acls.update(dataToUpdate, {
                                 where: {
                                     acl_id: acl_id,
@@ -151,7 +152,7 @@ class acls extends baseModelbo {
                     return this.sendResponseError(res, ['Error.uuidNotFound'], 1, 403);
                 }
                 axios
-                    .delete(`${base_url_multi_master}api/v1/acls/${uuid}`, multi_master_authorization).then((resp) => {
+                    .delete(`${base_url_cc_kam}api/v1/acls/${uuid}`, call_center_authorization).then((resp) => {
                     let toUpdate = {
                         updated_at: new Date(),
                         active: 'N'
