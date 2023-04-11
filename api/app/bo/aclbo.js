@@ -2,10 +2,10 @@ const {baseModelbo} = require("./basebo");
 const {default: axios} = require("axios");
 const db = require("../models");
 const env = process.env.NODE_ENV || 'development';
-const call_center_token = require(__dirname + '/../config/config.json')[env]["call_center_token"];
-const base_url_cc_kam = require(__dirname + '/../config/config.json')[env]["base_url_cc_kam"];
-const call_center_authorization = {
-    headers: {Authorization: call_center_token}
+const multi_master_token = require(__dirname + '/../config/config.json')[env]["multi_master_token"];
+const base_url_multi_master = require(__dirname + '/../config/config.json')[env]["base_url_multi_master"];
+const multi_master_authorization = {
+    headers: {Authorization: multi_master_token}
 };
 
 class acls extends baseModelbo {
@@ -18,33 +18,51 @@ class acls extends baseModelbo {
     saveAcl(req, res, next) {
         const formData = req.body;
 
-        if (!formData.name || !formData.description || !formData.default) {
+        if (!!!formData.name || !!!formData.description || !!!formData.default || !!!formData.server_uuid || !!!formData.server_id) {
             return this.sendResponseError(res, ['Error.EmptyFormData'], 0, 403);
         }
 
         axios
-            .post(`${base_url_cc_kam}api/v1/acls`, formData, call_center_authorization).then((resp) => {
-            let params = resp.data.result;
-            const acl = db.acls.build();
-            acl.name = formData.name;
-            acl.description = formData.description;
-            acl.default = formData.default;
-            acl.params = params;
-            acl.save().then(aclSaved => {
-                res.send({
-                    success: true,
-                    data: aclSaved,
-                    message: 'Domain created with success!'
+            .get(`${base_url_multi_master}api/v1/servers/${formData.server_uuid}`, multi_master_authorization).then((resp) => {
+            if (!!!resp) {
+                return res.send({
+                    success: false,
+                    message: "esl server not found"
+                })
+            }
+            const server_id = formData.server_id;
+            delete formData.server_id;
+            axios
+                .post(`${base_url_multi_master}api/v1/acls`, formData, multi_master_authorization).then((resp) => {
+                let params = resp.data.result;
+                const acl = db.acls.build();
+                acl.server_id = server_id;
+                acl.name = formData.name;
+                acl.description = formData.description;
+                acl.default = formData.default;
+                acl.params = params;
+                acl.save().then(aclSaved => {
+                    res.send({
+                        success: true,
+                        data: aclSaved,
+                        message: 'Acl created with success!'
+                    });
+                }).catch((error) => {
+                    return this.sendResponseError(res, ['Error.AnErrorHasOccurredSaveAcl'], 1, 403);
                 });
-            }).catch((error) => {
-                return this.sendResponseError(res, ['Error.AnErrorHasOccurredSaveAcl'], 1, 403);
-            });
+            }).catch((err) => {
+                res.send({
+                    success: false,
+                    message: err.response.data.errors || 'Failed Try again'
+                })
+            })
         }).catch((err) => {
             res.send({
                 success: false,
-                message: err.response.data.errors
+                message: err.response.data.errors || 'Failed Try again'
             })
         })
+
 
     }
 
@@ -69,37 +87,49 @@ class acls extends baseModelbo {
                     return this.sendResponseError(res, ['Error.uuidNotFound'], 1, 403);
                 }
                 axios
-                    .get(`${base_url_cc_kam}api/v1/acls/${uuid}`, call_center_authorization).then((resp) => {
-                    let dataToUpdate = data;
-                    dataToUpdate.updated_at = new Date();
-                    axios
-                        .put(`${base_url_cc_kam}api/v1/acls/${uuid}`, dataToUpdate, call_center_authorization).then((resp) => {
-                        this.db.acls.update(dataToUpdate, {
-                            where: {
-                                acl_id: acl_id,
-                                active: 'Y'
-                            }
-                        }).then(result => {
-                            res.send({
-                                success: true
-                            })
-                        }).catch(err => {
-                            return this.sendResponseError(res, ['Error', err], 1, 403);
-                        })
-                    }).catch((err) => {
-                        res.send({
+                    .get(`${base_url_multi_master}api/v1/servers/${data.server_uuid}`, multi_master_authorization).then((resp) => {
+                    if (!!!resp) {
+                        return res.send({
                             success: false,
-                            message: err.response.data.errors
+                            message: "esl server not found"
                         })
-                    })
+                    }
+                    axios
+                        .get(`${base_url_multi_master}api/v1/acls/${uuid}`, multi_master_authorization).then((resp) => {
+                        let dataToUpdate = data;
+                        dataToUpdate.updated_at = new Date();
+                        axios
+                            .put(`${base_url_multi_master}api/v1/acls/${uuid}`, dataToUpdate, multi_master_authorization).then((resp) => {
+                            this.db.acls.update(dataToUpdate, {
+                                where: {
+                                    acl_id: acl_id,
+                                    active: 'Y'
+                                }
+                            }).then(result => {
+                                res.send({
+                                    success: true
+                                })
+                            }).catch(err => {
+                                return this.sendResponseError(res, ['Error', err], 1, 403);
+                            })
+                        }).catch((err) => {
+                            res.send({
+                                success: false,
+                                message: err.response.data.errors
+                            })
+                        })
 
-                }).catch((err) => {
-                    return this.sendResponseError(res, ['Error.uuidNotFoundCannotUpdateAcl'], 1, 403);
+                    }).catch((err) => {
+                        return this.sendResponseError(res, ['Error.uuidNotFoundCannotUpdateAcl'], 1, 403);
+                    })
+                }).catch(err => {
+                    return this.sendResponseError(res, ['Error.Cannot findServer_esl'], 1, 403);
                 })
             }).catch(err => {
-                res.status(500).json(err)
-            }
-        )
+            return this.sendResponseError(res, ['Error.cannotGetACL DB'], 1, 403);
+        })
+
+
     }
 
     deleteAcl(req, res, next) {
@@ -121,7 +151,7 @@ class acls extends baseModelbo {
                     return this.sendResponseError(res, ['Error.uuidNotFound'], 1, 403);
                 }
                 axios
-                    .delete(`${base_url_cc_kam}api/v1/acls/${uuid}`, call_center_authorization).then((resp) => {
+                    .delete(`${base_url_multi_master}api/v1/acls/${uuid}`, multi_master_authorization).then((resp) => {
                     let toUpdate = {
                         updated_at: new Date(),
                         active: 'N'

@@ -579,10 +579,8 @@ class message_channelDao extends baseModelbo {
                                 }
                             })
                             .then(count_total => {
-                                console.log("hey,", count_total)
                                 let has_no_readed_msgs = false;
                                 this.AllMessage(messages, has_no_readed_msgs, message_channel_id, user_id, count_total).then(all_message => {
-                                    console.log("all_message", all_message)
                                     this.checkFile(messages).then(msgFile => {
                                         if (msgFile.success) {
                                             res.send({
@@ -625,7 +623,6 @@ class message_channelDao extends baseModelbo {
             })
             if (has_no_readed_msgs) {
                 this.set_message_channel_as_read(message_channel_id, user_id).then(update_message_channel => {
-                    console.log("hey1")
                     if (update_message_channel.status === true) {
                         this._getTotalUnreadMessages(user_id).then(totalUnreadMessagesCount => {
                             this.update_user_total_messages_not_readed(user_id, totalUnreadMessagesCount.count).then(update_user_msg => {
