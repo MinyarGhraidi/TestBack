@@ -572,7 +572,6 @@ class message_channelDao extends baseModelbo {
                                 this.AllMessage(messages, has_no_readed_msgs, message_channel_id, user_id, count_total).then(all_message => {
                                         this.checkFile(messages).then(msgFile => {
                                             if (msgFile.success) {
-                                                console.log('msgFile.dataaaaaa', msgFile.data)
                                                 res.send({
                                                     data: msgFile.data,
                                                     success: true,

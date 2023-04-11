@@ -46,6 +46,7 @@ class esl_servers extends baseModelbo {
             })
 
         }).catch(err=>{
+            console.log('errr',err)
             this.sendResponseError(res,['Error.CannotAddServerTelco',err],1,403)
         })
 
