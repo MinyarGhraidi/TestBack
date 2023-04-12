@@ -7,7 +7,13 @@ const base_url_cc_kam = require(__dirname + '/../config/config.json')[env]["base
 const call_center_authorization = {
     headers: {Authorization: call_center_token}
 };
+const Op = require("sequelize/lib/operators");
 const appSocket = new (require('../providers/AppSocket'))();
+const dialer_token = require(__dirname + '/../config/config.json')[env]["dialer_token"];
+const dialer_authorization = {
+    headers: {Authorization: dialer_token}
+}
+const base_url_dailer = require(__dirname + '/../config/config.json')[env]["base_url_dailer"];
 
 class domains extends baseModelbo {
     constructor() {
@@ -93,38 +99,50 @@ class domains extends baseModelbo {
                                 where : {domain_id : domain_id, active : 'Y'}
                             }).then((acc)=> {
                                 if(!!!acc){
-                                    return this.sendResponseError(res, ['Error.AccountNotFound'], 1, 403);
+                                     return res.send({
+                                        success: true
+                                    });
                                 }
-                                this.db['users'].findAll({ where : {
-                                        account_id : acc.account_id,
-                                        active : 'Y'
-                                    }}).then((users)=>{
-                                    if(users && users.length !== 0){
-                                        users.forEach(user =>{
-                                            this.db.users.update({updated_at : new Date(), sip_device : {...user.sip_device, domain : data.domain_name}}, {where : {
-                                                    user_id : user.user_id,
-                                                    active : 'Y'
-                                                }}).then(()=>{
-                                                    if(user.params.status !== 'logged-out'){
-                                                        appSocket.emit('destroy_session', {user_id: user.user_id, logged_out: true})
-                                                    }
-                                                if (idx < users.length - 1) {
-                                                    idx++;
-                                                } else {
-                                                    return res.send({
-                                                        success: true
+                                this.updateTrunkServer_uuid(acc.account_id, data.server_uuid, uuid).then(trunck=>{
+                                    if(trunck.success){
+                                        this.db['users'].findAll({ where : {
+                                                account_id : acc.account_id,
+                                                active : 'Y'
+                                            }}).then((users)=>{
+                                            if(users && users.length !== 0){
+                                                users.forEach(user =>{
+                                                    this.db.users.update({updated_at : new Date(), sip_device : {...user.sip_device, domain : data.domain_name}}, {where : {
+                                                            user_id : user.user_id,
+                                                            active : 'Y'
+                                                        }}).then(()=>{
+                                                        if(user.params.status !== 'logged-out'){
+                                                            appSocket.emit('destroy_session', {user_id: user.user_id, logged_out: true})
+                                                        }
+                                                        if (idx < users.length - 1) {
+                                                            idx++;
+                                                        } else {
+                                                            return res.send({
+                                                                success: true
+                                                            })
+                                                        }
                                                     })
-                                                }
-                                            })
+                                                })
+                                            }else{
+                                                return res.send({
+                                                    success: true
+                                                })
+                                            }
+                                        }).catch(err => {
+                                            return this.sendResponseError(res, ['Error', err], 1, 403);
                                         })
                                     }else{
-                                        return res.send({
-                                            success: true
-                                        })
+                                        return this.sendResponseError(res, ['Error update trunck'], 1, 403);
                                     }
+
                                 }).catch(err => {
                                     return this.sendResponseError(res, ['Error', err], 1, 403);
                                 })
+
                             }).catch((err)=> {
                                 return this.sendResponseError(res, ['Error', err], 1, 403);
                             })
@@ -132,9 +150,10 @@ class domains extends baseModelbo {
                             return this.sendResponseError(res, ['Error', err], 1, 403);
                         })
                     }).catch((err) => {
+                        console.log('errr', err.response.data.errors)
                         res.send({
                             success: false,
-                            message: err.response.data.errors.domain_name[0]
+                            message: err.response.data.errors
                         })
                     })
 
@@ -188,6 +207,77 @@ class domains extends baseModelbo {
                 })
             }).catch((err) => {
             return this.sendResponseError(res, ['Error.DomainNotFound'], 1, 403);
+        })
+    }
+
+    updateTrunkServer_uuid (account_id, server_uuid, domain_uuid){
+        return new Promise((resolve, reject)=>{
+            this.db['truncks'].findAll({
+                where:{
+                    account_id: account_id,
+                    status: 'Y',
+                    active: 'Y'
+                }
+            }).then(trunck=>{
+                if(trunck && trunck.length){
+                    let index = 0
+                    trunck.forEach(item=>{
+                        let uuid= item.dataValues.gateways.callCenter.uuid;
+                        let dialer_uuid = item.dataValues.gateways.dialer.uuid
+                        let trunk_kam = {
+                            name: item.dataValues.name,
+                            codec_prefs: item.dataValues.codec_prefs,
+                            channels: item.dataValues.channels,
+                            proxy: item.dataValues.proxy,
+                            type: item.dataValues.type,
+                            register: item.dataValues.register,
+                            accountcode: item.dataValues.gateways.dialer.accountcode,
+                            trunck_id: item.dataValues.trunck_id,
+                            updated_at: item.dataValues.updated_at,
+                            domain_uuid: domain_uuid,
+                            server_uuid: server_uuid,
+                            username: null,
+                            password: null
+                        }
+                        let data_db =item.dataValues;
+                        data_db.gateways.callCenter.server_uuid = server_uuid
+                        axios
+                            .put(`${base_url_cc_kam}api/v1/gateways/${uuid}`, trunk_kam, call_center_authorization)
+                            .then((resp) => {
+                                axios
+                                    .put(`${base_url_dailer}api/v1/dialer/gateways/${dialer_uuid}`, trunk_kam, dialer_authorization)
+                                    .then(dialer_obj => {
+                                        this.db['truncks'].update(data_db, {where: {trunck_id: trunk_kam.trunck_id}})
+                                            .then(trunk => {
+                                                if(index< trunck.length -1){
+                                                    index++
+                                                }else{
+                                                    resolve({
+                                                        success: true
+                                                    })
+                                                }
+                                            })
+                                    })
+                                    .catch(err=>{
+                                        reject(err)
+                                    })
+                                    .catch(err=>{
+                                        reject(err)
+                                    })
+                            })
+                            .catch(err=>{
+                                reject(err)
+                            })
+                    })
+
+                }else{
+                    resolve({
+                        success: true
+                    })
+                }
+            }).catch(err=>{
+                reject(err)
+            })
         })
     }
 }

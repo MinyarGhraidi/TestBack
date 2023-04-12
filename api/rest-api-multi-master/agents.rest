@@ -16,18 +16,18 @@ Content-Type: application/json
 Authorization: Bearer BomjNx8kFfZTdCFx4kH3hGECO78yS0C0KS7pgO0BUe8COxcved
 
 {
-    "name": "Anis",
-	"domain_uuid": "98d96541-19e5-4e50-8406-76ba8ee8bbf4",
-    "subscriber_uuid": "98d97201-4f74-443e-9e7f-c605c5282308",
-    "options": {
-        "call_timeout": 60,
-        "max_no_answer": 0,
-        "wrap_up_time": 10,
-        "reject_delay_time": 90,
-        "busy_delay_time": 90,
-        "no_answer_delay_time": 20
-    },
-    "queues": []
+  "name": "oxilog demo",
+  "domain_uuid": "98e7cc69-7dfe-494c-85bb-2282609083a6",
+  "subscriber_uuid": "98e7ea1d-80a1-4535-960e-6090a1cc30ff",
+  "options": {
+    "call_timeout": 30,
+    "max_no_answer": 0,
+    "wrap_up_time": 2,
+    "reject_delay_time": 2,
+    "busy_delay_time": 2,
+    "no_answer_delay_time": 20
+  },
+  "status": "logged-out"
 }
 
 ###
