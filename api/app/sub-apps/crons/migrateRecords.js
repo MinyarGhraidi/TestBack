@@ -4,7 +4,8 @@ const db = require("../../models");
 const moment = require("moment");
 const dbcdr = require("../../models/acc_cdrs/models");
 const { exec } = require("child_process");
-
+const env = process.env.NODE_ENV || 'development';
+const callCenterCrdt = require(__dirname + '/../config/config.json')[env]["callCenterCrdt"];
 
 class MigrateRecords extends baseModelbo {
     migrateRecords() {
@@ -24,12 +25,7 @@ class MigrateRecords extends baseModelbo {
                 }
             }).then(datacdrRecords => {
                 let PromiseDownload = new Promise((resolve, reject) => {
-                    Client({
-                        host: '5.135.68.123',
-                        port: 22,
-                        username: 'root',
-                        password: 'Oxilog2020.',
-                    }).then(client => {
+                    Client(callCenterCrdt).then(client => {
                         let index = 0
                         datacdrRecords.forEach((item_cdr, i) => {
                             client.downloadFile(
