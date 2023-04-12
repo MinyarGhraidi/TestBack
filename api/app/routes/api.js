@@ -389,6 +389,7 @@ let apiRouters = function (passport) {
 //-----------------------> ESL SERVERS API  addEslServer
     router.post('/api/esl_server/save',passport.authenticate('jwt', {session: false}), EslServersController.addEslServer);
     router.post('/api/esl_server/find',passport.authenticate('jwt', {session: false}), EslServersController.find);
+    router.post('/api/esl_server/changeStatusServer',passport.authenticate('jwt', {session: false}), EslServersController.changeStatusServer);
     router.get('/api/esl_server/findById/:entity_id', passport.authenticate('jwt', {session: false}), EslServersController.findById);
     router.put('/api/esl_server/update',passport.authenticate('jwt', {session: false}), EslServersController.editEslServer);
     router.delete('/api/esl_server/delete/:esl_server_id',passport.authenticate('jwt', {session: false}), EslServersController.deleteEslServer);

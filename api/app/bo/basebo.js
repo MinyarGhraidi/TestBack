@@ -869,6 +869,28 @@ class baseModelbo {
             }).catch((err)=>reject(err))
         })
     }
+
+    _changeStatusTelco(status, TelcoName, TelcoUUID) {
+        return new Promise((resolve, reject) => {
+            axios
+                .get(`${base_url_cc_kam}api/v1/${TelcoName}/${TelcoUUID}`, call_center_authorization).then((resp) => {
+                let TelcoData = resp.data.result;
+                if (!!!TelcoData) {
+                    reject(TelcoName + 'NotFound')
+                }
+                let newTelcoData ;
+                if(TelcoName === 'acls'){
+                    newTelcoData = {...TelcoData,default: status === 'Y' ? 'allow' : 'deny', updated_at : moment(new Date())};
+                }else{
+                    newTelcoData = {...TelcoData,enabled: status === 'Y'};
+                }
+                axios
+                    .put(`${base_url_cc_kam}api/v1/${TelcoName}/${TelcoUUID}`, newTelcoData, call_center_authorization).then((resp_update) => {
+                    resolve(resp_update.data.result)
+                }).catch(err => reject(err))
+            }).catch(err => reject(err))
+        })
+    }
 }
 
 

@@ -75,7 +75,6 @@ class accounts extends baseModelbo {
                 }
             }).then(users => {
                 if (users && users.length !== 0) {
-                    let users_ids = users.map((item) => item.user_id);
                     let updateTo = {}
                     if (status === 'Y') {
                         updateTo = {status: status, updated_at: moment(new Date())}
@@ -94,18 +93,20 @@ class accounts extends baseModelbo {
                         }
                     })
                         .then(() => {
-                            if (status === 'N') {
-                                users_ids.forEach(_user_id => {
-                                    appSocket.emit('reload.Permission', {user_id: _user_id});
-                                    if (indexUser < users_ids.length - 1) {
-                                        indexUser++;
-                                    } else {
-                                        return resolve(true);
+                                users.forEach(user => {
+                                    if(status === 'N'){
+                                        appSocket.emit('reload.Permission', {user_id: user.user_id});
                                     }
+                                    this._changeStatusTelco(status,'agents',user.sip_device.uuid).then(dataAgentTelco => {
+                                        this._changeStatusTelco(status,'subscribers',dataAgentTelco.subscriber_uuid).then(() => {
+                                            if (indexUser < users.length - 1) {
+                                                indexUser++;
+                                            } else {
+                                                return resolve(true);
+                                            }
+                                        }).catch(err => reject(err))
+                                    }).catch(err => reject(err))
                                 })
-                            } else {
-                                return resolve(true)
-                            }
                         }).catch(err => {
                         return reject(err);
                     });
@@ -141,25 +142,77 @@ class accounts extends baseModelbo {
         })
     }
 
+    changeStatusCampaignQueueTelco(account_id,status){
+        return new Promise((resolve,reject)=> {
+            let idx = 0;
+            this.db['campaigns'].find({where : {account_id : account_id , active  :'Y'}}).then(campaigns => {
+                if(!!!campaigns || campaigns.length === 0){
+                    return resolve(true)
+                }
+                campaigns.forEach(camp => {
+                    this._changeStatusTelco(status,'queues',camp.params.queue.uuid).then(()=>{
+                        if (idx < camp.length - 1) {
+                            idx++
+                        } else {
+                            this.db['campaigns'].update({status : status, updated_at : moment(new Date())},{where: {account_id : account_id , active  :'Y'}}).then(()=> {
+                                resolve(true)
+                            }).catch(err => reject(err))
+                        }
+                    }).catch(err => reject(err))
+                })
+            }).catch(err => reject(err))
+        })
+    }
+    changeStatusTrunkGatewayTelco(account_id,status){
+        return new Promise((resolve,reject)=> {
+            let idx = 0;
+            this.db['truncks'].find({where : {account_id : account_id , active  :'Y'}}).then(truncks => {
+                if(!!!truncks || truncks.length === 0){
+                    return resolve(true)
+                }
+                truncks.forEach(trunck => {
+                    this._changeStatusTelco(status,'gateways',trunck.gateways.callCenter.uuid).then(()=>{
+                        if (idx < truncks.length - 1) {
+                            idx++
+                        } else {
+                            this.db['truncks'].update({status : status, updated_at : moment(new Date())},{where: {account_id : account_id , active  :'Y'}}).then(()=> {
+                                resolve(true)
+                            }).catch(err => reject(err))
+                        }
+                    }).catch(err => reject(err))
+                })
+            }).catch(err => reject(err))
+        })
+    }
     changeStatus(account_id, status) {
 
         return new Promise((resolve, reject) => {
             const entities = [
-                'didsgroups', 'truncks', 'roles', 'templates_list_call_files', 'dialplan_items', 'accounts'
+                'didsgroups', 'roles', 'templates_list_call_files', 'dialplan_items', 'accounts'
             ]
-            this.changeStatusForEntities(entities, account_id, status).then(() => {
-                this.changeStatus_dids(account_id, status).then(() => {
-                    this.changeStatusUsersAndDestroySession(account_id, status).then(() => {
-                        resolve(true);
+            this.changeStatusCampaignQueueTelco(account_id,status).then(()=> {
+                this.changeStatusTrunkGatewayTelco(account_id,status).then(()=> {
+                    this.changeStatusForEntities(entities, account_id, status).then(() => {
+                        this.changeStatus_dids(account_id, status).then(() => {
+                            this.changeStatusUsersAndDestroySession(account_id, status).then(() => {
+                                resolve(true);
+                            }).catch(err => {
+                                return reject(err)
+                            })
+                        }).catch(err => {
+                            return reject(err);
+                        });
                     }).catch(err => {
-                        return reject(err)
-                    })
+                        return reject(err);
+                    });
                 }).catch(err => {
-                    return reject(err);
-                });
+                    return reject(err)
+                })
             }).catch(err => {
-                return reject(err);
-            });
+                return reject(err)
+            })
+
+
 
 
         })
@@ -748,7 +801,7 @@ class accounts extends baseModelbo {
     getUnaffectedDomains() {
         return new Promise((resolve, reject) => {
             this.db.domains.findAll({
-                where: {active: 'Y'}
+                where: {active: 'Y', status : 'Y'}
             }).then((domains) => {
                 if (!!!domains) {
                     resolve({
@@ -757,7 +810,7 @@ class accounts extends baseModelbo {
                     });
                 }
                 this.db['accounts'].findAll({
-                    where: {active: 'Y', domain_id: {[Op.not]: null}}
+                    where: {active: 'Y', status : 'Y', domain_id: {[Op.not]: null}}
                 }).then((users) => {
                     if (!!!users) {
                         resolve({

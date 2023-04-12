@@ -17,5 +17,8 @@ module.exports = {
     deleteEslServer : function (req, res, next) {
         _serverDAO.deleteEslServer(req, res, next)
     },
+    changeStatusServer : function (req, res, next) {
+        _serverDAO.changeStatusServer(req, res, next)
+    },
 
 }

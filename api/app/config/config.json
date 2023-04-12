@@ -95,9 +95,9 @@
         }
       },
       "cdr-db": {
-        "host": "92.222.227.221",
+        "host": "92.222.147.156",
         "username": "postgres",
-        "password": "postgres",
+        "password": "Oxilog2020.",
         "database": "cdr",
         "port": 5432,
         "dialect": "postgres",
