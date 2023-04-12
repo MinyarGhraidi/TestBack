@@ -150,7 +150,6 @@ class domains extends baseModelbo {
                             return this.sendResponseError(res, ['Error', err], 1, 403);
                         })
                     }).catch((err) => {
-                        console.log('errr', err.response.data.errors)
                         res.send({
                             success: false,
                             message: err.response.data.errors

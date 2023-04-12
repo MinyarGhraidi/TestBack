@@ -2,7 +2,6 @@ const {baseModelbo} = require("./basebo");
 const {default: axios} = require("axios");
 const moment = require("moment");
 const env = process.env.NODE_ENV || 'development';
-
 const call_center_token = require(__dirname + '/../config/config.json')[env]["call_center_token"];
 const base_url_cc_kam = require(__dirname + '/../config/config.json')[env]["base_url_cc_kam"];
 const call_center_authorization = {
@@ -47,7 +46,6 @@ class esl_servers extends baseModelbo {
             })
 
         }).catch(err=>{
-            console.log('errr',err.response.data.errors)
             this.sendResponseError(res,['Error.CannotAddServerTelco',err],1,403)
         })
 

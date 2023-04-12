@@ -5,7 +5,7 @@ const moment = require("moment");
 const dbcdr = require("../../models/acc_cdrs/models");
 const { exec } = require("child_process");
 const env = process.env.NODE_ENV || 'development';
-const callCenterCrdt = require(__dirname + '/../config/config.json')[env]["callCenterCrdt"];
+const callCenterCrdt = require(__dirname + '/../../config/config.json')[env]["callCenterCrdt"];
 
 class MigrateRecords extends baseModelbo {
     migrateRecords() {
