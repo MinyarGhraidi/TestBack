@@ -101,6 +101,7 @@ class acls extends baseModelbo {
                         dataToUpdate.updated_at = new Date();
                         axios
                             .put(`${base_url_cc_kam}api/v1/acls/${uuid}`, dataToUpdate, call_center_authorization).then((resp) => {
+                            dataToUpdate.params = resp.data.result;
                             this.db.acls.update(dataToUpdate, {
                                 where: {
                                     acl_id: acl_id,

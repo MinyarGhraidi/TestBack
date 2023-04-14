@@ -788,6 +788,7 @@ class accounts extends baseModelbo {
                     return _this.sendResponseError(res, ['Error.CannotDeleteCampaigns', err], 1, 403);
                 })
             }).catch((err) => {
+                console.log(err)
                 return _this.sendResponseError(res, ['Error.CannotDeleteTrunks', err], 1, 403);
             })
 
@@ -1159,7 +1160,6 @@ class accounts extends baseModelbo {
                             options,
                             status
                         };
-                        console.log('agenttttttt', data_agent)
                         axios
                             .post(`${base_url_cc_kam}api/v1/agents`, data_agent, call_center_authorization)
                             .then((resp) => {
@@ -1171,7 +1171,6 @@ class accounts extends baseModelbo {
                                     uuid_agent: resultAgent.uuid
                                 })
                             }).catch(err => {
-                            console.log('errrrrr', err)
                             this.deleteSubScriberOrAgentByUUID(result.uuid, null).then(() => {
                                 resolve({
                                     success: false,
