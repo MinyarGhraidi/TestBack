@@ -46,5 +46,8 @@ module.exports = {
     switchCampaignAgent: function (req, res, next) {
         _itembo.switchCampaignAgent(req, res, next)
     },
+    clearCallsCampaign: function (req, res, next) {
+        _itembo.clearCallsCampaign(req, res, next)
+    },
 
 };

@@ -195,6 +195,7 @@ class campaigns extends baseModelbo {
                 return _this.sendResponseError(res, ['Cannot delete Campaign', err], 1, 403);
             });
     }
+
     deleteCampaignFunc(uuid, campaign_id) {
         let _this = this;
         return new Promise((resolve, reject) => {
@@ -251,6 +252,7 @@ class campaigns extends baseModelbo {
                 })
         })
     }
+
     dissociateAgent(agents) {
         return new Promise((resolve, reject) => {
             if (agents && agents.length !== 0) {
@@ -266,6 +268,7 @@ class campaigns extends baseModelbo {
             }
         })
     }
+
     deleteCampaignFiles(campaign_id) {
         return new Promise((resolve, reject) => {
             this.db['listcallfiles']
@@ -1226,6 +1229,25 @@ class campaigns extends baseModelbo {
                     })
             } while (condition)
         })
+    }
+
+
+    clearCallsCampaign(req, res, next) {
+        let {queue_uuid} = req.body
+        if (!!!queue_uuid) {
+            return this.sendResponseError(res, ['QueueUUID_IsRequired'], 0, 403)
+        }
+        axios
+            .get(`${base_url_cc_kam}api/v1/queues/${queue_uuid}/clear`, call_center_authorization)
+            .then(() => {
+                return res.json({
+                    success: true,
+                    status: 200
+                })
+            })
+            .catch((err) => {
+                return this.sendResponseError(res, ['CannotClearCallsCampaign', err], 1, 403)
+            });
     }
 
 

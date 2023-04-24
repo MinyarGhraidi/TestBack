@@ -788,10 +788,8 @@ class accounts extends baseModelbo {
                     return _this.sendResponseError(res, ['Error.CannotDeleteCampaigns', err], 1, 403);
                 })
             }).catch((err) => {
-                console.log(err)
                 return _this.sendResponseError(res, ['Error.CannotDeleteTrunks', err], 1, 403);
             })
-
         }).catch((err) => {
             return _this.sendResponseError(res, ['Error.CannotGetUsersByAccount_id', err], 1, 403);
         });
