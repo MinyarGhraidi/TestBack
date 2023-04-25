@@ -18,7 +18,7 @@ class AccBo extends baseModelbo {
             const limit = parseInt(params.limit) > 0 ? params.limit : 1000;
             const page = params.page || 1;
             const offset = (limit * (page - 1));
-            let {date, directions, startTime, endTime, sipCode, reasonCode, ip, from, to, account_code} = filter;
+            let {date, directions, startTime, endTime, reasonCode, ip, from, to, account_code} = filter;
             let sqlCount = `select FILTER
                             from acc_cdrs
                             WHERE SUBSTRING("custom_vars", 0 , POSITION(':' in "custom_vars") ) = :account_code
@@ -27,16 +27,13 @@ class AccBo extends baseModelbo {
             let filter_count = ' count(*) ';
             let extra_where_count = '';
             if (startTime && startTime !== '') {
-                extra_where_count += ' AND start_time >= :start_time';
+                extra_where_count += ' AND start_time BETWEEN :start_time and :end_time ';
             }
             if (endTime && endTime !== '') {
-                extra_where_count += ' AND end_time <=  :end_time';
-            }
-            if (sipCode && sipCode !== '') {
-                extra_where_count += ' AND sip_code = :sip_code';
+                extra_where_count += ' AND end_time BETWEEN :start_time and :end_time';
             }
             if (reasonCode && reasonCode !== '') {
-                extra_where_count += ' AND sip_reason = :sip_reason';
+                extra_where_count += ' AND sip_reason_crm = :sip_reason';
             }
             if (directions && directions.length !== 0) {
                 extra_where_count += ' AND calldirection in (:directions)';
@@ -62,7 +59,6 @@ class AccBo extends baseModelbo {
                     offset: offset,
                     start_time: moment(date).format('YYYY-MM-DD').concat(' ', startTime),
                     end_time: moment(date).format('YYYY-MM-DD').concat(' ', endTime),
-                    sip_code: sipCode,
                     sip_reason: reasonCode,
                     directions: directions,
                     account_code: account_code,
@@ -89,7 +85,6 @@ class AccBo extends baseModelbo {
                         offset: offset,
                         start_time: moment(date).format('YYYY-MM-DD').concat(' ', startTime),
                         end_time: moment(date).format('YYYY-MM-DD').concat(' ', endTime),
-                        sip_code: sipCode,
                         sip_reason: reasonCode,
                         directions: directions,
                         account_code: account_code,
@@ -173,9 +168,9 @@ class AccBo extends baseModelbo {
         let date = req.body.date;
         let startTime = moment(date).format('YYYY-MM-DD').concat(' ', req.body.startTime);
         let endTime = moment(date).format('YYYY-MM-DD').concat(' ', req.body.endTime);
-        let sqlSipCode = `select distinct  sip_reason
+        let sqlSipCode = `select distinct  sip_reason_crm
                           from acc_cdrs
-                          where  sip_reason notnull  and sip_reason != '' and start_time >= :start_time and end_time <=  :end_time`;
+                          where sip_reason_crm notnull  and sip_reason_crm != '' and start_time BETWEEN  :start_time and :end_time`;
         db.sequelize["cdr-db"]
             .query(sqlSipCode, {
                 type: db.sequelize["cdr-db"].QueryTypes.SELECT,
