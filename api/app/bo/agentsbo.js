@@ -960,36 +960,46 @@ class agents extends baseModelbo {
         })
     }
 
-    logoutAgent(req,res,next){
-        let {user_id} = req.body;
-        this.db['users'].findOne({where: {user_id: user_id}}).then((user) => {
-            if (user && Object.keys(user) && Object.keys(user).length !== 0) {
-                this.db['users'].update({
-                    current_session_token: null,
-                    updated_at: moment(new Date())
-                }, {where: {user_id: user_id}}).then(() => {
-                    this.onConnectFunc(user.user_id, user.sip_device.uuid, 'logged-out', 'logged-out').then(()=>{
-                        appSocket.emit('reload.Permission', {
-                            user_id: user.user_id
-                        });
-                        res.send({
-                            status : 200,
-                            success : true
+    _logoutAgent(user_id){
+        return new Promise((resolve,reject) => {
+            if(!!!user_id){
+                return reject('user not found !')
+            }
+            this.db['users'].findOne({where: {user_id: user_id}}).then((user) => {
+                if (user && Object.keys(user) && Object.keys(user).length !== 0) {
+                    this.db['users'].update({
+                        current_session_token: null,
+                        updated_at: moment(new Date())
+                    }, {where: {user_id: user_id}}).then(() => {
+                        this.onConnectFunc(user.user_id, user.sip_device.uuid, 'logged-out', 'logged-out').then(()=>{
+                            appSocket.emit('reload.Permission', {
+                                user_id: user.user_id
+                            });
+                            return resolve({
+                                status : 200,
+                                success : true
+                            })
+                        }).catch((err)=> {
+                            reject('cannotChangeStatusAgentToLoggedOut',err)
                         })
                     }).catch((err)=> {
-                        this.sendResponseError(res,['cannotChangeStatusAgentToLoggedOut',err],1,403)
+                        reject('cannotUpdateAgent',err)
                     })
-                }).catch((err)=> {
-                    this.sendResponseError(res,['cannotUpdateAgent',err],1,403)
-                })
-            }else{
-                this.sendResponseError(res,['AgentNotFound'],1,403)
-            }
-        }).catch((err)=> {
-            this.sendResponseError(res,['AgentNotFound',err],1,403)
+                }else{
+                    reject('AgentNotFound')
+                }
+            }).catch((err)=> {
+                reject('AgentNotFound',err)
+            })
         })
-
-
+    }
+    logoutAgent(req,res,next){
+        let {user_id} = req.body;
+        this._logoutAgent(user_id).then(data => {
+            res.json(data)
+        }).catch(err => {
+            this.sendResponseError(res,['Error.',err],0,403)
+        })
     }
     //---------------> Report <---------------------
 
