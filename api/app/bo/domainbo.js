@@ -89,6 +89,7 @@ class domains extends baseModelbo {
                     }
                     axios
                         .put(`${base_url_cc_kam}api/v1/domains/${uuid}`, dataToUpdate, call_center_authorization).then((resp) => {
+                        dataToUpdate.params = resp.data.result;
                         this.db.domains.update(dataToUpdate, {
                             where: {
                                 domain_id: domain_id,
@@ -244,7 +245,7 @@ class domains extends baseModelbo {
                             .put(`${base_url_cc_kam}api/v1/gateways/${uuid}`, trunk_kam, call_center_authorization)
                             .then((resp) => {
                                 axios
-                                    .put(`${base_url_dailer}api/v1/dialer/gateways/${dialer_uuid}`, trunk_kam, dialer_authorization)
+                                    .put(`${base_url_dailer}api/v1/gateways/${dialer_uuid}`, trunk_kam, dialer_authorization)
                                     .then(dialer_obj => {
                                         this.db['truncks'].update(data_db, {where: {trunck_id: trunk_kam.trunck_id}})
                                             .then(trunk => {

@@ -1,0 +1,50 @@
+###
+# GET ALL GATEWAYS
+
+GET http://92.222.147.159:8091/api/v1/dialer/gateways
+Content-Type: application/json
+Authorization: Bearer LucH6JQhHjpXVhP8K6buVmGFrrYrQ9jR56Zx5Ftcq2X93fXcxRfFwrQU2Ka7J8Mr
+
+###
+# CREATE NEW GATEWAY
+
+POST http://92.222.147.159:8091/api/v1/dialer/gateways
+Content-Type: application/json
+Authorization: Bearer LucH6JQhHjpXVhP8K6buVmGFrrYrQ9jR56Zx5Ftcq2X93fXcxRfFwrQU2Ka7J8Mr
+
+{
+  "accountcode": "394234380473",
+  "name": "trucktesst",
+  "username": "",
+  "password": "",
+  "realm": "",
+  "proxy": "51.89.255.200",
+  "outbound_proxy": "",
+  "register": false,
+  "register_proxy": "",
+  "register_transport": "udp",
+  "expire_seconds": 900,
+  "retry_seconds": 90,
+  "distinct_to": false,
+  "auth_username": "",
+  "from_user": "",
+  "from_domain": "",
+  "caller_id_in_from": true,
+  "extension": "",
+  "extension_in_contact": false,
+  "contact_params": "",
+  "ping": 0,
+  "supress_cng": false,
+  "sip_cid_type": "none",
+  "codec_prefs": "PCMA",
+  "channels": 1000,
+  "enabled": true
+}
+###
+
+# DELETE GATEWAY BY UUID
+DELETE http://92.222.147.159:8091/api/v1/dialer/gateways/5583c012-c558-4d38-8c36-a30b671dfb06
+Content-Type: application/json
+Authorization: Bearer LucH6JQhHjpXVhP8K6buVmGFrrYrQ9jR56Zx5Ftcq2X93fXcxRfFwrQU2Ka7J8Mr
+
+

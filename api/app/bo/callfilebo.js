@@ -1084,7 +1084,6 @@ class callfiles extends baseModelbo {
                     "callerIdNumber": "33980762256",
                     "serverUuid": server_uuid
                 }
-                console.log('objjjj', obj)
                 axios.post(`${base_url_cc_kam}api/v1/commands/eavesdrop`,obj,call_center_authorization).then(result=>{
                     if(result.data && result.data.status === 'success'){
                         res.send({
@@ -1097,7 +1096,6 @@ class callfiles extends baseModelbo {
                     }
 
                 }).catch(err=>{
-                    console.log('errrr', err.response.data.errors)
                     return this.sendResponseError(res, ['Error.eavesdrop', err], 1, 403);
                 })
 
