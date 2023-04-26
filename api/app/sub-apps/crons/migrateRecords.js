@@ -35,36 +35,43 @@ class MigrateRecords extends baseModelbo {
                                 .then(response => {
                                     let cmd_ffmpeg = ' ffmpeg -i /var/www/crm/crm-backend/api/app/recordings/' + item_cdr.memberUUID + '.wav -vn -ar 44100 -ac 2 -b:a 192k ' + '/var/www/crm/crm-backend/api/app/recordings/' + item_cdr.memberUUID + '.mp3'
                                     exec(cmd_ffmpeg, (error, stdout, stderr) => {
-                                        dbcdr['acc_cdrs'].update({is_treated: 'Y'}, {
-                                            where: {
-                                                id: item_cdr.id
-                                            }
-                                        }).then(call_updated => {
-                                            this.db["calls_historys"].update({record_url: 'https://crm-back-demo.oxilog.net/api/callHistory/play/'+item_cdr.memberUUID}, {
-                                                where: {
-                                                    uuid: item_cdr.memberUUID,
-                                                    active: 'Y'
-                                                }
-                                            })
-                                                .then(() => {
-                                                    let cmd_delete = 'rm -rf ' +'/var/www/crm/crm-backend/api/app/recordings/' + item_cdr.memberUUID + '.wav'
-                                                    exec(cmd_delete, (error, stdout, stderr) => {
-                                                        if (index <= datacdrRecords.length - 1) {
-                                                            index++
-                                                        } else {
-                                                            resolve(true)
-                                                        }
-                                                    })
+                                        let SqlUpdateTreated = ` update acc_cdrs
+                                                                    set is_treated= 'Y'
+                                                                   where is_treated = 'N'
+                                                                     id = item_cdr.id `
+                                        db.sequelize['cdr-db'].query(SqlUpdateTreated, {
+                                            type: db.sequelize['cdr-db'].QueryTypes.SELECT,
+                                        }).then(updateCdr => {
+                                                this.db["calls_historys"].update({record_url: 'https://crm-back-demo.oxilog.net/api/callHistory/play/' + item_cdr.memberUUID}, {
+                                                    where: {
+                                                        uuid: item_cdr.memberUUID,
+                                                        active: 'Y'
+                                                    }
                                                 })
-                                        }).catch(err => {
-                                            console.log(err)
-                                        })
-                                    });
+                                                    .then(() => {
+                                                        let cmd_delete = 'rm -rf ' + '/var/www/crm/crm-backend/api/app/recordings/' + item_cdr.memberUUID + '.wav'
+                                                        exec(cmd_delete, (error, stdout, stderr) => {
+                                                            if (index <= datacdrRecords.length - 1) {
+                                                                index++
+                                                            } else {
+                                                                resolve(true)
+                                                            }
+                                                        })
+                                                    }).catch(error => {
+                                                    console.log(error)
+                                                })
 
-                                })
-                                .catch(error => {
-                                    console.log(error)
-                                })
+                                        }).catch(error => {
+                                            console.log(error)
+                                        });
+
+                                    })
+                                        .catch(error => {
+                                            console.log(error)
+                                        })
+                                })  .catch(error => {
+                                console.log(error)
+                            })
                         })
                     }).catch(e => console.log(e))
                 })
