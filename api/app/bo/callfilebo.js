@@ -120,7 +120,7 @@ class callfiles extends baseModelbo {
             phone_number,
         } = data.filter;
         let sqlListCallFiles = `select listcallfile_id from listcallfiles
-                                       where EXTRA_WHERE and active = 'Y' and status = 'Y'`
+                                       where EXTRA_WHERE and active = 'Y' `
 
         let sqlLeads = `Select distinct callF.*, calls_h.finished_at
                         from callfiles as callF
