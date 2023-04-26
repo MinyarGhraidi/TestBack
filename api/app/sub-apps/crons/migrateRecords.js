@@ -37,10 +37,13 @@ class MigrateRecords extends baseModelbo {
                                     exec(cmd_ffmpeg, (error, stdout, stderr) => {
                                         let SqlUpdateTreated = ` update acc_cdrs
                                                                     set is_treated= 'Y'
-                                                                   where is_treated = 'N'
-                                                                     id = item_cdr.id `
+                                                                   where
+                                                                     id = :id `
                                         db.sequelize['cdr-db'].query(SqlUpdateTreated, {
                                             type: db.sequelize['cdr-db'].QueryTypes.SELECT,
+                                            replacements: {
+                                                id: item_cdr.id
+                                            }
                                         }).then(updateCdr => {
                                                 this.db["calls_historys"].update({record_url: 'https://crm-back-demo.oxilog.net/api/callHistory/play/' + item_cdr.memberUUID}, {
                                                     where: {
