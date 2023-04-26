@@ -20,6 +20,7 @@ class AddCallFile extends baseModelbo {
             }).catch(err => reject(err))
         })
     }
+
     getCallFiles = (file_id) => {
         return new Promise((resolve, reject) => {
             let _this = this;
@@ -54,6 +55,7 @@ class AddCallFile extends baseModelbo {
             }
         })
     }
+
     getCustomFieldsAndDataMapping(listCallFileItem) {
         return new Promise((resolve, reject) => {
             let dataMapping = {}
@@ -86,6 +88,7 @@ class AddCallFile extends baseModelbo {
             }
         })
     }
+
     CallFileMapping(listCallFileID, E_File, DataMap) {
         return new Promise((resolve, reject) => {
             this.SqueletteCallFile(DataMap, E_File).then(SequeletteCF => {
@@ -100,6 +103,7 @@ class AddCallFile extends baseModelbo {
         })
 
     }
+
     SqueletteCallFile(dataMap, item_callFile) {
         return new Promise((resolve, reject) => {
             let basic_fields = [
@@ -166,6 +170,7 @@ class AddCallFile extends baseModelbo {
             });
         });
     }
+
     CallFiles_Mapping(ListCallFile, CallFiles, Phone_attribute) {
         return new Promise((resolve, reject) => {
             let idx = 0;
@@ -186,51 +191,45 @@ class AddCallFile extends baseModelbo {
                     Promise.all([PromiseInject]).then(callfilesInjected => {
                         let CFInj = callfilesInjected[0];
                         let DataCallFile = {
-                            length : 0,
-                            index : 0,
-                            deplicated : 0,
-                            status : false
+                            length: 0,
+                            index: 0,
+                            deplicated: 0,
+                            status: false
                         }
+                        const regexNumbers = /^\d+$/;
+                        const PhoneNumbers = []
+                        const E_Files = []
                         CFInj.forEach(E_File => {
-                            let PhoneNumber = E_File[Phone_attribute];
-                            if (PhoneNumber) {
-                                DataCallFile.length += 1;
-                                this.checkDuplicationListCallFile(PhoneNumber, ListCallFile).then(check_duplication => {
-                                    if (check_duplication) {
-                                        DataCallFile.status = idx === CFInj.length - 1;
-                                        DataCallFile.index += 1;
-                                        this.CallFileMapping(ListCallFile.listcallfile_id, E_File, DataMap).then(() => {
-                                            if (idx < CFInj.length - 1) {
-                                                idx++
-                                            } else {
-                                                this.updateListCallFile(ListCallFile.listcallfile_id,DataCallFile.length,DataCallFile.index, DataCallFile.deplicated).then(()=>{
-                                                    resolve(true)
-                                                }).catch(err=> reject(err))
-                                            }
-                                        }).catch(err => {
-                                            reject(err)
-                                        })
-                                    }else{
-                                        DataCallFile.deplicated += 1;
-                                        if (idx < CFInj.length - 1) {
+                            if(E_File[Phone_attribute] && regexNumbers.test(E_File[Phone_attribute].toString())){
+                                PhoneNumbers.push(E_File[Phone_attribute].toString())
+                                E_Files.push(E_File)
+                            }
+                        })
+                        this.checkDuplicationListCallFile(PhoneNumbers, ListCallFile).then(phoneNumbersToAdd => {
+                            DataCallFile.deplicated = PhoneNumbers.length - phoneNumbersToAdd.length
+                            if (phoneNumbersToAdd && phoneNumbersToAdd.length !== 0) {
+                                DataCallFile.length = phoneNumbersToAdd.length
+                                phoneNumbersToAdd.forEach(phone_number => {
+                                    DataCallFile.status = idx === E_Files.length - 1;
+                                    DataCallFile.index += 1;
+                                    let Efile = E_Files.filter(CF => CF[Phone_attribute].toString() === phone_number.toString())[0]
+                                    this.CallFileMapping(ListCallFile.listcallfile_id, Efile, DataMap).then(() => {
+                                        if (idx < E_Files.length - 1) {
                                             idx++
                                         } else {
-                                            this.updateListCallFile(ListCallFile.listcallfile_id,DataCallFile.length,DataCallFile.index, DataCallFile.deplicated).then(()=>{
-                                                resolve(true)
-                                            }).catch(err=> reject(err))
+                                            this.updateListCallFile(ListCallFile.listcallfile_id, DataCallFile.index, DataCallFile.deplicated).then(() => {
+                                                resolve({total : DataCallFile.index + DataCallFile.deplicated, deplicated : DataCallFile.deplicated, added : DataCallFile.index})
+                                            }).catch(err => reject(err))
                                         }
-                                    }
+                                    }).catch(err => {
+                                        reject(err)
+                                    })
+                                })
+                            } else {
+                                this.updateListCallFile(ListCallFile.listcallfile_id, DataCallFile.index, DataCallFile.deplicated).then(() => {
+                                    resolve({total : DataCallFile.index + DataCallFile.deplicated, deplicated : DataCallFile.deplicated, added : DataCallFile.index})
                                 }).catch(err => reject(err))
-                            }else{
-                                if (idx < CFInj.length - 1) {
-                                    idx++
-                                } else {
-                                    this.updateListCallFile(ListCallFile.listcallfile_id,DataCallFile.length,DataCallFile.index, DataCallFile.deplicated).then(()=>{
-                                        resolve(true)
-                                    }).catch(err=> reject(err))
-                                }
                             }
-
                         })
                     })
 
@@ -241,6 +240,7 @@ class AddCallFile extends baseModelbo {
             }
         })
     }
+
     saveCustomField(listCallFileID, callFile, callFileSaved) {
         return new Promise((resolve, reject) => {
             if (callFile && callFile.length !== 0) {
@@ -284,7 +284,7 @@ class AddCallFile extends baseModelbo {
                 FullCallFile.save_in_hooper = "N";
                 FullCallFile.status = "Y";
                 this.db['callfiles'].build(FullCallFile).save().then(() => {
-                        resolve(true)
+                    resolve(true)
                 }).catch(err => {
                     reject(err);
                 });
@@ -293,11 +293,12 @@ class AddCallFile extends baseModelbo {
             }
         })
     }
-    updateListCallFile(_id,nbr_callfiles, nbr_uploaded_callfiles, nbr_duplicated_callfiles){
-        return new Promise((resolve,reject)=>{
+
+    updateListCallFile(_id, nbr_uploaded_callfiles, nbr_duplicated_callfiles) {
+        return new Promise((resolve, reject) => {
             let item_toUpdate = {
                 processing_status: {
-                    "nbr_callfiles": nbr_callfiles,
+                    "nbr_callfiles": nbr_uploaded_callfiles + nbr_duplicated_callfiles,
                     "nbr_uploaded_callfiles": nbr_uploaded_callfiles,
                     "nbr_duplicated_callfiles": nbr_duplicated_callfiles
                 }
@@ -313,44 +314,8 @@ class AddCallFile extends baseModelbo {
             });
         })
     }
-    checkDuplicationListCallFile(phone_number, ListCallFile) {
-        return new Promise((resolve, reject) => {
-            let check_duplication = ListCallFile.check_duplication;
-            let campaign_id = ListCallFile.campaign_id;
-            let list_call_file_id = ListCallFile.listcallfile_id;
-            switch (check_duplication) {
-                case  0: {
-                    resolve(true)
-                    break;
-                }
-                case 1: {
-                    this.Check_in_campaign_call_files(campaign_id, phone_number, list_call_file_id).then(result => {
-                        if (result) {
-                            resolve(true)
-                        } else {
-                            resolve(false)
-                        }
-                    }).catch(err => {
-                        reject(err)
-                    })
-                    break;
-                }
-                case 2: {
-                    this.Check_in_list_call_file(list_call_file_id, phone_number).then(result => {
-                        if (result) {
-                            resolve(true)
-                        } else {
-                            resolve(false)
-                        }
-                    }).catch(err => {
-                        reject(err)
-                    })
-                    break;
-                }
-            }
-        })
-    }
-    Check_in_campaign_call_files(campaign_id, phone_number, list_call_file_id) {
+
+    _Check_in_campaign_call_files = (campaign_id, phoneNumbers, list_call_file_id) => {
         return new Promise((resolve, reject) => {
             this.db['listcallfiles'].findAll({
                 where: {
@@ -365,48 +330,85 @@ class AddCallFile extends baseModelbo {
                     list_call_files.map(item => {
                         data_id.push(item.listcallfile_id)
                     })
-                    this.db['callfiles'].findOne({
+                    this.db['callfiles'].findAll({
                         where: {
                             listcallfile_id: {[Op.in]: data_id},
-                            phone_number: phone_number.toString(),
+                            phone_number: {[Op.in]: phoneNumbers},
                             active: 'Y'
                         }
-                    }).then(call_file => {
-                        if (call_file) {
-                            resolve(false)
+                    }).then(call_files => {
+                        if (call_files && call_files.length !== 0) {
+                            const PhoneNumbersExists = call_files.map(cf => cf.phone_number);
+                            const PhoneNumbersToAdd = phoneNumbers.filter(element => !PhoneNumbersExists.includes(element));
+                            resolve(PhoneNumbersToAdd)
                         } else {
-                            resolve(true)
+                            resolve(phoneNumbers)
                         }
                     }).catch(err => {
                         reject(err)
                     })
                 } else {
-                    resolve(true)
+                    resolve(phoneNumbers)
                 }
             }).catch(err => {
                 reject(err)
             })
         })
     }
-    Check_in_list_call_file(list_call_file_id, phone_number) {
+    _Check_in_list_call_file = (list_call_file_id, phoneNumbers) => {
         return new Promise((resolve, reject) => {
             this.db['callfiles'].findOne({
                 where: {
                     listcallfile_id: list_call_file_id,
-                    phone_number: phone_number,
+                    phone_number: {[Op.in]: phoneNumbers},
                     active: 'Y'
                 }
-            }).then(call_file => {
-                if (call_file) {
-                    resolve(false)
+            }).then(call_files => {
+                if (call_files && call_files.length !== 0) {
+                    const PhoneNumbersExists = call_files.map(cf => cf.phone_number);
+                    const mergeAll = PhoneNumbersExists.concat(phoneNumbers);
+                    const set = new Set(mergeAll);
+                    const PhoneNumbersToAdd = [...set];
+                    resolve(PhoneNumbersToAdd)
                 } else {
-                    resolve(true)
+                    resolve(phoneNumbers)
                 }
             }).catch(err => {
                 reject(err)
             })
         })
     }
+
+    checkDuplicationListCallFile(phoneNumbers, ListCallFile) {
+        return new Promise((resolve, reject) => {
+            let check_duplication = ListCallFile.check_duplication;
+            let campaign_id = ListCallFile.campaign_id;
+            let list_call_file_id = ListCallFile.listcallfile_id;
+            switch (check_duplication) {
+                case  0: {
+                    resolve(phoneNumbers)
+                    break;
+                }
+                case 1: {
+                    this._Check_in_campaign_call_files(campaign_id, phoneNumbers, list_call_file_id).then(result => {
+                        resolve(result)
+                    }).catch(err => {
+                        reject(err)
+                    })
+                    break;
+                }
+                case 2: {
+                    this._Check_in_list_call_file(list_call_file_id, phoneNumbers).then(result => {
+                        resolve(result)
+                    }).catch(err => {
+                        reject(err)
+                    })
+                    break;
+                }
+            }
+        })
+    }
+
     getPhoneNumberAttribute(ListCallFile_item) {
         return new Promise((resolve, reject) => {
             if (!!!ListCallFile_item.templates_id) {
@@ -423,6 +425,7 @@ class AddCallFile extends baseModelbo {
             }
         })
     }
+
     cronListCallFiles() {
         return new Promise((resolve, reject) => {
             this.db['listcallfiles'].findAll({
@@ -433,9 +436,7 @@ class AddCallFile extends baseModelbo {
                 }
             }).then(dataListCallFiles => {
                 if (dataListCallFiles.length === 0) {
-                    resolve({
-                        message: "everything is okey !"
-                    })
+                    resolve({message: "everything is okey nothing to add !", cron : "cronListCallFiles"})
                 }
                 let Camp_ids = [];
                 let idxLCF = 0;
@@ -448,14 +449,12 @@ class AddCallFile extends baseModelbo {
                                 }
                             }
                             this.updateNumberCallFiles(data.length, ListCallFile_item.listcallfile_id).then(() => {
-                                this.CallFiles_Mapping(ListCallFile_item, data, Phone_Attribute).then(() => {
+                                this.CallFiles_Mapping(ListCallFile_item, data, Phone_Attribute).then((data) => {
                                     if (idxLCF < dataListCallFiles.length - 1) {
                                         idxLCF++;
                                     } else {
                                         appSocket.emit('refresh_list_callFiles', {campaign_ids: Camp_ids});
-                                        resolve({
-                                            message: "Done !"
-                                        })
+                                        resolve({message: `Done ! | Total : ${data.total} | Added : ${data.added} | Deplicated : ${data.deplicated}`, cron : "cronListCallFiles"})
                                     }
                                 }).catch(err => {
                                     reject(err)

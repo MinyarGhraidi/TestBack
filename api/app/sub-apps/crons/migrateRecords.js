@@ -52,7 +52,7 @@ class MigrateRecords extends baseModelbo {
                                                         if (index <= datacdrRecords.length - 1) {
                                                             index++
                                                         } else {
-                                                            resolve(true)
+                                                            resolve({cron : "migrateRecords", message : "Migration"})
                                                         }
                                                     })
                                                 })
