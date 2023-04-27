@@ -25,7 +25,7 @@ class users extends baseModelbo {
     }
 
     signIn(req, res, next) {
-        let {username, password, code, web_domain} = req.body;
+        let {username, password, web_domain, base_url, url} = req.body;
         let _this = this;
         if ((!!!username || !!!password)) {
             return this.sendResponseError(res, ['Error.RequestDataInvalid'], 0, 403);
@@ -33,6 +33,9 @@ class users extends baseModelbo {
         _this.getUserRoleInfo(username).then(data_user_info => {
             let PromiseDataUser = new Promise((resolve, reject) => {
                 if (data_user_info && data_user_info.roles_crm.value === 'superadmin') {
+                    if(url !== base_url){
+                        return this.sendResponseError(res, ['Error.InvalidWebDomainForSuperAdmin'], 2, 403);
+                    }
                     this.db['users'].findOne({
                         include: [{
                             model: db.roles_crms,
