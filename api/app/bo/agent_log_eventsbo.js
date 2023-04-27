@@ -8,17 +8,27 @@ class agent_log_events extends baseModelbo {
         this.primaryKey = 'agent_log_event_id';
     }
 
+    _getLastEvent(user_id){
+        return new Promise((resolve,reject) => {
+            this.db['agent_log_events'].findAll({where : {active: 'Y', user_id : user_id}, order: [['agent_log_event_id', 'DESC']]})
+                .then(events => {
+                    return resolve({
+                        status : 200,
+                        message : 'success',
+                        data : events[0]
+                    });
+                })
+                .catch(err => {
+                    return reject(err)
+                })
+        })
+    }
     getLastEvent(req, res, next) {
         let _this = this;
         let {user_id} = req.body;
-        this.db['agent_log_events'].findAll({where : {active: 'Y', user_id : user_id}, order: [['agent_log_event_id', 'DESC']]})
-            .then(events => {
-                res.send({
-                    status : 200,
-                    message : 'success',
-                    data : events[0]
-                });
-            })
+        this._getLastEvent(user_id).then(result => {
+            res.send(result)
+        })
             .catch(err => {
                 return _this.sendResponseError(res, ['Error.cannot Fetch data from DB', err], 1, 403);
             })
