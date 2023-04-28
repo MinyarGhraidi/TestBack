@@ -285,20 +285,21 @@ class agents extends baseModelbo {
                                     }
                                 })
                                 .catch(err => {
-                                    this.deleteSubScriberOrAgentByUUID(result.uuid,uuidAgent).then(()=>{
+                                    this.deleteSubScriberOrAgentByUUID(result.uuid, uuidAgent).then(() => {
                                         reject(err)
-                                    }).catch(()=> reject(err))
+                                    }).catch(() => reject(err))
                                 })
                         }).catch((err) => {
-                        this.deleteSubScriberOrAgentByUUID(result.uuid,null).then(()=>{
+                        this.deleteSubScriberOrAgentByUUID(result.uuid, null).then(() => {
                             reject(err)
-                        }).catch(()=> reject(err))
+                        }).catch(() => reject(err))
                     })
                 }).catch((err) => {
                 reject(err)
             })
         })
     }
+
     //---------------> Update Agent <----------------------
     updateAgent(req, res, next) {
         let _this = this;
@@ -412,8 +413,8 @@ class agents extends baseModelbo {
     deleteAgent(req, res, next) {
         let _this = this;
         let agent_id = req.body.user_id;
-        _messageDao.deleteMessageCascade([{user_id : agent_id}]).then(()=>{
-            this.deleteAgentWithSub(agent_id,true)
+        _messageDao.deleteMessageCascade([{user_id: agent_id}]).then(() => {
+            this.deleteAgentWithSub(agent_id, true)
                 .then(() => {
                     res.send({
                         succes: 200,
@@ -429,9 +430,9 @@ class agents extends baseModelbo {
 
     }
 
-    deleteAgentWithSub(user_id,isNotSuperAdmin) {
+    deleteAgentWithSub(user_id, isNotSuperAdmin) {
         return new Promise((resolve, reject) => {
-            if(isNotSuperAdmin){
+            if (isNotSuperAdmin) {
                 this.db['users'].findOne({
                     where: {
                         user_id: user_id,
@@ -488,7 +489,7 @@ class agents extends baseModelbo {
                 }).catch((err) => {
                     reject(err);
                 })
-            }else{
+            } else {
                 resolve(true)
             }
 
@@ -546,122 +547,156 @@ class agents extends baseModelbo {
         let {user_id, uuid, crmStatus, telcoStatus, pauseStatus, call_type} = req.body;
         this.onConnectFunc(user_id, uuid, crmStatus, telcoStatus, pauseStatus)
             .then((user) => {
-                let {sip_device, first_name, last_name, user_id, campaign_id, account_id} = user.agent.user;
-                let data_agent = {
-                    user_id: user_id,
-                    first_name: first_name,
-                    last_name: last_name,
-                    uuid: sip_device.uuid,
-                    crmStatus: user.agent.user.params.status,
-                    telcoStatus: sip_device.status,
-                    timerStart: sip_device.updated_at,
-                    campaign_id: campaign_id,
-                    account_id: account_id,
-                    call_type: call_type
-                };
-                appSocket.emit('agent_connection', data_agent);
-                res.send({
-                    status: 200,
-                    message: 'success'
-                })
+                if(user.success){
+                    let {sip_device, first_name, last_name, user_id, campaign_id, account_id} = user.agent.user;
+                    let data_agent = {
+                        user_id: user_id,
+                        first_name: first_name,
+                        last_name: last_name,
+                        uuid: sip_device.uuid,
+                        crmStatus: user.agent.user.params.status,
+                        telcoStatus: sip_device.status,
+                        timerStart: sip_device.updated_at,
+                        campaign_id: campaign_id,
+                        account_id: account_id,
+                        call_type: call_type
+                    };
+                    appSocket.emit('agent_connection', data_agent);
+                    return res.send({
+                        status: 200,
+                        message: 'success'
+                    })
+                }else{
+                    if(user.status === 403){
+                        return _this.sendResponseError(res, ['Error.AnErrorHasOccurredUser', user.message || 'idk'], 1, 403);
+                    }
+                    return res.send({
+                        status: 200,
+                        message: user.message || "something wrong"
+                    })
+                }
+
             })
             .catch((err) => {
                 return _this.sendResponseError(res, ['Error.AnErrorHasOccurredUser', err], 1, 403);
             });
+
     }
 
-    deleteChannelUUID(user_id,crmStatus){
-        return new Promise((resolve,reject)=>{
-            if(crmStatus === 'in_call'){
+    deleteChannelUUID(user_id, crmStatus) {
+        return new Promise((resolve, reject) => {
+            if (crmStatus === 'in_call') {
                 return resolve(true)
             }
             let toUpdate = {
                 channel_uuid: null,
-                updated_at : moment(new Date())
+                updated_at: moment(new Date())
             }
-            this.db['users'].update(toUpdate, {where: {user_id: user_id, active: 'Y'}}).then(()=>{
+            this.db['users'].update(toUpdate, {where: {user_id: user_id, active: 'Y'}}).then(() => {
                 resolve(true)
-            }).catch(err=> reject(err))
+            }).catch(err => reject(err))
         })
     }
+
     onConnectFunc(user_id, uuid, crmStatus, telcoStatus, pauseStatus = null) {
         return new Promise((resolve, reject) => {
-            if (uuid) {
-                this.OnConnectTelco(uuid, telcoStatus).then(result_telco => {
-                    if (result_telco.success) {
-                        this.db["users"].findOne({where: {user_id: user_id}})
-                            .then(user => {
-                                if (user) {
-                                    this.deleteChannelUUID(user_id,crmStatus).then(()=> {
+            _agent_log_eventsbo._getLastEvent(user_id).then(ALE => {
+                const action_name = ALE.data.dataValues.action_name;
+                console.log("==============================================")
+                console.log(action_name, crmStatus, action_name === crmStatus)
+                if (action_name === crmStatus) {
+                    return resolve({
+                        success : false,
+                        status: 200,
+                        message: 'status already exists'
+                    })
+                }
+                if (uuid) {
+                    this.OnConnectTelco(uuid, telcoStatus).then(result_telco => {
+                        if (result_telco.success) {
+                            this.db["users"].findOne({where: {user_id: user_id}})
+                                .then(user => {
+                                    if (user) {
+                                        this.deleteChannelUUID(user_id, crmStatus).then(() => {
+                                            let params = user.params;
+                                            user.updated_at = moment(new Date());
+                                            this.updateAgentStatus(user_id, user, telcoStatus, crmStatus, params, pauseStatus)
+                                                .then(agent => {
+                                                    if (agent.success) {
+                                                        return resolve({
+                                                            success: true,
+                                                            agent: agent,
+                                                            status: 200,
+                                                            message: 'status changed !'
+                                                        });
+                                                    } else {
+                                                        return resolve({
+                                                            success: false,
+                                                            status: 403,
+                                                            message : 'agent not updated !'
+                                                        });
+                                                    }
+                                                })
+                                                .catch((err) => {
+                                                    reject(err);
+                                                });
+                                        }).catch(err => reject(err))
+                                    } else {
+                                        resolve({
+                                            success: false,
+                                            status: 403,
+                                            message : 'user not found !'
+                                        })
+                                    }
+
+                                })
+                                .catch((err) => {
+                                    reject(err);
+                                });
+                        } else {
+                            this.db["users"].findOne({where: {user_id: user_id}})
+                                .then(user => {
+                                    if (user) {
                                         let params = user.params;
                                         user.updated_at = moment(new Date());
-                                        this.updateAgentStatus(user_id, user, telcoStatus, crmStatus, params, pauseStatus)
+                                        this.updateAgentStatus(user_id, user, "logged-out", "connected", params, pauseStatus)
+
                                             .then(agent => {
                                                 if (agent.success) {
                                                     resolve({
                                                         success: true,
-                                                        agent: agent
+                                                        agent: agent,
+                                                        status: 200,
                                                     });
                                                 } else {
                                                     resolve({
                                                         success: false,
+                                                        status: 403,
                                                     });
                                                 }
                                             })
                                             .catch((err) => {
                                                 reject(err);
                                             });
-                                    }).catch(err => reject(err))
-                                } else {
-                                    resolve({
-                                        success: false
-                                    })
-                                }
-
-                            })
-                            .catch((err) => {
-                                reject(err);
-                            });
-                    } else {
-                        this.db["users"].findOne({where: {user_id: user_id}})
-                            .then(user => {
-                                if (user) {
-                                    let params = user.params;
-                                    user.updated_at = moment(new Date());
-                                    this.updateAgentStatus(user_id, user, "logged-out", "connected", params, pauseStatus)
-
-                                        .then(agent => {
-                                            if (agent.success) {
-                                                resolve({
-                                                    success: true,
-                                                    agent: agent
-                                                });
-                                            } else {
-                                                resolve({
-                                                    success: false,
-                                                });
-                                            }
+                                    } else {
+                                        resolve({
+                                            success: false,
+                                            status: 403
                                         })
-                                        .catch((err) => {
-                                            reject(err);
-                                        });
-                                } else {
-                                    resolve({
-                                        success: false
-                                    })
-                                }
+                                    }
 
-                            })
-                            .catch((err) => {
-                                reject(err);
-                            });
-                    }
-                }).catch((err) => {
-                    reject(err);
-                });
-            } else {
-                reject(false)
-            }
+                                })
+                                .catch((err) => {
+                                    reject(err);
+                                });
+                        }
+                    }).catch((err) => {
+                        reject(err);
+                    });
+                } else {
+                    reject(false)
+                }
+            })
         })
     }
 
@@ -835,8 +870,8 @@ class agents extends baseModelbo {
                         } else {
                             let toUpdate = {
                                 channel_uuid: null,
-                                updated_at : moment(new Date()),
-                                current_session_token : null
+                                updated_at: moment(new Date()),
+                                current_session_token: null
                             }
                             this.db['users'].update(toUpdate, {where: {user_id: user.user_id}}).then(() => {
                                 idx++;
@@ -895,20 +930,24 @@ class agents extends baseModelbo {
         return new Promise((resolve, reject) => {
             this.onConnectFunc(item.user_id, item.uuid, 'connected', 'logged-out')
                 .then((user) => {
-                    let {sip_device, first_name, last_name, user_id, account_id, campaign_id} = user.agent.user;
-                    let data_agent = {
-                        user_id: user_id,
-                        first_name: first_name,
-                        last_name: last_name,
-                        uuid: sip_device.uuid,
-                        crmStatus: user.agent.user.params.status,
-                        telcoStatus: sip_device.status,
-                        timerStart: sip_device.updated_at,
-                        account_id: account_id,
-                        campaign_id: campaign_id
-                    };
-                    appSocket.emit('agent_connection', data_agent);
-                    resolve(true)
+                    if(user.success){
+                        let {sip_device, first_name, last_name, user_id, account_id, campaign_id} = user.agent.user;
+                        let data_agent = {
+                            user_id: user_id,
+                            first_name: first_name,
+                            last_name: last_name,
+                            uuid: sip_device.uuid,
+                            crmStatus: user.agent.user.params.status,
+                            telcoStatus: sip_device.status,
+                            timerStart: sip_device.updated_at,
+                            account_id: account_id,
+                            campaign_id: campaign_id
+                        };
+                        appSocket.emit('agent_connection', data_agent);
+                        return resolve(true)
+                    }else{
+                        return resolve(true)
+                    }
                 }).catch((err) => {
                 reject(err)
             });
@@ -962,9 +1001,9 @@ class agents extends baseModelbo {
         })
     }
 
-    _logoutAgent(user_id){
-        return new Promise((resolve,reject) => {
-            if(!!!user_id){
+    _logoutAgent(user_id) {
+        return new Promise((resolve, reject) => {
+            if (!!!user_id) {
                 return reject('user not found !')
             }
             this.db['users'].findOne({where: {user_id: user_id}}).then((user) => {
@@ -973,36 +1012,46 @@ class agents extends baseModelbo {
                         current_session_token: null,
                         updated_at: moment(new Date())
                     }, {where: {user_id: user_id}}).then(() => {
-                        this.onConnectFunc(user.user_id, user.sip_device.uuid, 'logged-out', 'logged-out').then(()=>{
-                            appSocket.emit('reload.Permission', {
-                                user_id: user.user_id
-                            });
-                            return resolve({
-                                status : 200,
-                                success : true
-                            })
-                        }).catch((err)=> {
-                            reject('cannotChangeStatusAgentToLoggedOut',err)
+                        this.onConnectFunc(user.user_id, user.sip_device.uuid, 'logged-out', 'logged-out').then(() => {
+                            if(user.success){
+                                appSocket.emit('reload.Permission', {
+                                    user_id: user.user_id
+                                });
+                                return resolve({
+                                    status: 200,
+                                    success: true
+                                })
+                            }else{
+                                return resolve({
+                                    status: 200,
+                                    success: true
+                                })
+                            }
+
+                        }).catch((err) => {
+                            reject('cannotChangeStatusAgentToLoggedOut', err)
                         })
-                    }).catch((err)=> {
-                        reject('cannotUpdateAgent',err)
+                    }).catch((err) => {
+                        reject('cannotUpdateAgent', err)
                     })
-                }else{
+                } else {
                     reject('AgentNotFound')
                 }
-            }).catch((err)=> {
-                reject('AgentNotFound',err)
+            }).catch((err) => {
+                reject('AgentNotFound', err)
             })
         })
     }
-    logoutAgent(req,res,next){
+
+    logoutAgent(req, res, next) {
         let {user_id} = req.body;
         this._logoutAgent(user_id).then(data => {
             res.json(data)
         }).catch(err => {
-            this.sendResponseError(res,['Error.',err],0,403)
+            this.sendResponseError(res, ['Error.', err], 0, 403)
         })
     }
+
     //---------------> Report <---------------------
 
     //------- Agent Details Report -------- //
@@ -1207,10 +1256,14 @@ class agents extends baseModelbo {
                                 }
                             }).then((call_status_list) => {
                                 call_status = call_status_list.map(item_cal => item_cal.callstatus_id);
-                                return resolve({...params, call_status : call_status, listCallFiles_ids : listCallFiles_ids})
+                                return resolve({
+                                    ...params,
+                                    call_status: call_status,
+                                    listCallFiles_ids: listCallFiles_ids
+                                })
                             })
-                        }else{
-                            return resolve({...params, listCallFiles_ids : listCallFiles_ids})
+                        } else {
+                            return resolve({...params, listCallFiles_ids: listCallFiles_ids})
 
                         }
                     }).catch(err => {
@@ -1218,7 +1271,7 @@ class agents extends baseModelbo {
                     })
                 } else {
                     this.getCampaignsIdsByAgentIds(agent_ids).then(resultCamps => {
-                        return resolve({...params, campaign_ids : resultCamps})
+                        return resolve({...params, campaign_ids: resultCamps})
                     }).catch(err => {
                         reject(err);
                     })
@@ -1289,36 +1342,39 @@ class agents extends baseModelbo {
 
 
     }
+
     removeDuplicates(arr) {
         let resultArray = [...new Set(arr)];
         return resultArray.filter(element => {
             return element !== null && element !== undefined;
         });
     }
-    getCampaignsIdsByAgentIds(agentIDs){
-        return new Promise((resolve,reject)=>{
+
+    getCampaignsIdsByAgentIds(agentIDs) {
+        return new Promise((resolve, reject) => {
             this.db['users'].findAll({
-                where: {user_id : agentIDs}
+                where: {user_id: agentIDs}
             }).then((allAgents) => {
                 let campaignIds = allAgents.map(user => user.campaign_id);
                 resolve(this.removeDuplicates(campaignIds))
             }).catch(() => resolve([]))
         })
     }
+
     getReportByOneAgent(params) {
         return new Promise((resolve, reject) => {
-                let {
-                    dataAgents,
-                    agent_id,
-                    call_status,
-                    campaign_ids,
-                    dateSelected_from,
-                    dateSelected_to,
-                    end_time,
-                    listCallFiles_ids,
-                    start_time,
-                    account_code
-                } = params;
+            let {
+                dataAgents,
+                agent_id,
+                call_status,
+                campaign_ids,
+                dateSelected_from,
+                dateSelected_to,
+                end_time,
+                listCallFiles_ids,
+                start_time,
+                account_code
+            } = params;
 
             let sqlCallsStats = `
                 select call_s.callstatus_id,
@@ -1342,70 +1398,70 @@ class agents extends baseModelbo {
                 where call_s.active = 'Y' EXTRA_WHERE_WITHOUT_CAMP EXTRA_WHERE_CAMP EXTRA_WHERE_STATUS
                 order by total desc
             `
-                let extra_where = '';
-                let extra_where_camp = '';
-                let extra_where_status = '';
-                let extra_where_without_camp = '';
-                if (start_time && start_time !== '') {
-                    extra_where += ' AND callH.started_at >= :start_time';
-                }
-                if (end_time && end_time !== '') {
-                    extra_where += ' AND  callH.finished_at <=  :end_time';
-                }
-                if (agent_id) {
-                    extra_where += ' AND callH.agent_id = :agent_id';
-                }
+            let extra_where = '';
+            let extra_where_camp = '';
+            let extra_where_status = '';
+            let extra_where_without_camp = '';
+            if (start_time && start_time !== '') {
+                extra_where += ' AND callH.started_at >= :start_time';
+            }
+            if (end_time && end_time !== '') {
+                extra_where += ' AND  callH.finished_at <=  :end_time';
+            }
+            if (agent_id) {
+                extra_where += ' AND callH.agent_id = :agent_id';
+            }
 
-                if (call_status && call_status !== '' && call_status.length !== 0) {
-                    extra_where += ' AND callS.callstatus_id in (:call_status)';
-                    extra_where_status += ' AND call_s.callstatus_id in (:call_status)';
+            if (call_status && call_status !== '' && call_status.length !== 0) {
+                extra_where += ' AND callS.callstatus_id in (:call_status)';
+                extra_where_status += ' AND call_s.callstatus_id in (:call_status)';
+            }
+            if (listCallFiles_ids !== '' && listCallFiles_ids.length !== 0) {
+                extra_where += ' AND listCallF.listcallfile_id in(:listCallFiles_ids)';
+            }
+            if (campaign_ids !== '' && campaign_ids.length !== 0) {
+                extra_where_camp += "AND  (call_s.campaign_id in(:campaign_ids) or  call_s.is_system = 'Y')"
+                extra_where += " AND (callS.campaign_id in(:campaign_ids) OR  callS.is_system = 'Y') "
+            } else {
+                extra_where_without_camp += "AND (stats.total > 0 or call_s.is_system = 'Y')"
+            }
+            sqlCallsStats = sqlCallsStats.replace('EXTRA_WHERE', extra_where);
+            sqlCallsStats = sqlCallsStats.replace('EXTRA_WHERE_CAMP', extra_where_camp);
+            sqlCallsStats = sqlCallsStats.replace('EXTRA_WHERE_STATUS', extra_where_status);
+            sqlCallsStats = sqlCallsStats.replace('EXTRA_WHERE_WITHOUT_CAMP', extra_where_without_camp);
+            db.sequelize['crm-app'].query(sqlCallsStats, {
+                type: db.sequelize['crm-app'].QueryTypes.SELECT,
+                replacements: {
+                    start_time: dateSelected_from.concat(' ', start_time),
+                    end_time: dateSelected_to.concat(' ', end_time),
+                    agent_id: agent_id,
+                    account_code: account_code,
+                    listCallFiles_ids: listCallFiles_ids,
+                    call_status: call_status,
+                    campaign_ids: campaign_ids
                 }
-                if (listCallFiles_ids !== '' && listCallFiles_ids.length !== 0) {
-                    extra_where += ' AND listCallF.listcallfile_id in(:listCallFiles_ids)';
-                }
-                if (campaign_ids !== '' && campaign_ids.length !== 0) {
-                    extra_where_camp += "AND  (call_s.campaign_id in(:campaign_ids) or  call_s.is_system = 'Y')"
-                    extra_where += " AND (callS.campaign_id in(:campaign_ids) OR  callS.is_system = 'Y') "
-                }else{
-                    extra_where_without_camp += "AND (stats.total > 0 or call_s.is_system = 'Y')"
-                }
-                sqlCallsStats = sqlCallsStats.replace('EXTRA_WHERE', extra_where);
-                sqlCallsStats = sqlCallsStats.replace('EXTRA_WHERE_CAMP', extra_where_camp);
-                sqlCallsStats = sqlCallsStats.replace('EXTRA_WHERE_STATUS', extra_where_status);
-                sqlCallsStats = sqlCallsStats.replace('EXTRA_WHERE_WITHOUT_CAMP', extra_where_without_camp);
-                db.sequelize['crm-app'].query(sqlCallsStats, {
-                    type: db.sequelize['crm-app'].QueryTypes.SELECT,
-                    replacements: {
-                        start_time: dateSelected_from.concat(' ', start_time),
-                        end_time: dateSelected_to.concat(' ', end_time),
-                        agent_id: agent_id,
-                        account_code: account_code,
-                        listCallFiles_ids: listCallFiles_ids,
-                        call_status: call_status,
-                        campaign_ids: campaign_ids
-                    }
-                }).then(data_stats => {
-                    let total = 0;
-                    data_stats.map(item => {
-                        total += parseInt(item.total);
-                    })
-                    data_stats.push({
-                        'label': 'total',
-                        'code': 'total',
-                        'total': total
-                    })
-                    resolve({
-                        success: true,
-                        data: data_stats,
-                        status: 200
-                    })
-                }).catch(err => {
-                    reject({
-                        success: false,
-                        data: [],
-                        status: 403
-                    })
+            }).then(data_stats => {
+                let total = 0;
+                data_stats.map(item => {
+                    total += parseInt(item.total);
                 })
+                data_stats.push({
+                    'label': 'total',
+                    'code': 'total',
+                    'total': total
+                })
+                resolve({
+                    success: true,
+                    data: data_stats,
+                    status: 200
+                })
+            }).catch(err => {
+                reject({
+                    success: false,
+                    data: [],
+                    status: 403
+                })
+            })
         })
     }
 
@@ -1672,7 +1728,7 @@ class agents extends baseModelbo {
                             pauseStatus: pauseStatus,
                         }
                     }).then(data_stats => {
-                        if(!!!data_stats || data_stats.length === 0){
+                        if (!!!data_stats || data_stats.length === 0) {
                             return res.send({
                                 success: false,
                                 data: [],
@@ -1774,9 +1830,9 @@ class agents extends baseModelbo {
         })
     }
 
-    qualifyCallFile(callfile,callfile_id,user_id,req){
-        return new Promise((resolve,reject)=> {
-            if(!!!callfile || !!!callfile_id){
+    qualifyCallFile(callfile, callfile_id, user_id, req) {
+        return new Promise((resolve, reject) => {
+            if (!!!callfile || !!!callfile_id) {
                 return resolve(true)
             }
             let Body = callfile;
@@ -1788,7 +1844,7 @@ class agents extends baseModelbo {
                 note: '',
                 call_file_id: callfile_id
             }
-            _callfilebo._updateCallFileQualification(callfile_id,Body,req).then(result => {
+            _callfilebo._updateCallFileQualification(callfile_id, Body, req).then(result => {
                 DDC.revision_id = result.revision_id
                 _callhistorybo._updateCall(DDC).then(resultHistory => {
                     resolve(resultHistory)
@@ -1796,40 +1852,49 @@ class agents extends baseModelbo {
             }).catch(err => reject(err))
         })
     }
-    changeCrmStatus(req,res,next) {
-        let {user_id, uuid,callfile,callfile_id} = req.body;
+
+    changeCrmStatus(req, res, next) {
+        let {user_id, uuid, callfile, callfile_id} = req.body;
         _agent_log_eventsbo._getLastEvent(user_id).then(event => {
             let status = event.data.dataValues.action_name
-            if(status === 'waiting-call' || status === 'in_call'){
-                this.onConnectFunc(user_id,uuid, 'connected', 'on-break')
+            if (status === 'waiting-call' || status === 'in_call') {
+                this.onConnectFunc(user_id, uuid, 'connected', 'on-break')
                     .then((user) => {
-                        let {sip_device, first_name, last_name, user_id, campaign_id, account_id} = user.agent.user;
-                        let data_agent = {
-                            user_id: user_id,
-                            first_name: first_name,
-                            last_name: last_name,
-                            uuid: sip_device.uuid,
-                            crmStatus: user.agent.user.params.status,
-                            telcoStatus: sip_device.status,
-                            timerStart: sip_device.updated_at,
-                            campaign_id: campaign_id,
-                            account_id: account_id,
-                            call_type: null
-                        };
-                        appSocket.emit('agent_connection', data_agent);
-                        this.qualifyCallFile(callfile,callfile_id,user_id,req).then(resultQualify => {
+                        if(user.success){
+                            let {sip_device, first_name, last_name, user_id, campaign_id, account_id} = user.agent.user;
+                            let data_agent = {
+                                user_id: user_id,
+                                first_name: first_name,
+                                last_name: last_name,
+                                uuid: sip_device.uuid,
+                                crmStatus: user.agent.user.params.status,
+                                telcoStatus: sip_device.status,
+                                timerStart: sip_device.updated_at,
+                                campaign_id: campaign_id,
+                                account_id: account_id,
+                                call_type: null
+                            };
+                            appSocket.emit('agent_connection', data_agent);
+                            this.qualifyCallFile(callfile, callfile_id, user_id, req).then(resultQualify => {
                                 return res.sendStatus(resultQualify ? 204 : 403);
-                        }).catch(() => {
-                            return res.sendStatus(403)
-                        })
+                            }).catch(() => {
+                                return res.sendStatus(403)
+                            })
+                        }else{
+                            if(user.status === 403){
+                                return res.sendStatus(403)
+                            }
+                            return res.sendStatus(200)
+                        }
+
                     }).catch(() => {
-                   return  res.sendStatus(403)
+                    return res.sendStatus(403)
                 })
-            }else{
+            } else {
                 res.sendStatus(204)
             }
         }).catch(() => {
-            return  res.sendStatus(403)
+            return res.sendStatus(403)
         })
 
 
