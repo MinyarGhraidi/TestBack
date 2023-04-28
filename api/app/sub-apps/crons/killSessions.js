@@ -17,7 +17,7 @@ class KillSessions extends baseModelbo {
                         if (idx < users.length - 1) {
                             idx++
                         } else {
-                            resolve({message: users.length + 'sessions killed !'})
+                            resolve({message: users.length + 'sessions killed !', cron : "cronKillSessions"})
                         }
                     })
 

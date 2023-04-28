@@ -45,7 +45,6 @@ class AddReminder extends baseModelbo {
         return new Promise((resolve,reject)=>{
             let currDate = new Date();
             let hoursMin = currDate.getHours() + ':' + currDate.getMinutes();
-            let hoursMinExp = "23:50";
             const tomorrow = new Date(currDate.getTime() + 24 * 60 * 60 * 1000);
             const yyyy_Now = currDate.getFullYear();
             const yyyy_Tomorrow = tomorrow.getFullYear();
@@ -106,16 +105,13 @@ class AddReminder extends baseModelbo {
                             if(idx < resultData.length -1){
                                 idx++;
                             }else{
-                                return resolve({
-                                    success :true,
-                                    message : resultData.length + ' Reminders Added to Notifications !'
-                                })
+                                return resolve({cron : "saveNotificationReminder", message : resultData.length + ' Reminders Added to Notifications !'})
                             }
                         })
                     })
                 }else{
                     return resolve({
-                        success :true,
+                        cron : "saveNotificationReminder",
                         message : "Nothing To Add !"
                     })
                 }

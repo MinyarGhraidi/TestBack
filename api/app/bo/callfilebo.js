@@ -28,6 +28,12 @@ class callfiles extends baseModelbo {
                 }
             }).then(call_previous => {
                 if(call_previous){
+                    if(body.customfields && body.customfields.length !== 0){
+                        const keys = body.customfields.map(c => c.value);
+                        keys.forEach(key => {
+                            delete body[key]
+                        })
+                    }
                     this.db['callfiles'].update(body,
                         {
                             where: {

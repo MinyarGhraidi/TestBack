@@ -2,7 +2,6 @@ const {Client} = require('node-scp')
 const {baseModelbo} = require("../../bo/basebo");
 const db = require("../../models");
 const moment = require("moment");
-const dbcdr = require("../../models/acc_cdrs/models");
 const { exec } = require("child_process");
 const env = process.env.NODE_ENV || 'development';
 const callCenterCrdt = require(__dirname + '/../../config/config.json')[env]["callCenterCrdt"];
@@ -37,29 +36,32 @@ class MigrateRecords extends baseModelbo {
                                     exec(cmd_ffmpeg, (error, stdout, stderr) => {
                                         let SqlUpdateTreated = ` update acc_cdrs
                                                                     set is_treated= 'Y'
-                                                                   where is_treated = 'N'
-                                                                     id = item_cdr.id `
+                                                                   where
+                                                                     id = :id `
                                         db.sequelize['cdr-db'].query(SqlUpdateTreated, {
                                             type: db.sequelize['cdr-db'].QueryTypes.SELECT,
+                                            replacements: {
+                                                id: item_cdr.id
+                                            }
                                         }).then(updateCdr => {
-                                                this.db["calls_historys"].update({record_url: 'https://crm-back-demo.oxilog.net/api/callHistory/play/' + item_cdr.memberUUID}, {
-                                                    where: {
-                                                        uuid: item_cdr.memberUUID,
-                                                        active: 'Y'
-                                                    }
-                                                })
-                                                    .then(() => {
-                                                        let cmd_delete = 'rm -rf ' + '/var/www/crm/crm-backend/api/app/recordings/' + item_cdr.memberUUID + '.wav'
-                                                        exec(cmd_delete, (error, stdout, stderr) => {
-                                                            if (index <= datacdrRecords.length - 1) {
-                                                                index++
-                                                            } else {
-                                                                resolve(true)
-                                                            }
-                                                        })
-                                                    }).catch(error => {
-                                                    console.log(error)
-                                                })
+                                            this.db["calls_historys"].update({record_url: 'https://api.skycrm360.io/api/callHistory/play/' + item_cdr.memberUUID}, {
+                                                where: {
+                                                    uuid: item_cdr.memberUUID,
+                                                    active: 'Y'
+                                                }
+                                            })
+                                                .then(() => {
+                                                    let cmd_delete = 'rm -rf ' + '/var/www/crm/crm-backend/api/app/recordings/' + item_cdr.memberUUID + '.wav'
+                                                    exec(cmd_delete, (error, stdout, stderr) => {
+                                                        if (index <= datacdrRecords.length - 1) {
+                                                            index++
+                                                        } else {
+                                                            resolve(true)
+                                                        }
+                                                    })
+                                                }).catch(error => {
+                                                console.log(error)
+                                            })
 
                                         }).catch(error => {
                                             console.log(error)
