@@ -68,9 +68,6 @@ class MigrateRecords extends baseModelbo {
                                         });
 
                                     })
-                                        .catch(error => {
-                                            console.log(error)
-                                        })
                                 })  .catch(error => {
                                 console.log(error)
                             })
