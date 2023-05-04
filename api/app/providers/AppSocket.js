@@ -3,7 +3,8 @@ const {io, Socket} = require('socket.io-client');
 let socket = io(app_config['socketUrl'].toString(), {
     secure: true,
     transports: ["websocket", "polling"],
-    rejectUnauthorized: false
+    rejectUnauthorized: false,
+    withCredentials : true
 }).connect()
 
 class AppSocket extends Socket {
