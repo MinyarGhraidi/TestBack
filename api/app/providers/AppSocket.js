@@ -4,7 +4,8 @@ let socket = io(app_config['socketUrl'].toString(), {
     secure: true,
     transports: ["websocket", "polling"],
     rejectUnauthorized: false,
-    withCredentials : true
+    withCredentials : true,
+    cors: { origin: '*' }
 }).connect()
 
 class AppSocket extends Socket {
