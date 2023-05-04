@@ -1854,10 +1854,10 @@ class agents extends baseModelbo {
     }
 
     changeCrmStatus(req, res, next) {
-        let {user_id, uuid, callfile, callfile_id} = req.body;
+        let {user_id, uuid, callfile, callfile_id,currentToken} = req.body;
         _agent_log_eventsbo._getLastEvent(user_id).then(event => {
             let status = event.data.dataValues.action_name
-            if (status === 'waiting-call' || status === 'in_call') {
+            if (status === 'waiting-call' || status === 'in_call' || (status === 'logged-out' && currentToken !== null ) ) {
                 this.onConnectFunc(user_id, uuid, 'connected', 'on-break')
                     .then((user) => {
                         if(user.success){
