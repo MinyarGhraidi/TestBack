@@ -346,7 +346,8 @@ class agents extends baseModelbo {
                                                     domain_uuid: dataSub.domain_uuid,
                                                     subscriber_uuid: dataSub.uuid,
                                                     options: options,
-                                                    updated_at: new Date()
+                                                    updated_at: new Date(),
+                                                    enabled : true
                                                 }
                                                 axios
                                                     .put(`${base_url_cc_kam}api/v1/agents/${uuid}`, update_Agent, call_center_authorization)
