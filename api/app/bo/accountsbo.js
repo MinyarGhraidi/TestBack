@@ -406,6 +406,8 @@ class accounts extends baseModelbo {
                                         }).catch(() => {
                                             return _this.sendResponseError(res, ['Error.CannotUpdateAccount'], 1, 403);
                                         })
+                                    }).catch(err => {
+                                        return _this.sendResponseError(res, ['Error.CannotEditSubscriberAgent'], 1, 403);
                                     })
                                 }).catch(() => {
                                     return _this.sendResponseError(res, ['Error.CannotFindUser'], 1, 403);
@@ -1222,7 +1224,8 @@ class accounts extends baseModelbo {
                                     domain_uuid: dataSub.domain_uuid,
                                     subscriber_uuid: dataSub.uuid,
                                     options: newAccount.sip_device.options,
-                                    updated_at: new Date()
+                                    updated_at: new Date(),
+                                    enabled : true
                                 }
                                 let uuid_Agent = userData.sip_device.uuid
                                 axios
