@@ -231,27 +231,42 @@ class listcallfiles extends baseModelbo {
                     } else {
                         const file_path = appDir + '/app/resources/efiles/' + efile.uri;
                         if (fs.existsSync(file_path)) {
-                            data_listCallFile_gp.name = listCallFile_name;
-                            data_listCallFile_gp.campaign_id = campaign_id;
-                            data_listCallFile_gp.created_at = moment(new Date());
-                            data_listCallFile_gp.updated_at = moment(new Date());
-                            data_listCallFile_gp.processing = 0;
-                            data_listCallFile_gp.processing_status =
-                                {
-                                    nbr_callfiles: 0,
-                                    nbr_uploaded_callfiles: 0,
-                                    nbr_duplicated_callfiles: 0
-                                };
-                            delete data_listCallFile_gp['listcallfile_id'];
-                            const ListCallFileModel = db['listcallfiles'];
-                            let list_CallFile = ListCallFileModel.build(data_listCallFile_gp);
-                            list_CallFile.save(data_listCallFile_gp).then(() => {
-                                res.send({
-                                    success: true,
-                                })
-                            }).catch(err => {
-                                _this.sendResponseError(res, err)
+                            this.db['callfiles'].findOne({
+                                where: {
+                                    listcallfile_id: listCallFile_id,
+                                    active : 'Y'
+                                }
+                            }).then(callfiles => {
+                                if(callfiles && callfiles.length !== 0){
+                                    data_listCallFile_gp.name = listCallFile_name;
+                                    data_listCallFile_gp.campaign_id = campaign_id;
+                                    data_listCallFile_gp.created_at = moment(new Date());
+                                    data_listCallFile_gp.updated_at = moment(new Date());
+                                    data_listCallFile_gp.processing = 0;
+                                    data_listCallFile_gp.processing_status =
+                                        {
+                                            nbr_callfiles: 0,
+                                            nbr_uploaded_callfiles: 0,
+                                            nbr_duplicated_callfiles: 0
+                                        };
+                                    delete data_listCallFile_gp['listcallfile_id'];
+                                    const ListCallFileModel = db['listcallfiles'];
+                                    let list_CallFile = ListCallFileModel.build(data_listCallFile_gp);
+                                    list_CallFile.save(data_listCallFile_gp).then(() => {
+                                        return res.send({
+                                            success: true,
+                                        })
+                                    }).catch(err => {
+                                        _this.sendResponseError(res, err)
+                                    })
+                                }else{
+                                    return res.send({
+                                        success : false,
+                                        message : "no-leads-in-cloned-list-leads"
+                                    })
+                                }
                             })
+
 
                         } else {
                             return res.send({
