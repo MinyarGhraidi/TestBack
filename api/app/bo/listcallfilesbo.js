@@ -226,10 +226,11 @@ class listcallfiles extends baseModelbo {
                     if (!efile) {
                         return res.send({
                             success : false,
-                            message : "file-does-not-exit"
+                            message : "file-does-not-exit",
+                            target : "1"
                         })
                     } else {
-                        const file_path = appDir + '/app/resources/efiles/' + efile.uri;
+                        const file_path = appDir + '/app/resources/efiles' + efile.uri;
                         if (fs.existsSync(file_path)) {
                             this.db['callfiles'].findOne({
                                 where: {
@@ -271,7 +272,9 @@ class listcallfiles extends baseModelbo {
                         } else {
                             return res.send({
                                 success : false,
-                                message : "file-does-not-exit"
+                                message : "file-does-not-exit",
+                                target : "2",
+                                file_path
                             })
                         }
                     }
