@@ -3,8 +3,9 @@ let db = require('../models');
 const ObjectsToCsv = require('objects-to-csv');
 const path = require('path');
 const fs = require("fs");
-const appDir = path.dirname(require.main.path);
+//const appDir = path.dirname(require.main.path);
 const moment = require('moment');
+const {appDir} = require("../helpers/app");
 
 class listcallfiles extends baseModelbo {
     constructor() {
@@ -226,8 +227,7 @@ class listcallfiles extends baseModelbo {
                     if (!efile) {
                         return res.send({
                             success : false,
-                            message : "file-does-not-exit",
-                            target : "1"
+                            message : "file-does-not-exit"
                         })
                     } else {
                         const file_path = appDir + '/app/resources/efiles' + efile.uri;
@@ -272,9 +272,7 @@ class listcallfiles extends baseModelbo {
                         } else {
                             return res.send({
                                 success : false,
-                                message : "file-does-not-exit",
-                                target : "2",
-                                file_path
+                                message : "file-does-not-exit"
                             })
                         }
                     }
