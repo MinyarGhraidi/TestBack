@@ -6,7 +6,6 @@ const fs = require("fs");
 const appDir = path.dirname(require.main.path);
 const moment = require('moment');
 
-
 class listcallfiles extends baseModelbo {
     constructor() {
         super('listcallfiles', 'listcallfile_id');
@@ -222,32 +221,53 @@ class listcallfiles extends baseModelbo {
         }).then(listcallfile => {
             if (listcallfile) {
                 let data_listCallFile_gp = listcallfile.toJSON();
-                data_listCallFile_gp.name = listCallFile_name;
-                data_listCallFile_gp.campaign_id = campaign_id;
-                data_listCallFile_gp.created_at = moment(new Date());
-                data_listCallFile_gp.updated_at = moment(new Date());
-                data_listCallFile_gp.processing = 0;
-                data_listCallFile_gp.processing_status =
-                    {
-                        nbr_callfiles: 0,
-                        nbr_uploaded_callfiles: 0,
-                        nbr_duplicated_callfiles: 0
-                    };
-                delete data_listCallFile_gp['listcallfile_id'];
-                const ListCallFileModel = db['listcallfiles'];
-                let list_CallFile = ListCallFileModel.build(data_listCallFile_gp);
-                list_CallFile.save(data_listCallFile_gp).then(() => {
-                    res.send({
-                        success: true,
-                    })
+                let file_id = data_listCallFile_gp.file_id;
+                this.db['efiles'].findById(file_id).then(efile => {
+                    if (!efile) {
+                        return res.send({
+                            success : false,
+                            message : "file-does-not-exit"
+                        })
+                    } else {
+                        const file_path = appDir + '/app/resources/efiles/' + efile.uri;
+                        if (fs.existsSync(file_path)) {
+                            data_listCallFile_gp.name = listCallFile_name;
+                            data_listCallFile_gp.campaign_id = campaign_id;
+                            data_listCallFile_gp.created_at = moment(new Date());
+                            data_listCallFile_gp.updated_at = moment(new Date());
+                            data_listCallFile_gp.processing = 0;
+                            data_listCallFile_gp.processing_status =
+                                {
+                                    nbr_callfiles: 0,
+                                    nbr_uploaded_callfiles: 0,
+                                    nbr_duplicated_callfiles: 0
+                                };
+                            delete data_listCallFile_gp['listcallfile_id'];
+                            const ListCallFileModel = db['listcallfiles'];
+                            let list_CallFile = ListCallFileModel.build(data_listCallFile_gp);
+                            list_CallFile.save(data_listCallFile_gp).then(() => {
+                                res.send({
+                                    success: true,
+                                })
+                            }).catch(err => {
+                                _this.sendResponseError(res, err)
+                            })
+
+                        } else {
+                            return res.send({
+                                success : false,
+                                message : "file-does-not-exit"
+                            })
+                        }
+                    }
                 }).catch(err => {
-                    _this.sendResponseError(res, err)
-                })
+                    _this.sendResponseError(res, ['Error get data file'])
+                });
             } else {
                 res.send({
-                    success: true,
+                    success: false,
                     data: [],
-                    message: 'list CallFile  not found'
+                    message: 'list-leads-not-found'
                 })
             }
 
