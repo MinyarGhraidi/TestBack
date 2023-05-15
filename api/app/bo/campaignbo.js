@@ -2,6 +2,7 @@ const {baseModelbo} = require('./basebo');
 const {default: axios} = require("axios");
 const agentbo = require('./agentsbo')
 const efilebo = require('./efilesbo')
+const listcallfilesbo = require('./listcallfilesbo')
 const agent_log_eventsbo = require('./agent_log_eventsbo')
 const env = process.env.NODE_ENV || 'development';
 const call_center_token = require(__dirname + '/../config/config.json')[env]["call_center_token"];
@@ -15,6 +16,7 @@ const call_center_authorization = {
 
 let _agentsbo = new agentbo;
 let _efilebo = new efilebo;
+let _listcallfilesbo = new listcallfilesbo;
 let _agent_log_eventsbo = new agent_log_eventsbo;
 
 class campaigns extends baseModelbo {
@@ -278,13 +280,15 @@ class campaigns extends baseModelbo {
                         let listcallfiles_ids = listcallfiles.map(el => el.listcallfile_id);
                         let idx = 0;
                         listcallfiles_ids.forEach(listcallfile_id => {
-                            this.deleteWithChild('listcallfiles', 'callfiles', 'listcallfile_id', 'listcallfile_id', listcallfile_id).then(() => {
-                                if (idx < listcallfiles_ids.length - 1) {
-                                    idx++
-                                } else {
-                                    resolve(true)
-                                }
-                            }).catch((err) => reject(err))
+                            _listcallfilesbo._deleteFromHooperByCallfileID(listcallfile_id).then(() => {
+                                this.deleteWithChild('listcallfiles', 'callfiles', 'listcallfile_id', 'listcallfile_id', listcallfile_id).then(() => {
+                                    if (idx < listcallfiles_ids.length - 1) {
+                                        idx++
+                                    } else {
+                                        resolve(true)
+                                    }
+                                }).catch((err) => reject(err))
+                            }).catch(err => reject(err))
                         })
                     } else {
                         resolve(true)
@@ -314,15 +318,22 @@ class campaigns extends baseModelbo {
                         updated_at: moment(new Date())
                     }, {where: {campaign_id: campaign_id}})
                         .then(() => {
-                            this.changeStatusComp(campaign_id, status).then(() => {
-                                res.send({
+                            if(status === 'N'){
+                                this.changeStatusComp(campaign_id, status).then(() => {
+                                    return res.send({
+                                        status: 200,
+                                        message: "success"
+                                    })
+
+                                }).catch((err) => {
+                                    return _this.sendResponseError(res, ['cannot change the campaign status1', err], 1, 403);
+                                })
+                            }else{
+                                return res.send({
                                     status: 200,
                                     message: "success"
                                 })
-
-                            }).catch((err) => {
-                                return _this.sendResponseError(res, ['cannot change the campaign status1', err], 1, 403);
-                            })
+                            }
                         }).catch((err) => {
                         return _this.sendResponseError(res, ['cannot change the campaign status2', err], 1, 403);
                     });
@@ -337,7 +348,7 @@ class campaigns extends baseModelbo {
 
     changeStatusComp(compaign_id, status) {
         return new Promise((resolve, reject) => {
-            const UpdateEntities = ['pausestatuses', 'listcallfiles', 'callstatuses'];
+            const UpdateEntities = ['pausestatuses', 'callstatuses'];
             this.changeStatusForEntities(UpdateEntities, compaign_id, status).then(() => {
                 this.changeStatus_callfiles(compaign_id, status).then(() => {
                     resolve(true);
@@ -350,7 +361,6 @@ class campaigns extends baseModelbo {
 
         })
     }
-
     changeStatusForEntities(entities, campaign_id, status) {
         let indexEntities = 0;
         return new Promise((resolve, reject) => {
@@ -382,25 +392,29 @@ class campaigns extends baseModelbo {
             this.db['listcallfiles'].findAll({
                 where: {
                     campaign_id: campaign_id,
+                    active : 'Y'
                 }
             }).then((callFilesList) => {
-                if (!!!callFilesList.length !== 0) {
+                if (callFilesList && callFilesList.length !== 0) {
+                    callFilesList.forEach(data => {
+                        _listcallfilesbo._changeStatus(data.listcallfile_id, status).then(() => {
+                            this.changeStatus_callfilesByIdListCallFiles(data.listcallfile_id, status).then(() => {
+                                if (indexCallFiles < callFilesList.length - 1) {
+                                    indexCallFiles++;
+                                } else {
+                                    return resolve(true);
+                                }
+                            }).catch(err => {
+                                return reject(err);
+                            })
+                        }).catch(err => {
+                            return reject(err)
+                        })
+                    });
+                }else{
                     return resolve(true);
                 }
-                callFilesList.forEach(data => {
-                    this.changeStatus_callfilesByIdListCallFiles(data.listcallfile_id, status).then(() => {
-                        if (indexCallFiles < callFilesList.length - 1) {
-                            indexCallFiles++;
-                        } else {
-                            resolve(true);
-                        }
 
-                    }).catch(err => {
-                        reject(err);
-                    })
-
-
-                });
             }).catch(err => {
                 reject(err);
             });

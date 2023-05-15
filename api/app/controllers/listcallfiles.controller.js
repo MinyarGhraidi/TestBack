@@ -38,5 +38,8 @@ module.exports = {
     getStatsListCallFileCallStatusCampaign : function (req, res, next) {
         listcallfilesDaoInst.getStatsListCallFileCallStatusCampaign(req, res, next)
     },
+    changeStatus : function (req, res, next) {
+        listcallfilesDaoInst.changeStatus(req, res, next)
+    },
 
 }

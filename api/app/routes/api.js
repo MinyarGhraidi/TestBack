@@ -178,6 +178,7 @@ let apiRouters = function (passport) {
 
     //listcallfiles routers
     router.post("/api/listcallfile/find/:params?", passport.authenticate('jwt', {session: false}), listcallfilesController.find);
+    router.post("/api/listcallfile/changeStatus", passport.authenticate('jwt', {session: false}), listcallfilesController.changeStatus);
     router.get("/api/listcallfile/findById/:entity_id", passport.authenticate('jwt', {session: false}), listcallfilesController.findById);
     router.put("/api/listcallfile/update", passport.authenticate('jwt', {session: false}), listcallfilesController.update);
     router.delete("/api/listcallfile/delete/:params", passport.authenticate('jwt', {session: false}), listcallfilesController.deleteCascade);
@@ -357,6 +358,7 @@ let apiRouters = function (passport) {
     router.get('/api/templateList/findById/:entity_id', passport.authenticate('jwt', {session: false}), TemplateListCallFile.findById);
     router.delete('/api/templateList/delete/:params', passport.authenticate('jwt', {session: false}), TemplateListCallFile.delete);
     router.put('/api/templateList/update', passport.authenticate('jwt', {session: false}), TemplateListCallFile.update);
+    router.post("/api/templateList/changeStatus", passport.authenticate('jwt', {session: false}), TemplateListCallFile.changeStatus);
 
     router.post('/api/agent/agentReports', passport.authenticate('jwt', {session: false}),  agentsController.agentDetailsReports);
 

@@ -16,6 +16,8 @@ module.exports ={
     },
     update: function (req, res, next) {
         _itembo.update(req, res, next)
-    }
-
+    },
+    changeStatus : function (req, res, next) {
+        _itembo.changeStatus(req, res, next)
+    },
 }
