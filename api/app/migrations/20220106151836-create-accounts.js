@@ -105,7 +105,8 @@ module.exports = {
                         "last_name" : "1",
                         "user_id" : 1,
                         "status" : "Y",
-                        "role_crm_id" : 1
+                        "role_crm_id" : 1,
+                        "lang" : 'en'
                     }
                 ]);
         });

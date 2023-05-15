@@ -346,7 +346,8 @@ class agents extends baseModelbo {
                                                     domain_uuid: dataSub.domain_uuid,
                                                     subscriber_uuid: dataSub.uuid,
                                                     options: options,
-                                                    updated_at: new Date()
+                                                    updated_at: new Date(),
+                                                    enabled : true
                                                 }
                                                 axios
                                                     .put(`${base_url_cc_kam}api/v1/agents/${uuid}`, update_Agent, call_center_authorization)
@@ -602,8 +603,6 @@ class agents extends baseModelbo {
         return new Promise((resolve, reject) => {
             _agent_log_eventsbo._getLastEvent(user_id).then(ALE => {
                 const action_name = ALE.data.dataValues.action_name;
-                console.log("==============================================")
-                console.log(action_name, crmStatus, action_name === crmStatus)
                 if (action_name === crmStatus) {
                     return resolve({
                         success : false,

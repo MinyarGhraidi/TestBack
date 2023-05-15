@@ -269,11 +269,29 @@ class users extends baseModelbo {
                                                                         }
                                                                     ],
                                                                     "permission_route": "user-settings"
+                                                                },
+                                                                {
+                                                                    "lookups": [
+                                                                        {
+                                                                            "key": "add"
+                                                                        },
+                                                                        {
+                                                                            "key": "edit"
+                                                                        },
+                                                                        {
+                                                                            "key": "delete"
+                                                                        },
+                                                                        {
+                                                                            "key": "list"
+                                                                        }
+                                                                    ],
+                                                                    "permission_route": "home"
                                                                 }
                                                             ]
                                                             let list_permissions = user.role.permission ;
                                                             permissions_user = list_permissions.concat(default_permissions)
                                                             permissions = data_perm.user_has_role_permission.concat('user-settings')
+                                                            permissions = data_perm.user_has_role_permission.concat('home')
                                                         }else{
                                                             permissions = data_perm.permissions_values || []
                                                         }
