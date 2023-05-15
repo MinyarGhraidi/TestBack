@@ -9,6 +9,7 @@ const env = process.env.NODE_ENV || 'development';
 const config = require('../config/config.json')[env];
 const call_center_token = require(__dirname + '/../config/config.json')[env]["call_center_token"];
 const base_url_cc_kam = require(__dirname + '/../config/config.json')[env]["base_url_cc_kam"];
+
 const call_center_authorization = {
     headers: {Authorization: call_center_token}
 };
@@ -307,6 +308,13 @@ class baseModelbo {
             }).catch(err=>reject(err))
         })
     }
+    _deleteFromHooperByCallfileID = (listcallfile_id) => {
+        return new Promise((resolve,reject) => {
+            this.db['hoopers'].destroy({where : {listcallfile_id : listcallfile_id}}).then(() => {
+                resolve(true)
+            }).catch(err => reject(err))
+        })
+    }
     deleteCascade(req, res, next) {
         let _id = req.params.params;
         switch (this.baseModal) {
@@ -352,10 +360,18 @@ class baseModelbo {
                 break;
             case 'listcallfiles' :
                 this.deleteWithChild('listcallfiles', 'callfiles', 'listcallfile_id', 'listcallfile_id', _id).then(() => {
-                            res.json({
-                                success: true,
-                                messages: 'deleted'
+                            this._deleteFromHooperByCallfileID(_id).then(() => {
+                                res.json({
+                                    success: true,
+                                    messages: 'deleted'
+                                })
+                            }).catch((err) => {
+                                res.json({
+                                    success: false,
+                                    messages: 'Cant delete Hoopers'
+                                })
                             })
+
                 }).catch((err) => {
                     res.json({
                         success: false,
