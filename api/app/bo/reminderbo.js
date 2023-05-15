@@ -22,7 +22,7 @@ class Reminderbo extends baseModelbo{
         let sqlCount = `select count(*) FROM reminders as "Rem" LEFT OUTER JOIN "users" AS "user" ON "Rem"."agent_id" = "user"."user_id" LEFT OUTER JOIN "callfiles" AS "callfile" ON "Rem"."call_file_id" = "callfile"."callfile_id" 
                           WHERE "user".active = 'Y' and "Rem".active = 'Y' and "callfile".active = 'Y' WHEREQUERYCOUNT`
 
-        let sqlQuery = `select "Rem".note , "Rem".agent_id, "Rem".reminder_id,
+        let sqlQuery = `select "Rem".note , "Rem".agent_id, "Rem".reminder_id,"Rem".call_file_id,
                         CONCAT("Rem".date, ' ',"Rem".time) as date_time,
                         CONCAT("user".first_name, ' ',"user".last_name) as agent,
                         CONCAT("callfile".first_name,' ',"callfile".last_name,' (',"callfile".phone_number,' )') as callfile,
