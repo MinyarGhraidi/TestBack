@@ -49,11 +49,11 @@ class listcallfiles extends baseModelbo {
             _this.sendResponseError(res, ['Error.listCallFile_id is required'])
             return
         }
-        this.db['listcallfiles'].findOne({where : {listcallfile_id : listCallfile_id, active : 'Y'}}).then(LCF =>{
-            if(!!!LCF){
-             return _this.sendResponseError(res, ['Error.cannotFindListCallFile'], 1,403)
+        this.db['listcallfiles'].findOne({where: {listcallfile_id: listCallfile_id, active: 'Y'}}).then(LCF => {
+            if (!!!LCF) {
+                return _this.sendResponseError(res, ['Error.cannotFindListCallFile'], 1, 403)
             }
-            _this.getStatsCallStatusByLisCallFile(listCallfile_id,LCF.campaign_id).then(data_stats => {
+            _this.getStatsCallStatusByLisCallFile(listCallfile_id, LCF.campaign_id).then(data_stats => {
                 res.send({
                     data: data_stats,
                     status: 200,
@@ -102,7 +102,7 @@ class listcallfiles extends baseModelbo {
                 }
             })
             .then(statsListCallFiles => {
-                let Filtered =  statsListCallFiles.filter(stat => stat.count_call_status !== null)
+                let Filtered = statsListCallFiles.filter(stat => stat.count_call_status !== null)
                 res.send({
                     success: true,
                     data: Filtered
@@ -112,7 +112,7 @@ class listcallfiles extends baseModelbo {
         })
     }
 
-    getStatsCallStatusByLisCallFile(listCallfile_id,campaign_id) {
+    getStatsCallStatusByLisCallFile(listCallfile_id, campaign_id) {
         return new Promise((resolve, reject) => {
             let sqlStats = `SELECT code, count(call_f.*) as count_call_status
                             FROM callstatuses as call_s
@@ -128,7 +128,7 @@ class listcallfiles extends baseModelbo {
                     replacements: {
                         listCallfile_id: listCallfile_id,
                         active: 'Y',
-                        campaign_id : campaign_id
+                        campaign_id: campaign_id
                     }
                 })
                 .then(statsListCallFiles => {
@@ -228,8 +228,8 @@ class listcallfiles extends baseModelbo {
                 this.db['efiles'].findById(file_id).then(efile => {
                     if (!efile) {
                         return res.send({
-                            success : false,
-                            message : "file-does-not-exit"
+                            success: false,
+                            message: "file-does-not-exit"
                         })
                     } else {
                         const file_path = appDir + '/app/resources/efiles' + efile.uri;
@@ -237,10 +237,10 @@ class listcallfiles extends baseModelbo {
                             this.db['callfiles'].findOne({
                                 where: {
                                     listcallfile_id: listCallFile_id,
-                                    active : 'Y'
+                                    active: 'Y'
                                 }
                             }).then(callfiles => {
-                                if(callfiles && callfiles.length !== 0){
+                                if (callfiles && callfiles.length !== 0) {
                                     data_listCallFile_gp.name = listCallFile_name;
                                     data_listCallFile_gp.campaign_id = campaign_id;
                                     data_listCallFile_gp.created_at = moment(new Date());
@@ -262,10 +262,10 @@ class listcallfiles extends baseModelbo {
                                     }).catch(err => {
                                         _this.sendResponseError(res, err)
                                     })
-                                }else{
+                                } else {
                                     return res.send({
-                                        success : false,
-                                        message : "no-leads-in-cloned-list-leads"
+                                        success: false,
+                                        message: "no-leads-in-cloned-list-leads"
                                     })
                                 }
                             })
@@ -273,8 +273,8 @@ class listcallfiles extends baseModelbo {
 
                         } else {
                             return res.send({
-                                success : false,
-                                message : "file-does-not-exit"
+                                success: false,
+                                message: "file-does-not-exit"
                             })
                         }
                     }
@@ -293,6 +293,91 @@ class listcallfiles extends baseModelbo {
 
     }
 
+    checkTemplate = (template_id) => {
+        return new Promise((resolve, reject) => {
+            if (template_id) {
+                this.db['templates_list_call_files'].findOne({
+                    where: {
+                        status: 'Y',
+                        active: 'Y',
+                        templates_list_call_files_id: template_id
+                    }
+                }).then(template => {
+                    if (!!!template) {
+                        resolve({
+                            success: false,
+                            message: "list-leads-without-template"
+                        })
+                    } else {
+                        resolve({
+                            success: true
+                        })
+                    }
+                }).catch(err => reject(err))
+            } else {
+                resolve({
+                    success: true
+                })
+            }
+        })
+    }
+    _changeStatus = (listcallfile_id, status) => {
+        return new Promise((resolve, reject) => {
+            this.db['listcallfiles'].findOne({where: {listcallfile_id: listcallfile_id}}).then(lcf => {
+                let template_id = lcf.templates_id
+                if (lcf && Object.keys(lcf).length !== 0) {
+                    this.checkTemplate(template_id).then(resultCheck => {
+                        if (resultCheck.success) {
+                            this.db['listcallfiles'].update({
+                                status: status,
+                                updated_at: moment(new Date())
+                            }, {where: {listcallfile_id: listcallfile_id, active: 'Y'}}).then(() => {
+                                if (status === 'N') {
+                                    this.db['callfiles'].update({
+                                        status: status,
+                                        updated_at: moment(new Date())
+                                    }, {where: {listcallfile_id: listcallfile_id, active: 'Y'}}).then(() => {
+                                        this._deleteFromHooperByCallfileID(listcallfile_id).then(() => {
+                                            return resolve({
+                                                success: true
+                                            })
+                                        }).catch(err => reject(err))
+                                    }).catch(err => reject(err))
+                                } else {
+                                    resolve({
+                                        success: true
+                                    })
+                                }
+                            }).catch(err => reject(err))
+                        }else{
+                            return resolve({
+                                success: false,
+                                message: resultCheck.message
+                            })
+                        }
+                    })
+                }else{
+                    return reject('listcallfile not found')
+                }
+            })
+
+        })
+    }
+    changeStatus = (req, res, next) => {
+        const {listcallfile_id, status} = req.body
+        if (!!!listcallfile_id) {
+            return this.sendResponseError(res, ['emptyBody'], 1, 403)
+        }
+        this._changeStatus(listcallfile_id, status).then((data) => {
+            res.send({
+                status: 200,
+                success: data.success,
+                message: data.message
+            })
+        }).catch(err => {
+            return this.sendResponseError(res, ['ErrorChangeStatus', err], 2, 403)
+        })
+    }
 }
 
 module.exports = listcallfiles;
