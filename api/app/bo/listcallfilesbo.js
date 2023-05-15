@@ -142,7 +142,7 @@ class listcallfiles extends baseModelbo {
     async printCsv(data) {
         const csv = new ObjectsToCsv(data);
         const file_name = Date.now() + 'ListCallFileQualification.csv';
-        const file_path = appDir + '/api/app/resources/qualificationListCallFile/' + file_name;
+        const file_path = appDir + '/app/resources/qualificationListCallFile/' + file_name;
         await csv.toDisk(file_path);
         await csv.toString()
         return file_name
@@ -187,7 +187,7 @@ class listcallfiles extends baseModelbo {
         let _this = this;
         let file_name = req.params.filename;
         if (file_name && file_name !== 'undefined') {
-            const file = appDir + '/api/app/resources/qualificationListCallFile/' + file_name;
+            const file = appDir + '/app/resources/qualificationListCallFile/' + file_name;
             res.download(file, function (err) {
                 if (err) {
                     _this.sendResponseError(res, err);
