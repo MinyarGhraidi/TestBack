@@ -380,7 +380,7 @@ class users extends baseModelbo {
                 return res.send({
                     success : false,
                     status : 403,
-                    message : 'You have To enable this account first !'
+                    message : 'enable-account'
                 })
             }
                 this.db['has_permissions'].findAll({

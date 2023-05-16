@@ -89,7 +89,7 @@ class agents extends baseModelbo {
                                             res.send({
                                                 success: false,
                                                 status: 403,
-                                                message: 'Failed Try Again'
+                                                message: "fail-catch"
                                             })
                                         })
                                     }).catch((err) => {
@@ -101,7 +101,7 @@ class agents extends baseModelbo {
                                         status: 403,
                                         data: [],
                                         agents_available: agents_available,
-                                        message: agents_available === 0 ? "you reached your limit on adding agents ! " : `You only have ${agents_available} agent${agents_available > 1 ? 's' : ''} to add !`
+                                        message: "reach-limit-add-agents"
                                     })
                                 }
                             }).catch((err) => {
@@ -132,7 +132,7 @@ class agents extends baseModelbo {
                     if (!isUnique) {
                         resolve({
                             success: false,
-                            message: 'This username is already exist'
+                            message: 'username-exist'
                         });
                     } else {
                         resolve({
@@ -400,8 +400,7 @@ class agents extends baseModelbo {
                     res.send({
                         status: 403,
                         success: false,
-                        error_type: 'check_username',
-                        message: 'This username is already exist'
+                        message: 'username-exist'
                     });
                 }
             }).catch((err) => {

@@ -172,7 +172,7 @@ class campaigns extends baseModelbo {
                     resolve({
                         success: false,
                         status: 403,
-                        message: 'Audios Not Found'
+                        message: 'audio-not-found'
                     });
                 }
             }).catch(err => {

@@ -21,7 +21,7 @@ class TemplateListbo extends baseModelbo{
                     }).then(listcallfiles => {
                         if(listcallfiles && listcallfiles.length !== 0){
                             listcallfiles.forEach(lcf => {
-                                _listcallfilesbo._changeStatus(lcf.listcallfile_id, status).then(() => {
+                                _listcallfilesbo._changeStatusLCF(lcf.listcallfile_id, status).then(() => {
                                     resolve(true)
                                 }).catch(err => reject(err))
                             })
@@ -41,7 +41,7 @@ class TemplateListbo extends baseModelbo{
             return this.sendResponseError(res,['emptyBody'],1,403)
         }
         this._changeStatus(template_id,status).then(() => {
-            res.send({
+           return  res.send({
                 status : 200,
                 success : true
             })

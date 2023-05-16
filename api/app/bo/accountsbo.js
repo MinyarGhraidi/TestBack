@@ -360,7 +360,7 @@ class accounts extends baseModelbo {
                     if (acc) {
                         return res.send({
                             success: false,
-                            message: "web domain already affected to another account"
+                            message: "web-domain-already-affected"
                         })
                     } else {
                         this.couldAffectDomain(domain).then((resultAffection) => {
@@ -436,7 +436,7 @@ class accounts extends baseModelbo {
                 if (account_fetch) {
                     return res.send({
                         success: false,
-                        message: "web domain already affected to another account"
+                        message: "web-domain-already-affected"
                     })
                 } else {
                     this.couldAffectDomain(domain).then((resultAffection) => {
@@ -483,8 +483,9 @@ class accounts extends baseModelbo {
                                                             } else {
                                                                 res.send({
                                                                     status: 200,
-                                                                    message: result_camp_agent.message,
+                                                                    message: 'fail-catch',
                                                                     success: false,
+                                                                    messageError : result_camp_agent.message
                                                                 })
                                                             }
                                                         })
@@ -521,13 +522,14 @@ class accounts extends baseModelbo {
                         } else {
                             res.send({
                                 success: false,
-                                message: "domain already affected to another account"
+                                message: "domain-already-affected"
                             })
                         }
                     }).catch((err) => {
                         res.send({
                             success: false,
-                            message: err.response.data
+                            messageError : err.response.data,
+                            message: "fail-catch"
                         })
                     })
                 }
@@ -771,7 +773,7 @@ class accounts extends baseModelbo {
                                     .then(() => {
                                         res.send({
                                             status: 200,
-                                            message: 'account deleted with success'
+                                            success: true
                                         })
                                     })
                                     .catch(err => {
