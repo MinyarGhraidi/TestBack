@@ -173,6 +173,7 @@ class AddCallFile extends baseModelbo {
 
     CallFiles_Mapping(ListCallFile, CallFiles, Phone_attribute) {
         return new Promise((resolve, reject) => {
+
             let idx = 0;
             if (CallFiles && CallFiles.length !== 0) {
                 this.getCustomFieldsAndDataMapping(ListCallFile).then(DataMap => {
@@ -199,12 +200,18 @@ class AddCallFile extends baseModelbo {
                         const regexNumbers = /^\d+$/;
                         const PhoneNumbers = []
                         const E_Files = []
+                        console.log("CFInj : ",CFInj.length)
+                        console.log("Phone_attribute : ",Phone_attribute)
+                        let phoneCountAttribute = 0
                         CFInj.forEach(E_File => {
                             if(E_File[Phone_attribute] && regexNumbers.test(E_File[Phone_attribute].toString())){
                                 PhoneNumbers.push(E_File[Phone_attribute].toString())
                                 E_Files.push(E_File)
+                            }else{
+                                phoneCountAttribute++
                             }
                         })
+                        console.log("E_Files : ",E_Files.length)
                         this.checkDuplicationListCallFile(PhoneNumbers, ListCallFile).then(phoneNumbersToAdd => {
                             DataCallFile.deplicated = PhoneNumbers.length - phoneNumbersToAdd.length
                             if (phoneNumbersToAdd && phoneNumbersToAdd.length !== 0) {
@@ -218,7 +225,7 @@ class AddCallFile extends baseModelbo {
                                             idx++
                                         } else {
                                             this.updateListCallFile(ListCallFile.listcallfile_id, DataCallFile.index, DataCallFile.deplicated).then(() => {
-                                                resolve({total : DataCallFile.index + DataCallFile.deplicated, deplicated : DataCallFile.deplicated, added : DataCallFile.index})
+                                                resolve({phoneAttributeNotFound : phoneCountAttribute,total : DataCallFile.index + DataCallFile.deplicated, deplicated : DataCallFile.deplicated, added : DataCallFile.index})
                                             }).catch(err => reject(err))
                                         }
                                     }).catch(err => {
@@ -227,7 +234,7 @@ class AddCallFile extends baseModelbo {
                                 })
                             } else {
                                 this.updateListCallFile(ListCallFile.listcallfile_id, DataCallFile.index, DataCallFile.deplicated).then(() => {
-                                    resolve({total : DataCallFile.index + DataCallFile.deplicated, deplicated : DataCallFile.deplicated, added : DataCallFile.index})
+                                    resolve({phoneAttributeNotFound : phoneCountAttribute, total : DataCallFile.index + DataCallFile.deplicated, deplicated : DataCallFile.deplicated, added : DataCallFile.index})
                                 }).catch(err => reject(err))
                             }
                         })
@@ -449,12 +456,13 @@ class AddCallFile extends baseModelbo {
                                 }
                             }
                             this.updateNumberCallFiles(data.length, ListCallFile_item.listcallfile_id).then(() => {
-                                this.CallFiles_Mapping(ListCallFile_item, data, Phone_Attribute).then((data) => {
+                                this.CallFiles_Mapping(ListCallFile_item, data, Phone_Attribute).then((datax) => {
+                                    console.log(datax)
                                     if (idxLCF < dataListCallFiles.length - 1) {
                                         idxLCF++;
                                     } else {
                                         appSocket.emit('refresh_list_callFiles', {campaign_ids: Camp_ids});
-                                        resolve({message: `Done ! | Total : ${data.total} | Added : ${data.added} | Deplicated : ${data.deplicated}`, cron : "cronListCallFiles"})
+                                        resolve({message: `Done for : ${ListCallFile_item.name}, ID : ${ListCallFile_item.listcallfile_id} | Total : ${datax.total} | Added : ${datax.added} | Deplicated : ${datax.deplicated} | PhoneNumber (Not found or incorrect) : ${datax.phoneAttributeNotFound}`, cron : "cronListCallFiles"})
                                     }
                                 }).catch(err => {
                                     reject(err)
