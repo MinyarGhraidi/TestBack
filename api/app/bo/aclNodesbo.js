@@ -107,7 +107,8 @@ class aclNodes extends baseModelbo {
                 }).catch((err) => {
                     res.send({
                         success: false,
-                        message: err.response.data.errors
+                        messageError : err.response.data.errors,
+                        message: "fail-catch"
                     })
                 })
             }).catch(err => {

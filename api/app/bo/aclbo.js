@@ -28,7 +28,7 @@ class acls extends baseModelbo {
             if (!!!resp) {
                 return res.send({
                     success: false,
-                    message: "esl server not found"
+                    message: "esl-server-not-found"
                 })
             }
             const server_id = formData.server_id;
@@ -45,8 +45,7 @@ class acls extends baseModelbo {
                 acl.save().then(aclSaved => {
                     res.send({
                         success: true,
-                        data: aclSaved,
-                        message: 'Acl created with success!'
+                        data: aclSaved
                     });
                 }).catch((error) => {
                     return this.sendResponseError(res, ['Error.AnErrorHasOccurredSaveAcl'], 1, 403);
@@ -54,13 +53,15 @@ class acls extends baseModelbo {
             }).catch((err) => {
                 res.send({
                     success: false,
-                    message: err.response.data.errors || 'Failed Try again'
+                    message : "fail-catch",
+                    messageError: err.response.data.errors || 'Failed Try again'
                 })
             })
         }).catch((err) => {
             res.send({
                 success: false,
-                message: err.response.data.errors || 'Failed Try again'
+                message : "fail-catch",
+                messageError: err.response.data.errors || 'Failed Try again'
             })
         })
 
@@ -92,7 +93,7 @@ class acls extends baseModelbo {
                     if (!!!resp) {
                         return res.send({
                             success: false,
-                            message: "esl server not found"
+                            message: "esl-server-not-found"
                         })
                     }
                     axios
@@ -117,7 +118,8 @@ class acls extends baseModelbo {
                         }).catch((err) => {
                             res.send({
                                 success: false,
-                                message: err.response.data.errors
+                                messageError: err.response.data.errors,
+                                message : "fail-catch"
                             })
                         })
 

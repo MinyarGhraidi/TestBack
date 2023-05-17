@@ -802,19 +802,10 @@ class callfiles extends baseModelbo {
             this.getCallFileIdsByCampaignID(campaign_id).then(result => {
                 if (result.success) {
                     this.updateCallFileTreatAndHooper(result.data, result.call_status).then(resUpdate => {
-                        if (resUpdate) {
                             res.send({
                                 success: true,
-                                status: 200,
-                                message: 'Campaign Recycled Successfully !'
+                                status: 200
                             })
-                        } else {
-                            res.send({
-                                success: false,
-                                status: 403,
-                                message: 'Error, Please Try Again !'
-                            })
-                        }
                     }).catch(err => {
                         return this.sendResponseError(res, ['Error.CannotUpdateCallFileTreatAndHooper', err], 1, 403);
                     })
@@ -833,19 +824,10 @@ class callfiles extends baseModelbo {
             this.getCallFileIdsByListCallFileID(listcallfile_id).then(result => {
                 if (result.success) {
                     this.updateCallFileTreatAndHooper(result.data, result.call_status).then(resUpdate => {
-                        if (resUpdate) {
                             res.send({
                                 success: true,
-                                status: 200,
-                                message: 'List Call File Recycled Successfully !'
+                                status: 200
                             })
-                        } else {
-                            res.send({
-                                success: false,
-                                status: 403,
-                                message: 'Error, Please Try Again !'
-                            })
-                        }
                     }).catch(err => {
                         return this.sendResponseError(res, ['Error.CannotUpdateCallFileTreatAndHooper', err], 1, 403);
                     })
@@ -934,14 +916,13 @@ class callfiles extends baseModelbo {
                                                 resolve({
                                                     success: true,
                                                     data: CF_ids,
-                                                    call_status: CS_codes,
-                                                    message: 'Campaign Recycled Successfully !'
+                                                    call_status: CS_codes
                                                 })
                                             }
                                         } else {
                                             resolve({
                                                 success: false,
-                                                message: 'ListCallFile doesn`t have callfiles !'
+                                                message: 'list-leads-without-leads'
 
                                             })
                                         }
@@ -949,7 +930,7 @@ class callfiles extends baseModelbo {
                                 } else {
                                     resolve({
                                         success: false,
-                                        message: 'Campaign doesn`t have listcallfiles !'
+                                        message: 'campaign-without-list-leads'
                                     })
                                 }
                             }).catch(err => reject(err))
