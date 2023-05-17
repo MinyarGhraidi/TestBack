@@ -179,7 +179,11 @@ class listcallfiles extends baseModelbo {
                 }).catch(err=>{
                     this.sendResponseError(res, 'Error.printFile')
                 })
+            }else{
+                this.sendResponseError(res, 'Error.printFile')
             }
+        }).catch(err=>{
+            this.sendResponseError(res, 'Error.printFile')
         })
     }
 
