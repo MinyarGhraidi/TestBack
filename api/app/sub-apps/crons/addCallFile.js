@@ -200,8 +200,6 @@ class AddCallFile extends baseModelbo {
                         const regexNumbers = /^\d+$/;
                         const PhoneNumbers = []
                         const E_Files = []
-                        console.log("CFInj : ",CFInj.length)
-                        console.log("Phone_attribute : ",Phone_attribute)
                         let phoneCountAttribute = 0
                         CFInj.forEach(E_File => {
                             if(E_File[Phone_attribute] && regexNumbers.test(E_File[Phone_attribute].toString())){
@@ -211,7 +209,6 @@ class AddCallFile extends baseModelbo {
                                 phoneCountAttribute++
                             }
                         })
-                        console.log("E_Files : ",E_Files.length)
                         this.checkDuplicationListCallFile(PhoneNumbers, ListCallFile).then(phoneNumbersToAdd => {
                             DataCallFile.deplicated = PhoneNumbers.length - phoneNumbersToAdd.length
                             if (phoneNumbersToAdd && phoneNumbersToAdd.length !== 0) {
@@ -457,7 +454,6 @@ class AddCallFile extends baseModelbo {
                             }
                             this.updateNumberCallFiles(data.length, ListCallFile_item.listcallfile_id).then(() => {
                                 this.CallFiles_Mapping(ListCallFile_item, data, Phone_Attribute).then((datax) => {
-                                    console.log(datax)
                                     if (idxLCF < dataListCallFiles.length - 1) {
                                         idxLCF++;
                                     } else {
