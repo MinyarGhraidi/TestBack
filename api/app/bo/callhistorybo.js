@@ -39,7 +39,8 @@ class Callhistorybo extends baseModelbo {
                                  set revision_id = :revision_id ,
                                  dmt = :dmt ,
                                  dmc = :dmc ,
-                                 note = :note 
+                                 note = :note ,
+                                 call_status = :call_status
                                  where id = (select id from calls_historys
                                              where call_file_id =:call_file_id
                                              order by started_at DESC
@@ -51,7 +52,8 @@ class Callhistorybo extends baseModelbo {
                             revision_id: body.revision_id,
                             note: body.note,
                             dmc: dmc,
-                            dmt: dmt}
+                            dmt: dmt,
+                            call_status: body.call_status}
                     }).then(()=>{
                         resolve(true)
                     }).catch(err => {
