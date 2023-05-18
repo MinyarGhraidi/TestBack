@@ -581,7 +581,7 @@
     "test": "mocha --exit -r 'test/**/*.js'  --grep",
     "saveCalls": "NODE_ENV=development nodemon SaveCallFile ",
     "startSip": "nodemon  --unhandled-rejections=strict --experimental-modules --es-module-specifier-resolution=node  ./app/sub-apps/sipConnect.js",
-    "crons-backend": "NODE_ENV=production nodemon app/sub-apps/crons/crons.js"
+    "crons-backend": "NODE_ENV=production nodemon --max-old-space-size=8192  app/sub-apps/crons/crons.js"
   },
   "devDependencies": {
     "cron": "^2.2.0",
