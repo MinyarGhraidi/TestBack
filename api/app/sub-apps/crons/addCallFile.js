@@ -209,29 +209,40 @@ class AddCallFile extends baseModelbo {
                                 phoneCountAttribute++
                             }
                         })
-                        this.checkDuplicationListCallFile(PhoneNumbers, ListCallFile).then(phoneNumbersToAdd => {
+                        this.checkDuplicationListCallFile(PhoneNumbers, ListCallFile).then(async phoneNumbersToAdd => {
                             DataCallFile.deplicated = PhoneNumbers.length - phoneNumbersToAdd.length
                             if (phoneNumbersToAdd && phoneNumbersToAdd.length !== 0) {
                                 DataCallFile.length = phoneNumbersToAdd.length
-                                phoneNumbersToAdd.forEach(phone_number => {
+                                for (const phone_number of phoneNumbersToAdd) {
                                     DataCallFile.status = idx === E_Files.length - 1;
                                     DataCallFile.index += 1;
                                     let Efile = E_Files.filter(CF => CF[Phone_attribute].toString() === phone_number.toString())[0]
-                                    this.CallFileMapping(ListCallFile.listcallfile_id, Efile, DataMap).then(() => {
+                                    await this.CallFileMapping(ListCallFile.listcallfile_id, Efile, DataMap).then(() => {
                                         if (idx < E_Files.length - 1) {
                                             idx++
                                         } else {
                                             this.updateListCallFile(ListCallFile.listcallfile_id, DataCallFile.index, DataCallFile.deplicated).then(() => {
-                                                resolve({phoneAttributeNotFound : phoneCountAttribute,total : DataCallFile.index + DataCallFile.deplicated, deplicated : DataCallFile.deplicated, added : DataCallFile.index})
+                                                resolve({
+                                                    phoneAttributeNotFound: phoneCountAttribute,
+                                                    total: DataCallFile.index + DataCallFile.deplicated,
+                                                    deplicated: DataCallFile.deplicated,
+                                                    added: DataCallFile.index
+                                                })
                                             }).catch(err => reject(err))
                                         }
                                     }).catch(err => {
+                                        console.log(err)
                                         reject(err)
                                     })
-                                })
+                                }
                             } else {
                                 this.updateListCallFile(ListCallFile.listcallfile_id, DataCallFile.index, DataCallFile.deplicated).then(() => {
-                                    resolve({phoneAttributeNotFound : phoneCountAttribute, total : DataCallFile.index + DataCallFile.deplicated, deplicated : DataCallFile.deplicated, added : DataCallFile.index})
+                                    resolve({
+                                        phoneAttributeNotFound: phoneCountAttribute,
+                                        total: DataCallFile.index + DataCallFile.deplicated,
+                                        deplicated: DataCallFile.deplicated,
+                                        added: DataCallFile.index
+                                    })
                                 }).catch(err => reject(err))
                             }
                         })
@@ -288,6 +299,7 @@ class AddCallFile extends baseModelbo {
                 FullCallFile.save_in_hooper = "N";
                 FullCallFile.status = "Y";
                 this.db['callfiles'].build(FullCallFile).save().then(() => {
+                    console.count("saved File ")
                     resolve(true)
                 }).catch(err => {
                     reject(err);
