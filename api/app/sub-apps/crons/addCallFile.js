@@ -231,7 +231,6 @@ class AddCallFile extends baseModelbo {
                                             }).catch(err => reject(err))
                                         }
                                     }).catch(err => {
-                                        console.log(err)
                                         reject(err)
                                     })
                                 }
@@ -299,7 +298,6 @@ class AddCallFile extends baseModelbo {
                 FullCallFile.save_in_hooper = "N";
                 FullCallFile.status = "Y";
                 this.db['callfiles'].build(FullCallFile).save().then(() => {
-                    console.count("saved File ")
                     resolve(true)
                 }).catch(err => {
                     reject(err);
