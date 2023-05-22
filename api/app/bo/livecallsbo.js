@@ -1,6 +1,6 @@
 const {baseModelbo} = require('./basebo');
 let sequelize = require('sequelize');
-let db = require('../models');
+let db = require("../models");
 
 class livecalls extends baseModelbo {
     constructor() {
@@ -28,45 +28,61 @@ class livecalls extends baseModelbo {
     getLiveCallsByAccount(req, res, next) {
         let _this = this;
         let {account_id} = req.body;
-        if(!!!account_id){
+        if (!!!account_id) {
             res.send({
                 status: 403,
                 message: "Account ID Not Found !",
                 data: []
             })
         }
-        this.db['live_calls'].findAll({where: {active: 'Y'}})
-            .then(liveCalls => {
-                this.db['accounts'].findOne({where: {account_id: account_id}})
-                    .then(account => {
-                        if (Object.keys(account) && Object.keys(account).length !== 0) {
-                            let filteredData = liveCalls.filter(call => call.events[0].accountcode === account.account_code);
+
+        this.db['accounts'].findOne({where: {account_id: account_id}})
+            .then(account => {
+                if (account) {
+                    let sqlQuery = `select *
+                            from live_calls
+                            WHERE SUBSTRING("callid", 0 , POSITION(':' in "callid") ) = :account_code`
+
+                    db.sequelize['crm-app'].query(sqlQuery, {
+                        type: db.sequelize['crm-app'].QueryTypes.SELECT,
+                        replacements: {
+                            account_code: account.account_code
+                        }
+                    }).then(livecall => {
+                        if (livecall && livecall.length !== 0) {
                             res.send({
                                 status: 200,
                                 message: "success",
-                                data: filteredData,
+                                data: livecall,
                             });
                         } else {
                             res.send({
                                 status: 200,
                                 message: "success",
-                                data: []
+                                data: [],
                             });
                         }
+                    }).catch(err => {
+                        return _this.sendResponseError(res, ['Cannot fetch data from DB', err], 1, 403);
                     })
-                    .catch(err => {
-                        return _this.sendResponseError(res, ['Cannot fetch accounts from DB', err], 1, 403);
-                    })
+                } else {
+                    res.send({
+                        status: 200,
+                        message: "success",
+                        data: []
+                    });
+                }
             })
             .catch(err => {
-                return _this.sendResponseError(res, ['Cannot fetch data from DB', err], 1, 403);
+                return _this.sendResponseError(res, ['Cannot fetch accounts from DB', err], 1, 403);
             })
+
     }
 
-    getLiveCallsByCampaign(req, res, next){
+    getLiveCallsByCampaign(req, res, next) {
         let _this = this;
         let {campaign_id} = req.body;
-        if(!!!campaign_id){
+        if (!!!campaign_id) {
             res.send({
                 status: 403,
                 message: "campaign ID Not Found !",
