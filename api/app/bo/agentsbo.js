@@ -1386,8 +1386,8 @@ class agents extends baseModelbo {
                          left join (
                     select callS.callstatus_id, callS.code, count(*) as total
                     from callstatuses as callS
-                             left join callfiles as callF On callF.call_status = callS.code
-                             left join calls_historys as callH On callH.call_file_id = callF.callfile_id
+                             left join calls_historys as callH On callH.call_status = callS.code
+                             left join callfiles as callF On callF.callfile_id = callH.call_file_id
                              left join listcallfiles as listCallF On callF.listcallfile_id = listCallF.listcallfile_id
                     where 1 = 1
                         EXTRA_WHERE
