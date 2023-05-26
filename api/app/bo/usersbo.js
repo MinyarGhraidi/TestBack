@@ -290,8 +290,8 @@ class users extends baseModelbo {
                                                             ]
                                                             let list_permissions = user.role.permission ;
                                                             permissions_user = list_permissions.concat(default_permissions)
-                                                            permissions = data_perm.user_has_role_permission.concat('user-settings')
-                                                            permissions = data_perm.user_has_role_permission.concat('home')
+                                                            permissions = data_perm.user_has_role_permission
+                                                            //permissions = data_perm.user_has_role_permission.concat('home')
                                                         }else{
                                                             permissions = data_perm.permissions_values || []
                                                         }
@@ -529,6 +529,7 @@ class users extends baseModelbo {
                             if (index < permissions.length - 1) {
                                 index++
                             } else {
+                                permissions_lockups.push('user-settings')
                                 resolve({
                                     permissions_values: permissions_values,
                                     permissions_description: permissions_description,
