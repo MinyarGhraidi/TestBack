@@ -1212,11 +1212,8 @@ class agents extends baseModelbo {
             campaign_ids,
             dateSelected_from,
             dateSelected_to,
-            end_time,
             listCallFiles_ids,
-            roleCrmAgent,
-            start_time,
-            account_code
+            roleCrmAgent
         } = params;
         this.getUsers(agent_ids, campaign_ids, roleCrmAgent, account_id).then(result => {
             dataAgents = result.dataAgents;
@@ -1285,25 +1282,38 @@ class agents extends baseModelbo {
                         status: 200
                     })
                 }
-                agent_ids.forEach(agent => {
-                    this.getReportByOneAgent({...newParams[0], agent_id: agent}).then(result => {
+                    this.getReportByOneAgent({...newParams[0], agent_id: agent_ids}).then(result => {
                         if (result.success) {
-                            let currentAgent = dataAgents.filter((item) => item.user_id === agent)
-                            resultArray.push({agent: currentAgent[0], data: result.data});
-                        }
-                        if (idx < agent_ids.length - 1) {
-                            idx++
-                        } else {
+                            agent_ids.forEach(agent=>{
+                                let currentAgent = dataAgents.filter((item) => item.user_id === agent)
+                                let AgentStatusData = []
+                                let total = 0
+                                result.data.forEach(item=>{
+                                    if(item.agent_id === agent){
+                                        total += Number(item.total)
+                                        AgentStatusData.push(item)
+                                    }
+                                })
+                                AgentStatusData.push({label: 'total', code: 'total', total: total})
+                                resultArray.push({agent: currentAgent[0], data: AgentStatusData});
+                            })
                             return res.send({
                                 success: true,
                                 data: resultArray,
                                 status: 200
                             })
+                        }else{
+                            return res.send({
+                                success: true,
+                                data: [],
+                                status: 200
+                            })
                         }
+
                     }).catch(err => {
                         return this.sendResponseError(res, ['ErrorCannotGetStatus'], 1, 403)
                     })
-                })
+
             }).catch(err => {
                 return this.sendResponseError(res, ['ErrorCannotGetStatus'], 1, 403)
             })
@@ -1375,27 +1385,28 @@ class agents extends baseModelbo {
             } = params;
 
             let sqlCallsStats = `
-                select call_s.callstatus_id,
-                       call_s.code,
-                       call_s.label,
+                select distinct us.user_id as agent_id,callS.callstatus_id , callS.code, callS.label,
                        case
                            WHEN stats.total is null THEN 0
                            ELSE stats.total
                            END
-                from callstatuses call_s
+                from users as us
+                full join callstatuses as callS on 1=1
                          left join (
-                    select callS.callstatus_id, callS.code, count(*) as total
+                    select callH.agent_id, callS.callstatus_id, callS.code, count(*) as total
                     from callstatuses as callS
                              left join calls_historys as callH On callH.call_status = callS.code
                              left join callfiles as callF On callF.callfile_id = callH.call_file_id
                              left join listcallfiles as listCallF On callF.listcallfile_id = listCallF.listcallfile_id
                     where 1 = 1
                         EXTRA_WHERE
-                    group by callS.code, callS.callstatus_id)
-                    as stats On stats.callstatus_id = call_s.callstatus_id
-                where call_s.active = 'Y' EXTRA_WHERE_WITHOUT_CAMP EXTRA_WHERE_CAMP EXTRA_WHERE_STATUS
+                    group by callS.code, callS.callstatus_id, callH.agent_id)
+                    as stats On stats.agent_id = us.user_id and stats.callstatus_id = callS.callstatus_id
+                where callS.active = 'Y' EXTRA_WHERE_WITHOUT_CAMP EXTRA_WHERE_CAMP EXTRA_WHERE_STATUS
                 order by total desc
+
             `
+
             let extra_where = '';
             let extra_where_camp = '';
             let extra_where_status = '';
@@ -1407,21 +1418,21 @@ class agents extends baseModelbo {
                 extra_where += ' AND  callH.finished_at <=  :end_time';
             }
             if (agent_id) {
-                extra_where += ' AND callH.agent_id = :agent_id';
+                extra_where += ' AND callH.agent_id in (:agent_id)';
             }
 
             if (call_status && call_status !== '' && call_status.length !== 0) {
                 extra_where += ' AND callS.callstatus_id in (:call_status)';
-                extra_where_status += ' AND call_s.callstatus_id in (:call_status)';
+                extra_where_status += ' AND callS.callstatus_id in (:call_status)';
             }
             if (listCallFiles_ids !== '' && listCallFiles_ids.length !== 0) {
                 extra_where += ' AND listCallF.listcallfile_id in(:listCallFiles_ids)';
             }
             if (campaign_ids !== '' && campaign_ids.length !== 0) {
-                extra_where_camp += "AND  (call_s.campaign_id in(:campaign_ids) or  call_s.is_system = 'Y')"
+                extra_where_camp += "AND  (callS.campaign_id in(:campaign_ids) or  callS.is_system = 'Y') and us.user_id in (:agent_id)"
                 extra_where += " AND (callS.campaign_id in(:campaign_ids) OR  callS.is_system = 'Y') "
             } else {
-                extra_where_without_camp += "AND (stats.total > 0 or call_s.is_system = 'Y')"
+                extra_where_without_camp += "AND (stats.total > 0 or callS.is_system = 'Y')"
             }
             sqlCallsStats = sqlCallsStats.replace('EXTRA_WHERE', extra_where);
             sqlCallsStats = sqlCallsStats.replace('EXTRA_WHERE_CAMP', extra_where_camp);
