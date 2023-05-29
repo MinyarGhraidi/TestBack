@@ -348,7 +348,7 @@ class campaigns extends baseModelbo {
 
     changeStatusComp(compaign_id, status) {
         return new Promise((resolve, reject) => {
-            const UpdateEntities = ['pausestatuses', 'callstatuses'];
+            const UpdateEntities = ['pausestatuses', 'callstatuses', 'call_blundings'];
             this.changeStatusForEntities(UpdateEntities, compaign_id, status).then(() => {
                 this.changeStatus_callfiles(compaign_id, status).then(() => {
                     resolve(true);
@@ -386,9 +386,8 @@ class campaigns extends baseModelbo {
     }
 
     changeStatus_callfiles(campaign_id, status) {
-        let indexCallFiles = 0;
-
         return new Promise((resolve, reject) => {
+            let indexCallFiles = 0;
             this.db['listcallfiles'].findAll({
                 where: {
                     campaign_id: campaign_id,
@@ -437,7 +436,6 @@ class campaigns extends baseModelbo {
             });
         })
     }
-
 
     //-------------> Default Pause Call Status Camapign <----------------------
     addDefaultPauseCallStatus(req, res, next) {
