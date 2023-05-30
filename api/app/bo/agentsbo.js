@@ -156,7 +156,7 @@ class agents extends baseModelbo {
                             if (!isUnique) {
                                 _usersbo._generateUserName(user.account_id, AgentRole).then(secondGenUserName => {
                                     TestuserName = parseInt(secondGenUserName) + 1;
-                                    let pass = this.generatestring(10)
+                                    let pass = this.generatePassword()
                                     let newUser = {
                                         ...user,
                                         sip_device: {
@@ -183,7 +183,7 @@ class agents extends baseModelbo {
                                     }
                                 })
                             } else {
-                                let pass = this.generatestring(10)
+                                let pass = this.generatePassword()
                                 let newUser = {
                                     ...user,
                                     sip_device: {
@@ -1803,16 +1803,24 @@ class agents extends baseModelbo {
         //   }
     }
 
-    generatestring(length) {
-        let result = '';
-        let characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-        let charactersLength = characters.length;
-        for (let i = 0; i < length; i++) {
-            result += characters.charAt(Math.floor(Math.random() *
-                charactersLength));
+    generatePassword() {
+        const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        const digits = '0123456789';
+        let password = '';
+
+        // Generate 3 random characters
+        for (let i = 0; i < 3; i++) {
+            password += characters.charAt(Math.floor(Math.random() * characters.length));
         }
-        return result;
+
+        // Generate 3 random digits
+        for (let i = 0; i < 3; i++) {
+            password += digits.charAt(Math.floor(Math.random() * digits.length));
+        }
+
+        return password;
     }
+
 
     OnConnectTelco(uuid, telcoStatus) {
         return new Promise((resolve, reject) => {
