@@ -10,6 +10,7 @@ const base_url_cc_kam = require(__dirname + '/../config/config.json')[env]["base
 const appSocket = new (require("../providers/AppSocket"))();
 const helpers = require('../helpers/helpers')
 const moment = require("moment");
+const db = require("../models");
 const call_center_authorization = {
     headers: {Authorization: call_center_token}
 };
@@ -1260,6 +1261,27 @@ class campaigns extends baseModelbo {
             .catch((err) => {
                 return this.sendResponseError(res, ['CannotClearCallsCampaign', err], 1, 403)
             });
+    }
+
+    resetHooper (req, res, next){
+        let id = req.body.id
+        let sqlQuery = `delete
+                            from hoopers as h
+                            where h.listcallfile_id IN (select list.listcallfile_id from listcallfiles list where list.campaign_id = :campaign_id )`
+
+        db.sequelize['crm-app'].query(sqlQuery, {
+            type: db.sequelize['crm-app'].QueryTypes.DELETE,
+            replacements: {
+                campaign_id: id
+            }
+        }).then(result=>{
+                res.send({
+                    success: true,
+                })
+
+        }).catch(err=>{
+            return this.sendResponseError(res, ['CannotResetHooper', err], 1, 403)
+        })
     }
 
 

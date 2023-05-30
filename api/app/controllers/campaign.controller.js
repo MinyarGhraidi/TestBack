@@ -49,5 +49,8 @@ module.exports = {
     clearCallsCampaign: function (req, res, next) {
         _itembo.clearCallsCampaign(req, res, next)
     },
+    resetHooper : function (req, res, next) {
+        _itembo.resetHooper(req, res, next)
+    }
 
 };
