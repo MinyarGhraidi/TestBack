@@ -117,6 +117,9 @@ module.exports = (sequelize, Sequelize) => {
         campaign.belongsTo(models.accounts, {
             foreignKey: 'account_id'
         });
+        campaign.hasMany(models.listcallfiles,{
+            foreignKey: 'campaign_id'
+        })
     };
 
     return campaign

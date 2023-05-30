@@ -62,6 +62,7 @@ EslServersController = require('../controllers/esl_server.controller');
 CallhistoryController = require('../controllers/callhistory.controller');
 NotificationsController = require('../controllers/notifications.controller');
 ReminderController = require('../controllers/reminder.controller');
+HooperController = require('../controllers/hooper.controller');
 
 let apiRouters = function (passport) {
 
@@ -407,6 +408,9 @@ let apiRouters = function (passport) {
     router.put('/api/reminder/update', passport.authenticate('jwt', {session: false}), ReminderController.update);
     router.delete('/api/reminder/delete/:params', passport.authenticate('jwt', {session: false}), ReminderController.delete);
     router.post('/api/reminder/save', passport.authenticate('jwt', {session: false}), ReminderController.save);
+
+    router.post('/api/hooper/find/:params?', passport.authenticate('jwt', {session: false}), HooperController.find);
+    router.get('/api/hooper/findById/:entity_id', passport.authenticate('jwt', {session: false}), HooperController.findById);
     return router;
 
 
