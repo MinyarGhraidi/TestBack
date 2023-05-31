@@ -3,7 +3,9 @@ let _itembo = new itembo();
 
 module.exports = {
 
-    update: function (req, res, next) {
+    save: function (req, res, next) {
+        _itembo.save(req, res, next);
+    }, update: function (req, res, next) {
         _itembo.update(req, res, next);
     },
     findNotification: function (req, res, next) {

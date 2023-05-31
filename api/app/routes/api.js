@@ -70,6 +70,7 @@ let apiRouters = function (passport) {
     router.post("/api/changeCrmStatus/",passport.authenticate('jwt', {session: false}), agentsController.changeCrmStatus);
     // notifications
     router.post("/api/notification/SaveNotification",passport.authenticate('jwt', {session: false}), NotificationsController.SaveNotification);
+    router.post("/api/notification/save",passport.authenticate('jwt', {session: false}), NotificationsController.save);
     router.put("/api/notification/update",passport.authenticate('jwt', {session: false}), NotificationsController.update);
     router.post("/api/notification/findNotification",passport.authenticate('jwt', {session: false}), NotificationsController.findNotification);
     router.put("/api/notification/updateByAccountID", passport.authenticate('jwt', {session: false}), NotificationsController.updateByAccountID);
