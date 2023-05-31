@@ -1265,25 +1265,41 @@ class campaigns extends baseModelbo {
 
     resetHooper (req, res, next){
         let id = req.body.id
-        let sqlQuery = `delete
-                            from hoopers as h
-                            where h.listcallfile_id IN (select list.listcallfile_id from listcallfiles list where list.campaign_id = :campaign_id )`
+        let sqlQuerySelect = `update callfiles
+                              set save_in_hooper = 'N'
+                              where callfile_id IN(
 
-        db.sequelize['crm-app'].query(sqlQuery, {
-            type: db.sequelize['crm-app'].QueryTypes.DELETE,
+                            select h.callfile_id
+                            from hoopers as h
+                            where h.listcallfile_id IN (select list.listcallfile_id from listcallfiles list where list.campaign_id = :campaign_id ))`
+
+        db.sequelize['crm-app'].query(sqlQuerySelect, {
+            type: db.sequelize['crm-app'].QueryTypes.UPDATE,
             replacements: {
                 campaign_id: id
             }
         }).then(result=>{
-                res.send({
-                    success: true,
-                })
+            let sqlQuery = `delete
+                                from hoopers as h
+                                where h.listcallfile_id IN (select list.listcallfile_id from listcallfiles list where list.campaign_id = :campaign_id )`
 
+            db.sequelize['crm-app'].query(sqlQuery, {
+                type: db.sequelize['crm-app'].QueryTypes.DELETE,
+                replacements: {
+                    campaign_id: id
+                }
+            }).then(result=>{
+                    res.send({
+                        success: true,
+                    })
+
+            }).catch(err=>{
+                return this.sendResponseError(res, ['CannotResetHooper', err], 1, 403)
+            })
         }).catch(err=>{
-            return this.sendResponseError(res, ['CannotResetHooper', err], 1, 403)
+            return this.sendResponseError(res, ['CannotResetHooper', err], 2, 403)
         })
     }
-
 
 }
 
