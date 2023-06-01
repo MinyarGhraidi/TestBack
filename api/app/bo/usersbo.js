@@ -109,7 +109,7 @@ class users extends baseModelbo {
                                 data: null,
                                 status: 403,
                                 success: false,
-                                message: 'agent-already-connected'
+                                message: 'Agent already connected !'
                             })
 
                         }
@@ -125,7 +125,7 @@ class users extends baseModelbo {
                                     data: null,
                                     status: 403,
                                     success: false,
-                                    message: 'account-not-found'
+                                    message: 'Compte introuvable !'
                                 })
                                 return
                             } else if (user.password_hash && password && user.verifyPassword(password)) {
@@ -232,7 +232,7 @@ class users extends baseModelbo {
                                                     data: null,
                                                     status: 403,
                                                     success: false,
-                                                    message: 'account-not-found'
+                                                    message: 'Compte introuvable !'
                                                 })
                                                 return
                                             }
