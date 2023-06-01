@@ -244,12 +244,10 @@ class notifications extends baseModelbo {
                             dataCountAll.map(data => {
                                 if (data.campaign_id !== null) {
                                     let campToAdd = campaigns.filter(camp => camp.campaign_id === data.campaign_id);
-                                    data.dataValues.campaign = campToAdd[0].toJSON();
+                                    data.dataValues.campaign = campToAdd.length !== 0 ? campToAdd[0].toJSON() : {}
                                 } else {
                                     let lcfToAdd = listcallfiles.filter(lcf => lcf.listcallfile_id === data.list_callfile_id);
-                                    if (lcfToAdd && lcfToAdd.length !== 0) {
-                                        data.dataValues.listcallfile = lcfToAdd[0].toJSON();
-                                    }
+                                    data.dataValues.listcallfile = lcfToAdd.length !== 0 ? lcfToAdd[0].toJSON() : {}
                                 }
                             })
                             let CountUnreadMessages = 0;
@@ -274,6 +272,7 @@ class notifications extends baseModelbo {
 
                         })
                             .catch(err => {
+                                console.log("err",err)
                                 return res.send({
                                     success: false, status: 403, data: [], count: {
                                         all: 0, unread: 0
@@ -281,6 +280,7 @@ class notifications extends baseModelbo {
                                 })
                             })
                     }).catch(err => {
+                        console.log("err1",err)
                         return res.send({
                             success: false, status: 403, data: [], count: {
                                 all: 0, unread: 0
@@ -288,6 +288,7 @@ class notifications extends baseModelbo {
                         })
                     });
                 }).catch(err => {
+                    console.log("err2",err)
                     return res.send({
                         success: false, status: 403, data: [], count: {
                             all: 0, unread: 0
