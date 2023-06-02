@@ -28,13 +28,21 @@ class users extends baseModelbo {
         let {username, password, web_domain, base_url, url} = req.body;
         let _this = this;
         if ((!!!username || !!!password)) {
-            return this.sendResponseError(res, ['Error.RequestDataInvalid'], 0, 403);
+            return res.send({
+                data: null,
+                status: 403,
+                success: false,
+                message: 'All fields are required !'
+            })
         }
         _this.getUserRoleInfo(username).then(data_user_info => {
             let PromiseDataUser = new Promise((resolve, reject) => {
                 if (data_user_info && data_user_info.roles_crm.value === 'superadmin') {
                     if(url !== base_url){
-                        return this.sendResponseError(res, ['Error.InvalidWebDomainForSuperAdmin'], 2, 403);
+                        return resolve({
+                            success : false,
+                            message : "invalid web domain"
+                        })
                     }
                     this.db['users'].findOne({
                         include: [{
@@ -53,7 +61,16 @@ class users extends baseModelbo {
                             status: 'Y'
                         }
                     }).then((user) => {
-                        resolve(user)
+                        if(!!!user){
+                            return resolve({
+                                success : false,
+                                message : "username not found"
+                            })
+                        }
+                        return resolve({
+                            success :true,
+                            data : user
+                        })
 
                     }).catch(() => {
                         return this.sendResponseError(res, ['Error.AnErrorHasOccurredUser'], 1, 403);
@@ -86,21 +103,45 @@ class users extends baseModelbo {
                                     account_id: account_domain.account_id
                                 }
                             }).then((user) => {
-                                resolve(user)
+                                if(!!!user){
+                                    return resolve({
+                                        success : false,
+                                        message : "username not found by this web domain"
+                                    })
+                                }
+                                return resolve({
+                                    success :true,
+                                    data : user
+                                })
                             })
                         } else {
-                            return this.sendResponseError(res, ['Error.AccountByDomainNotFound'], 1, 403);
+                            return resolve({
+                                success : false,
+                                message : "web domain not found"
+                            })
                         }
-                    })
+                    }).catch(() => {
+                        return this.sendResponseError(res, ['Error.AnErrorHasOccurredFindAccount'], 1, 403);
+                    });
                 }
             })
             Promise.all([PromiseDataUser]).then(data_user => {
-                let user = null
-                if (data_user && data_user.length !== 0) {
-                    user = data_user[0]
+                if(!data_user[0].success){
+                    return res.send({
+                        data: null,
+                        status: 403,
+                        success: false,
+                        message: data_user.message
+                    })
                 }
+                let user = data_user[0].data
                 if (!user) {
-                    this.sendResponseError(res, ['Error.UserNotFound'], 0, 403);
+                        return res.send({
+                            data: null,
+                            status: 403,
+                            success: false,
+                            message: "user not found"
+                        })
                 } else {
                     let user_info = user.toJSON();
                     if ((user_info && user_info.roles_crm && user_info.roles_crm.value === 'agent')) {
@@ -121,13 +162,13 @@ class users extends baseModelbo {
                             }
                         }).then((account_data) => {
                             if (!account_data) {
-                                res.send({
+                                return res.send({
                                     data: null,
                                     status: 403,
                                     success: false,
-                                    message: 'Compte introuvable !'
+                                    message: 'Account not found !'
                                 })
-                                return
+
                             } else if (user.password_hash && password && user.verifyPassword(password)) {
                                 if (user.password_hash && password) {
                                     this.db['has_permissions'].findAll({
@@ -195,13 +236,28 @@ class users extends baseModelbo {
                                         })
                                     })
                                 } else {
-                                    this.sendResponseError(res, ['Error.InvalidPassword'], 0, 403);
+                                    return res.send({
+                                        data: null,
+                                        status: 403,
+                                        success: false,
+                                        message: 'Incorrect password'
+                                    })
                                 }
                             } else {
-                                this.sendResponseError(res, ['Error.InvalidPassword'], 2, 403);
+                                return res.send({
+                                    data: null,
+                                    status: 403,
+                                    success: false,
+                                    message: 'Incorrect password'
+                                })
                             }
                         }).catch((error) => {
-                            return this.sendResponseError(res, ['Error.AnErrorHasOccurredUser'], 1, 403);
+                            return res.send({
+                                data: null,
+                                status: 403,
+                                success: false,
+                                message: 'Problem finding Account'
+                            })
                         });
                     }
                     else if (user.password_hash && password && user.verifyPassword(password)) {
@@ -232,14 +288,19 @@ class users extends baseModelbo {
                                                     data: null,
                                                     status: 403,
                                                     success: false,
-                                                    message: 'Compte introuvable !'
+                                                    message: 'Account not found !'
                                                 })
                                                 return
                                             }
                                             let accountcode = account.account_code;
                                             if (user_info && user_info.roles_crm && (user_info.roles_crm.value === 'admin' || user_info.roles_crm.value === 'superadmin' || user_info.roles_crm.value === 'user')) {
                                                 if (!!!user.role_id && user_info.roles_crm.value === 'user') {
-                                                    return this.sendResponseError(res, ['Error.UserWithoutRole'], 1, 403);
+                                                    return res.send({
+                                                        data: null,
+                                                        status: 403,
+                                                        success: false,
+                                                        message: 'User without role'
+                                                    })
                                                 }
                                                 const token = jwt.sign({
                                                     user_id: user.user_id,
@@ -320,10 +381,20 @@ class users extends baseModelbo {
                                 })
                             })
                         } else {
-                            this.sendResponseError(res, ['Error.InvalidPassword'], 0, 403);
+                            return res.send({
+                                data: null,
+                                status: 403,
+                                success: false,
+                                message: 'Incorrect password'
+                            })
                         }
                     } else {
-                        this.sendResponseError(res, ['Error.InvalidPassword'], 2, 403);
+                        return res.send({
+                            data: null,
+                            status: 403,
+                            success: false,
+                            message: 'Incorrect password'
+                        })
                     }
                 }
             })
