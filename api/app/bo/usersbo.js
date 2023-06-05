@@ -131,7 +131,7 @@ class users extends baseModelbo {
                         data: null,
                         status: 403,
                         success: false,
-                        message: data_user.message
+                        message: data_user[0].message
                     })
                 }
                 let user = data_user[0].data
