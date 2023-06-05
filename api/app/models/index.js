@@ -10,7 +10,7 @@ process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0;
 const config = require(__dirname + '/../config/config.json')[env];
 const db = {};
 const databases = Object.keys(config.databases);
-const timezone = 'Africa/Tunis';
+const timezone = null;
 process.env.TZ = timezone;
 let sequelize ={};
 let sequalize_extra_config = config;
@@ -31,9 +31,8 @@ for (let i = 0; i < databases.length; ++i) {
   operatorsAliases: false,
 };
 
-sequalize_extra_config.timezone = timezone;
 sequalize_extra_config.dialectOptions = {
-  useUTC: false,
+  useUTC: true,
   timezone: timezone
 }
 
