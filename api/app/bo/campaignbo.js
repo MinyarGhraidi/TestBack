@@ -1311,6 +1311,7 @@ class campaigns extends baseModelbo {
             }
         }).then(listCallFiles=>{
             if(listCallFiles && listCallFiles.length !== 0){
+                let indx= 0;
                 listCallFiles.forEach(list => {
                     db.sequelize['crm-app'].query(sqlQueryInsert, {
                         type: db.sequelize['crm-app'].QueryTypes.INSERT,
@@ -1323,10 +1324,15 @@ class campaigns extends baseModelbo {
                             activeStatus : "Y"
                         }
                     }).then(() => {
-                        res.send({
-                            success :true,
-                            status : 200
-                        })
+                        if(indx < listCallFiles.length -1){
+                            indx++;
+                        }else{
+                            res.send({
+                                success :true,
+                                status : 200
+                            })
+                        }
+
                     }).catch(err => {
                         this.sendResponseError(res, ["errorCreation"],1,403)
                     })
