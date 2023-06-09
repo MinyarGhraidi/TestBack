@@ -11,7 +11,7 @@ const appSocket = new (require("../../providers/AppSocket"))();
 class AddCallFile extends baseModelbo {
 
 
-    updateNumberCallFiles(lengthCallFiles, ListCallFile_id) {
+    updateNumberCallFiles(ListCallFile_id) {
         return new Promise((resolve, reject) => {
             this.db['listcallfiles'].update({
                 updated_at: moment(new Date()), processing: 1
@@ -202,10 +202,10 @@ class AddCallFile extends baseModelbo {
                         const E_Files = []
                         let phoneCountAttribute = 0
                         CFInj.forEach(E_File => {
-                            if(E_File[Phone_attribute] && regexNumbers.test(E_File[Phone_attribute].toString())){
+                            if (E_File[Phone_attribute] && regexNumbers.test(E_File[Phone_attribute].toString())) {
                                 PhoneNumbers.push(E_File[Phone_attribute].toString())
                                 E_Files.push(E_File)
-                            }else{
+                            } else {
                                 phoneCountAttribute++
                             }
                         })
@@ -440,42 +440,111 @@ class AddCallFile extends baseModelbo {
         })
     }
 
+    _getCallFilesBySqlListID(sql_list_id, listCallfile_id) {
+        return new Promise((resolve, reject) => {
+            let sqlQuerySelect = `select phone_number, first_name, last_name, middle_initial, title, address1, address2, address3, state, city, province, postal_code, email, country_code, gender from vicidial_list where list_id = :sql_list_id;`
+            db.sequelize['crm-sql'].query(sqlQuerySelect, {
+                type: db.sequelize['crm-sql'].QueryTypes.SELECT,
+                replacements: {
+                    sql_list_id: sql_list_id
+                }
+            }).then(async listLeads => {
+                if (listLeads && listLeads.length !== 0) {
+                    let idx_add = 0;
+                    for (const listLead of listLeads) {
+                        let Date_TZ = moment(new Date());
+                        let data = {}
+                        data.updated_at = Date_TZ;
+                        data.created_at = Date_TZ;
+                        data.listcallfile_id = listCallfile_id;
+                        data.to_treat = "N";
+                        data.save_in_hooper = "N";
+                        data.status = "Y";
+                        data = Object.assign(data, listLead);
+                        this.db['callfiles'].build(data).save().then(() => {
+                            if (idx_add < listLeads.length - 1) {
+                                idx_add++;
+                            } else {
+                                this.db['listcallfiles'].update({
+                                    updated_at: moment(new Date()), processing_status : {
+                                        "nbr_callfiles": listLeads.length,
+                                        "nbr_uploaded_callfiles": idx_add,
+                                        "nbr_duplicated_callfiles": 0
+                                    }}, {where: {listcallfile_id: listCallfile_id, active: 'Y'}}).then(() => {
+                                    resolve(true)
+                                }).catch(err => reject(err))
+                            }
+                        }).catch(err => {
+                            reject(err);
+                        });
+
+                    }
+                } else {
+                    this.db['listcallfiles'].update({
+                        updated_at: moment(new Date()), processing_status : {
+                            "nbr_callfiles": 0,
+                            "nbr_uploaded_callfiles": 0,
+                            "nbr_duplicated_callfiles": 0
+                        }}, {where: {listcallfile_id: listCallfile_id, active: 'Y'}}).then(() => {
+                        resolve(true)
+                    }).catch(err => reject(err))
+                }
+            })
+        })
+    }
+
     cronListCallFiles() {
         return new Promise((resolve, reject) => {
             this.db['listcallfiles'].findAll({
                 where: {
-                    file_id: {[Op.not]: null},
                     active: 'Y',
                     processing: 0
                 }
             }).then(dataListCallFiles => {
                 if (dataListCallFiles.length === 0) {
-                    resolve({message: "everything is okey nothing to add !", cron : "cronListCallFiles"})
+                    resolve({message: "everything is okey nothing to add !", cron: "cronListCallFiles"})
                 }
                 let Camp_ids = [];
                 let idxLCF = 0;
                 dataListCallFiles.forEach(ListCallFile_item => {
-                    this.getPhoneNumberAttribute(ListCallFile_item).then(Phone_Attribute => {
-                        this.getCallFiles(ListCallFile_item.file_id).then(data => {
-                            if (data && data.length !== 0) {
-                                if (!Camp_ids.includes(ListCallFile_item.campaign_id)) {
-                                    Camp_ids.push(ListCallFile_item.campaign_id);
-                                }
-                            }
-                            this.updateNumberCallFiles(data.length, ListCallFile_item.listcallfile_id).then(() => {
-                                this.CallFiles_Mapping(ListCallFile_item, data, Phone_Attribute).then((datax) => {
-                                    if (idxLCF < dataListCallFiles.length - 1) {
-                                        idxLCF++;
-                                    } else {
-                                        appSocket.emit('refresh_list_callFiles', {campaign_ids: Camp_ids});
-                                        resolve({message: `Done for : ${ListCallFile_item.name}, ID : ${ListCallFile_item.listcallfile_id} | Total : ${datax.total} | Added : ${datax.added} | Deplicated : ${datax.deplicated} | PhoneNumber (Not found or incorrect) : ${datax.phoneAttributeNotFound}`, cron : "cronListCallFiles"})
-                                    }
-                                }).catch(err => {
-                                    reject(err)
-                                })
+                    if (!Camp_ids.includes(ListCallFile_item.campaign_id)) {
+                        Camp_ids.push(ListCallFile_item.campaign_id);
+                    }
+                    if (!!!ListCallFile_item.sql_list_id) {
+                        this.getPhoneNumberAttribute(ListCallFile_item).then(Phone_Attribute => {
+                            this.getCallFiles(ListCallFile_item.file_id).then(data => {
+                                this.updateNumberCallFiles(ListCallFile_item.listcallfile_id).then(() => {
+                                    this.CallFiles_Mapping(ListCallFile_item, data, Phone_Attribute).then((datax) => {
+                                        if (idxLCF < dataListCallFiles.length - 1) {
+                                            idxLCF++;
+                                        } else {
+                                            appSocket.emit('refresh_list_callFiles', {campaign_ids: Camp_ids});
+                                            resolve({
+                                                message: `Done for : ${ListCallFile_item.name}, ID : ${ListCallFile_item.listcallfile_id} | Total : ${datax.total} | Added : ${datax.added} | Deplicated : ${datax.deplicated} | PhoneNumber (Not found or incorrect) : ${datax.phoneAttributeNotFound}`,
+                                                cron: "cronListCallFiles"
+                                            })
+                                        }
+                                    }).catch(err => {
+                                        reject(err)
+                                    })
+                                }).catch(err => reject(err))
                             }).catch(err => reject(err))
                         }).catch(err => reject(err))
-                    }).catch(err => reject(err))
+                    } else {
+                        this.updateNumberCallFiles(ListCallFile_item.listcallfile_id).then(() => {
+                            this._getCallFilesBySqlListID(ListCallFile_item.sql_list_id, ListCallFile_item.listcallfile_id).then(() => {
+                                if (idxLCF < dataListCallFiles.length - 1) {
+                                    idxLCF++;
+                                } else {
+                                    appSocket.emit('refresh_list_callFiles', {campaign_ids: Camp_ids});
+                                    resolve({
+                                        message: `Done for : ${ListCallFile_item.name}, ID : ${ListCallFile_item.listcallfile_id}`,
+                                        cron: "cronListCallFiles"
+                                    })
+                                }
+                            })
+                        })
+                    }
                 })
             }).catch(err => reject(err))
         })

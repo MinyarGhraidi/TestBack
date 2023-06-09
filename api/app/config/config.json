@@ -117,6 +117,23 @@
           "acquire": 3000000,
           "idle": 100000
         }
+      },
+      "crm-sql" : {
+        "host": "92.222.147.158",
+        "username": "root",
+        "password": "OuPfme45oAM6m6S8lqy4PQfxlYFlCnmPzyaloZ5Zw=",
+        "database": "asterisk",
+        "dialect": "mysql",
+        "port" : 3306,
+        "dialectOptions": {
+          "options": {
+            "requestTimeout": 30000
+          }
+        },
+        "pool": {
+          "acquire": 100000000,
+          "idle": 100000
+        }
       }
     },
     "socketUrl": "https://ip158.ip-92-222-147.eu:3002",

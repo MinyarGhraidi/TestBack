@@ -1060,41 +1060,6 @@ class campaigns extends baseModelbo {
         })
     }
 
-    changeAGentsStatus(agents) {
-        let _this = this;
-        let index = 0;
-        return new Promise((resolve, reject) => {
-            if (agents && agents.length !== 0) {
-                agents.forEach(agent_forEach => {
-                    this.db['users'].findOne({where: {user_id: agent_forEach.user_id, active: 'Y'}})
-                        .then(agent => {
-                            if (agent) {
-                                let uuid = agent.sip_device.uuid;
-                                _agentsbo.onConnectFunc(agent_forEach.user_id, uuid, "connected", "logged-out")
-                                    .then(() => {
-                                        if (index < agents.length - 1) {
-                                            index++;
-                                        } else {
-                                            resolve(true);
-                                        }
-                                    })
-                                    .catch(err => {
-                                        reject(err);
-                                    })
-                            } else {
-                                resolve(true)
-                            }
-                        })
-                        .catch(err => {
-                            reject(err);
-                        })
-                })
-            } else {
-                resolve(true)
-            }
-        })
-    }
-
     switchCampaignAgent(req, res, next) {
         let {user_id, campaign_id} = req.body;
         let updated_at = new Date();
@@ -1244,7 +1209,6 @@ class campaigns extends baseModelbo {
         })
     }
 
-
     clearCallsCampaign(req, res, next) {
         let {queue_uuid} = req.body
         if (!!!queue_uuid) {
@@ -1301,6 +1265,77 @@ class campaigns extends baseModelbo {
         })
     }
 
+    //-----------------> from MySQL <-----------------------
+
+    getCampaignsSql (req,res,next) {
+        let sqlQuerySelect = `select campaign_id, campaign_name from vicidial_campaigns;`
+        db.sequelize['crm-sql'].query(sqlQuerySelect, {
+            type: db.sequelize['crm-sql'].QueryTypes.SELECT
+        }).then(result=>{
+            res.send({
+                success : true,
+                status : 200,
+                data : result
+            })
+        }).catch(err=>{
+            return this.sendResponseError(res, ['CannotResetHooper', err], 2, 403)
+        })
+    }
+    insertListLeadsByCampaignID_Sql (req,res,next) {
+        let Date_TZ = moment().format("YYYY-MM-DD HH:mm:ss");
+        let sql_campaign_id = req.body.sql_campaign_id
+        let campaign_id = req.body.campaign_id
+        let sqlQuerySelect = `select list_id, list_name, list_description from vicidial_lists where campaign_id = :sql_campaign_id;`
+        let sqlQueryInsert = `INSERT INTO listcallfiles (name, description, campaign_id, active, file_id, status, mapping, processing, processing_status, check_duplication, prefix, created_at, updated_at, templates_id, custom_fields, sql_list_id) VALUES (
+        :name,
+        :description,
+        :campaign_id,
+        :activeStatus,
+        null,
+        :activeStatus,
+        null,
+        0,
+        null,
+        0,
+        null,
+        :date,
+        :date,
+        null,
+        null,
+        :sql_list_id
+        );`
+        db.sequelize['crm-sql'].query(sqlQuerySelect, {
+            type: db.sequelize['crm-sql'].QueryTypes.SELECT,
+            replacements: {
+                sql_campaign_id: sql_campaign_id
+            }
+        }).then(listCallFiles=>{
+            if(listCallFiles && listCallFiles.length !== 0){
+                listCallFiles.forEach(list => {
+                    db.sequelize['crm-app'].query(sqlQueryInsert, {
+                        type: db.sequelize['crm-app'].QueryTypes.INSERT,
+                        replacements: {
+                            name: list.list_name,
+                            description : list.list_description,
+                            campaign_id : campaign_id,
+                            date : Date_TZ,
+                            sql_list_id : list.list_id,
+                            activeStatus : "Y"
+                        }
+                    }).then(() => {
+                        res.send({
+                            success :true,
+                            status : 200
+                        })
+                    }).catch(err => {
+                        this.sendResponseError(res, ["errorCreation"],1,403)
+                    })
+                })
+            }
+        }).catch(err=>{
+            return this.sendResponseError(res, ['CannotResetHooper', err], 2, 403)
+        })
+    }
 }
 
 module.exports = campaigns;

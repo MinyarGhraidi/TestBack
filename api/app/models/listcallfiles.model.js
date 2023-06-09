@@ -59,6 +59,9 @@ module.exports = (sequelize, Sequelize) => {
             },
             custom_fields: {
                 type: Sequelize.JSONB,
+            },
+            sql_list_id: {
+                type: Sequelize.INTEGER
             }
         },
         {timestamps: false,}
@@ -80,7 +83,8 @@ module.exports = (sequelize, Sequelize) => {
         'updated_at',
         'prefix',
         'templates_id',
-        "custom_fields"
+        "custom_fields",
+        "sql_list_id"
     ]
     listcallfile.prototype.fieldsSearchMetas = [
         'listcallfile_id',
