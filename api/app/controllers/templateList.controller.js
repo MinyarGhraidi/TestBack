@@ -20,4 +20,7 @@ module.exports ={
     changeStatus : function (req, res, next) {
         _itembo.changeStatus(req, res, next)
     },
+    deleteTemplate : function (req, res, next) {
+        _itembo.deleteTemplate(req, res, next)
+    },
 }

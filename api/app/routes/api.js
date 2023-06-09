@@ -361,6 +361,7 @@ let apiRouters = function (passport) {
     router.delete('/api/templateList/delete/:params', passport.authenticate('jwt', {session: false}), TemplateListCallFile.delete);
     router.put('/api/templateList/update', passport.authenticate('jwt', {session: false}), TemplateListCallFile.update);
     router.post("/api/templateList/changeStatus", passport.authenticate('jwt', {session: false}), TemplateListCallFile.changeStatus);
+    router.post("/api/templateList/deleteTemplate", passport.authenticate('jwt', {session: false}), TemplateListCallFile.deleteTemplate);
 
     router.post('/api/agent/agentReports', passport.authenticate('jwt', {session: false}),  agentsController.agentDetailsReports);
 

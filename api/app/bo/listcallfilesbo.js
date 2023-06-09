@@ -296,8 +296,11 @@ class listcallfiles extends baseModelbo {
         })
 
     }
-    checkCampaign = (campaign_id) => {
+    checkCampaign = (campaign_id, status) => {
         return new Promise((resolve, reject) => {
+            if(status === 'N'){
+                return resolve(true)
+            }
             if (campaign_id) {
                 this.db['campaigns'].findOne({
                     where: {
@@ -317,8 +320,13 @@ class listcallfiles extends baseModelbo {
             }
         })
     }
-    checkTemplate = (template_id) => {
+    checkTemplate = (template_id, status) => {
         return new Promise((resolve, reject) => {
+            if(status === 'N'){
+                return resolve({
+                    success: true
+                })
+            }
             if (template_id) {
                 this.db['templates_list_call_files'].findOne({
                     where: {
@@ -377,9 +385,9 @@ class listcallfiles extends baseModelbo {
                 let template_id = lcf.templates_id
                 let campaign_id = lcf.campaign_id
                 if (lcf && Object.keys(lcf).length !== 0) {
-                    this.checkCampaign(campaign_id).then(resultCheckCampaign => {
+                    this.checkCampaign(campaign_id, status).then(resultCheckCampaign => {
                         if(resultCheckCampaign){
-                            this.checkTemplate(template_id).then(resultCheckTemplate => {
+                            this.checkTemplate(template_id, status).then(resultCheckTemplate => {
                                 if (resultCheckTemplate.success) {
                                     this._changeStatusLCF(listcallfile_id, status).then(() => {
                                         resolve({

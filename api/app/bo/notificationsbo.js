@@ -272,7 +272,6 @@ class notifications extends baseModelbo {
 
                         })
                             .catch(err => {
-                                console.log("err",err)
                                 return res.send({
                                     success: false, status: 403, data: [], count: {
                                         all: 0, unread: 0
@@ -280,7 +279,6 @@ class notifications extends baseModelbo {
                                 })
                             })
                     }).catch(err => {
-                        console.log("err1",err)
                         return res.send({
                             success: false, status: 403, data: [], count: {
                                 all: 0, unread: 0
@@ -288,7 +286,6 @@ class notifications extends baseModelbo {
                         })
                     });
                 }).catch(err => {
-                    console.log("err2",err)
                     return res.send({
                         success: false, status: 403, data: [], count: {
                             all: 0, unread: 0
