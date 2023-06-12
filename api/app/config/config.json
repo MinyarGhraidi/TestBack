@@ -150,7 +150,11 @@
       "username": "root",
       "password": "Oxilog2020."
     },
-    "secret": "'BL#,miQFau,amA!?FFW@oKO3<_<E-j-]PVO65d!c%|V2h{(3#~~*$8{X<H}BVm"
+    "secret": "'BL#,miQFau,amA!?FFW@oKO3<_<E-j-]PVO65d!c%|V2h{(3#~~*$8{X<H}BVm",
+    "config_camps" : {
+      "camp_1206/1.0" : "PV-RENOV GLOBALE",
+      "camp_1206/2.0" : "07-Bove"
+    }
   },
   "tz": "Europe/Paris",
   "salt": "$2b$10$TOzGnzuUQjfTzmecOw7NKe"
