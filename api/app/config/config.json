@@ -119,9 +119,9 @@
         }
       },
       "crm-sql" : {
-        "host": "92.222.147.158",
+        "host": "37.187.29.206",
         "username": "root",
-        "password": "OuPfme45oAM6m6S8lqy4PQfxlYFlCnmPzyaloZ5Zw=",
+        "password": "Oxilog2020.",
         "database": "asterisk",
         "dialect": "mysql",
         "port" : 3306,
@@ -152,8 +152,7 @@
     },
     "secret": "'BL#,miQFau,amA!?FFW@oKO3<_<E-j-]PVO65d!c%|V2h{(3#~~*$8{X<H}BVm",
     "config_camps" : {
-      "camp_1206/1.0" : "PV-RENOV GLOBALE",
-      "camp_1206/2.0" : "07-Bove"
+      "CMP-PROSPECTION" : "CMP-PROSPECTION"
     }
   },
   "tz": "Europe/Paris",
