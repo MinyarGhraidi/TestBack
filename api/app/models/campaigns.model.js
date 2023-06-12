@@ -68,6 +68,9 @@ module.exports = (sequelize, Sequelize) => {
             },
             config : {
                 type: Sequelize.JSONB
+            },
+            sql_campaign_id: {
+                type: Sequelize.INTEGER
             }
         },
         {timestamps: false,}
@@ -91,7 +94,8 @@ module.exports = (sequelize, Sequelize) => {
         'trunck_id',
         'script',
         'call_status_ids',
-        'config'
+        'config',
+        "sql_campaign_id"
 
     ]
         campaign.prototype.fieldsSearchMetas = [

@@ -14,6 +14,7 @@ const db = require("../models");
 const call_center_authorization = {
     headers: {Authorization: call_center_token}
 };
+const Op = require("sequelize/lib/operators");
 
 let _agentsbo = new agentbo;
 let _efilebo = new efilebo;
@@ -1286,7 +1287,6 @@ class campaigns extends baseModelbo {
         let sql_campaign_id = req.body.sql_campaign_id
         let campaign_id = req.body.campaign_id
         let sqlQuerySelect = `select list_id, list_name, list_description from vicidial_lists where campaign_id = :sql_campaign_id;`
-        let sqlQuerySelectCount = `SELECT COUNT(*) FROM listcallfiles WHERE campaign_id = :campaign_id AND sql_list_id IS NOT NULL;`
         let sqlQueryInsert = `INSERT INTO listcallfiles (name, description, campaign_id, active, file_id, status, mapping, processing, processing_status, check_duplication, prefix, created_at, updated_at, templates_id, custom_fields, sql_list_id) VALUES (
         :name,
         :description,
@@ -1305,20 +1305,17 @@ class campaigns extends baseModelbo {
         null,
         :sql_list_id
         );`
-        db.sequelize['crm-app'].query(sqlQuerySelectCount, {
-            type: db.sequelize['crm-app'].QueryTypes.SELECT,
-            replacements: {
-                campaign_id: campaign_id
-            }
-        }).then(resCount => {
-            let count = parseInt(resCount[0].count)
-            if(count > 0){
-                return res.send({
-                    success : false,
-                    status : 403,
-                    message : "list-leads-already-imported"
-                })
-            }
+        this.db['campaigns'].findOne({
+            campaign_id : campaign_id,
+            sql_campaign_id : { [Op.ne]: null}
+        }).then(campaign => {
+        if(campaign){
+            return res.json({
+                status : 403,
+                success : false,
+                message : "list-leads-already-imported"
+            })
+        }else{
             db.sequelize['crm-sql'].query(sqlQuerySelect, {
                 type: db.sequelize['crm-sql'].QueryTypes.SELECT,
                 replacements: {
@@ -1342,20 +1339,26 @@ class campaigns extends baseModelbo {
                             if(indx < listCallFiles.length -1){
                                 indx++;
                             }else{
-                                res.send({
-                                    success :true,
-                                    status : 200
+                                this.db['campaigns'].update({sql_campaign_id : sql_campaign_id, updated_at : moment(new Date())},{where : {campaign_id : campaign_id}}).then(() => {
+                                    return res.send({
+                                        success :true,
+                                        status : 200
+                                    })
+                                }).catch(err => {
+                                    return this.sendResponseError(res, ["errorUpdateCampaign"],1,403)
                                 })
+
                             }
 
                         }).catch(err => {
-                            this.sendResponseError(res, ["errorCreation"],1,403)
+                            return this.sendResponseError(res, ["errorCreation"],1,403)
                         })
                     })
                 }
             }).catch(err=>{
                 return this.sendResponseError(res, ['CannotSelectCampaignsSql', err], 2, 403)
             })
+        }
         })
 
     }
