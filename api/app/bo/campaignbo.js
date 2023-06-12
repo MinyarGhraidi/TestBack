@@ -1286,6 +1286,7 @@ class campaigns extends baseModelbo {
         let sql_campaign_id = req.body.sql_campaign_id
         let campaign_id = req.body.campaign_id
         let sqlQuerySelect = `select list_id, list_name, list_description from vicidial_lists where campaign_id = :sql_campaign_id;`
+        let sqlQuerySelectCount = `SELECT COUNT(*) FROM listcallfiles WHERE campaign_id = :campaign_id AND sql_list_id IS NOT NULL;`
         let sqlQueryInsert = `INSERT INTO listcallfiles (name, description, campaign_id, active, file_id, status, mapping, processing, processing_status, check_duplication, prefix, created_at, updated_at, templates_id, custom_fields, sql_list_id) VALUES (
         :name,
         :description,
@@ -1304,43 +1305,59 @@ class campaigns extends baseModelbo {
         null,
         :sql_list_id
         );`
-        db.sequelize['crm-sql'].query(sqlQuerySelect, {
-            type: db.sequelize['crm-sql'].QueryTypes.SELECT,
+        db.sequelize['crm-app'].query(sqlQuerySelectCount, {
+            type: db.sequelize['crm-app'].QueryTypes.SELECT,
             replacements: {
-                sql_campaign_id: sql_campaign_id
+                campaign_id: campaign_id
             }
-        }).then(listCallFiles=>{
-            if(listCallFiles && listCallFiles.length !== 0){
-                let indx= 0;
-                listCallFiles.forEach(list => {
-                    db.sequelize['crm-app'].query(sqlQueryInsert, {
-                        type: db.sequelize['crm-app'].QueryTypes.INSERT,
-                        replacements: {
-                            name: list.list_name,
-                            description : list.list_description,
-                            campaign_id : campaign_id,
-                            date : Date_TZ,
-                            sql_list_id : list.list_id,
-                            activeStatus : "Y"
-                        }
-                    }).then(() => {
-                        if(indx < listCallFiles.length -1){
-                            indx++;
-                        }else{
-                            res.send({
-                                success :true,
-                                status : 200
-                            })
-                        }
-
-                    }).catch(err => {
-                        this.sendResponseError(res, ["errorCreation"],1,403)
-                    })
+        }).then(resCount => {
+            let count = parseInt(resCount[0].count)
+            if(count > 0){
+                return res.send({
+                    success : false,
+                    status : 403,
+                    message : "list-leads-already-imported"
                 })
             }
-        }).catch(err=>{
-            return this.sendResponseError(res, ['CannotResetHooper', err], 2, 403)
+            db.sequelize['crm-sql'].query(sqlQuerySelect, {
+                type: db.sequelize['crm-sql'].QueryTypes.SELECT,
+                replacements: {
+                    sql_campaign_id: sql_campaign_id
+                }
+            }).then(listCallFiles=>{
+                if(listCallFiles && listCallFiles.length !== 0){
+                    let indx= 0;
+                    listCallFiles.forEach(list => {
+                        db.sequelize['crm-app'].query(sqlQueryInsert, {
+                            type: db.sequelize['crm-app'].QueryTypes.INSERT,
+                            replacements: {
+                                name: list.list_name,
+                                description : list.list_description,
+                                campaign_id : campaign_id,
+                                date : Date_TZ,
+                                sql_list_id : list.list_id,
+                                activeStatus : "Y"
+                            }
+                        }).then(() => {
+                            if(indx < listCallFiles.length -1){
+                                indx++;
+                            }else{
+                                res.send({
+                                    success :true,
+                                    status : 200
+                                })
+                            }
+
+                        }).catch(err => {
+                            this.sendResponseError(res, ["errorCreation"],1,403)
+                        })
+                    })
+                }
+            }).catch(err=>{
+                return this.sendResponseError(res, ['CannotSelectCampaignsSql', err], 2, 403)
+            })
         })
+
     }
 }
 
