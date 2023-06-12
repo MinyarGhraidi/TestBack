@@ -176,13 +176,13 @@ class listcallfiles extends baseModelbo {
                     } else {
                         this.sendResponseError(res, 'Error.printFile')
                     }
-                }).catch(err=>{
+                }).catch(err => {
                     this.sendResponseError(res, 'Error.printFile')
                 })
-            }else{
+            } else {
                 this.sendResponseError(res, 'Error.printFile')
             }
-        }).catch(err=>{
+        }).catch(err => {
             this.sendResponseError(res, 'Error.printFile')
         })
     }
@@ -298,7 +298,7 @@ class listcallfiles extends baseModelbo {
     }
     checkCampaign = (campaign_id, status) => {
         return new Promise((resolve, reject) => {
-            if(status === 'N'){
+            if (status === 'N') {
                 return resolve(true)
             }
             if (campaign_id) {
@@ -322,7 +322,7 @@ class listcallfiles extends baseModelbo {
     }
     checkTemplate = (template_id, status) => {
         return new Promise((resolve, reject) => {
-            if(status === 'N'){
+            if (status === 'N') {
                 return resolve({
                     success: true
                 })
@@ -355,27 +355,28 @@ class listcallfiles extends baseModelbo {
     }
 
     _changeStatusLCF = (listcallfile_id, status) => {
-        return new Promise((resolve,reject) => {
+        return new Promise((resolve, reject) => {
             this.db['listcallfiles'].update({
                 status: status,
                 updated_at: moment(new Date())
             }, {where: {listcallfile_id: listcallfile_id, active: 'Y'}}).then(() => {
-                if (status === 'N') {
-                    this.db['callfiles'].update({
-                        status: status,
-                        updated_at: moment(new Date())
-                    }, {where: {listcallfile_id: listcallfile_id, active: 'Y'}}).then(() => {
+                this.db['callfiles'].update({
+                    status: status,
+                    updated_at: moment(new Date())
+                }, {where: {listcallfile_id: listcallfile_id, active: 'Y'}}).then(() => {
+                    if (status === 'N') {
                         this._deleteFromHooperByCallfileID(listcallfile_id).then(() => {
                             return resolve({
                                 success: true
                             })
                         }).catch(err => reject(err))
-                    }).catch(err => reject(err))
-                } else {
-                    resolve({
-                        success: true
-                    })
-                }
+                    } else {
+                        resolve({
+                            success: true
+                        })
+                    }
+                }).catch(err => reject(err))
+
             }).catch(err => reject(err))
         })
     }
@@ -386,32 +387,32 @@ class listcallfiles extends baseModelbo {
                 let campaign_id = lcf.campaign_id
                 if (lcf && Object.keys(lcf).length !== 0) {
                     this.checkCampaign(campaign_id, status).then(resultCheckCampaign => {
-                        if(resultCheckCampaign){
+                        if (resultCheckCampaign) {
                             this.checkTemplate(template_id, status).then(resultCheckTemplate => {
                                 if (resultCheckTemplate.success) {
                                     this._changeStatusLCF(listcallfile_id, status).then(() => {
                                         resolve({
-                                            success : true
+                                            success: true
                                         })
                                     }).catch(err => reject(err))
-                                }else{
+                                } else {
                                     return resolve({
                                         success: false,
                                         message: resultCheckTemplate.message
                                     })
                                 }
                             })
-                        }else{
+                        } else {
                             return resolve({
                                 success: false,
                                 message: "campaign-not-activated"
                             })
                         }
                     }).catch(err => {
-                        return this.sendResponseError(res,["CampaignNotFound",err],1,403)
+                        return this.sendResponseError(res, ["CampaignNotFound", err], 1, 403)
                     })
 
-                }else{
+                } else {
                     return reject('listcallfile not found')
                 }
             })

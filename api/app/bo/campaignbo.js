@@ -399,16 +399,12 @@ class campaigns extends baseModelbo {
             }).then((callFilesList) => {
                 if (callFilesList && callFilesList.length !== 0) {
                     callFilesList.forEach(data => {
-                        _listcallfilesbo._changeStatus(data.listcallfile_id, status).then(() => {
-                            this.changeStatus_callfilesByIdListCallFiles(data.listcallfile_id, status).then(() => {
+                        _listcallfilesbo._changeStatusLCF(data.listcallfile_id, status).then(() => {
                                 if (indexCallFiles < callFilesList.length - 1) {
                                     indexCallFiles++;
                                 } else {
                                     return resolve(true);
                                 }
-                            }).catch(err => {
-                                return reject(err);
-                            })
                         }).catch(err => {
                             return reject(err)
                         })
@@ -416,30 +412,12 @@ class campaigns extends baseModelbo {
                 } else {
                     return resolve(true);
                 }
-
             }).catch(err => {
                 reject(err);
             });
 
         })
     }
-
-    changeStatus_callfilesByIdListCallFiles(listCallFiles_id, status) {
-        return new Promise((resolve, reject) => {
-            this.db["callfiles"].update({
-                status: status,
-                updated_at: moment(new Date())
-            }, {where: {listcallfile_id: listCallFiles_id, active: 'Y'}})
-                .then(
-                    () => {
-                        resolve(true);
-                    }
-                ).catch(err => {
-                return reject(err);
-            });
-        })
-    }
-
     //-------------> Default Pause Call Status Camapign <----------------------
     addDefaultPauseCallStatus(req, res, next) {
         let _this = this;
@@ -1273,8 +1251,7 @@ class campaigns extends baseModelbo {
     //-----------------> from MySQL <-----------------------
 
     getCampaignsSql(req, res, next) {
-        let sqlQuerySelect = `select campaign_id, campaign_name
-                              from vicidial_campaigns;`
+        let sqlQuerySelect = `select campaign_id, campaign_name from vicidial_campaigns;`
         db.sequelize['crm-sql'].query(sqlQuerySelect, {
             type: db.sequelize['crm-sql'].QueryTypes.SELECT
         }).then(result => {
@@ -1316,10 +1293,12 @@ class campaigns extends baseModelbo {
                                       null,
                                       :sql_list_id);`
         this.db['campaigns'].findOne({
-            campaign_id: campaign_id,
-            sql_campaign_id: {[Op.ne]: null},
-            active: 'Y',
-            status: 'Y'
+            where: {
+                campaign_id: campaign_id,
+                sql_campaign_id: {[Op.ne]: null},
+                active: 'Y',
+                status: 'Y'
+            }
         }).then(campaign => {
             if (campaign) {
                 return res.json({
