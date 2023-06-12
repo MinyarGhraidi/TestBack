@@ -320,7 +320,7 @@ class campaigns extends baseModelbo {
                         updated_at: moment(new Date())
                     }, {where: {campaign_id: campaign_id}})
                         .then(() => {
-                            if(status === 'N'){
+                            if (status === 'N') {
                                 this.changeStatusComp(campaign_id, status).then(() => {
                                     return res.send({
                                         status: 200,
@@ -330,7 +330,7 @@ class campaigns extends baseModelbo {
                                 }).catch((err) => {
                                     return _this.sendResponseError(res, ['cannot change the campaign status1', err], 1, 403);
                                 })
-                            }else{
+                            } else {
                                 return res.send({
                                     status: 200,
                                     message: "success"
@@ -363,6 +363,7 @@ class campaigns extends baseModelbo {
 
         })
     }
+
     changeStatusForEntities(entities, campaign_id, status) {
         let indexEntities = 0;
         return new Promise((resolve, reject) => {
@@ -393,7 +394,7 @@ class campaigns extends baseModelbo {
             this.db['listcallfiles'].findAll({
                 where: {
                     campaign_id: campaign_id,
-                    active : 'Y'
+                    active: 'Y'
                 }
             }).then((callFilesList) => {
                 if (callFilesList && callFilesList.length !== 0) {
@@ -412,7 +413,7 @@ class campaigns extends baseModelbo {
                             return reject(err)
                         })
                     });
-                }else{
+                } else {
                     return resolve(true);
                 }
 
@@ -1228,137 +1229,151 @@ class campaigns extends baseModelbo {
             });
     }
 
-    resetHooper (req, res, next){
+    resetHooper(req, res, next) {
         let id = req.body.id
         let sqlQuerySelect = `update callfiles
                               set save_in_hooper = 'N'
-                              where callfile_id IN(
-
-                            select h.callfile_id
-                            from hoopers as h
-                            where h.listcallfile_id IN (select list.listcallfile_id from listcallfiles list where list.campaign_id = :campaign_id ))`
+                              where callfile_id IN (
+                                  select h.callfile_id
+                                  from hoopers as h
+                                  where h.listcallfile_id IN (select list.listcallfile_id
+                                                              from listcallfiles list
+                                                              where list.campaign_id = :campaign_id))`
 
         db.sequelize['crm-app'].query(sqlQuerySelect, {
             type: db.sequelize['crm-app'].QueryTypes.UPDATE,
             replacements: {
                 campaign_id: id
             }
-        }).then(result=>{
+        }).then(result => {
             let sqlQuery = `delete
-                                from hoopers as h
-                                where h.listcallfile_id IN (select list.listcallfile_id from listcallfiles list where list.campaign_id = :campaign_id )`
+                            from hoopers as h
+                            where h.listcallfile_id IN (select list.listcallfile_id
+                                                        from listcallfiles list
+                                                        where list.campaign_id = :campaign_id)`
 
             db.sequelize['crm-app'].query(sqlQuery, {
                 type: db.sequelize['crm-app'].QueryTypes.DELETE,
                 replacements: {
                     campaign_id: id
                 }
-            }).then(result=>{
-                    res.send({
-                        success: true,
-                    })
+            }).then(result => {
+                res.send({
+                    success: true,
+                })
 
-            }).catch(err=>{
+            }).catch(err => {
                 return this.sendResponseError(res, ['CannotResetHooper', err], 1, 403)
             })
-        }).catch(err=>{
+        }).catch(err => {
             return this.sendResponseError(res, ['CannotResetHooper', err], 2, 403)
         })
     }
 
     //-----------------> from MySQL <-----------------------
 
-    getCampaignsSql (req,res,next) {
-        let sqlQuerySelect = `select campaign_id, campaign_name from vicidial_campaigns;`
+    getCampaignsSql(req, res, next) {
+        let sqlQuerySelect = `select campaign_id, campaign_name
+                              from vicidial_campaigns;`
         db.sequelize['crm-sql'].query(sqlQuerySelect, {
             type: db.sequelize['crm-sql'].QueryTypes.SELECT
-        }).then(result=>{
+        }).then(result => {
             res.send({
-                success : true,
-                status : 200,
-                data : result
+                success: true,
+                status: 200,
+                data: result
             })
-        }).catch(err=>{
+        }).catch(err => {
             return this.sendResponseError(res, ['CannotResetHooper', err], 2, 403)
         })
     }
-    insertListLeadsByCampaignID_Sql (req,res,next) {
+
+    insertListLeadsByCampaignID_Sql(req, res, next) {
         let Date_TZ = moment().format("YYYY-MM-DD HH:mm:ss");
         let sql_campaign_id = req.body.sql_campaign_id
         let campaign_id = req.body.campaign_id
-        let sqlQuerySelect = `select list_id, list_name, list_description from vicidial_lists where campaign_id = :sql_campaign_id;`
-        let sqlQueryInsert = `INSERT INTO listcallfiles (name, description, campaign_id, active, file_id, status, mapping, processing, processing_status, check_duplication, prefix, created_at, updated_at, templates_id, custom_fields, sql_list_id) VALUES (
-        :name,
-        :description,
-        :campaign_id,
-        :activeStatus,
-        null,
-        :activeStatus,
-        null,
-        0,
-        null,
-        0,
-        null,
-        :date,
-        :date,
-        null,
-        null,
-        :sql_list_id
-        );`
+        let sqlQuerySelect = `select list_id, list_name, list_description
+                              from vicidial_lists
+                              where campaign_id = :sql_campaign_id;`
+        let sqlQueryInsert = `INSERT INTO listcallfiles (name, description, campaign_id, active, file_id, status,
+                                                         mapping, processing, processing_status, check_duplication,
+                                                         prefix, created_at, updated_at, templates_id, custom_fields,
+                                                         sql_list_id)
+                              VALUES (:name,
+                                      :description,
+                                      :campaign_id,
+                                      :activeStatus,
+                                      null,
+                                      :activeStatus,
+                                      null,
+                                      0,
+                                      null,
+                                      0,
+                                      null,
+                                      :date,
+                                      :date,
+                                      null,
+                                      null,
+                                      :sql_list_id);`
         this.db['campaigns'].findOne({
-            campaign_id : campaign_id,
-            sql_campaign_id : { [Op.ne]: null}
+            campaign_id: campaign_id,
+            sql_campaign_id: {[Op.ne]: null},
+            active: 'Y',
+            status: 'Y'
         }).then(campaign => {
-        if(campaign){
-            return res.json({
-                status : 403,
-                success : false,
-                message : "list-leads-already-imported"
-            })
-        }else{
-            db.sequelize['crm-sql'].query(sqlQuerySelect, {
-                type: db.sequelize['crm-sql'].QueryTypes.SELECT,
-                replacements: {
-                    sql_campaign_id: sql_campaign_id
-                }
-            }).then(listCallFiles=>{
-                if(listCallFiles && listCallFiles.length !== 0){
-                    let indx= 0;
-                    listCallFiles.forEach(list => {
-                        db.sequelize['crm-app'].query(sqlQueryInsert, {
-                            type: db.sequelize['crm-app'].QueryTypes.INSERT,
-                            replacements: {
-                                name: list.list_name,
-                                description : list.list_description,
-                                campaign_id : campaign_id,
-                                date : Date_TZ,
-                                sql_list_id : list.list_id,
-                                activeStatus : "Y"
-                            }
-                        }).then(() => {
-                            if(indx < listCallFiles.length -1){
-                                indx++;
-                            }else{
-                                this.db['campaigns'].update({sql_campaign_id : sql_campaign_id, updated_at : moment(new Date())},{where : {campaign_id : campaign_id}}).then(() => {
-                                    return res.send({
-                                        success :true,
-                                        status : 200
+            if (campaign) {
+                return res.json({
+                    status: 403,
+                    success: false,
+                    message: "list-leads-already-imported"
+                })
+            } else {
+                db.sequelize['crm-sql'].query(sqlQuerySelect, {
+                    type: db.sequelize['crm-sql'].QueryTypes.SELECT,
+                    replacements: {
+                        sql_campaign_id: sql_campaign_id
+                    }
+                }).then(listCallFiles => {
+                    if (listCallFiles && listCallFiles.length !== 0) {
+                        let indx = 0;
+                        listCallFiles.forEach(list => {
+                            db.sequelize['crm-app'].query(sqlQueryInsert, {
+                                type: db.sequelize['crm-app'].QueryTypes.INSERT,
+                                replacements: {
+                                    name: list.list_name,
+                                    description: list.list_description,
+                                    campaign_id: campaign_id,
+                                    date: Date_TZ,
+                                    sql_list_id: list.list_id,
+                                    activeStatus: "Y"
+                                }
+                            }).then(() => {
+                                if (indx < listCallFiles.length - 1) {
+                                    indx++;
+                                } else {
+                                    this.db['campaigns'].update({
+                                        sql_campaign_id: sql_campaign_id,
+                                        updated_at: moment(new Date())
+                                    }, {where: {campaign_id: campaign_id}}).then(() => {
+                                        return res.send({
+                                            success: true,
+                                            status: 200
+                                        })
+                                    }).catch(err => {
+                                        return this.sendResponseError(res, ["errorUpdateCampaign"], 1, 403)
                                     })
-                                }).catch(err => {
-                                    return this.sendResponseError(res, ["errorUpdateCampaign"],1,403)
-                                })
 
-                            }
+                                }
 
-                        }).catch(err => {
-                            return this.sendResponseError(res, ["errorCreation"],1,403)
+                            }).catch(err => {
+                                return this.sendResponseError(res, ["errorCreation"], 1, 403)
+                            })
                         })
-                    })
-                }
-            }).catch(err=>{
-                return this.sendResponseError(res, ['CannotSelectCampaignsSql', err], 2, 403)
-            })
-        }
+                    }
+                }).catch(err => {
+                    return this.sendResponseError(res, ['CannotSelectCampaignsSql', err], 2, 403)
+                })
+            }
         })
 
     }

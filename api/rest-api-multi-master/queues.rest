@@ -87,7 +87,7 @@ Authorization: Bearer BomjNx8kFfZTdCFx4kH3hGECO78yS0C0KS7pgO0BUe8COxcved
 ###
 #GET QUEUE TIERS
 
-GET https://92.222.147.159:1443/api/v1/queues/41ee100d-086f-49dc-afa1-6b74f7221653/tiers
+GET https://92.222.147.159:1443/api/v1/queues/699ef1f2-9179-477d-a4bf-6e1ee890a078/tiers
 Content-Type: application/json
 Authorization: Bearer BomjNx8kFfZTdCFx4kH3hGECO78yS0C0KS7pgO0BUe8COxcved
 
