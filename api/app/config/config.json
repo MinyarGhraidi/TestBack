@@ -120,8 +120,8 @@
       },
       "crm-sql" : {
         "host": "37.187.29.206",
-        "username": "root",
-        "password": "Oxilog2020.",
+        "username": "cron",
+        "password": "1234.",
         "database": "asterisk",
         "dialect": "mysql",
         "port" : 3306,
