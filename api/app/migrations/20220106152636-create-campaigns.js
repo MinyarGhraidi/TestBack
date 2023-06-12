@@ -72,6 +72,9 @@ module.exports = {
             config: {
                 type: Sequelize.JSONB
             },
+            sql_campaign_id: {
+            type: Sequelize.INTEGER
+        }
         });
     },
     down: (queryInterface, Sequelize) => {
