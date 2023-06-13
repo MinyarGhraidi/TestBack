@@ -51,9 +51,12 @@ class callfiles extends baseModelbo {
                                     delete obj[item[0]]
                                 }
                                 if (item[0] === 'customfields') {
-                                    item[1].map(field => {
-                                        obj[field.value] = field.default
-                                    })
+                                    if(item[1] && item.length !==0) {
+                                        item[1].map(field => {
+                                            obj[field.value] = field.default
+                                        })
+                                    }
+
                                 }
                             })
                             let objAfter = body
