@@ -718,6 +718,7 @@ class callfiles extends baseModelbo {
                                         }
                                     })
                                 } else {
+                                    call_file.customfields = []
                                     let uiSchema = {
                                         'ui:field': 'layout',
                                         'ui:layout': [],
