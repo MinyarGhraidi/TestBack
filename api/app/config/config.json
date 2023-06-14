@@ -153,7 +153,8 @@
     "secret": "'BL#,miQFau,amA!?FFW@oKO3<_<E-j-]PVO65d!c%|V2h{(3#~~*$8{X<H}BVm",
     "config_camps" : {
       "CMP-PROSPECTION" : "CMP-PROSPECTION",
-      "CMP-PRDV70" : "CMP-PRDV70"
+      "CMP-PRDV70" : "CMP-PRDV70",
+      "CMP-RAPPEL" : "CMP-RAPPEL"
     }
   },
   "tz": "Europe/Paris",
