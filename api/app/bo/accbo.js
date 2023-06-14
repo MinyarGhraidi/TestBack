@@ -33,7 +33,7 @@ class AccBo extends baseModelbo {
                 extra_where_count += ' AND end_time BETWEEN :start_time and :end_time';
             }
             if (reasonCode && reasonCode !== '') {
-                extra_where_count += ' AND sip_reason_crm = :sip_reason';
+                extra_where_count += ' AND (sip_reason_crm = :sip_reason or sip_reason = :sip_reason)';
             }
             if (directions && directions.length !== 0) {
                 extra_where_count += ' AND calldirection in (:directions)';
@@ -168,9 +168,14 @@ class AccBo extends baseModelbo {
         let date = req.body.date;
         let startTime = moment(date).format('YYYY-MM-DD').concat(' ', req.body.startTime);
         let endTime = moment(date).format('YYYY-MM-DD').concat(' ', req.body.endTime);
-        let sqlSipCode = `select distinct  sip_reason_crm
+        let sqlSipCode = `
+                        select distinct  sip_reason_crm
                           from acc_cdrs
-                          where sip_reason_crm notnull  and sip_reason_crm != '' and start_time BETWEEN  :start_time and :end_time`;
+                          where sip_reason_crm notnull and sip_reason_crm != '' and start_time BETWEEN  :start_time and :end_time
+                          UNION DISTINCT 
+                        select distinct  sip_reason as sip_reason_crm
+                          from acc_cdrs
+                          where sip_reason notnull and sip_reason != '' and start_time BETWEEN  :start_time and :end_time ;`;
         db.sequelize["cdr-db"]
             .query(sqlSipCode, {
                 type: db.sequelize["cdr-db"].QueryTypes.SELECT,
