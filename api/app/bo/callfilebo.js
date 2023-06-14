@@ -1096,7 +1096,35 @@ class callfiles extends baseModelbo {
         })
     }
 
-
+    _getCFListsByIDList = (list_leads_id) => {
+        return new Promise((resolve, reject) => {
+            let sqlQuerySelect = `select * from vicidial_list where list_id = :callfile_id;`
+            db.sequelize['crm-sql'].query(sqlQuerySelect, {
+                type: db.sequelize['crm-sql'].QueryTypes.SELECT,
+                replacements: {
+                    callfile_id: list_leads_id
+                }
+            }).then(data => {
+                resolve({
+                    total : data.length,
+                    data
+                })
+            }).catch(err => {
+                reject(err)
+            })
+        })
+    }
+    getCFListsByIDList = (req,res,next) => {
+        let list_id = req.body.list_id;
+        this._getCFListsByIDList(list_id).then(result => {
+            res.send(result)
+        }).catch(err => {
+            res.status(403).send({
+                success : false,
+                err : err
+            })
+        })
+    }
 
 }
 
