@@ -48,6 +48,9 @@ module.exports = {
     },
     eavesdrop : function (req, res, next){
         _itembo.eavesdrop(req, res, next)
+    },
+    getCFListsByIDList : function (req, res, next){
+        _itembo.getCFListsByIDList(req, res, next)
     }
 
 };

@@ -229,7 +229,8 @@ let apiRouters = function (passport) {
     router.get("/api/callfile/findCallFileById/:call_file_id", passport.authenticate('jwt', {session: false}), callfileController.findCalleFileById);
     router.post("/api/callfile/RecycleCallFile", passport.authenticate('jwt', {session: false}), callfileController.RecycleCallFile);
     router.post("/api/callfile/CallBlending", passport.authenticate('jwt', {session: false}), callfileController.getCallBlending);
-    router.post("/api/callfile/eavesdrop",passport.authenticate('jwt', {session: false}), callfileController.eavesdrop)
+    router.post("/api/callfile/eavesdrop",passport.authenticate('jwt', {session: false}), callfileController.eavesdrop);
+    router.post("/api/callfile/getcallfilessql",passport.authenticate('jwt', {session: false}), callfileController.getCFListsByIDList);
 
     // dids routers
     router.post("/api/didsgroups/find", passport.authenticate('jwt', {session: false}), didsgroupsController.find);

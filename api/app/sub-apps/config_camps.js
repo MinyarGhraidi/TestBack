@@ -21,12 +21,13 @@ importCampaign = (sql_campaign_id, campaign_id) => {
                                                                       0,
                                                                       null,
                                                                       0,
-                                                                      null,
+                                                                      33,
                                                                       :date,
                                                                       :date,
                                                                       null,
                                                                       null,
                                                                       :sql_list_id);`
+
         let mapping = {
             "phone_number": "phone_number",
             "title": "title",
