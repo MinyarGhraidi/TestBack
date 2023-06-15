@@ -1237,7 +1237,7 @@ class agents extends baseModelbo {
                                     active: 'Y',
                                     $or: [
                                         {
-                                            is_system:
+                                            is_default:
                                                 {
                                                     $eq: "Y"
                                                 }
@@ -1429,10 +1429,10 @@ class agents extends baseModelbo {
                 extra_where += ' AND listCallF.listcallfile_id in(:listCallFiles_ids)';
             }
             if (campaign_ids !== '' && campaign_ids.length !== 0) {
-                extra_where_camp += "AND  (callS.campaign_id in(:campaign_ids) or  callS.is_system = 'Y') and us.user_id in (:agent_id)"
-                extra_where += " AND (callS.campaign_id in(:campaign_ids) OR  callS.is_system = 'Y') "
+                extra_where_camp += "AND  (callS.campaign_id in(:campaign_ids) or  callS.is_default = 'Y') and us.user_id in (:agent_id)"
+                extra_where += " AND (callS.campaign_id in(:campaign_ids) OR  callS.is_default = 'Y') "
             } else {
-                extra_where_without_camp += "AND (stats.total > 0 or callS.is_system = 'Y')"
+                extra_where_without_camp += "AND (stats.total > 0 or callS.is_default = 'Y')"
             }
             sqlCallsStats = sqlCallsStats.replace('EXTRA_WHERE', extra_where);
             sqlCallsStats = sqlCallsStats.replace('EXTRA_WHERE_CAMP', extra_where_camp);
