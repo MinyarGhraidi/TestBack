@@ -154,7 +154,8 @@
     "config_camps" : {
       "CMP-PROSPECTION" : "CMP-PROSPECTION",
       "CMP-PRDV70" : "CMP-PRDV70",
-      "CMP-RAPPEL" : "CMP-RAPPEL"
+      "CMP-RAPPEL" : "CMP-RAPPEL",
+      "CMP-PRDV88" : "CMP-PRDV88"
     }
   },
   "tz": "Europe/Paris",
