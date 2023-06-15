@@ -21,7 +21,7 @@ importCampaign = (sql_campaign_id, campaign_id) => {
                                                                       0,
                                                                       null,
                                                                       0,
-                                                                      null,
+                                                                      33,
                                                                       :date,
                                                                       :date,
                                                                       null,
