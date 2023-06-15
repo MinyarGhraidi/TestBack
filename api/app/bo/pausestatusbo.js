@@ -48,10 +48,9 @@ class pausestatus extends baseModelbo {
     findByCampIdsAndSystem(req, res, next){
         let {campIds} = req.body;
         let sqlFind = `
-SELECT * 
-FROM pausestatuses AS PS
-WHERE  ( EXTRAWHERE PS."isSystem" = 'Y') AND PS.active = 'Y' AND PS.status = 'Y';
-`
+ SELECT PS.* , camp.campaign_name
+FROM pausestatuses AS PS left join campaigns camp ON PS.campaign_id = camp.campaign_id
+WHERE  ( EXTRAWHERE PS."isSystem" = 'Y') AND PS.active = 'Y' AND PS.status = 'Y'`
         let extraWhere = '';
         if(campIds && campIds.length !== 0){
             extraWhere += 'PS.campaign_id IN (:campIds) OR';

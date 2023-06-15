@@ -80,7 +80,7 @@
       "crm-app": {
         "host": "87.98.162.115",
         "username": "postgres",
-        "password": "postgres",
+        "password": "OxilogPreProd",
         "database": "oxilog-crm-app",
         "port": 5432,
         "dialect": "postgres",
@@ -102,7 +102,7 @@
       "cdr-db": {
         "host": "87.98.162.115",
         "username": "postgres",
-        "password": "oxilog-crm-app",
+        "password": "OxilogPreProd",
         "database": "cdr",
         "port": 5432,
         "dialect": "postgres",
