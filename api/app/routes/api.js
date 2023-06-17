@@ -417,6 +417,9 @@ let apiRouters = function (passport) {
     router.post('/api/campaign/deleteHooper',passport.authenticate('jwt', {session: false}),campaignController.resetHooper);
     router.get('/api/campaign/getCampaignsSql',passport.authenticate('jwt', {session: false}),campaignController.getCampaignsSql);
     router.post('/api/campaign/insertListLeadsSql',campaignController.insertListLeadsSql);
+
+    router.post('/api/dialplanItems/findTrunck', passport.authenticate('jwt', {session: false}), dialpanItemsController.getDialPlan);
+
     return router;
 
 

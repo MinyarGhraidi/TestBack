@@ -20,7 +20,10 @@ module.exports = {
     delete: function (req, res, next) {
         _dialplanItemsbo.delete(req, res, next);
     },
-   
+    getDialPlan : function (req, res, next){
+        _dialplanItemsbo.getDialPlan(req, res, next)
+    }
+
 
 };
 

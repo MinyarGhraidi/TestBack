@@ -785,6 +785,7 @@ class callfiles extends baseModelbo {
                     })
                 }
             }).catch(err => {
+                console.log('err', err)
                 return this.sendResponseError(res, ['Error '], err)
             })
         })
