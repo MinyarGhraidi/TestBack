@@ -17,8 +17,8 @@ Content-Type: application/json
 Authorization: Bearer BomjNx8kFfZTdCFx4kH3hGECO78yS0C0KS7pgO0BUe8COxcved
 
 {
-    "name": "Q1",
-    "extension": "1111",
+    "name": "50000",
+    "extension": "5000",
 	"domain_uuid": "98d96541-19e5-4e50-8406-76ba8ee8bbf4",
     "strategy": "ring-all",
     "greetings": [],

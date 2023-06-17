@@ -442,7 +442,7 @@ class AddCallFile extends baseModelbo {
 
     _getCallFilesBySqlListID(sql_list_id, listCallfile_id) {
         return new Promise((resolve, reject) => {
-            let sqlQuerySelect = `select phone_number, first_name, last_name, middle_initial, title, address1, address2, address3, state, city, province, postal_code, email, country_code, gender from vicidial_list where list_id = :sql_list_id;`
+            let sqlQuerySelect = `select phone_number,date_of_birth, first_name, last_name, middle_initial, title, address1, address2, address3, state, city, province, postal_code, email, country_code, gender from vicidial_list where list_id = :sql_list_id;`
             db.sequelize['crm-sql'].query(sqlQuerySelect, {
                 type: db.sequelize['crm-sql'].QueryTypes.SELECT,
                 replacements: {
