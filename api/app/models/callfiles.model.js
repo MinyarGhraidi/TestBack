@@ -108,6 +108,12 @@ module.exports = (sequelize, Sequelize) => {
             siren: {
                 type: Sequelize.STRING
             },
+            date_of_birth: {
+                type: Sequelize.STRING
+            },
+            comments: {
+                type: Sequelize.STRING
+            },
         },
         {timestamps: false,}
     )
@@ -131,7 +137,9 @@ module.exports = (sequelize, Sequelize) => {
         'country_code',
         'customfields',
         'to_treat',
-        'save_in_hooper'
+        'save_in_hooper',
+        'date_of_birth',
+        'comments'
 
     ]
     callfile.prototype.fieldsSearchMetas = [

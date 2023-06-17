@@ -60,6 +60,9 @@ module.exports = {
       },
       custom_fields: {
         type: Sequelize.JSONB,
+      },
+      sql_list_id: {
+        type: Sequelize.INTEGER
       }
     });
   },

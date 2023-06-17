@@ -51,9 +51,12 @@ class callfiles extends baseModelbo {
                                     delete obj[item[0]]
                                 }
                                 if (item[0] === 'customfields') {
-                                    item[1].map(field => {
-                                        obj[field.value] = field.default
-                                    })
+                                    if(item[1] && item.length !==0) {
+                                        item[1].map(field => {
+                                            obj[field.value] = field.default
+                                        })
+                                    }
+
                                 }
                             })
                             let objAfter = body
@@ -718,6 +721,7 @@ class callfiles extends baseModelbo {
                                         }
                                     })
                                 } else {
+                                    call_file.customfields = []
                                     let uiSchema = {
                                         'ui:field': 'layout',
                                         'ui:layout': [],
@@ -1093,7 +1097,35 @@ class callfiles extends baseModelbo {
         })
     }
 
-
+    _getCFListsByIDList = (list_leads_id) => {
+        return new Promise((resolve, reject) => {
+            let sqlQuerySelect = `select * from vicidial_list where list_id = :callfile_id;`
+            db.sequelize['crm-sql'].query(sqlQuerySelect, {
+                type: db.sequelize['crm-sql'].QueryTypes.SELECT,
+                replacements: {
+                    callfile_id: list_leads_id
+                }
+            }).then(data => {
+                resolve({
+                    total : data.length,
+                    data
+                })
+            }).catch(err => {
+                reject(err)
+            })
+        })
+    }
+    getCFListsByIDList = (req,res,next) => {
+        let list_id = req.body.list_id;
+        this._getCFListsByIDList(list_id).then(result => {
+            res.send(result)
+        }).catch(err => {
+            res.status(403).send({
+                success : false,
+                err : err
+            })
+        })
+    }
 
 }
 

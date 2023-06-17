@@ -51,12 +51,6 @@ module.exports = {
     },
     resetHooper : function (req, res, next) {
         _itembo.resetHooper(req, res, next)
-    },
-    getCampaignsSql : function (req, res, next) {
-        _itembo.getCampaignsSql(req, res, next)
-    },
-    insertListLeadsSql : function (req, res, next) {
-        _itembo.insertListLeadsByCampaignID_Sql(req, res, next)
     }
 
 };

@@ -579,10 +579,13 @@
   "scripts": {
     "start": "nodemon server.js",
     "start:prod": "NODE_ENV=production nodemon server.js",
+    "start:preProd": "NODE_ENV=preProd nodemon server.js",
     "test": "mocha --exit -r 'test/**/*.js'  --grep",
     "saveCalls": "NODE_ENV=development nodemon SaveCallFile ",
-    "startSip": "nodemon  --unhandled-rejections=strict --experimental-modules --es-module-specifier-resolution=node  ./app/sub-apps/sipConnect.js",
-    "crons-backend": "NODE_ENV=production nodemon --max-old-space-size=8192  app/sub-apps/crons/crons.js"
+    "saveCalls-preprpd": "NODE_ENV=preProd nodemon SaveCallFile ",
+    "crons-backend": "NODE_ENV=production nodemon --max-old-space-size=8192  app/sub-apps/crons/crons.js",
+    "crons-backend-preprod": "NODE_ENV=preProd nodemon --max-old-space-size=8192  app/sub-apps/crons/crons.js",
+    "config-camp": "NODE_ENV=production nodemon --max-old-space-size=8192 ./app/sub-apps/config_camps.js"
   },
   "devDependencies": {
     "cron": "^2.2.0",
