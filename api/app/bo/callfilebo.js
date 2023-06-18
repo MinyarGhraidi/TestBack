@@ -809,6 +809,51 @@ class callfiles extends baseModelbo {
         })
     }
 
+    findCalleFileByPhoneNumber(req, res, next) {
+        let _this = this
+        const {phone_number} = req.params;
+        if (!!!phone_number) {
+            return this.sendResponseError(res, ['Error phone_number Empty'])
+        }
+        this.db['callfiles'].findOne({
+            include: {
+                model: db.listcallfiles
+            },
+            where: {
+                phone_number : phone_number
+            }
+        }).then(call_file => {
+            if (!!!call_file) {
+                return res.send({
+                    success: false,
+                    message: "call file not found"
+                })
+            }
+            let schema = {
+                type: 'object',
+                properties: {}
+            }
+            let mapping = {}
+            this.createSchemaUischema(call_file, mapping, schema).then(result => {
+                if (result.success) {
+                    res.send({
+                        success: true,
+                        data: call_file,
+                        schema: result.schema,
+                        uiSchema: result.uiSchema
+                    })
+                } else {
+                    res.send({
+                        success: false,
+                        message: result.message
+                    })
+                }
+            }).catch(err => {
+                console.log('err', err)
+                return this.sendResponseError(res, ['Error '], err)
+            })
+        })
+    }
     RecycleCallFile(req, res, next) {
         let {campaign_id, listcallfile_id} = req.body;
         if (!!!campaign_id && !!!listcallfile_id) {
