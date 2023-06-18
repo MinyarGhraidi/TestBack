@@ -22,6 +22,19 @@ class truncks extends baseModelbo {
         let _this = this;
         let trunk_kam = req.body.values;
         let data_db = req.body.db_values;
+
+        let whereCondition = {
+            active: 'Y',
+            status: 'Y'
+        };
+
+        if (data_db.password) {
+           whereCondition.proxy= data_db.proxy
+        }
+
+
+        console.log(whereCondition);
+        return
         this.db['truncks'].findOne({
             where:{
                 active: 'Y',

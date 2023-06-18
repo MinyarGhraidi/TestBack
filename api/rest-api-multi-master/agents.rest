@@ -106,12 +106,12 @@ Authorization: Bearer BomjNx8kFfZTdCFx4kH3hGECO78yS0C0KS7pgO0BUe8COxcved
 
 ###
 #UPDATE AGENT STATUS
-PUT https://92.222.147.159:1443/api/v1/agents/d3ce3117-eb06-4dfa-a1d6-c80d5fe49283/status
+PUT https://92.222.147.159:1443/api/v1/agents/18e5d8c4-8cbb-4ae3-bfab-a5f1a306b701/status
 Content-Type: application/json
 Authorization: Bearer BomjNx8kFfZTdCFx4kH3hGECO78yS0C0KS7pgO0BUe8COxcved
 
 {
-    "status": "available"
+    "status": "logged-out"
 }
 
 ###
