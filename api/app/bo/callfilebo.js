@@ -6,6 +6,7 @@ const efilesBo = require('./efilesbo');
 const moment = require("moment");
 const _efilebo = new efilesBo;
 const env = process.env.NODE_ENV || 'development';
+const config_camps = require(__dirname + '/../config/config.json')[env]["config_camps"];
 const call_center_token = require(__dirname + '/../config/config.json')[env]["call_center_token"];
 const base_url_cc_kam = require(__dirname + '/../config/config.json')[env]["base_url_cc_kam"];
 const call_center_authorization = {
@@ -20,15 +21,15 @@ class callfiles extends baseModelbo {
         this.primaryKey = 'callfile_id';
     }
 
-    _updateCallFileQualification(callfile_id,body,req){
-        return new Promise((resolve,reject)=> {
+    _updateCallFileQualification(callfile_id, body, req) {
+        return new Promise((resolve, reject) => {
             this.db['callfiles'].findOne({
                 where: {
                     callfile_id: callfile_id
                 }
             }).then(call_previous => {
-                if(call_previous){
-                    if(body.customfields && body.customfields.length !== 0){
+                if (call_previous) {
+                    if (body.customfields && body.customfields.length !== 0) {
                         const keys = body.customfields.map(c => c.value);
                         keys.forEach(key => {
                             delete body[key]
@@ -42,7 +43,7 @@ class callfiles extends baseModelbo {
                             returning: true,
                             plain: true
                         }).then(result => {
-                        if(result){
+                        if (result) {
                             let obj = call_previous.dataValues
                             Object.entries(obj).map(item => {
 
@@ -51,7 +52,7 @@ class callfiles extends baseModelbo {
                                     delete obj[item[0]]
                                 }
                                 if (item[0] === 'customfields') {
-                                    if(item[1] && item.length !==0) {
+                                    if (item[1] && item.length !== 0) {
                                         item[1].map(field => {
                                             obj[field.value] = field.default
                                         })
@@ -61,9 +62,9 @@ class callfiles extends baseModelbo {
                             })
                             let objAfter = body
                             delete objAfter.customfields
-                            Object.entries(objAfter).map(element=>{
-                                if(Array.isArray(element[1])){
-                                    element[1]=element[1].toString()
+                            Object.entries(objAfter).map(element => {
+                                if (Array.isArray(element[1])) {
+                                    element[1] = element[1].toString()
                                 }
                             })
                             delete obj.customfields
@@ -75,19 +76,18 @@ class callfiles extends baseModelbo {
                             }).catch(err => {
                                 reject(err)
                             })
-                        }else{
-                           resolve({
-                               success : false
-                           })
+                        } else {
+                            resolve({
+                                success: false
+                            })
                         }
 
                     }).catch(err => {
                         reject(err)
                     })
-                }
-                else{
+                } else {
                     resolve({
-                        success : false
+                        success: false
                     })
                 }
 
@@ -96,12 +96,13 @@ class callfiles extends baseModelbo {
             })
         })
     }
+
     updateCallFileQualification(req, res, next) {
         let callfile_id = req.body.callfile_id
-        this._updateCallFileQualification(callfile_id,req.body,req).then(result => {
+        this._updateCallFileQualification(callfile_id, req.body, req).then(result => {
             res.send(result)
         }).catch(err => {
-            this.sendResponseError(res,['cannotUpdateCallFile',err],1,403)
+            this.sendResponseError(res, ['cannotUpdateCallFile', err], 1, 403)
         })
     }
 
@@ -523,7 +524,13 @@ class callfiles extends baseModelbo {
                         default: item[1],
                         "readOnly": true
                     }
-                } else {
+                }else if (item[0] === 'comments') {
+                    schema.properties[item[0]] = {
+                        type: "string",
+                        default: item[1],
+                        format : "textarea"
+                    }
+                }else {
                     schema.properties[item[0]] = {
                         type: "string",
                         default: item[1],
@@ -597,14 +604,21 @@ class callfiles extends baseModelbo {
                 let index2 = index1 + 1
                 let obj = {}
                 if (dataSchema[index1] && dataSchema[index2]) {
-                    obj[dataSchema[index1][0]] = {sm: 6}
-                    obj[dataSchema[index2][0]] = {sm: 6}
+                    if (dataSchema[index1][0] === 'comments' || dataSchema[index2][0] === 'comments') {
+                        obj['comments'] = {sm : 12}
+                    } else {
+                        obj[dataSchema[index1][0]] = {sm: 6}
+                        obj[dataSchema[index2][0]] = {sm: 6}
+                    }
                     uiSchema["ui:layout"].push(obj)
                 } else if (dataSchema[index1]) {
-                    obj[dataSchema[index1][0]] = {sm: 6}
+                    if (dataSchema[index1][0] === 'comments' || dataSchema[index1][0] === 'comments') {
+                        obj['comments'] = {sm: 12}
+                    } else {
+                        obj[dataSchema[index1][0]] = {sm: 6}
+                    }
                     uiSchema["ui:layout"].push(obj)
                 }
-
                 if (dataSchema[index1] && dataSchema[index1][1].type === 'array') {
                     uiSchema[dataSchema[index1][0]] = {"ui:widget": "checkboxes"}
                 } else if (dataSchema[index2] && dataSchema[index2][1].type === 'array') {
@@ -807,10 +821,10 @@ class callfiles extends baseModelbo {
             this.getCallFileIdsByCampaignID(campaign_id).then(result => {
                 if (result.success) {
                     this.updateCallFileTreatAndHooper(result.data, result.call_status).then(resUpdate => {
-                            res.send({
-                                success: true,
-                                status: 200
-                            })
+                        res.send({
+                            success: true,
+                            status: 200
+                        })
                     }).catch(err => {
                         return this.sendResponseError(res, ['Error.CannotUpdateCallFileTreatAndHooper', err], 1, 403);
                     })
@@ -829,10 +843,10 @@ class callfiles extends baseModelbo {
             this.getCallFileIdsByListCallFileID(listcallfile_id).then(result => {
                 if (result.success) {
                     this.updateCallFileTreatAndHooper(result.data, result.call_status).then(resUpdate => {
-                            res.send({
-                                success: true,
-                                status: 200
-                            })
+                        res.send({
+                            success: true,
+                            status: 200
+                        })
                     }).catch(err => {
                         return this.sendResponseError(res, ['Error.CannotUpdateCallFileTreatAndHooper', err], 1, 403);
                     })
@@ -1025,74 +1039,74 @@ class callfiles extends baseModelbo {
         })
     }
 
-    getCallBlending (req, res, next){
+    getCallBlending(req, res, next) {
         let number = req.body.number;
-        if(!!!number){
-            return this.sendResponseError(res, ['Error.numberIsNull', ], 1, 403);
+        if (!!!number) {
+            return this.sendResponseError(res, ['Error.numberIsNull',], 1, 403);
         }
         this.db['callfiles'].findOne({
-            where:{
+            where: {
                 phone_number: number,
-                active : 'Y',
+                active: 'Y',
             },
             order: [['updated_at', 'DESC']]
-        }).then(call_blending=>{
-            if(call_blending){
+        }).then(call_blending => {
+            if (call_blending) {
                 res.send({
                     success: true,
-                    data:call_blending
+                    data: call_blending
                 })
-            }else{
+            } else {
                 res.send({
                     success: false
                 })
             }
-        }).catch(err=>{
+        }).catch(err => {
             return this.sendResponseError(res, ['Error.CannotGetCallBlending', err], 1, 403);
         })
     }
 
-    eavesdrop (req, res, next){
+    eavesdrop(req, res, next) {
         let agent_id = req.body.agent_id;
         let supSipUri = req.body.sip_uri
         let domain = req.body.domain
         let server_uuid = req.body.server_uuid
-        if(!!!agent_id || !!!supSipUri || !!!domain || !!!server_uuid){
+        if (!!!agent_id || !!!supSipUri || !!!domain || !!!server_uuid) {
             return this.sendResponseError(res, ['Error.dataAgentNUll'], 1, 403);
         }
         this.db['users'].findOne({
-            where:{
+            where: {
                 user_id: agent_id,
-                active : 'Y',
+                active: 'Y',
                 status: 'Y'
             }
-        }).then(agent=>{
-            if (!!!agent || !!!agent.channel_uuid){
+        }).then(agent => {
+            if (!!!agent || !!!agent.channel_uuid) {
                 return this.sendResponseError(res, ['Error.dataAgentNUll'], 1, 403);
-            }else{
-                let obj={
+            } else {
+                let obj = {
                     "channelUuid": agent.channel_uuid,
-                    "supervisorSipUri": supSipUri+"@"+domain,
+                    "supervisorSipUri": supSipUri + "@" + domain,
                     "callerIdNumber": "33980762256",
                     "serverUuid": server_uuid
                 }
-                axios.post(`${base_url_cc_kam}api/v1/commands/eavesdrop`,obj,call_center_authorization).then(result=>{
-                    if(result.data && result.data.status === 'success'){
+                axios.post(`${base_url_cc_kam}api/v1/commands/eavesdrop`, obj, call_center_authorization).then(result => {
+                    if (result.data && result.data.status === 'success') {
                         res.send({
                             success: true
                         })
-                    }else{
+                    } else {
                         res.send({
                             success: false
                         })
                     }
 
-                }).catch(err=>{
+                }).catch(err => {
                     return this.sendResponseError(res, ['Error.eavesdrop', err], 1, 403);
                 })
 
             }
-        }).catch(err=>{
+        }).catch(err => {
             return this.sendResponseError(res, ['Error.FindUser', err], 1, 403);
         })
     }
@@ -1107,7 +1121,7 @@ class callfiles extends baseModelbo {
                 }
             }).then(data => {
                 resolve({
-                    total : data.length,
+                    total: data.length,
                     data
                 })
             }).catch(err => {
@@ -1115,14 +1129,14 @@ class callfiles extends baseModelbo {
             })
         })
     }
-    getCFListsByIDList = (req,res,next) => {
+    getCFListsByIDList = (req, res, next) => {
         let list_id = req.body.list_id;
         this._getCFListsByIDList(list_id).then(result => {
             res.send(result)
         }).catch(err => {
             res.status(403).send({
-                success : false,
-                err : err
+                success: false,
+                err: err
             })
         })
     }

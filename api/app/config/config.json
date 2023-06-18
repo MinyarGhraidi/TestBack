@@ -225,7 +225,14 @@
       "CMP-PROSPECTION" : "CMP-PROSPECTION",
       "CMP-PRDV70" : "CMP-PRDV70",
       "CMP-RAPPEL" : "CMP-RAPPEL",
-      "CMP-PRDV88" : "CMP-PRDV88"
+      "CMP-PRDV88" : "CMP-PRDV88",
+      "CMP-1701": "CMP-1701",
+      "CMP 1702": "CMP 1702",
+      "CMP 1703": "CMP 1703",
+      "CMP-PV-QUALIF": "CMP-PV-QUALIF",
+      "RENOV-GLOBALE QUALIF": "RENOV-GLOBALE QUALIF",
+      "CMP-CPF": "CMP-CPF",
+      "PV-RENOV GLOBALE": "PV-RENOV GLOBALE"
     }
   },
   "tz": "Europe/Paris",

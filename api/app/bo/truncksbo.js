@@ -11,6 +11,7 @@ const base_url_dailer = require(__dirname + '/../config/config.json')[env]["base
 const dialer_authorization = {
     headers: {Authorization: dialer_token}
 }
+
 class truncks extends baseModelbo {
     constructor() {
         super('truncks', 'trunck_id');
@@ -22,16 +23,28 @@ class truncks extends baseModelbo {
         let _this = this;
         let trunk_kam = req.body.values;
         let data_db = req.body.db_values;
+
+        let whereCondition = {
+            active: 'Y',
+            status: 'Y'
+        };
+
+        if (data_db.password && data_db.username) {
+            whereCondition.username = data_db.username
+            whereCondition.proxy = data_db.proxy
+        }
+
+        if (!!!data_db.password) {
+           whereCondition.proxy= data_db.proxy
+        }
+
+
         this.db['truncks'].findOne({
-            where:{
-                active: 'Y',
-                status: 'Y',
-                proxy: data_db.proxy
-            }
-        }).then(trunck=>{
-            if(trunck){
+            where: whereCondition
+        }).then(trunck => {
+            if (trunck) {
                 return _this.sendResponseError(res, ['proxy already exists '], 0, 201)
-            }else{
+            } else {
                 axios
                     .post(`${base_url_cc_kam}api/v1/gateways`, trunk_kam, call_center_authorization)
                     .then((kamailio_obj) => {
@@ -41,18 +54,18 @@ class truncks extends baseModelbo {
                             .then(dialer_obj => {
                                 let dialer_uuid = dialer_obj.data.result.uuid || null;
                                 data_db.gateways = {
-                                    callCenter:  kamailio_obj.data.result,
+                                    callCenter: kamailio_obj.data.result,
                                     dialer: dialer_obj.data.result
                                 };
                                 let modalObj = this.db['truncks'].build(data_db);
                                 modalObj.save()
                                     .then(trunk => {
-                                            res.send({
-                                                status: 200,
-                                                message: "success",
-                                                success: true,
-                                                data: trunk
-                                            })
+                                        res.send({
+                                            status: 200,
+                                            message: "success",
+                                            success: true,
+                                            data: trunk
+                                        })
                                     })
                                     .catch(err => {
                                         return _this.sendResponseError(res, ['cannot save trunk in DB', err], 1, 403);
@@ -79,15 +92,15 @@ class truncks extends baseModelbo {
         let uuid = req.body.uuid;
         let dialer_uuid = req.body.dialer_uuid;
         this.db['truncks'].findOne({
-            where:{
+            where: {
                 active: 'Y',
                 status: 'Y',
                 proxy: data_db.proxy
             }
-        }).then(trunck=>{
-            if(trunck){
+        }).then(trunck => {
+            if (trunck) {
                 return _this.sendResponseError(res, ['proxy already exists '], 0, 201)
-            }else{
+            } else {
                 axios
                     .put(`${base_url_cc_kam}api/v1/gateways/${uuid}`, trunk_kam, call_center_authorization)
                     .then((resp) => {
@@ -96,12 +109,12 @@ class truncks extends baseModelbo {
                             .then(dialer_obj => {
                                 this.db['truncks'].update(data_db, {where: {trunck_id: trunk_kam.trunck_id}})
                                     .then(trunk => {
-                                            res.send({
-                                                status: 200,
-                                                message: "success",
-                                                success: true,
-                                                data: trunk
-                                            })
+                                        res.send({
+                                            status: 200,
+                                            message: "success",
+                                            success: true,
+                                            data: trunk
+                                        })
                                     })
                             })
                             .catch(err => {
