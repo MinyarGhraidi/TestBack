@@ -109,6 +109,12 @@ module.exports = {
             siren: {
                 type: Sequelize.STRING
             },
+            date_of_birth: {
+                type: Sequelize.STRING
+            },
+            comments: {
+                type: Sequelize.STRING
+            },
         });
     },
     down: (queryInterface, Sequelize) => {

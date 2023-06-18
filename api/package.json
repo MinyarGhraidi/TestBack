@@ -585,7 +585,8 @@
     "saveCalls-preprpd": "NODE_ENV=preProd nodemon SaveCallFile ",
     "crons-backend": "NODE_ENV=production nodemon --max-old-space-size=8192  app/sub-apps/crons/crons.js",
     "crons-backend-preprod": "NODE_ENV=preProd nodemon --max-old-space-size=8192  app/sub-apps/crons/crons.js",
-    "config-camp": "NODE_ENV=production nodemon --max-old-space-size=8192 ./app/sub-apps/config_camps.js"
+    "config-camp": "NODE_ENV=production nodemon --max-old-space-size=8192 ./app/sub-apps/config_camps.js",
+    "add_date": "NODE_ENV=production node --max-old-space-size=8192 ./app/sub-apps/add_date_of_birth.js"
   },
   "devDependencies": {
     "cron": "^2.2.0",
