@@ -33,9 +33,12 @@ class truncks extends baseModelbo {
             whereCondition.username = data_db.username
             whereCondition.proxy = data_db.proxy
         }
+
         if (!!!data_db.password) {
-            whereCondition.proxy = data_db.proxy
+           whereCondition.proxy= data_db.proxy
         }
+
+
         this.db['truncks'].findOne({
             where: whereCondition
         }).then(trunck => {
