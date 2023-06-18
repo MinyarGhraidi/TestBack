@@ -41,7 +41,9 @@ importCampaign = (sql_campaign_id, campaign_id) => {
             "postal_code" : "postal_code",
             "country_code": "country_code",
             "gender" : "gender",
-            "email": "email"
+            "email": "email",
+            "date_of_birth" : "date_of_birth",
+            "comments" : "comments"
         }
         const jsonStringMapping = JSON.stringify(mapping);
 
