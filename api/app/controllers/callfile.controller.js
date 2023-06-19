@@ -40,6 +40,9 @@ module.exports = {
     findCalleFileById: function (req, res, next){
         _itembo.findCalleFileById(req, res, next)
     },
+    findCalleFileByPhoneNumber: function (req, res, next){
+        _itembo.findCalleFileByPhoneNumber(req, res, next)
+    },
     RecycleCallFile: function (req, res, next){
         _itembo.RecycleCallFile(req, res, next)
     },

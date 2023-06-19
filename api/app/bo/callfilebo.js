@@ -137,6 +137,7 @@ class callfiles extends baseModelbo {
                                  left join calls_historys as calls_h on callF.callfile_id = calls_h.call_file_id
                         where calls_h.active = :active
                           and callF.active = :active
+                          and callF.listcallfile_id in (:listCallFiles_ids)
                            EXTRA_WHERE 
                            order by calls_h.finished_at desc LIMIT :limit OFFSET :offset
                          `
@@ -145,6 +146,7 @@ class callfiles extends baseModelbo {
                                  left join calls_historys as calls_h on callF.callfile_id = calls_h.call_file_id
                         where calls_h.active = :active
                           and callF.active = :active
+                          and callF.listcallfile_id in (:listCallFiles_ids)
                            EXTRA_WHERE 
                          `
         let extra_where = '';
@@ -803,12 +805,55 @@ class callfiles extends baseModelbo {
                     })
                 }
             }).catch(err => {
-                console.log('err', err)
                 return this.sendResponseError(res, ['Error '], err)
             })
         })
     }
 
+    findCalleFileByPhoneNumber(req, res, next) {
+        let _this = this
+        const {phone_number} = req.params;
+        if (!!!phone_number) {
+            return this.sendResponseError(res, ['Error phone_number Empty'])
+        }
+        this.db['callfiles'].findOne({
+            include: {
+                model: db.listcallfiles
+            },
+            where: {
+                phone_number : phone_number
+            }
+        }).then(call_file => {
+            if (!!!call_file) {
+                return res.send({
+                    success: false,
+                    message: "call file not found"
+                })
+            }
+            let schema = {
+                type: 'object',
+                properties: {}
+            }
+            let mapping = {}
+            this.createSchemaUischema(call_file, mapping, schema).then(result => {
+                if (result.success) {
+                    res.send({
+                        success: true,
+                        data: call_file,
+                        schema: result.schema,
+                        uiSchema: result.uiSchema
+                    })
+                } else {
+                    res.send({
+                        success: false,
+                        message: result.message
+                    })
+                }
+            }).catch(err => {
+                return this.sendResponseError(res, ['Error '], err)
+            })
+        })
+    }
     RecycleCallFile(req, res, next) {
         let {campaign_id, listcallfile_id} = req.body;
         if (!!!campaign_id && !!!listcallfile_id) {
