@@ -137,6 +137,7 @@ class callfiles extends baseModelbo {
                                  left join calls_historys as calls_h on callF.callfile_id = calls_h.call_file_id
                         where calls_h.active = :active
                           and callF.active = :active
+                          and callF.listcallfile_id in (:listCallFiles_ids)
                            EXTRA_WHERE 
                            order by calls_h.finished_at desc LIMIT :limit OFFSET :offset
                          `
@@ -145,6 +146,7 @@ class callfiles extends baseModelbo {
                                  left join calls_historys as calls_h on callF.callfile_id = calls_h.call_file_id
                         where calls_h.active = :active
                           and callF.active = :active
+                          and callF.listcallfile_id in (:listCallFiles_ids)
                            EXTRA_WHERE 
                          `
         let extra_where = '';
@@ -803,7 +805,6 @@ class callfiles extends baseModelbo {
                     })
                 }
             }).catch(err => {
-                console.log('err', err)
                 return this.sendResponseError(res, ['Error '], err)
             })
         })
@@ -849,7 +850,6 @@ class callfiles extends baseModelbo {
                     })
                 }
             }).catch(err => {
-                console.log('err', err)
                 return this.sendResponseError(res, ['Error '], err)
             })
         })
