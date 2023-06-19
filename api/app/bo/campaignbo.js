@@ -572,8 +572,8 @@ class campaigns extends baseModelbo {
                 }
                 let {queue} = params;
                 let {greetings, hold_music} = queue.options;
-                queue.greetings = ["http://myTestServer/IVRS/" + greetings];
-                queue.hold_music = ["http://myTestServer/IVRS/" + hold_music];
+                queue.greetings = [];
+                queue.hold_music = [];
                 cloned_campaign.campaign_name = campaign.campaign_name;
                 cloned_campaign.agents = [];
                 this.generateUniqueUsernameFunction()
