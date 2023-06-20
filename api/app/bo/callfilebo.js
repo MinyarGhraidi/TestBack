@@ -163,11 +163,11 @@ class callfiles extends baseModelbo {
         if (endTime && endTime !== '') {
             extra_where += ' AND calls_h.finished_at <=  :end_time';
         }
+        if (call_status && call_status.length !== 0) {
+            extra_where += ' AND calls_h.call_status in (:call_status) '
+        }
         if (phone_number && phone_number !== '') {
             extra_where += ' AND callF.phone_number = :phone_number '
-        }
-        if (call_status && call_status.length !== 0) {
-            extra_where += ' AND callF.call_status in (:call_status) '
         }
         sqlLeads = sqlLeads.replace('EXTRA_WHERE', extra_where);
         sqlLeadsCount = sqlLeadsCount.replace('EXTRA_WHERE', extra_where);
@@ -238,7 +238,271 @@ class callfiles extends baseModelbo {
         })
 
     }
+    ReformatOneFileCSVExport(item, schema) {
+        return new Promise((resolve, reject) => {
+            let dataSchema = [];
+            let idx = 0;
+            schema.forEach(data => {
+                dataSchema.push(item[data.currentColumn]);
+                if (idx < schema.length - 1) {
+                    idx++;
+                } else {
+                    if (dataSchema.length !== 0) {
+                        dataSchema[0] = "\r\n" + dataSchema[0]
+                    }
+                    resolve(dataSchema)
+                }
+            })
+        })
+    }
+    leadsStatsExport(req,res,next){
+        let _this = this;
+        let data = req.body;
+        if (!!!data.filter) {
+            res.send({
+                success: false,
+                status: 403,
+                data: [],
+                message: 'Cannot get filter'
+            })
+        }
+        let {
+            listCallFiles_ids,
+            call_status,
+            dateSelected_from,
+            startTime,
+            endTime,
+            dateSelected_to,
+            campaign_ids,
+            agents_ids
+        } = data.filter;
 
+        let sqlListCallFiles = `select listcallfile_id from listcallfiles
+                                       where EXTRA_WHERE and active = 'Y' `
+
+        let SqlQuery = `Select distinct 
+callF.phone_number as "Phone Number",
+CONCAT(callF.first_name, ' ', callF.last_name) as "Client Name",
+callF.address1 as "Address", 
+callF.state as "State",
+callF.city as "City",
+callF.province as "Province",
+callF.postal_code as "Postal Code",
+callF.email as "Client Email",
+callF.country_code as "Country Code",
+callF.note as "Note",
+CS.label as "Call Status",
+callF.gender as "Gender",
+callF.age as "Age",
+callF.company_name as "Company Name",
+callF.siret as "Siret",
+callF.siren as "Siren",
+callF.date_of_birth as "Date Of Birth",
+callF.category as "Category",
+CONCAT(U.first_name, ' ', U.last_name) as "Agent Name" 
+                        from callfiles as callF
+                        left join calls_historys as calls_h on callF.callfile_id = calls_h.call_file_id
+                        LEFT OUTER JOIN users AS U ON calls_h.agent_id = U.user_id
+                        LEFT OUTER JOIN callstatuses AS CS ON calls_h.call_status = CS.code 
+                        where calls_h.active = :active
+                          and callF.active = :active
+                          and U.active = :active
+                          and CS.active = :active
+                            EXTRA_WHERE`
+
+        let extra_where_sqlListCallFile = '';
+        let extra_where_ListCallFile = '';
+        if (listCallFiles_ids && listCallFiles_ids.length === 0) {
+            extra_where_ListCallFile = " campaign_id in (:campaign_ids) ";
+        } else {
+            extra_where_ListCallFile = " listcallfile_id in (:listCallFiles_ids) ";
+        }
+        if(agents_ids && agents_ids.length !== 0){
+            extra_where_sqlListCallFile += ' AND calls_h.agent_id in (:agents_ids)';
+        }
+        if (startTime && startTime !== '') {
+            extra_where_sqlListCallFile += ' AND calls_h.started_at >= :start_time';
+        }
+        if (endTime && endTime !== '') {
+            extra_where_sqlListCallFile += ' AND calls_h.finished_at <=  :end_time';
+        }
+        if (call_status && call_status.length !== 0) {
+            extra_where_sqlListCallFile += ' AND calls_h.call_status in (:call_status) '
+        }
+        sqlListCallFiles = sqlListCallFiles.replace('EXTRA_WHERE', extra_where_ListCallFile);
+
+        db.sequelize['crm-app'].query(sqlListCallFiles, {
+            type: db.sequelize['crm-app'].QueryTypes.SELECT,
+            replacements: {
+                campaign_ids: campaign_ids,
+                listCallFiles_ids: listCallFiles_ids
+            }
+        }).then(list_call_file => {
+            if (list_call_file && list_call_file.length !== 0) {
+                let lCF_ids = list_call_file.map((item) => item.listcallfile_id);
+                extra_where_sqlListCallFile += ' AND callF.listcallfile_id in (:listCallFiles_ids)'
+                SqlQuery = SqlQuery.replace('EXTRA_WHERE', extra_where_sqlListCallFile);
+                db.sequelize['crm-app'].query(SqlQuery, {
+                    type: db.sequelize['crm-app'].QueryTypes.SELECT,
+                    replacements: {
+                        start_time: moment(dateSelected_from).format('YYYY-MM-DD').concat(' ', startTime),
+                        end_time: moment(dateSelected_to).format('YYYY-MM-DD').concat(' ', endTime),
+                        listCallFiles_ids: lCF_ids,
+                        active: 'Y',
+                        call_status: call_status
+                    }
+                }).then(dataLeads => {
+                    if(dataLeads && dataLeads.length !== 0){
+                        let schema = [
+                            {
+                                column: 'Phone Number',
+                                type: 'String',
+                                currentColumn: 'Phone Number',
+                            },
+                            {
+                                column: 'Client Name',
+                                type: 'String',
+                                currentColumn: 'Client Name',
+                            },
+                            {
+                                column: 'Address',
+                                type: 'String',
+                                currentColumn: 'Address',
+
+                            },
+                            {
+                                column: 'State',
+                                type: 'String',
+                                currentColumn: 'State',
+                            },
+                            {
+                                column: 'City',
+                                type: 'String',
+                                currentColumn: 'City',
+
+                            },
+                            {
+                                column: 'Province',
+                                type: 'String',
+                                currentColumn: 'Province',
+                            }, {
+                                column: 'Postal Code',
+                                type: 'String',
+                                currentColumn: 'Postal Code',
+
+                            }, {
+                                column: 'Client Email',
+                                type: 'String',
+                                currentColumn: 'Client Email',
+
+                            }, {
+                                column: 'Country Code',
+                                type: 'String',
+                                currentColumn: 'Country Code',
+
+                            },
+                            {
+                                column: 'Note',
+                                type: 'String',
+                                currentColumn: 'Note',
+
+                            },
+
+                            {
+                                column: 'Call Status',
+                                type: 'String',
+                                currentColumn: 'Call Status',
+
+                            },
+                            {
+                                column: 'Gender',
+                                type: 'String',
+                                currentColumn: 'Gender',
+
+                            },
+                            {
+                                column: 'Age',
+                                type: 'String',
+                                currentColumn: 'Age',
+
+                            },
+                            {
+                                column: 'Company Name',
+                                type: 'String',
+                                currentColumn: 'Company Name',
+
+                            },
+                            {
+                                column: 'Siret',
+                                type: 'String',
+                                currentColumn: 'Siret',
+
+                            },
+                            {
+                                column: 'Siren',
+                                type: 'String',
+                                currentColumn: 'Siren',
+                            },
+                            {
+                                column: 'Date Of Birth',
+                                type: 'String',
+                                currentColumn: 'Date Of Birth',
+
+                            },
+                            {
+                                column: 'Agent Name',
+                                type: 'String',
+                                currentColumn: 'Agent Name' ,
+
+                            },
+                            {
+                                column: 'Category',
+                                type: 'String',
+                                currentColumn: 'Category',
+
+                            }
+
+                        ]
+                        const Sc = ['Phone Number', 'Client Name', 'Address', 'State', 'City', 'Province', 'Postal Code', 'Client Email', 'Country Code','Note', 'Call Status', 'Gender', 'Age', 'Company Name', 'Siret', 'Siren', 'Date Of Birth', 'Agent Name', 'Category']
+                        let ResultArray = [Sc];
+                        let indexMapping = 0;
+                        dataLeads.forEach(data_item => {
+                            this.ReformatOneFileCSVExport(data_item, schema).then(dataFormat => {
+                                if (indexMapping < dataLeads.length - 1) {
+                                    indexMapping++;
+                                    ResultArray.push(dataFormat)
+                                } else {
+                                    ResultArray.push(dataFormat);
+                                    return res.send({
+                                        data: ResultArray,
+                                        success: true
+                                    })
+                                }
+                            }).catch(err => {
+                                this.sendResponseError(res, ["Error.CannotGetCDRS"], 1, 403)
+                            })
+                        })
+                    }else{
+                        return res.send({
+                            data: [],
+                            success: false
+                        })
+                    }
+                }).catch(err => {
+                    _this.sendResponseError(res, ['Error stats'], err)
+                })
+            }else {
+                    res.send({
+                        success: true,
+                        status: 200,
+                        data: [],
+                        message: 'no call file history'
+                    })
+                }
+        }).catch(err => {
+            return _this.sendResponseError(res, ['Error stats'], err)
+        })
+    }
     changeCustomFields(customField) {
         return new Promise((resolve, reject) => {
             if (Array.isArray(customField)) {
