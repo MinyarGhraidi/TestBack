@@ -164,10 +164,10 @@ class callfiles extends baseModelbo {
             extra_where += ' AND calls_h.finished_at <=  :end_time';
         }
         if (phone_number && phone_number !== '') {
-            extra_where += ' AND phone_number = :phone_number '
+            extra_where += ' AND callF.phone_number = :phone_number '
         }
         if (call_status && call_status.length !== 0) {
-            extra_where += ' AND call_status in (:call_status) '
+            extra_where += ' AND callF.call_status in (:call_status) '
         }
         sqlLeads = sqlLeads.replace('EXTRA_WHERE', extra_where);
         sqlLeadsCount = sqlLeadsCount.replace('EXTRA_WHERE', extra_where);
