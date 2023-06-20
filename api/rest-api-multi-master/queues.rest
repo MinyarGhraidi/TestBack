@@ -45,34 +45,35 @@ Authorization: Bearer BomjNx8kFfZTdCFx4kH3hGECO78yS0C0KS7pgO0BUe8COxcved
 ###
 #UPDATE QUEUE
 
-PUT https://92.222.147.159:1443/api/v1/queues/97868d0e-1fa8-4f42-b594-22927aef7a26
+PUT https://92.222.147.159:1443/api/v1/queues/40ea051c-cfb1-4a09-a114-c436778206f8
 Content-Type: application/json
 Authorization: Bearer BomjNx8kFfZTdCFx4kH3hGECO78yS0C0KS7pgO0BUe8COxcved
 
 {
-  "domain_uuid": "98d96541-19e5-4e50-8406-76ba8ee8bbf4",
-  "extension": "401892675942",
-  "name": "401892675942",
+  "domain_uuid": "996d61c9-1958-4af6-b82a-1f235614fc73",
+  "extension": "424677963454",
+  "name": "424677963454",
   "strategy": "longest-idle-agent",
   "record": true,
   "greetings": [],
   "hold_music": [],
   "options": {
-    "max_wait_time": 50,
-    "record_template": "$${recordings_dir}\/97868d0e-1fa8-4f42-b594-22927aef7a26\/${strftime(%Y-%m-%d-%H-%M-%S)}.${caller_id_number}.${destination_number}.${uuid}.wav",
     "time_base_score": "queue",
     "tier_rules_apply": "false",
     "tier_rule_wait_second": 300,
+    "tier_rule_wait_multiply_level": "false",
+    "tier_rule_no_agent_no_wait": "true",
     "discard_abandoned_after": 900,
     "abandoned_resume_allowed": "true",
-    "ring_progressively_delay": 10,
-    "tier_rule_no_agent_no_wait": "true",
+    "max_wait_time": 50,
     "max_wait_time_with_no_agent": 120,
-    "tier_rule_wait_multiply_level": "false",
+    "max_wait_time_with_no_agent_time_reached": 5,
+    "ring_progressively_delay": 10,
     "skip_agents_with_external_calls": "true",
-    "max_wait_time_with_no_agent_time_reached": 5
+    "agent_no_answer_status": "on-break"
   }
 }
+
 
 
 ###

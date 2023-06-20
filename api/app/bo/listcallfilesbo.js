@@ -17,6 +17,11 @@ class listcallfiles extends baseModelbo {
 
     getStatsListCallFiles(req, res, next) {
         let _this = this;
+        let {campaign_id} = req.body
+        if (!!!campaign_id) {
+            _this.sendResponseError(res, ['Error.campaign_id is required'])
+            return
+        }
         let sqlStats = `SELECT listCallf.listcallfile_id                                  as id,
                                count(callf.*)                                             as total,
                                count(case when callf.to_treat = 'Y' then 1 else null end) as total_called,
@@ -24,7 +29,7 @@ class listcallfiles extends baseModelbo {
                         from public.listcallfiles as listCallf
                                  LEFT JOIN callfiles as callf
                                            on callf.listcallfile_id = listCallf.listcallfile_id and callf.active = 'Y'
-                        WHERE listCallf.active = 'Y'
+                        WHERE listCallf.active = 'Y' and listCallf.campaign_id = :campaign_id
                         GROUP by listCallf.listcallfile_id
                         ORDER by listCallf.listcallfile_id desc`
         db.sequelize['crm-app'].query(sqlStats,
@@ -34,6 +39,7 @@ class listcallfiles extends baseModelbo {
             .then(statsListCallFiles => {
                 res.send({
                     data: statsListCallFiles,
+                    campaign_id: campaign_id,
                     status: 200,
                     success: true
                 })
