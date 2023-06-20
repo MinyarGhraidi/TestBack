@@ -143,13 +143,14 @@
     "dialect": "postgres",
     "databases": {
       "crm-app": {
-        "host": "92.222.147.156",
+        "host": "92.222.147.158",
         "username": "postgres",
         "password": "Oxilog2020.",
         "database": "oxilog-crm-app",
         "port": 5432,
         "dialect": "postgres",
         "underscored": true,
+        "logging": false,
         "define": {
           "createdAt": "created_at",
           "updatedAt": "updated_at"
@@ -165,14 +166,14 @@
         }
       },
       "cdr-db": {
-        "host": "92.222.147.156",
+        "host": "92.222.147.158",
         "username": "postgres",
         "password": "Oxilog2020.",
         "database": "cdr",
         "port": 5432,
         "dialect": "postgres",
         "socketUrl": "https://ip158.ip-92-222-147.eu:3002",
-        "logging": true,
+        "logging": false,
         "define": {
           "freezeTableName": true
         },
