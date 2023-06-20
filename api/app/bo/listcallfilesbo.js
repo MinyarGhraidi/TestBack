@@ -17,7 +17,7 @@ class listcallfiles extends baseModelbo {
 
     getStatsListCallFiles(req, res, next) {
         let _this = this;
-        let {campaign_id} = req.body
+        let campaign_id = req.params.campaign_id;
         if (!!!campaign_id) {
             _this.sendResponseError(res, ['Error.campaign_id is required'])
             return
@@ -35,6 +35,9 @@ class listcallfiles extends baseModelbo {
         db.sequelize['crm-app'].query(sqlStats,
             {
                 type: db.sequelize['crm-app'].QueryTypes.SELECT,
+                replacements: {
+                    campaign_id: campaign_id
+                }
             })
             .then(statsListCallFiles => {
                 res.send({

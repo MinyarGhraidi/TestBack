@@ -185,7 +185,7 @@ let apiRouters = function (passport) {
     router.put("/api/listcallfile/update", passport.authenticate('jwt', {session: false}), listcallfilesController.update);
     router.delete("/api/listcallfile/delete/:params", passport.authenticate('jwt', {session: false}), listcallfilesController.deleteCascade);
     router.post("/api/listcallfile/save", passport.authenticate('jwt', {session: false}), listcallfilesController.save);
-    router.get("/api/listcallfile/getStatsListCallFiles", passport.authenticate('jwt', {session: false}), listcallfilesController.getStatsListCallFiles);
+    router.get("/api/listcallfile/getStatsListCallFiles/:campaign_id", passport.authenticate('jwt', {session: false}), listcallfilesController.getStatsListCallFiles);
     router.post("/api/listcallfile/CallFileQualification", passport.authenticate('jwt', {session: false}), listcallfilesController.CallFileQualification);
     router.get("/api/listcallfile/downloadCallFile/:filename", passport.authenticate('jwt', {session: false}), listcallfilesController.downloadList);
     router.post("/api/listcallfile/cloneListCallFiles", passport.authenticate('jwt', {session: false}), listcallfilesController.cloneListCallFiles);
@@ -317,6 +317,7 @@ let apiRouters = function (passport) {
 
     router.post('/api/callfile/UpdateCall', passport.authenticate('jwt', {session: false}), callfileController.updateCallFileQualification)
     router.post('/api/callfile/leadsStats', passport.authenticate('jwt', {session: false}), callfileController.leadsStats)
+    router.post('/api/callfile/leadsStatsExport', passport.authenticate('jwt', {session: false}), callfileController.leadsStatsExport)
     router.post('/api/callfile/getHistoryCallFile', passport.authenticate('jwt', {session: false}), callfileController.getHistoryCallFile)
     router.post('/api/callfile/getCustomFields', passport.authenticate('jwt', {session: false}), callfileController.getCustomFields)
 

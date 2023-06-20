@@ -25,6 +25,9 @@ module.exports = {
     leadsStats :function (req, res, next){
         _itembo.leadsStats(req,res,next)
     },
+    leadsStatsExport :function (req, res, next){
+        _itembo.leadsStatsExport(req,res,next)
+    },
     getHistoryCallFile :function (req, res, next){
         _itembo.getHistoryCallFile(req,res,next)
     },
