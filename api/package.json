@@ -162,6 +162,7 @@
       "version": "0.5.2"
     },
     "fs": "0.0.1-security",
+    "helmet": "^7.0.0",
     "http-errors": {
       "integrity": "sha512-uUQBt3H/cSIVfch6i1EuPNy/YsRSOUBXTVfZ+yR7Zjez3qjBz6i9+i4zjNaoqcoFVI4lQJ5plg63TvGfRSDCRg==",
       "requires": {

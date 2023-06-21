@@ -8,6 +8,9 @@ module.exports = (sequelize, Sequelize) => {
             did_id: {
                 type: Sequelize.INTEGER
             },
+            phone_number: {
+                type: Sequelize.STRING
+            },
             campaign_id: {
                 type: Sequelize.INTEGER
             },account_id: {
