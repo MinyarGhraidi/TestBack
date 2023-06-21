@@ -45,14 +45,14 @@ Authorization: Bearer BomjNx8kFfZTdCFx4kH3hGECO78yS0C0KS7pgO0BUe8COxcved
 ###
 #UPDATE QUEUE
 
-PUT https://92.222.147.159:1443/api/v1/queues/40ea051c-cfb1-4a09-a114-c436778206f8
+PUT https://92.222.147.159:1443/api/v1/queues/90567e79-d8f8-4692-9cff-0d840f7eae23
 Content-Type: application/json
 Authorization: Bearer BomjNx8kFfZTdCFx4kH3hGECO78yS0C0KS7pgO0BUe8COxcved
 
 {
-  "domain_uuid": "996d61c9-1958-4af6-b82a-1f235614fc73",
-  "extension": "424677963454",
-  "name": "424677963454",
+  "domain_uuid": "98d96541-19e5-4e50-8406-76ba8ee8bbf4",
+  "extension": "140266035985",
+  "name": "774363684635",
   "strategy": "longest-idle-agent",
   "record": true,
   "greetings": [],
@@ -70,7 +70,7 @@ Authorization: Bearer BomjNx8kFfZTdCFx4kH3hGECO78yS0C0KS7pgO0BUe8COxcved
     "max_wait_time_with_no_agent_time_reached": 5,
     "ring_progressively_delay": 10,
     "skip_agents_with_external_calls": "true",
-    "agent_no_answer_status": "on-break"
+    "agent_no_answer_status": "available"
   }
 }
 

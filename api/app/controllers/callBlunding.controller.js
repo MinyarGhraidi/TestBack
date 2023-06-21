@@ -17,4 +17,10 @@ module.exports = {
     delete: function (req, res, next) {
         callBlundingDaoInst.delete(req, res, next);
     },
+    bulkCallBlending: function (req, res, next) {
+        callBlundingDaoInst.bulkCallBlending(req, res, next);
+    },
+    updateCallBlending: function (req, res, next) {
+        callBlundingDaoInst.updateCallBlending(req, res, next);
+    },
 }
