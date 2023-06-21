@@ -36,6 +36,10 @@ app.all('*', (req, res, next) => {
   res.setHeader('Access-Control-Expose-Headers', 'Authorization');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
   res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,content-type, Authorization');
+  res.setHeader(
+      'Content-Security-Policy',
+      "upgrade-insecure-requests"
+  );
   next();
 });
 app.use(helmet());
