@@ -834,8 +834,8 @@ class agents extends baseModelbo {
             if (agents && agents.length !== 0) {
                 let Users = []
                 agents.forEach(user => {
-                    _usersbo.verifyTokenParam(user.current_session_token).then((res) => {
-                        if (res === true) {
+                    // _usersbo.verifyTokenParam(user.current_session_token).then((res) => {
+                    //     if (res === true) {
                             let {sip_device, first_name, last_name, user_id, campaign_id} = user;
                             this.db['agent_log_events'].findAll({
                                 where: {active: 'Y', user_id: user_id},
@@ -865,20 +865,19 @@ class agents extends baseModelbo {
                                     reject(err)
                                 })
 
-                        } else {
-                            let toUpdate = {
-                                channel_uuid: null,
-                                updated_at: moment(new Date()),
-                                current_session_token: null
-                            }
-                            this.db['users'].update(toUpdate, {where: {user_id: user.user_id}}).then(() => {
-                                idx++;
-                            }).catch(err => {
-                                reject(err)
-                            })
-                        }
-
-                    }).catch(err => reject(err))
+                        // } else {
+                        //     let toUpdate = {
+                        //         channel_uuid: null,
+                        //         updated_at: moment(new Date()),
+                        //         current_session_token: null
+                        //     }
+                        //     this.db['users'].update(toUpdate, {where: {user_id: user.user_id}}).then(() => {
+                        //         idx++;
+                        //     }).catch(err => {
+                        //         reject(err)
+                        //     })
+                        // }
+                   // }).catch(err => reject(err))
                 })
             } else {
                 resolve([]);
