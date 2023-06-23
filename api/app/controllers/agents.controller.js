@@ -45,6 +45,9 @@ module.exports = {
     logoutAgent: function (req, res, next) {
         agentsDaoInst.logoutAgent(req, res, next)
     },
+    disconnectAgentsByAccountID: function (req, res, next) {
+        agentsDaoInst.disconnectAgentsByAccountID(req, res, next)
+    },
     agentDetailsReports: function (req, res, next) {
         agentsDaoInst.agentDetailsReports(req, res, next)
     },

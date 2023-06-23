@@ -1,9 +1,7 @@
 const {baseModelbo} = require('./basebo');
 let db = require('../models');
 const ObjectsToCsv = require('objects-to-csv');
-const path = require('path');
 const fs = require("fs");
-//const appDir = path.dirname(require.main.path);
 const moment = require('moment');
 const {appDir} = require("../helpers/app");
 
@@ -17,10 +15,19 @@ class listcallfiles extends baseModelbo {
 
     getStatsListCallFiles(req, res, next) {
         let _this = this;
-        let campaign_id = req.body.campaign_id;
+        let {campaign_id, limit, page, fieldsSearchMetas, meta_key} = req.body;
+        const _page = page || 1;
+        const offset = ((limit || 10) * (_page - 1));
         if (!!!campaign_id) {
             _this.sendResponseError(res, ['Error.campaign_id is required'])
             return
+        }
+        let whereLike = '';
+        if(fieldsSearchMetas && fieldsSearchMetas.length !== 0 && meta_key && meta_key !== '' && meta_key.length >= 3){
+            fieldsSearchMetas.forEach(field => {
+                let concatChamp = 'listCallf.'+field;
+                whereLike += ` AND ${concatChamp} LIKE '%${meta_key}%'`
+            })
         }
         let sqlStats = `SELECT listCallf.listcallfile_id                                  as id,
                                count(callf.*)                                             as total,
@@ -29,14 +36,17 @@ class listcallfiles extends baseModelbo {
                         from public.listcallfiles as listCallf
                                  LEFT JOIN callfiles as callf
                                            on callf.listcallfile_id = listCallf.listcallfile_id and callf.active = 'Y'
-                        WHERE listCallf.active = 'Y' and listCallf.campaign_id = :campaign_id
+                        WHERE listCallf.active = 'Y' and listCallf.campaign_id = :campaign_id WHERE_LIKE
                         GROUP by listCallf.listcallfile_id
-                        ORDER by listCallf.listcallfile_id desc`
+                        ORDER by listCallf.listcallfile_id desc limit :limit offset :offset`
+        sqlStats = sqlStats.replace('WHERE_LIKE',whereLike);
         db.sequelize['crm-app'].query(sqlStats,
             {
                 type: db.sequelize['crm-app'].QueryTypes.SELECT,
                 replacements: {
-                    campaign_id: campaign_id
+                    campaign_id: campaign_id,
+                    limit,
+                    offset
                 }
             })
             .then(statsListCallFiles => {

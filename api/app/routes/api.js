@@ -151,6 +151,7 @@ let apiRouters = function (passport) {
     router.post("/api/agent/filterDashboard", passport.authenticate('jwt', {session: false}), agentsController.filterDashboard);
     router.post("/api/agent/DisConnectAgent", passport.authenticate('jwt', {session: false}), agentsController.onDisconnectAgents);
     router.post("/api/agent/logoutAgent", passport.authenticate('jwt', {session: false}), agentsController.logoutAgent);
+    router.post("/api/agent/disconnectAgentsByAccountID", passport.authenticate('jwt', {session: false}), agentsController.disconnectAgentsByAccountID);
 
     //Lookups
     // account routers
@@ -418,6 +419,7 @@ let apiRouters = function (passport) {
     router.post('/api/hooper/find/:params?', passport.authenticate('jwt', {session: false}), HooperController.find);
     router.get('/api/hooper/findById/:entity_id', passport.authenticate('jwt', {session: false}), HooperController.findById);
     router.post('/api/campaign/deleteHooper',passport.authenticate('jwt', {session: false}),campaignController.resetHooper);
+    router.post('/api/campaign/getCampaignsByDID_ID',passport.authenticate('jwt', {session: false}),campaignController.getCampaignsByDID_ID);
 
     router.post('/api/dialplanItems/findTrunck', passport.authenticate('jwt', {session: false}), dialpanItemsController.getDialPlan);
 
