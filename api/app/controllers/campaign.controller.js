@@ -51,6 +51,9 @@ module.exports = {
     },
     resetHooper : function (req, res, next) {
         _itembo.resetHooper(req, res, next)
+    },
+    getCampaignsByDID_ID : function (req, res, next) {
+        _itembo.getCampaignsByDID_ID(req, res, next)
     }
 
 };

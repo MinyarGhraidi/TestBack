@@ -1050,6 +1050,55 @@ class agents extends baseModelbo {
         })
     }
 
+    disconnectAgentsByAccountID(req,res,next){
+        let account_id = req.body.account_id;
+        this.db['roles_crms'].findOne({where : {value : 'agent'}}).then(role => {
+            let sql = `select user_id
+                    FROM users
+                    WHERE 
+                    WHERE_CONDITION
+                    sip_device->>'status' <> :status;`
+            let where_condition = ''
+
+            if(account_id){
+                where_condition+= ' account_id = :account_id AND '
+            }
+            where_condition += 'active = :active AND role_crm_id = :role_crm_id AND'
+            sql = sql.replace('WHERE_CONDITION', where_condition)
+            db.sequelize['crm-app'].query(sql, {
+                type: db.sequelize['crm-app'].QueryTypes.SELECT,
+                replacements: {
+                    active: 'Y',
+                    account_id: account_id,
+                    role_crm_id: role.id,
+                    status : 'logged-out'
+                }
+            }).then(users => {
+                if(users && users.length !== 0){
+                    let users_ids = users.map(u => u.user_id);
+                    let idx = 0;
+                    users_ids.forEach(user_id => {
+                        appSocket.emit('destroy_session', {user_id: user_id, logged_out: true})
+                        if(idx < users_ids.length -1){
+                            idx++;
+                        }else{
+                            res.send({
+                                status : 200,
+                                success : true
+                            })
+                        }
+                    })
+                }else{
+                    res.send({
+                        status : 200,
+                        success : true
+                    })
+                }
+            }).catch(err => {
+                return this.sendResponseError(res, ['cannotGetUsers', err], 0, 403)
+            })
+        })
+    }
     //---------------> Report <---------------------
 
     //------- Agent Details Report -------- //

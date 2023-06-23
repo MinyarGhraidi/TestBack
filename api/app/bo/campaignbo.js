@@ -13,6 +13,8 @@ const db = require("../models");
 const call_center_authorization = {
     headers: {Authorization: call_center_token}
 };
+const Op = require("sequelize/lib/operators");
+
 let _efilebo = new efilebo;
 let _listcallfilesbo = new listcallfilesbo;
 let _agent_log_eventsbo = new agent_log_eventsbo;
@@ -1241,6 +1243,32 @@ class campaigns extends baseModelbo {
             })
         }).catch(err => {
             return this.sendResponseError(res, ['CannotResetHooper', err], 2, 403)
+        })
+    }
+
+    getCampaignsByDID_ID(req, res, next) {
+        let {did_id, account_id} = req.body;
+        if (!!!did_id) {
+            return this.sendResponseError(res, ['DID_ID is required'], 0, 403)
+        }
+        let sql = `SELECT campaign_name, campaign_type
+                    FROM campaigns
+                    WHERE 
+                    active = :active AND 
+                    account_id = :account_id AND 
+                    config->'did_group_ids' @> :did_id ::jsonb;`
+
+        db.sequelize['crm-app'].query(sql, {
+            type: db.sequelize['crm-app'].QueryTypes.SELECT,
+            replacements: {
+                active: 'Y',
+                account_id: account_id,
+                did_id : '['+did_id+']'
+            }
+        }).then(campaigns => {
+            res.send(campaigns)
+        }).catch(err => {
+            return this.sendResponseError(res, ['cannotFindCampaigns', err], 0, 403)
         })
     }
 
