@@ -4,9 +4,9 @@ const fs = require("fs");
 const {reject} = require("bcrypt/promises");
 const efilesBo = require('./efilesbo');
 const moment = require("moment");
+const Op = require("sequelize/lib/operators");
 const _efilebo = new efilesBo;
 const env = process.env.NODE_ENV || 'development';
-const config_camps = require(__dirname + '/../config/config.json')[env]["config_camps"];
 const call_center_token = require(__dirname + '/../config/config.json')[env]["call_center_token"];
 const base_url_cc_kam = require(__dirname + '/../config/config.json')[env]["base_url_cc_kam"];
 const call_center_authorization = {
@@ -132,9 +132,10 @@ class callfiles extends baseModelbo {
         let sqlListCallFiles = `select listcallfile_id from listcallfiles
                                        where EXTRA_WHERE and active = 'Y' `
 
-        let sqlLeads = `Select distinct callF.*, calls_h.finished_at
+        let sqlLeads = `Select distinct callF.*, calls_h.finished_at, LCF.name as "list_leads_name"
                         from callfiles as callF
                                  left join calls_historys as calls_h on callF.callfile_id = calls_h.call_file_id
+                                 join listcallfiles as LCF on LCF.listcallfile_id = callF.listcallfile_id
                         where calls_h.active = :active
                           and callF.active = :active
                           and callF.listcallfile_id in (:listCallFiles_ids)
@@ -282,6 +283,7 @@ class callfiles extends baseModelbo {
 
         let SqlQuery = `Select distinct 
 callF.phone_number as "Phone Number",
+LCF.name as "List Leads Name",
 CONCAT(callF.first_name, ' ', callF.last_name) as "Client Name",
 callF.address1 as "Address", 
 callF.state as "State",
@@ -302,6 +304,7 @@ callF.category as "Category",
 CONCAT(U.first_name, ' ', U.last_name) as "Agent Name" 
                         from callfiles as callF
                         left join calls_historys as calls_h on callF.callfile_id = calls_h.call_file_id
+                        join listcallfiles AS LCF ON LCF.listcallfile_id = callF.listcallfile_id
                         LEFT OUTER JOIN users AS U ON calls_h.agent_id = U.user_id
                         LEFT OUTER JOIN callstatuses AS CS ON calls_h.call_status = CS.code 
                         where calls_h.active = :active
@@ -358,6 +361,11 @@ CONCAT(U.first_name, ' ', U.last_name) as "Agent Name"
                                 column: 'Phone Number',
                                 type: 'String',
                                 currentColumn: 'Phone Number',
+                            },
+                            {
+                                column: 'List Leads Name',
+                                type: 'String',
+                                currentColumn: 'List Leads Name',
                             },
                             {
                                 column: 'Client Name',
@@ -463,7 +471,7 @@ CONCAT(U.first_name, ' ', U.last_name) as "Agent Name"
                             }
 
                         ]
-                        const Sc = ['Phone Number', 'Client Name', 'Address', 'State', 'City', 'Province', 'Postal Code', 'Client Email', 'Country Code','Note', 'Call Status', 'Gender', 'Age', 'Company Name', 'Siret', 'Siren', 'Date Of Birth', 'Agent Name', 'Category']
+                        const Sc = ['Phone Number','List Leads Name', 'Client Name', 'Address', 'State', 'City', 'Province', 'Postal Code', 'Client Email', 'Country Code','Note', 'Call Status', 'Gender', 'Age', 'Company Name', 'Siret', 'Siren', 'Date Of Birth', 'Agent Name', 'Category']
                         let ResultArray = [Sc];
                         let indexMapping = 0;
                         dataLeads.forEach(data_item => {
@@ -1129,7 +1137,7 @@ CONCAT(U.first_name, ' ', U.last_name) as "Agent Name"
         if (campaign_id) {
             this.getCallFileIdsByCampaignID(campaign_id).then(result => {
                 if (result.success) {
-                    this.updateCallFileTreatAndHooper(result.data, result.call_status).then(resUpdate => {
+                    this.updateCallFileTreatAndHooper(result.data).then(() => {
                         res.send({
                             success: true,
                             status: 200
@@ -1151,7 +1159,7 @@ CONCAT(U.first_name, ' ', U.last_name) as "Agent Name"
         } else if (listcallfile_id) {
             this.getCallFileIdsByListCallFileID(listcallfile_id).then(result => {
                 if (result.success) {
-                    this.updateCallFileTreatAndHooper(result.data, result.call_status).then(resUpdate => {
+                    this.updateCallFileTreatAndHooper(result.data).then(() => {
                         res.send({
                             success: true,
                             status: 200
@@ -1172,7 +1180,7 @@ CONCAT(U.first_name, ' ', U.last_name) as "Agent Name"
         }
     }
 
-    updateCallFileTreatAndHooper(callFile_ids, call_status) {
+    updateCallFileTreatAndHooper(callFile_ids) {
         return new Promise((resolve, reject) => {
             let updateTZ = moment(new Date());
             let toUpdate = {
@@ -1184,7 +1192,6 @@ CONCAT(U.first_name, ' ', U.last_name) as "Agent Name"
                 where: {
                     callfile_id: callFile_ids,
                     active: 'Y',
-                    call_status: call_status
                 }
             }).then(() => {
                 resolve(true)
@@ -1194,30 +1201,19 @@ CONCAT(U.first_name, ' ', U.last_name) as "Agent Name"
 
     getCallFileIdsByCampaignID(campaign_id) {
         return new Promise((resolve, reject) => {
-            this.db['campaigns'].findOne({where: {campaign_id: campaign_id, active: 'Y'}}).then(campaign => {
-                if (Object.keys(campaign) && Object.keys(campaign).length !== 0) {
+            this.db['campaigns'].findOne({where: {campaign_id: campaign_id, active: 'Y', status : 'Y'}}).then(campaign => {
+                if (campaign && Object.keys(campaign) && Object.keys(campaign).length !== 0) {
+                    let Camp_CS_ids = campaign.call_status_ids || [];
                     this.db['callstatuses'].findAll({
                         where: {
                             active: 'Y',
                             status: 'Y',
-                            $or: [
-                                {
-                                    is_system:
-                                        {
-                                            $eq: "Y"
-                                        }
-                                },
-                                {
-                                    campaign_id: campaign_id,
-                                }
-                            ]
+                            callstatus_id : Camp_CS_ids
                         }
                     }).then((res_CS) => {
                         if (res_CS && res_CS.length !== 0) {
-                            let Camp_CS_ids = campaign.call_status_ids || [];
-                            let CS_data = res_CS.filter(CS => Camp_CS_ids.includes(CS.callstatus_id))
                             let CS_codes = [];
-                            CS_data.map(item => {
+                            res_CS.map(item => {
                                 CS_codes.push(item.code);
                             })
                             this.db['listcallfiles'].findAll({
@@ -1234,7 +1230,14 @@ CONCAT(U.first_name, ' ', U.last_name) as "Agent Name"
                                         where: {
                                             listcallfile_id: LCF_ids,
                                             active: 'Y',
-                                            call_status: CS_codes
+                                            [Op.or]: [
+                                                { call_status: CS_codes },
+                                                {
+                                                    call_status: null,
+                                                    to_treat: 'Y',
+                                                    save_in_hooper: 'Y'
+                                                }
+                                            ]
                                         }
                                     }).then(callfiles => {
                                         if (callfiles && callfiles.length !== 0) {
@@ -1282,63 +1285,80 @@ CONCAT(U.first_name, ' ', U.last_name) as "Agent Name"
                     status: 'Y'
                 }
             }).then(listcallfile => {
-                if (Object.keys(listcallfile) && Object.keys(listcallfile).length !== 0) {
-                    this.db['callstatuses'].findAll({
+                if (listcallfile && Object.keys(listcallfile) && Object.keys(listcallfile).length !== 0) {
+                    this.db['campaigns'].findOne({
                         where: {
-                            active: 'Y',
-                            status: 'Y',
-                            $or: [
-                                {
-                                    is_system:
-                                        {
-                                            $eq: "Y"
-                                        }
-                                },
-                                {
-                                    campaign_id: listcallfile.campaign_id,
-                                }
-                            ]
+                            campaign_id: listcallfile.campaign_id,
+                            active: 'Y'
                         }
-                    }).then((res_CS) => {
-                        this.db['campaigns'].findOne({
-                            where: {
-                                campaign_id: listcallfile.campaign_id,
-                                status: 'Y',
-                                active: 'Y'
+                    }).then((camp) => {
+                        if(camp){
+                            if(camp.status === 'N'){
+                                return resolve({
+                                    success: false,
+                                    message: 'You have to enable Campaign first !'
+                                })
                             }
-                        }).then((camp) => {
                             let Camp_CS_ids = camp.call_status_ids || [];
-                            let CS_data = res_CS.filter(CS => Camp_CS_ids.includes(CS.callstatus_id))
-                            let CS_codes = [];
-                            CS_data.map(item => {
-                                CS_codes.push(item.code);
-                            })
-                            this.db['callfiles'].findAll({
+                            this.db['callstatuses'].findAll({
                                 where: {
-                                    listcallfile_id: list_call_file_id,
                                     active: 'Y',
-                                    call_status: CS_codes
+                                    status: 'Y',
+                                    callstatus_id : Camp_CS_ids
                                 }
-                            }).then(callfiles => {
-                                if (callfiles && callfiles.length !== 0) {
-                                    let CF_ids = [];
-                                    callfiles.forEach(CF => CF_ids.push(CF.callfile_id));
-                                    if (CF_ids.length === callfiles.length) {
-                                        resolve({
-                                            success: true,
-                                            data: CF_ids,
-                                            call_status: CS_codes,
-                                            message: 'List Call File Recycled Successfully !'
-                                        })
-                                    }
-                                } else {
+                            }).then((res_CS) => {
+                                if(res_CS && res_CS.length !== 0){
+                                    let CS_codes = [];
+                                    res_CS.map(item => {
+                                        CS_codes.push(item.code);
+                                    })
+                                    this.db['callfiles'].findAll({
+                                        where: {
+                                            listcallfile_id: list_call_file_id,
+                                            active: 'Y',
+                                            [Op.or]: [
+                                                { call_status: CS_codes },
+                                                {
+                                                    call_status: null,
+                                                    to_treat: 'Y',
+                                                    save_in_hooper: 'Y'
+                                                }
+                                            ]
+                                        }
+                                    }).then(callfiles => {
+                                        if (callfiles && callfiles.length !== 0) {
+                                            let CF_ids = [];
+                                            callfiles.forEach(CF => CF_ids.push(CF.callfile_id));
+                                            if (CF_ids.length === callfiles.length) {
+                                                resolve({
+                                                    success: true,
+                                                    data: CF_ids,
+                                                    call_status: CS_codes,
+                                                    message: 'List Call File Recycled Successfully !'
+                                                })
+                                            }
+                                        } else {
+                                            resolve({
+                                                success: false,
+                                                message: 'ListCallFile doesn`t have callfiles !'
+                                            })
+                                        }
+                                    }).catch(err => reject(err))
+                                }else{
                                     resolve({
                                         success: false,
-                                        message: 'ListCallFile doesn`t have callfiles !'
+                                        message: 'Campaign without CS !'
                                     })
                                 }
+
                             }).catch(err => reject(err))
-                        }).catch(err => reject(err))
+                        }else{
+                            resolve({
+                                success: false,
+                                message: 'Campaign Not found !'
+                            })
+                        }
+
 
                     }).catch(err => reject(err))
                 } else {
