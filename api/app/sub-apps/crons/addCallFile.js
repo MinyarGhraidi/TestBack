@@ -39,15 +39,15 @@ class AddCallFile extends baseModelbo {
                                 const workbook = xlsx.readFile(path_dir);
                                 const sheetNames = workbook.SheetNames;
                                 result = xlsx.utils.sheet_to_json(workbook.Sheets[sheetNames[0]]);
-                                resolve(result);
+                                resolve({ data  : result, message : 'None'});
                             } else {
-                                resolve(result);
+                                resolve({ data  : [], message : `file '${efile.uri}' not found`});
                             }
                         } else {
-                            resolve(result);
+                            resolve({ data  : [], message : `file '${efile.uri}' extension must be in (csv, xlsx, xls)`});
                         }
                     } else {
-                        resolve(result);
+                        resolve({ data  : [], message : `file with file_id ${file_id} not found in database`});
                     }
                 }).catch(err => {
                     reject(err);
@@ -514,13 +514,13 @@ class AddCallFile extends baseModelbo {
                         this.getPhoneNumberAttribute(ListCallFile_item).then(Phone_Attribute => {
                             this.getCallFiles(ListCallFile_item.file_id).then(data => {
                                 this.updateNumberCallFiles(ListCallFile_item.listcallfile_id).then(() => {
-                                    this.CallFiles_Mapping(ListCallFile_item, data, Phone_Attribute).then((datax) => {
+                                    this.CallFiles_Mapping(ListCallFile_item, data.data, Phone_Attribute).then((datax) => {
                                         if (idxLCF < dataListCallFiles.length - 1) {
                                             idxLCF++;
                                         } else {
                                             appSocket.emit('refresh_list_callFiles', {campaign_ids: Camp_ids});
                                             resolve({
-                                                message: `Done for : ${ListCallFile_item.name}, ID : ${ListCallFile_item.listcallfile_id} | Total : ${datax.total} | Added : ${datax.added} | Deplicated : ${datax.deplicated} | PhoneNumber (Not found or incorrect) : ${datax.phoneAttributeNotFound}`,
+                                                message: `Done for : ${ListCallFile_item.name}| ID : ${ListCallFile_item.listcallfile_id}| Error : ${data.message} | Total : ${datax.total} | Added : ${datax.added} | Deplicated : ${datax.deplicated} | PhoneNumber (Not found or incorrect) : ${datax.phoneAttributeNotFound}`,
                                                 cron: "cronListCallFiles"
                                             })
                                         }
