@@ -221,10 +221,10 @@ class callfiles extends baseModelbo {
                             attributes: attributes_res
                         })
                     }).catch(err => {
-                        _this.sendResponseError(res, ['Error stats'], err)
+                        _this.sendResponseError(res, ['Error stats1'], err)
                     })
                 }).catch(err => {
-                    _this.sendResponseError(res, ['Error stats'], err)
+                    _this.sendResponseError(res, ['Error stats2'], err)
                 })
             } else {
                 res.send({
@@ -235,7 +235,7 @@ class callfiles extends baseModelbo {
                 })
             }
         }).catch(err => {
-            _this.sendResponseError(res, ['Error stats'], err)
+            _this.sendResponseError(res, ['Error stats3'], err)
         })
 
     }
@@ -771,12 +771,12 @@ CONCAT(U.first_name, ' ', U.last_name) as "Agent Name"
         return new Promise((resolve, reject) => {
             let dataField = [];
             let index = 0;
-            Object.entries(call_file.dataValues).map(item => {
+            Object.entries(call_file).map(item => {
                 let indexField = Object.keys(mapping).findIndex(element => element === item[0])
                 if (indexField !== -1) {
                     dataField.push([item[0], item[1]])
                 }
-                if (index < Object.entries(call_file.dataValues).length - 1) {
+                if (index < Object.entries(call_file).length - 1) {
                     index++
                 } else {
                     resolve({
@@ -912,12 +912,12 @@ CONCAT(U.first_name, ' ', U.last_name) as "Agent Name"
 
     createSchemaUischema(call_file, mapping, schema) {
         return new Promise((resolve, reject) => {
-            if (call_file.listcallfile.templates_id !== null) {
+            if (!!!!call_file.templates_id) {
                 this.db['templates_list_call_files'].findOne({
                     where: {
                         active: 'Y',
                         status: 'Y',
-                        templates_list_call_files_id: call_file.listcallfile.templates_id
+                        templates_list_call_files_id: call_file.templates_id
                     }
                 }).then(tempCallFile => {
                     if (tempCallFile) {
@@ -984,7 +984,7 @@ CONCAT(U.first_name, ' ', U.last_name) as "Agent Name"
                     reject(err)
                 })
             } else {
-                mapping = call_file.listcallfile.mapping
+                mapping = call_file.mapping || {}
                 this.fieldCallFile(mapping, call_file).then(result => {
                     if (result.success) {
                         this.creatSchema(result.dataField, schema).then(dataInput => {
@@ -1037,24 +1037,38 @@ CONCAT(U.first_name, ' ', U.last_name) as "Agent Name"
         })
     }
 
-    findCalleFileById(req, res, next) {
+    findCallFile(req,res,next){
         let _this = this
-        const {call_file_id} = req.params;
-        if (!!!call_file_id) {
-            return this.sendResponseError(res, ['Error call file id is null'])
+        const data = req.body;
+        if (!!!data.phone_number && !!!data.callfile_id) {
+            return _this.sendResponseError(res, ['Error empty'])
         }
-        this.db['callfiles'].findOne({
-            include: {
-                model: db.listcallfiles
-            },
-            where: {
-                callfile_id: call_file_id
+        let sqlQuerySelectLeads = `SELECT CF.*, LCF.*, C.script FROM callfiles AS CF 
+                                       LEFT OUTER JOIN listcallfiles AS LCF ON CF.listcallfile_id = LCF.listcallfile_id
+                                       LEFT OUTER JOIN campaigns AS C ON C.campaign_id = LCF.campaign_id
+                                       WHERE C.active = :active AND LCF.active = :active AND CF.active = :active AND CF.status = :active WHERE_CONDITION LIMIT :limit;`
+        let whereQuery = ''
+        if(data && data.phone_number){
+            whereQuery += `AND :phone_number like CONCAT('%',CF.phone_number, '%')`
+        }
+        if(data && data.callfile_id){
+            whereQuery += `AND CF.callfile_id = :callfile_id`
+        }
+        sqlQuerySelectLeads = sqlQuerySelectLeads.replace('WHERE_CONDITION',whereQuery);
+        db.sequelize['crm-app'].query(sqlQuerySelectLeads, {
+            type: db.sequelize['crm-app'].QueryTypes.SELECT,
+            replacements: {
+                active: 'Y',
+                phone_number : data.phone_number || null,
+                callfile_id : data.callfile_id || null,
+                limit : 1
             }
-        }).then(call_file => {
-            if (!!!call_file) {
+        }).then((call_file) => {
+            let cfLength = call_file.length || 0
+            if(cfLength === 0){
                 return res.send({
                     success: false,
-                    message: "call file not found"
+                    message: "unknown-phone-number"
                 })
             }
             let schema = {
@@ -1062,70 +1076,26 @@ CONCAT(U.first_name, ' ', U.last_name) as "Agent Name"
                 properties: {}
             }
             let mapping = {}
-            this.createSchemaUischema(call_file, mapping, schema).then(result => {
+            this.createSchemaUischema(call_file[0], mapping, schema).then(result => {
                 if (result.success) {
-                    res.send({
+                    return res.send({
                         success: true,
-                        data: call_file,
+                        data: call_file[0],
                         schema: result.schema,
-                        uiSchema: result.uiSchema
+                        uiSchema: result.uiSchema,
                     })
                 } else {
-                    res.send({
+                    return res.send({
                         success: false,
                         message: result.message
                     })
                 }
             }).catch(err => {
-                return this.sendResponseError(res, ['Error '], err)
+                return _this.sendResponseError(res, ['Error '], err)
             })
         })
     }
 
-    findCalleFileByPhoneNumber(req, res, next) {
-        let _this = this
-        const {phone_number} = req.params;
-        if (!!!phone_number) {
-            return this.sendResponseError(res, ['Error phone_number Empty'])
-        }
-        this.db['callfiles'].findOne({
-            include: {
-                model: db.listcallfiles
-            },
-            where: {
-                phone_number : phone_number
-            }
-        }).then(call_file => {
-            if (!!!call_file) {
-                return res.send({
-                    success: false,
-                    message: "call file not found"
-                })
-            }
-            let schema = {
-                type: 'object',
-                properties: {}
-            }
-            let mapping = {}
-            this.createSchemaUischema(call_file, mapping, schema).then(result => {
-                if (result.success) {
-                    res.send({
-                        success: true,
-                        data: call_file,
-                        schema: result.schema,
-                        uiSchema: result.uiSchema
-                    })
-                } else {
-                    res.send({
-                        success: false,
-                        message: result.message
-                    })
-                }
-            }).catch(err => {
-                return this.sendResponseError(res, ['Error '], err)
-            })
-        })
-    }
     RecycleCallFile(req, res, next) {
         let {campaign_id, listcallfile_id} = req.body;
         if (!!!campaign_id && !!!listcallfile_id) {

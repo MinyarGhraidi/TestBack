@@ -35,206 +35,214 @@ class users extends baseModelbo {
                 message: 'All fields are required !'
             })
         }
-        _this.getUserRoleInfo(username).then(data_user_info => {
-            let PromiseDataUser = new Promise((resolve, reject) => {
-                if (data_user_info && data_user_info.roles_crm.value === 'superadmin') {
-                    if(url !== base_url){
-                        return resolve({
-                            success : false,
-                            message : "invalid web domain"
+        let webDomain = web_domain === 'localhost' ? 'admin.skycrm360.io' : web_domain
+        this.db['accounts'].findOne({
+            where: {
+                web_domain: webDomain,
+                active: 'Y',
+                status: 'Y'
+            }
+        }).then((account_domain) => {
+            if (!!!account_domain) {
+                return res.send({
+                    data: null,
+                    status: 403,
+                    success: false,
+                    message: "web domain not found"
+                })
+            }
+            _this.getUserRoleInfo(username, account_domain.account_id).then(data_user_info => {
+                let PromiseDataUser = new Promise((resolve, reject) => {
+                    if (data_user_info && data_user_info.roles_crm.value === 'superadmin') {
+                        if (url !== base_url) {
+                            return resolve({
+                                success: false,
+                                message: "invalid web domain"
+                            })
+                        }
+                        this.db['users'].findOne({
+                            include: [{
+                                model: db.roles_crms,
+                            },
+                                {
+                                    model: db.accounts,
+                                },
+                                {
+                                    model: db.roles,
+                                }
+                            ],
+                            where: {
+                                username: username,
+                                active: 'Y',
+                                status: 'Y'
+                            }
+                        }).then((user) => {
+                            if (!!!user) {
+                                return resolve({
+                                    success: false,
+                                    message: "username not found"
+                                })
+                            }
+                            return resolve({
+                                success: true,
+                                data: user
+                            })
+
+                        }).catch(() => {
+                            return this.sendResponseError(res, ['Error.AnErrorHasOccurredUser'], 1, 403);
+                        });
+                    } else {
+                        this.db['users'].findOne({
+                            include: [{
+                                model: db.roles_crms,
+                            },
+                                {
+                                    model: db.accounts,
+                                },
+                                {
+                                    model: db.roles,
+                                }
+                            ],
+                            where: {
+                                username: username,
+                                active: 'Y',
+                                status: 'Y',
+                                account_id: account_domain.account_id
+                            }
+                        }).then((user) => {
+                            if (!!!user) {
+                                return resolve({
+                                    success: false,
+                                    message: "username not found by this web domain"
+                                })
+                            }
+                            return resolve({
+                                success: true,
+                                data: user
+                            })
                         })
                     }
-                    this.db['users'].findOne({
-                        include: [{
-                            model: db.roles_crms,
-                        },
-                            {
-                                model: db.accounts,
-                            },
-                            {
-                                model: db.roles,
-                            }
-                        ],
-                        where: {
-                            username: username,
-                            active: 'Y',
-                            status: 'Y'
-                        }
-                    }).then((user) => {
-                        if(!!!user){
-                            return resolve({
-                                success : false,
-                                message : "username not found"
-                            })
-                        }
-                        return resolve({
-                            success :true,
-                            data : user
+                })
+                Promise.all([PromiseDataUser]).then(data_user => {
+                    if (!data_user[0].success) {
+                        return res.send({
+                            data: null,
+                            status: 403,
+                            success: false,
+                            message: data_user[0].message
                         })
-
-                    }).catch(() => {
-                        return this.sendResponseError(res, ['Error.AnErrorHasOccurredUser'], 1, 403);
-                    });
-                }
-                else {
-                    this.db['accounts'].findOne({
-                        where: {
-                            web_domain: web_domain,
-                            active: 'Y',
-                            status: 'Y'
-                        }
-                    }).then((account_domain) => {
-                        if (account_domain) {
-                            this.db['users'].findOne({
-                                include: [{
-                                    model: db.roles_crms,
-                                },
-                                    {
-                                        model: db.accounts,
-                                    },
-                                    {
-                                        model: db.roles,
-                                    }
-                                ],
-                                where: {
-                                    username: username,
-                                    active: 'Y',
-                                    status: 'Y',
-                                    account_id: account_domain.account_id
-                                }
-                            }).then((user) => {
-                                if(!!!user){
-                                    return resolve({
-                                        success : false,
-                                        message : "username not found by this web domain"
-                                    })
-                                }
-                                return resolve({
-                                    success :true,
-                                    data : user
-                                })
-                            })
-                        } else {
-                            return resolve({
-                                success : false,
-                                message : "web domain not found"
-                            })
-                        }
-                    }).catch(() => {
-                        return this.sendResponseError(res, ['Error.AnErrorHasOccurredFindAccount'], 1, 403);
-                    });
-                }
-            })
-            Promise.all([PromiseDataUser]).then(data_user => {
-                if(!data_user[0].success){
-                    return res.send({
-                        data: null,
-                        status: 403,
-                        success: false,
-                        message: data_user[0].message
-                    })
-                }
-                let user = data_user[0].data
-                if (!user) {
+                    }
+                    let user = data_user[0].data
+                    if (!user) {
                         return res.send({
                             data: null,
                             status: 403,
                             success: false,
                             message: "user not found"
                         })
-                } else {
-                    let user_info = user.toJSON();
-                    if ((user_info && user_info.roles_crm && user_info.roles_crm.value === 'agent')) {
-                        if(user_info.current_session_token){
-                            return res.send({
-                                data: null,
-                                status: 403,
-                                success: false,
-                                message: 'Agent already connected !'
-                            })
-
-                        }
-                        this.db['accounts'].findOne({
-                            where: {
-                                account_id: user_info.account_id,
-                                active: 'Y',
-                                status: 'Y'
-                            }
-                        }).then((account_data) => {
-                            if (!account_data) {
+                    } else {
+                        let user_info = user.toJSON();
+                        if ((user_info && user_info.roles_crm && user_info.roles_crm.value === 'agent')) {
+                            if (user_info.current_session_token) {
                                 return res.send({
                                     data: null,
                                     status: 403,
                                     success: false,
-                                    message: 'Account not found !'
+                                    message: 'Agent already connected !'
                                 })
 
-                            } else if (user.password_hash && password && user.verifyPassword(password)) {
-                                if (user.password_hash && password) {
-                                    this.db['has_permissions'].findAll({
-                                        include: [{
-                                            model: db.permissions_crms,
-                                        }],
-                                        where: {
-                                            roles_crm_id: user.role_crm_id,
-                                            active: 'Y'
-                                        }
-                                    }).then(permissions => {
-                                        this.getPermissionsValues(permissions, user).then(data_perm => {
-                                            this.db['accounts'].findOne({include:[{model: db.domains}],
-                                                where: {account_id: user.account_id}})
-                                                .then(account => {
-                                                    let accountcode = account.account_code;
-                                                    let {
-                                                        sip_device,
-                                                        first_name,
-                                                        last_name,
-                                                        user_id,
-                                                        campaign_id
-                                                    } = user;
-
-                                                    if (user_info.roles_crm.value === 'agent') {
-                                                        let data_agent = {
-                                                            user_id: user_id,
-                                                            first_name: first_name,
-                                                            last_name: last_name,
-                                                            uuid: sip_device.uuid,
-                                                            crmStatus: user.params.status,
-                                                            telcoStatus: sip_device.status,
-                                                            timerStart: sip_device.updated_at,
-                                                            campaign_id: campaign_id
-                                                        };
-                                                        appSocket.emit('agent_connection', data_agent);
-                                                    }
-
-
-                                                    const token = jwt.sign({
-                                                        user_id: user.user_id,
-                                                        username: user.username,
-                                                    }, config.secret, {
-                                                        expiresIn: '8600m'
-                                                    });
-                                                    this.db['users'].update({current_session_token: token}, {where: {user_id: user.user_id}})
-                                                        .then(() => {
-                                                            res.send({
-                                                                message: 'Success',
-                                                                user: user.toJSON(),
-                                                                permissions: data_perm.permissions_values || [],
-                                                                permissions_route: data_perm.permissions_description || [],
-                                                                success: true,
-                                                                token: token,
-                                                                result: 1,
-                                                                accountcode: accountcode,
-                                                                domain_name: account.domain && account.domain.domain_name ? account.domain.domain_name: null
-                                                            });
-                                                        }).catch((error) => {
-                                                        return this.sendResponseError(res, ['Error.AnErrorHasOccurredUser'], 1, 403);
-                                                    });
-                                                }).catch((error) => {
-                                                return this.sendResponseError(res, ['Error.AnErrorHasOccurredUser'], 1, 403);
-                                            });
-                                        })
+                            }
+                            this.db['accounts'].findOne({
+                                where: {
+                                    account_id: user_info.account_id,
+                                    active: 'Y',
+                                    status: 'Y'
+                                }
+                            }).then((account_data) => {
+                                if (!account_data) {
+                                    return res.send({
+                                        data: null,
+                                        status: 403,
+                                        success: false,
+                                        message: 'Account not found !'
                                     })
+
+                                } else if (user.password_hash && password && user.verifyPassword(password)) {
+                                    if (user.password_hash && password) {
+                                        this.db['has_permissions'].findAll({
+                                            include: [{
+                                                model: db.permissions_crms,
+                                            }],
+                                            where: {
+                                                roles_crm_id: user.role_crm_id,
+                                                active: 'Y'
+                                            }
+                                        }).then(permissions => {
+                                            this.getPermissionsValues(permissions, user).then(data_perm => {
+                                                this.db['accounts'].findOne({
+                                                    include: [{model: db.domains}],
+                                                    where: {account_id: user.account_id}
+                                                })
+                                                    .then(account => {
+                                                        let accountcode = account.account_code;
+                                                        let {
+                                                            sip_device,
+                                                            first_name,
+                                                            last_name,
+                                                            user_id,
+                                                            campaign_id
+                                                        } = user;
+
+                                                        if (user_info.roles_crm.value === 'agent') {
+                                                            let data_agent = {
+                                                                user_id: user_id,
+                                                                first_name: first_name,
+                                                                last_name: last_name,
+                                                                uuid: sip_device.uuid,
+                                                                crmStatus: user.params.status,
+                                                                telcoStatus: sip_device.status,
+                                                                timerStart: sip_device.updated_at,
+                                                                campaign_id: campaign_id
+                                                            };
+                                                            appSocket.emit('agent_connection', data_agent);
+                                                        }
+
+
+                                                        const token = jwt.sign({
+                                                            user_id: user.user_id,
+                                                            username: user.username,
+                                                        }, config.secret, {
+                                                            expiresIn: '8600m'
+                                                        });
+                                                        this.db['users'].update({current_session_token: token}, {where: {user_id: user.user_id}})
+                                                            .then(() => {
+                                                                res.send({
+                                                                    message: 'Success',
+                                                                    user: user.toJSON(),
+                                                                    permissions: data_perm.permissions_values || [],
+                                                                    permissions_route: data_perm.permissions_description || [],
+                                                                    success: true,
+                                                                    token: token,
+                                                                    result: 1,
+                                                                    accountcode: accountcode,
+                                                                    domain_name: account.domain && account.domain.domain_name ? account.domain.domain_name : null
+                                                                });
+                                                            }).catch((error) => {
+                                                            return this.sendResponseError(res, ['Error.AnErrorHasOccurredUser'], 1, 403);
+                                                        });
+                                                    }).catch((error) => {
+                                                    return this.sendResponseError(res, ['Error.AnErrorHasOccurredUser'], 1, 403);
+                                                });
+                                            })
+                                        })
+                                    } else {
+                                        return res.send({
+                                            data: null,
+                                            status: 403,
+                                            success: false,
+                                            message: 'Incorrect password'
+                                        })
+                                    }
                                 } else {
                                     return res.send({
                                         data: null,
@@ -243,6 +251,134 @@ class users extends baseModelbo {
                                         message: 'Incorrect password'
                                     })
                                 }
+                            }).catch((error) => {
+                                return res.send({
+                                    data: null,
+                                    status: 403,
+                                    success: false,
+                                    message: 'Problem finding Account'
+                                })
+                            });
+                        } else if (user.password_hash && password && user.verifyPassword(password)) {
+                            if (user.password_hash && password) {
+                                this.db['has_permissions'].findAll({
+                                    include: [{
+                                        model: db.permissions_crms,
+                                    }],
+                                    where: {
+                                        roles_crm_id: user.role_id !== null ? user.account.role_crm_id : user.role_crm_id,
+                                        active: 'Y'
+                                    }
+                                }).then(permissions => {
+                                    this.getPermissionsValues(permissions, user).then(data_perm => {
+                                        this.db['accounts'].findOne({
+                                            include: [{
+                                                model: db.domains
+                                            }],
+                                            where: {
+                                                account_id: user.account_id,
+                                                active: 'Y',
+                                                status: 'Y'
+                                            }
+                                        })
+                                            .then(account => {
+                                                if (!account) {
+                                                    res.send({
+                                                        data: null,
+                                                        status: 403,
+                                                        success: false,
+                                                        message: 'Account not found !'
+                                                    })
+                                                    return
+                                                }
+                                                let accountcode = account.account_code;
+                                                if (user_info && user_info.roles_crm && (user_info.roles_crm.value === 'admin' || user_info.roles_crm.value === 'superadmin' || user_info.roles_crm.value === 'user')) {
+                                                    if (!!!user.role_id && user_info.roles_crm.value === 'user') {
+                                                        return res.send({
+                                                            data: null,
+                                                            status: 403,
+                                                            success: false,
+                                                            message: 'User without role'
+                                                        })
+                                                    }
+                                                    const token = jwt.sign({
+                                                        user_id: user.user_id,
+                                                        username: user.username,
+                                                    }, config.secret, {
+                                                        expiresIn: '8600m'
+                                                    });
+                                                    this.db['users'].update({current_session_token: token}, {where: {user_id: user.user_id}})
+                                                        .then(() => {
+                                                            let permissions_user = [];
+                                                            let permissions = [];
+                                                            if (user.role_id) {
+                                                                let default_permissions = [
+                                                                    {
+                                                                        "lookups": [
+                                                                            {
+                                                                                "key": "add"
+                                                                            },
+                                                                            {
+                                                                                "key": "edit"
+                                                                            },
+                                                                            {
+                                                                                "key": "delete"
+                                                                            },
+                                                                            {
+                                                                                "key": "list"
+                                                                            }
+                                                                        ],
+                                                                        "permission_route": "user-settings"
+                                                                    },
+                                                                    {
+                                                                        "lookups": [
+                                                                            {
+                                                                                "key": "add"
+                                                                            },
+                                                                            {
+                                                                                "key": "edit"
+                                                                            },
+                                                                            {
+                                                                                "key": "delete"
+                                                                            },
+                                                                            {
+                                                                                "key": "list"
+                                                                            }
+                                                                        ],
+                                                                        "permission_route": "home"
+                                                                    }
+                                                                ]
+                                                                let list_permissions = user.role.permission;
+                                                                permissions_user = list_permissions.concat(default_permissions)
+                                                                permissions = data_perm.user_has_role_permission
+                                                                //permissions = data_perm.user_has_role_permission.concat('home')
+                                                            } else {
+                                                                permissions = data_perm.permissions_values || []
+                                                            }
+                                                            res.send({
+                                                                message: 'Success',
+                                                                user: user.toJSON(),
+                                                                permissions: permissions,
+                                                                permissions_route: data_perm.permissions_description || [],
+                                                                success: true,
+                                                                token: token,
+                                                                result: 1,
+                                                                accountcode: accountcode,
+                                                                list_permission: permissions_user,
+                                                                domain_name: account.domain && account.domain.domain_name ? account.domain.domain_name : null
+                                                            });
+                                                        }).catch((error) => {
+                                                        return this.sendResponseError(res, ['Error.AnErrorHasOccurredUser'], 1, 403);
+                                                    });
+                                                } else {
+                                                    return this.sendResponseError(res, ['Error.AnErrorHasOccurredUser'], 1, 403);
+                                                }
+
+                                            }).catch((error) => {
+                                            return this.sendResponseError(res, ['Error.AnErrorHasOccurredUser'], 1, 403);
+                                        });
+                                    })
+                                })
                             } else {
                                 return res.send({
                                     data: null,
@@ -251,135 +387,6 @@ class users extends baseModelbo {
                                     message: 'Incorrect password'
                                 })
                             }
-                        }).catch((error) => {
-                            return res.send({
-                                data: null,
-                                status: 403,
-                                success: false,
-                                message: 'Problem finding Account'
-                            })
-                        });
-                    }
-                    else if (user.password_hash && password && user.verifyPassword(password)) {
-                        if (user.password_hash && password) {
-                            this.db['has_permissions'].findAll({
-                                include: [{
-                                    model: db.permissions_crms,
-                                }],
-                                where: {
-                                    roles_crm_id: user.role_id !== null ? user.account.role_crm_id : user.role_crm_id,
-                                    active: 'Y'
-                                }
-                            }).then(permissions => {
-                                this.getPermissionsValues(permissions, user).then(data_perm => {
-                                    this.db['accounts'].findOne({
-                                        include:[{
-                                            model: db.domains
-                                        }],
-                                        where: {
-                                            account_id: user.account_id,
-                                            active: 'Y',
-                                            status: 'Y'
-                                        }
-                                    })
-                                        .then(account => {
-                                            if (!account) {
-                                                res.send({
-                                                    data: null,
-                                                    status: 403,
-                                                    success: false,
-                                                    message: 'Account not found !'
-                                                })
-                                                return
-                                            }
-                                            let accountcode = account.account_code;
-                                            if (user_info && user_info.roles_crm && (user_info.roles_crm.value === 'admin' || user_info.roles_crm.value === 'superadmin' || user_info.roles_crm.value === 'user')) {
-                                                if (!!!user.role_id && user_info.roles_crm.value === 'user') {
-                                                    return res.send({
-                                                        data: null,
-                                                        status: 403,
-                                                        success: false,
-                                                        message: 'User without role'
-                                                    })
-                                                }
-                                                const token = jwt.sign({
-                                                    user_id: user.user_id,
-                                                    username: user.username,
-                                                }, config.secret, {
-                                                    expiresIn: '8600m'
-                                                });
-                                                this.db['users'].update({current_session_token: token}, {where: {user_id: user.user_id}})
-                                                    .then(() => {
-                                                        let permissions_user = [];
-                                                        let permissions = [];
-                                                        if(user.role_id){
-                                                            let default_permissions = [
-                                                                {
-                                                                    "lookups": [
-                                                                        {
-                                                                            "key": "add"
-                                                                        },
-                                                                        {
-                                                                            "key": "edit"
-                                                                        },
-                                                                        {
-                                                                            "key": "delete"
-                                                                        },
-                                                                        {
-                                                                            "key": "list"
-                                                                        }
-                                                                    ],
-                                                                    "permission_route": "user-settings"
-                                                                },
-                                                                {
-                                                                    "lookups": [
-                                                                        {
-                                                                            "key": "add"
-                                                                        },
-                                                                        {
-                                                                            "key": "edit"
-                                                                        },
-                                                                        {
-                                                                            "key": "delete"
-                                                                        },
-                                                                        {
-                                                                            "key": "list"
-                                                                        }
-                                                                    ],
-                                                                    "permission_route": "home"
-                                                                }
-                                                            ]
-                                                            let list_permissions = user.role.permission ;
-                                                            permissions_user = list_permissions.concat(default_permissions)
-                                                            permissions = data_perm.user_has_role_permission
-                                                            //permissions = data_perm.user_has_role_permission.concat('home')
-                                                        }else{
-                                                            permissions = data_perm.permissions_values || []
-                                                        }
-                                                        res.send({
-                                                            message: 'Success',
-                                                            user: user.toJSON(),
-                                                            permissions: permissions,
-                                                            permissions_route: data_perm.permissions_description || [],
-                                                            success: true,
-                                                            token: token,
-                                                            result: 1,
-                                                            accountcode: accountcode,
-                                                            list_permission: permissions_user,
-                                                            domain_name: account.domain && account.domain.domain_name ? account.domain.domain_name: null
-                                                        });
-                                                    }).catch((error) => {
-                                                    return this.sendResponseError(res, ['Error.AnErrorHasOccurredUser'], 1, 403);
-                                                });
-                                            } else {
-                                                return this.sendResponseError(res, ['Error.AnErrorHasOccurredUser'], 1, 403);
-                                            }
-
-                                        }).catch((error) => {
-                                        return this.sendResponseError(res, ['Error.AnErrorHasOccurredUser'], 1, 403);
-                                    });
-                                })
-                            })
                         } else {
                             return res.send({
                                 data: null,
@@ -388,21 +395,15 @@ class users extends baseModelbo {
                                 message: 'Incorrect password'
                             })
                         }
-                    } else {
-                        return res.send({
-                            data: null,
-                            status: 403,
-                            success: false,
-                            message: 'Incorrect password'
-                        })
                     }
-                }
+                })
             })
-        })
-
+        }).catch(() => {
+            return this.sendResponseError(res, ['Error.AnErrorHasOccurredFindAccount'], 1, 403);
+        });
     }
 
-    getUserRoleInfo(username) {
+    getUserRoleInfo(username, account_id) {
         return new Promise((resolve, reject) => {
             this.db['users'].findOne({
                 include: [{
@@ -410,6 +411,7 @@ class users extends baseModelbo {
                 }
                 ],
                 where: {
+                    account_id: account_id,
                     username: username,
                     active: 'Y',
                     status: 'Y',
@@ -447,54 +449,54 @@ class users extends baseModelbo {
             if (!user) {
                 return _this.sendResponseError(res, ['Error.UserNotFound'], 0, 403);
             }
-            if(user.status === 'N'){
+            if (user.status === 'N') {
                 return res.send({
-                    success : false,
-                    status : 403,
-                    message : 'enable-account'
+                    success: false,
+                    status: 403,
+                    message: 'enable-account'
                 })
             }
-                this.db['has_permissions'].findAll({
-                    include: [{
-                        model: db.permissions_crms,
-                    }],
-                    where: {
-                        roles_crm_id: user.role_crm_id,
-                        active: 'Y'
-                    }
-                }).then(permissions => {
-                    this.getPermissionsValues(permissions).then(data_perm => {
-                        this.db['accounts'].findOne({include:[{model: db.domains}],where: {account_id: user.account_id}})
-                            .then(account => {
-                                let accountcode = account.account_code;
-                                const token = jwt.sign({
-                                    user_id: user.user_id,
-                                    username: user.username,
-                                }, config.secret, {
-                                    expiresIn: '8600m'
-                                });
-                                this.db['users'].update({current_session_token: token}, {where: {user_id: user.user_id}})
-                                    .then(() => {
-                                        res.send({
-                                            message: 'Success',
-                                            user: user.toJSON(),
-                                            permissions: data_perm.permissions_values || [],
-                                            permissions_route: data_perm.permissions_description || [],
-                                            success: true,
-                                            token: token,
-                                            result: 1,
-                                            accountcode: accountcode,
-                                            domain_name: account.domain && account.domain.domain_name ? account.domain.domain_name: null
-                                        });
-                                    }).catch((error) => {
-                                    return this.sendResponseError(res, ['Error.AnErrorHasOccurredUpdateTokenUser'], 1, 403);
-                                });
-                            }).catch((error) => {
-                            return this.sendResponseError(res, ['Error.AnErrorHasOccurredUser'], 1, 403);
-                        });
+            this.db['has_permissions'].findAll({
+                include: [{
+                    model: db.permissions_crms,
+                }],
+                where: {
+                    roles_crm_id: user.role_crm_id,
+                    active: 'Y'
+                }
+            }).then(permissions => {
+                this.getPermissionsValues(permissions).then(data_perm => {
+                    this.db['accounts'].findOne({include: [{model: db.domains}], where: {account_id: user.account_id}})
+                        .then(account => {
+                            let accountcode = account.account_code;
+                            const token = jwt.sign({
+                                user_id: user.user_id,
+                                username: user.username,
+                            }, config.secret, {
+                                expiresIn: '8600m'
+                            });
+                            this.db['users'].update({current_session_token: token}, {where: {user_id: user.user_id}})
+                                .then(() => {
+                                    res.send({
+                                        message: 'Success',
+                                        user: user.toJSON(),
+                                        permissions: data_perm.permissions_values || [],
+                                        permissions_route: data_perm.permissions_description || [],
+                                        success: true,
+                                        token: token,
+                                        result: 1,
+                                        accountcode: accountcode,
+                                        domain_name: account.domain && account.domain.domain_name ? account.domain.domain_name : null
+                                    });
+                                }).catch((error) => {
+                                return this.sendResponseError(res, ['Error.AnErrorHasOccurredUpdateTokenUser'], 1, 403);
+                            });
+                        }).catch((error) => {
+                        return this.sendResponseError(res, ['Error.AnErrorHasOccurredUser'], 1, 403);
+                    });
 
-                    })
                 })
+            })
         }).catch((error) => {
             return _this.sendResponseError(res, ['Error.AnErrorHasOccurredUser', error], 1, 403);
         });
