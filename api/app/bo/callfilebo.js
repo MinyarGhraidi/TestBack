@@ -755,7 +755,8 @@ CONCAT(U.first_name, ' ', U.last_name) as "Agent Name"
             customFields.map((field) => {
                 resCustomFields.push(field.customfields);
             })
-            let result = Object.keys(Object.assign({}, ...resCustomFields));
+            //let result = Object.keys(Object.assign({}, ...resCustomFields));
+            let result = resCustomFields[0].map(c => c.label)
             AllFields = Fields.concat(result);
             res.send({
                 success: true,
@@ -1043,10 +1044,13 @@ CONCAT(U.first_name, ' ', U.last_name) as "Agent Name"
         if (!!!data.phone_number && !!!data.callfile_id) {
             return _this.sendResponseError(res, ['Error empty'])
         }
-        let sqlQuerySelectLeads = `SELECT CF.*, LCF.*, C.script FROM callfiles AS CF 
+        if (!!!data.account_id) {
+            return _this.sendResponseError(res, ['Error empty account_id'])
+        }
+        let sqlQuerySelectLeads = `SELECT CF.*, LCF.*, C.script, C.account_id FROM callfiles AS CF 
                                        LEFT OUTER JOIN listcallfiles AS LCF ON CF.listcallfile_id = LCF.listcallfile_id
                                        LEFT OUTER JOIN campaigns AS C ON C.campaign_id = LCF.campaign_id
-                                       WHERE C.active = :active AND LCF.active = :active AND length(phone_number) >=9 AND CF.active = :active AND CF.status = :active WHERE_CONDITION LIMIT :limit;`
+                                       WHERE C.account_id= :account_id AND C.active = :active AND LCF.active = :active AND length(phone_number) >=9 AND CF.active = :active AND CF.status = :active WHERE_CONDITION LIMIT :limit;`
 
         let whereQuery = ''
         if(data && data.phone_number){
@@ -1062,6 +1066,7 @@ CONCAT(U.first_name, ' ', U.last_name) as "Agent Name"
                 active: 'Y',
                 phone_number : data.phone_number || null,
                 callfile_id : data.callfile_id || null,
+                account_id : data.account_id,
                 limit : 1
             }
         }).then((call_file) => {
