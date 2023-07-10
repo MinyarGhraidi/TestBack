@@ -150,7 +150,7 @@
         "port": 5432,
         "dialect": "postgres",
         "underscored": true,
-        "logging": true,
+        "logging": false,
         "define": {
           "createdAt": "created_at",
           "updatedAt": "updated_at"
