@@ -13,6 +13,8 @@ class AccBo extends baseModelbo {
 
     _getCdrsFunction(params, sansLimit = false) {
         return new Promise((resolve, reject) => {
+            console.log("===============================================>")
+            console.log(params)
             const AgentUUID = params.agentUUID || null
             const filter = params.filter || null;
             const limit = parseInt(params.limit) > 0 ? params.limit : 1000;
@@ -77,7 +79,7 @@ class AccBo extends baseModelbo {
                 }
                 sqlData = sqlData.replace('EXTRA_WHERE', extra_where_limit);
                 sqlData = sqlData.replace('FILTER', '*');
-
+                console.log("====sqlData",sqlData)
                 db.sequelize['cdr-db'].query(sqlData, {
                     type: db.sequelize['cdr-db'].QueryTypes.SELECT,
                     replacements: {
@@ -105,6 +107,8 @@ class AccBo extends baseModelbo {
                                 }
 
                             }).then((accounts) => {
+                                console.log(accounts)
+
                                 this.db['campaigns'].findAll({
                                     where: {
                                         active: 'Y',
@@ -112,7 +116,9 @@ class AccBo extends baseModelbo {
                                 }).then((campaigns) => {
                                     let cdrs_data = []
                                     PromiseBB.each(data, item => {
-                                        let account_data = accounts.filter(item_acc => item_acc.account_number === item.accountcode);
+                                        let index = item.custom_vars.indexOf(":");
+                                        let AccountCode = item.custom_vars.slice(0,index);
+                                        let account_data = accounts.filter(item_acc => item_acc.account_code === String(AccountCode));
                                         let campaign_data = campaigns.filter(item_acc => item_acc.campaign_id === parseInt(item.campaignId));
                                         let user_data = users.filter(item_acc => {
                                             return (item_acc.sip_device.uuid === item.agent)
