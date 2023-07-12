@@ -946,7 +946,7 @@ class agents extends baseModelbo {
                     case 'in_qualification':
                         inQualification.push(item_ag)
                         break
-                    case 'on_break':
+                    case 'on-break':
                         onBreak.push(item_ag)
                         break
                     case 'connected':
