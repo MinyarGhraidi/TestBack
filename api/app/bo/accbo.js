@@ -13,8 +13,6 @@ class AccBo extends baseModelbo {
 
     _getCdrsFunction(params, sansLimit = false) {
         return new Promise((resolve, reject) => {
-            console.log("===============================================>")
-            console.log(params)
             const AgentUUID = params.agentUUID || null
             const filter = params.filter || null;
             const limit = parseInt(params.limit) > 0 ? params.limit : 1000;
@@ -79,7 +77,6 @@ class AccBo extends baseModelbo {
                 }
                 sqlData = sqlData.replace('EXTRA_WHERE', extra_where_limit);
                 sqlData = sqlData.replace('FILTER', '*');
-                console.log("====sqlData",sqlData)
                 db.sequelize['cdr-db'].query(sqlData, {
                     type: db.sequelize['cdr-db'].QueryTypes.SELECT,
                     replacements: {
@@ -107,8 +104,6 @@ class AccBo extends baseModelbo {
                                 }
 
                             }).then((accounts) => {
-                                console.log(accounts)
-
                                 this.db['campaigns'].findAll({
                                     where: {
                                         active: 'Y',
