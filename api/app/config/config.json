@@ -173,7 +173,7 @@
         "port": 5432,
         "dialect": "postgres",
         "socketUrl": "https://ip158.ip-92-222-147.eu:3002",
-        "logging": false,
+        "logging": true,
         "define": {
           "freezeTableName": true
         },
