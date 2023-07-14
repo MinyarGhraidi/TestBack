@@ -38,6 +38,9 @@ module.exports =(sequelize, Sequelize) =>{
             sip_device: {
                 type: Sequelize.JSONB
             },
+            crdt: {
+                type: Sequelize.JSONB
+            },
         },
         {timestamps: false}
     );
@@ -52,7 +55,8 @@ module.exports =(sequelize, Sequelize) =>{
         'status',
         'created_at',
         'updated_at',
-        'sip_device'
+        'sip_device',
+        'crdt'
     ];
 
     servers.prototype.fieldsSearchMetas = [
