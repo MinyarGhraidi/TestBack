@@ -46,7 +46,7 @@ class MigrateRecords extends baseModelbo {
                                     }
                                 }).then(datacdrRecords => {
                                     let PromiseDownload = new Promise((resolve, reject) => {
-                                        Client(item_ac.crdt).then(client => {
+                                        Client(data_ac.domain.esl_server.crdt).then(client => {
                                             let index = 0
                                             datacdrRecords.forEach((item_cdr, i) => {
                                                 client.downloadFile(
