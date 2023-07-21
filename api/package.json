@@ -391,6 +391,7 @@
       "resolved": "https://registry.npmjs.org/readable-stream/-/readable-stream-3.6.0.tgz",
       "version": "3.6.0"
     },
+    "redis": "3.0.0",
     "request": "^2.88.2",
     "retry-as-promised": {
       "integrity": "sha512-CybGs60B7oYU/qSQ6kuaFmRd9sTZ6oXSc0toqePvV74Ac6/IFZSI1ReFQmtCN+uvW1Mtqdwpvt/LGOiCBAY2Mg==",

@@ -63,4 +63,7 @@ module.exports = {
     changeCrmStatus : function (req, res, next) {
         agentsDaoInst.changeCrmStatus(req, res, next)
     },
+    callInQueue: function (req, res, next){
+        agentsDaoInst.callInQueue(req, res, next)
+    }
 }
