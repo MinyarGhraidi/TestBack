@@ -152,6 +152,7 @@ let apiRouters = function (passport) {
     router.post("/api/agent/DisConnectAgent", passport.authenticate('jwt', {session: false}), agentsController.onDisconnectAgents);
     router.post("/api/agent/logoutAgent", passport.authenticate('jwt', {session: false}), agentsController.logoutAgent);
     router.post("/api/agent/disconnectAgentsByAccountID", passport.authenticate('jwt', {session: false}), agentsController.disconnectAgentsByAccountID);
+    router.post("/api/agent/callInQueue",passport.authenticate('jwt',{session: false}), agentsController.callInQueue)
 
     //Lookups
     // account routers

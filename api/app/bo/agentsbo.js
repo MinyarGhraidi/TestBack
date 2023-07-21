@@ -21,6 +21,8 @@ let _messageDao = new messageDao;
 let _agent_log_eventsbo = new agent_log_eventsbo;
 const appSocket = new (require('../providers/AppSocket'))();
 const Op = require("sequelize/lib/operators");
+const AppRedis = require("../providers/AppRedis")
+const redisClient = (new AppRedis()).client;
 
 class agents extends baseModelbo {
     constructor() {
@@ -2005,6 +2007,73 @@ class agents extends baseModelbo {
 
 
     }
+
+    callInQueue (req, res, next) {
+        let {account_id, campaign_id} = req.body;
+          if(campaign_id){
+              redisClient.get(campaign_id, (err, stu) => {
+                  if (stu){
+                      let data = JSON.parse(stu)
+                      if (data.numberCall){
+                          res.send({
+                              success: true,
+                              total : parseInt(data.numberCall)
+                          })
+                      }
+                  }else if(err){
+                      res.send({
+                          success: false,
+                          message: err
+                      })
+                  }else{
+                      res.send({
+                          success: true,
+                          total:0
+                      })
+                  }
+              })
+          }else{
+             this.db['campaigns'].findAll({
+                 where:{
+                     active: 'Y',
+                     status: 'Y',
+                     account_id : account_id
+                 }
+             }).then(campaign=>{
+                 if(campaign && campaign.length !== 0){
+                     let total = 0
+                     let index = 0
+                     campaign.forEach(item=>{
+                         redisClient.get(item.campaign_id, (err, stu) => {
+                             if (stu){
+                                 let data = JSON.parse(stu)
+                                 if (data.numberCall){
+                                     total +=parseInt(data.numberCall)
+                                 }
+                             }else if(err){
+                                 res.send({
+                                     success: false,
+                                     message : err
+                                 })
+                             }
+                          if(index < campaign.length-1){
+                              index++
+                          }else{
+                              res.send({
+                                  success: true,
+                                  total : total
+                              })
+                          }
+                         })
+                     })
+                 }
+             }).catch(err => {
+                 return this.sendResponseError(res, ['Error.cannotCamp', err], 1, 403)
+             })
+          }
+
+}
+
 }
 
 module.exports = agents;
