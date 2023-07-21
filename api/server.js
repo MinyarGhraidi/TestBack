@@ -7,7 +7,6 @@ const useragent = require('express-useragent');
 const bodyParser = require('body-parser');
 const { appConfig } = require("./app/helpers/app");
 const passport = require('passport');
-const helmet = require('helmet');
 app.use(useragent.express());
 app.use(cors());
 
@@ -36,13 +35,11 @@ app.all('*', (req, res, next) => {
   res.setHeader('Access-Control-Expose-Headers', 'Authorization');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
   res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,content-type, Authorization');
-  res.setHeader(
-      'Content-Security-Policy',
-      "upgrade-insecure-requests"
-  );
+
+  res.setHeader('Cross-Origin-Resource-Policy', 'cross-site');
+
   next();
 });
-app.use(helmet());
 
 // Add the CSP header   app.use(     helmet.contentSecurityPolicy({       directives: {
 
@@ -51,12 +48,7 @@ app.use((req, res, next) => {
   res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
   next();
 });
-app.use(
-    helmet.contentSecurityPolicy({       directives: {
-        'upgrade-insecure-requests': [],
-      },
-    })
-);
+
 app.use('/', require('./app/routes/api')(passport));
 
 app.get('/', (req, res) => {

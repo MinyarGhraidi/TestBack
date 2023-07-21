@@ -143,14 +143,13 @@ class users extends baseModelbo {
                     } else {
                         let user_info = user.toJSON();
                         if ((user_info && user_info.roles_crm && user_info.roles_crm.value === 'agent')) {
-                            if (user_info.current_session_token) {
+                            if (user_info.current_session_token && user_info.sip_device.status !== 'logged-out') {
                                 return res.send({
                                     data: null,
                                     status: 403,
                                     success: false,
                                     message: 'Agent already connected !'
                                 })
-
                             }
                             this.db['accounts'].findOne({
                                 where: {
@@ -206,8 +205,6 @@ class users extends baseModelbo {
                                                             };
                                                             appSocket.emit('agent_connection', data_agent);
                                                         }
-
-
                                                         const token = jwt.sign({
                                                             user_id: user.user_id,
                                                             username: user.username,

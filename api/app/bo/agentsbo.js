@@ -911,17 +911,58 @@ class agents extends baseModelbo {
         this.db['users'].findAll({where: where})
             .then(agents => {
                 this.verifyTokenAgents(agents).then((result) => {
-                    res.send({
-                        status: "200",
-                        message: "success",
-                        data: result
+                    this.TrieStats(result).then(trited_stats => {
+                        res.send({
+                            status: "200",
+                            message: "success",
+                            data: trited_stats
+                        })
+                    }).catch(err => {
+                        return _this.sendResponseError(res, ['Error.cannotVerifyToken', err], 1, 403);
                     })
+
                 }).catch(err => {
                     return _this.sendResponseError(res, ['Error.cannotVerifyToken', err], 1, 403);
                 })
 
             }).catch(err => {
             return _this.sendResponseError(res, ['Error.cannot fetch list agents', err], 1, 403);
+        })
+    }
+
+    TrieStats(agents) {
+        return new Promise((resolve, reject) => {
+            let inCall = []
+            let waitingCall = []
+            let inQualification = []
+            let onBreak = []
+            let connected = []
+            agents.forEach(item_ag => {
+                switch (item_ag.crmStatus) {
+                    case 'in_call':
+                        inCall.push(item_ag)
+                        break
+                    case 'waiting-call':
+                        waitingCall.push(item_ag)
+                        break
+                    case 'in_qualification':
+                        inQualification.push(item_ag)
+                        break
+                    case 'on-break':
+                        onBreak.push(item_ag)
+                        break
+                    case 'connected':
+                        connected.push(item_ag)
+                        break
+                }
+            })
+            inCall.sort((a,b) => a.timerStart - b.timerStart)
+            waitingCall.sort((a,b) => a.timerStart - b.timerStart)
+            inQualification.sort((a,b) => a.timerStart - b.timerStart)
+            onBreak.sort((a,b) => a.timerStart - b.timerStart)
+            connected.sort((a,b) => a.timerStart - b.timerStart)
+            let Stats = inCall.concat(waitingCall, inQualification, onBreak, connected)
+            resolve(Stats)
         })
     }
 
