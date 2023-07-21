@@ -19,7 +19,7 @@ class call_blundings extends baseModelbo {
                     phone_number: obj.phone_number
                 })
             }
-            this.db['call_blundings'].findOne({where: {phone_number: obj.phone_number}}).then(call_b => {
+            this.db['call_blundings'].findOne({where: {phone_number: obj.phone_number, active : 'Y'}}).then(call_b => {
                 if (call_b) {
                     return resolve({
                         success: false,

@@ -29,7 +29,7 @@ class Callhistorybo extends baseModelbo {
                     let dmt = 0;
                     let dmc = 0;
                     if(agent_event[0].action_name === 'in_qualification'){
-                        dmt = moment(agent_event[0].finish_at, "YYYY-MM-DD HH:mm:ss").diff(moment(agent_event[1].start_at, "YYYY-MM-DD HH:mm:ss"), 'seconds');
+                        dmt = moment(agent_event[0].finish_at || new Date(), "YYYY-MM-DD HH:mm:ss").diff(moment(agent_event[1].start_at, "YYYY-MM-DD HH:mm:ss"), 'seconds');
                         dmc=moment(agent_event[1].finish_at, "YYYY-MM-DD HH:mm:ss").diff(moment(agent_event[1].start_at, "YYYY-MM-DD HH:mm:ss"), 'seconds');
                     }else{
                         dmt = moment((agent_event[0].finish_at || new Date()), "YYYY-MM-DD HH:mm:ss").diff(moment(agent_event[0].start_at, "YYYY-MM-DD HH:mm:ss"), 'seconds');
@@ -49,7 +49,7 @@ class Callhistorybo extends baseModelbo {
                         type: db.sequelize['crm-app'].QueryTypes.SELECT,
                         replacements: {
                             call_file_id: body.call_file_id,
-                            revision_id: body.revision_id,
+                            revision_id: body.revision_id || null,
                             note: body.note,
                             dmc: dmc,
                             dmt: dmt,
