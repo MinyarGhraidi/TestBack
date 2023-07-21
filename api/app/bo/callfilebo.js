@@ -112,7 +112,7 @@ class callfiles extends baseModelbo {
         const limit = parseInt(data.limit) > 0 ? data.limit : 1000;
         const offset = data.limit * (data.pages - 1) || 0
         if (!!!data.filter) {
-            res.send({
+            return res.send({
                 success: false,
                 status: 403,
                 data: [],
@@ -132,7 +132,7 @@ class callfiles extends baseModelbo {
         let sqlListCallFiles = `select listcallfile_id from listcallfiles
                                        where EXTRA_WHERE and active = 'Y' `
 
-        let sqlLeads = `Select distinct callF.*, calls_h.finished_at, LCF.name as "list_leads_name"
+        let sqlLeads = `Select distinct callF.*, MAX(calls_h.finished_at) as finished_at, LCF.name as "list_leads_name"
                         from callfiles as callF
                                  left join calls_historys as calls_h on callF.callfile_id = calls_h.call_file_id
                                  join listcallfiles as LCF on LCF.listcallfile_id = callF.listcallfile_id
@@ -140,15 +140,15 @@ class callfiles extends baseModelbo {
                           and callF.active = :active
                           and callF.listcallfile_id in (:listCallFiles_ids)
                            EXTRA_WHERE 
-                           order by calls_h.finished_at desc LIMIT :limit OFFSET :offset
+                           group by callF.callfile_id, LCF.name order by finished_at desc LIMIT :limit OFFSET :offset
                          `
-        let sqlLeadsCount = `Select count(distinct callF.*)
+        let sqlLeadsCount = `Select count(distinct callF.*), MAX(calls_h.finished_at) as finished_at
                         from callfiles as callF
                                  left join calls_historys as calls_h on callF.callfile_id = calls_h.call_file_id
                         where calls_h.active = :active
                           and callF.active = :active
                           and callF.listcallfile_id in (:listCallFiles_ids)
-                           EXTRA_WHERE 
+                           EXTRA_WHERE group by callF.callfile_id order by finished_at desc
                          `
         let extra_where = '';
         let extra_where_ListCallFile = '';
@@ -193,6 +193,14 @@ class callfiles extends baseModelbo {
                         call_status: call_status
                     }
                 }).then(countAll => {
+                    if(countAll.length === 0){
+                        return res.send({
+                            success: true,
+                            status: 200,
+                            data: [],
+                            message: 'no call file history'
+                        })
+                    }
                     extra_where += ' AND list_call_file_id in (:listCallFiles_ids)'
                     let pages = Math.ceil(countAll[0].count / data.limit);
                     db.sequelize['crm-app'].query(sqlLeads, {
@@ -214,20 +222,20 @@ class callfiles extends baseModelbo {
                             limit: limit,
                             pages: pages
                         };
-                        res.send({
+                        return res.send({
                             success: true,
                             status: 200,
                             data: dataLeads,
                             attributes: attributes_res
                         })
                     }).catch(err => {
-                        _this.sendResponseError(res, ['Error stats1'], err)
+                        return _this.sendResponseError(res, ['Error stats1'], err)
                     })
                 }).catch(err => {
-                    _this.sendResponseError(res, ['Error stats2'], err)
+                    return _this.sendResponseError(res, ['Error stats2'], err)
                 })
             } else {
-                res.send({
+                return res.send({
                     success: true,
                     status: 200,
                     data: [],
@@ -235,7 +243,7 @@ class callfiles extends baseModelbo {
                 })
             }
         }).catch(err => {
-            _this.sendResponseError(res, ['Error stats3'], err)
+            return _this.sendResponseError(res, ['Error stats3'], err)
         })
 
     }
@@ -352,7 +360,8 @@ CONCAT(U.first_name, ' ', U.last_name) as "Agent Name"
                         end_time: moment(dateSelected_to).format('YYYY-MM-DD').concat(' ', endTime),
                         listCallFiles_ids: lCF_ids,
                         active: 'Y',
-                        call_status: call_status
+                        call_status: call_status,
+                        agents_ids: agents_ids
                     }
                 }).then(dataLeads => {
                     if(dataLeads && dataLeads.length !== 0){
@@ -490,7 +499,8 @@ CONCAT(U.first_name, ' ', U.last_name) as "Agent Name"
                                 this.sendResponseError(res, ["Error.CannotGetCDRS"], 1, 403)
                             })
                         })
-                    }else{
+                    }
+                    else{
                         return res.send({
                             data: [],
                             success: false
@@ -499,7 +509,8 @@ CONCAT(U.first_name, ' ', U.last_name) as "Agent Name"
                 }).catch(err => {
                     _this.sendResponseError(res, ['Error stats'], err)
                 })
-            }else {
+            }
+            else {
                     res.send({
                         success: true,
                         status: 200,
