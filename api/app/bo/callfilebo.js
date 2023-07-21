@@ -3,9 +3,11 @@ let db = require('../models');
 const fs = require("fs");
 const {reject} = require("bcrypt/promises");
 const efilesBo = require('./efilesbo');
+const callhistoryBo = require('./callhistorybo');
 const moment = require("moment");
 const Op = require("sequelize/lib/operators");
 const _efilebo = new efilesBo;
+const _callhistorybo = new callhistoryBo;
 const env = process.env.NODE_ENV || 'development';
 const call_center_token = require(__dirname + '/../config/config.json')[env]["call_center_token"];
 const base_url_cc_kam = require(__dirname + '/../config/config.json')[env]["base_url_cc_kam"];
@@ -97,10 +99,41 @@ class callfiles extends baseModelbo {
         })
     }
 
+    SaveReminder = (call_status, data) => {
+        return new Promise((resolve, reject) => {
+            if (call_status) {
+                let modalObj = this.db['reminders'].build(data)
+                modalObj
+                    .save()
+                    .then(() => {
+                        return resolve(true)
+                    })
+                    .catch(err => {
+                        reject(err)
+                    })
+            }else{
+                return resolve(true)
+            }
+        })
+    }
     updateCallFileQualification(req, res, next) {
-        let callfile_id = req.body.callfile_id
-        this._updateCallFileQualification(callfile_id, req.body, req).then(result => {
-            res.send(result)
+        let {call_file_data, call_history_data, call_status} = req.body
+        let callfile_id = call_file_data.callfile_id
+        this._updateCallFileQualification(callfile_id, call_file_data, req).then(result => {
+            if(result.success){
+                this.SaveReminder(call_status,call_history_data).then(() => {
+                    call_history_data.revision_id = result.revision_id
+                    _callhistorybo._updateCall(call_history_data).then(resultHistory => {
+                        res.send(resultHistory)
+                    }).catch(err => {
+                        reject(err)
+                    })
+                }).catch(err => {
+                    reject(err)
+                })
+            }else{
+                res.send(result)
+            }
         }).catch(err => {
             this.sendResponseError(res, ['cannotUpdateCallFile', err], 1, 403)
         })
@@ -216,7 +249,6 @@ class callfiles extends baseModelbo {
                             call_status: call_status
                         }
                     }).then(dataLeads => {
-                        console.log(pages,countAll)
                         const attributes_res = {
                             count: countAll,
                             offset: offset,
