@@ -148,7 +148,7 @@ class callfiles extends baseModelbo {
                         where calls_h.active = :active
                           and callF.active = :active
                           and callF.listcallfile_id in (:listCallFiles_ids)
-                           EXTRA_WHERE group by callF.callfile_id order by finished_at desc
+                           EXTRA_WHERE
                          `
         let extra_where = '';
         let extra_where_ListCallFile = '';
@@ -216,6 +216,7 @@ class callfiles extends baseModelbo {
                             call_status: call_status
                         }
                     }).then(dataLeads => {
+                        console.log(pages,countAll)
                         const attributes_res = {
                             count: countAll,
                             offset: offset,
