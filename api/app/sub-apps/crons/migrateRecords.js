@@ -37,7 +37,7 @@ class MigrateRecords extends baseModelbo {
                                                          AND record_url <> ''
                                                          and durationsec <> '0'
                                                           and     SUBSTRING("custom_vars", 0 , POSITION(':' in "custom_vars") ) = :account_code
-                                                         and start_time like '2023-07-13%' limit 100`
+                                                         and start_time like :current_date limit 100`
                                 db.sequelize['cdr-db'].query(SqlGetCDrNotTreated, {
                                     type: db.sequelize['cdr-db'].QueryTypes.SELECT,
                                     replacements: {
