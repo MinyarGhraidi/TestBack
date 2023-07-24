@@ -1142,32 +1142,41 @@ class callfiles extends baseModelbo {
                     success: false,
                     message: "unknown-phone-number"
                 })
+            }else{
+                return res.send({
+                    success: true,
+                    data : call_file[0]
+                })
             }
-            let schema = {
-                type: 'object',
-                properties: {}
-            }
-            let mapping = {}
-            this.createSchemaUischema(call_file[0], mapping, schema).then(result => {
-                if (result.success) {
-                    return res.send({
-                        success: true,
-                        data: call_file[0],
-                        schema: result.schema,
-                        uiSchema: result.uiSchema,
-                    })
-                } else {
-                    return res.send({
-                        success: false,
-                        message: result.message
-                    })
-                }
-            }).catch(err => {
-                return _this.sendResponseError(res, ['Error '], err)
-            })
+
         })
     }
 
+    SchemaCallFile(req,res,next){
+        let callfile = req.body.callfile
+        let schema = {
+            type: 'object',
+            properties: {}
+        }
+        let mapping = {}
+        this.createSchemaUischema(callfile, mapping, schema).then(result => {
+            if (result.success) {
+                return res.send({
+                    success: true,
+                    data: callfile,
+                    schema: result.schema,
+                    uiSchema: result.uiSchema,
+                })
+            } else {
+                return res.send({
+                    success: false,
+                    message: result.message
+                })
+            }
+        }).catch(err => {
+            return this.sendResponseError(res, ['Error '], err)
+        })
+    }
     RecycleCallFile(req, res, next) {
         let {campaign_id, listcallfile_id} = req.body;
         if (!!!campaign_id && !!!listcallfile_id) {
