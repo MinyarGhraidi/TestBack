@@ -1115,6 +1115,11 @@ CONCAT(U.first_name, ' ', U.last_name) as "Agent Name"
             }
         }).then((call_file) => {
             let cfLength = call_file.length || 0
+            if(cfLength !== 0 && data.fast_resp=== true){
+                return res.send({
+                    success: true
+                })
+            }
             if(cfLength === 0){
                 return res.send({
                     success: false,
