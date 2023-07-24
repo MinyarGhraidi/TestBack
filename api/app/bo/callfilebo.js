@@ -111,17 +111,23 @@ class callfiles extends baseModelbo {
                     .catch(err => {
                         reject(err)
                     })
-            }else{
+            } else {
                 return resolve(true)
             }
         })
     }
+
     updateCallFileQualification(req, res, next) {
         let {call_file_data, call_history_data, call_status} = req.body
+        if (!!!call_file_data || !!!call_history_data) {
+            return res.send({
+                success: true
+            })
+        }
         let callfile_id = call_file_data.callfile_id
         this._updateCallFileQualification(callfile_id, call_file_data, req).then(result => {
-            if(result.success){
-                this.SaveReminder(call_status,call_history_data).then(() => {
+            if (result.success) {
+                this.SaveReminder(call_status, call_history_data).then(() => {
                     call_history_data.revision_id = result.revision_id
                     _callhistorybo._updateCall(call_history_data).then(resultHistory => {
                         res.send(resultHistory)
@@ -131,7 +137,7 @@ class callfiles extends baseModelbo {
                 }).catch(err => {
                     reject(err)
                 })
-            }else{
+            } else {
                 res.send(result)
             }
         }).catch(err => {
@@ -162,8 +168,10 @@ class callfiles extends baseModelbo {
             campaign_ids,
             phone_number,
         } = data.filter;
-        let sqlListCallFiles = `select listcallfile_id from listcallfiles
-                                       where EXTRA_WHERE and active = 'Y' `
+        let sqlListCallFiles = `select listcallfile_id
+                                from listcallfiles
+                                where EXTRA_WHERE
+                                  and active = 'Y' `
 
         let sqlLeads = `Select distinct callF.*, MAX(calls_h.finished_at) as finished_at, LCF.name as "list_leads_name"
                         from callfiles as callF
@@ -172,17 +180,19 @@ class callfiles extends baseModelbo {
                         where calls_h.active = :active
                           and callF.active = :active
                           and callF.listcallfile_id in (:listCallFiles_ids)
-                           EXTRA_WHERE 
-                           group by callF.callfile_id, LCF.name order by finished_at desc LIMIT :limit OFFSET :offset
-                         `
+                            EXTRA_WHERE
+                        group by callF.callfile_id, LCF.name
+                        order by finished_at desc LIMIT :limit
+                        OFFSET :offset
+        `
         let sqlLeadsCount = `Select count(distinct callF.*), MAX(calls_h.finished_at) as finished_at
-                        from callfiles as callF
-                                 left join calls_historys as calls_h on callF.callfile_id = calls_h.call_file_id
-                        where calls_h.active = :active
-                          and callF.active = :active
-                          and callF.listcallfile_id in (:listCallFiles_ids)
-                           EXTRA_WHERE
-                         `
+                             from callfiles as callF
+                                      left join calls_historys as calls_h on callF.callfile_id = calls_h.call_file_id
+                             where calls_h.active = :active
+                               and callF.active = :active
+                               and callF.listcallfile_id in (:listCallFiles_ids)
+                                 EXTRA_WHERE
+        `
         let extra_where = '';
         let extra_where_ListCallFile = '';
         if (listCallFiles_ids && listCallFiles_ids.length === 0) {
@@ -226,7 +236,7 @@ class callfiles extends baseModelbo {
                         call_status: call_status
                     }
                 }).then(countAll => {
-                    if(countAll.length === 0){
+                    if (countAll.length === 0) {
                         return res.send({
                             success: true,
                             status: 200,
@@ -280,6 +290,7 @@ class callfiles extends baseModelbo {
         })
 
     }
+
     ReformatOneFileCSVExport(item, schema) {
         return new Promise((resolve, reject) => {
             let dataSchema = [];
@@ -297,7 +308,8 @@ class callfiles extends baseModelbo {
             })
         })
     }
-    leadsStatsExport(req,res,next){
+
+    leadsStatsExport(req, res, next) {
         let _this = this;
         let data = req.body;
         if (!!!data.filter) {
@@ -319,35 +331,36 @@ class callfiles extends baseModelbo {
             agents_ids
         } = data.filter;
 
-        let sqlListCallFiles = `select listcallfile_id from listcallfiles
-                                       where EXTRA_WHERE and active = 'Y' `
+        let sqlListCallFiles = `select listcallfile_id
+                                from listcallfiles
+                                where EXTRA_WHERE
+                                  and active = 'Y' `
 
-        let SqlQuery = `Select distinct 
-callF.phone_number as "Phone Number",
-LCF.name as "List Leads Name",
-CONCAT(callF.first_name, ' ', callF.last_name) as "Client Name",
-callF.address1 as "Address", 
-callF.state as "State",
-callF.city as "City",
-callF.province as "Province",
-callF.postal_code as "Postal Code",
-callF.email as "Client Email",
-callF.country_code as "Country Code",
-callF.note as "Note",
-CS.label as "Call Status",
-callF.gender as "Gender",
-callF.age as "Age",
-callF.company_name as "Company Name",
-callF.siret as "Siret",
-callF.siren as "Siren",
-callF.date_of_birth as "Date Of Birth",
-callF.category as "Category",
-CONCAT(U.first_name, ' ', U.last_name) as "Agent Name" 
+        let SqlQuery = `Select distinct callF.phone_number as                             "Phone Number",
+                                        LCF.name as                                       "List Leads Name",
+                                        CONCAT(callF.first_name, ' ', callF.last_name) as "Client Name",
+                                        callF.address1 as                                 "Address",
+                                        callF.state as                                    "State",
+                                        callF.city as                                     "City",
+                                        callF.province as                                 "Province",
+                                        callF.postal_code as                              "Postal Code",
+                                        callF.email as                                    "Client Email",
+                                        callF.country_code as                             "Country Code",
+                                        callF.note as                                     "Note",
+                                        CS.label as                                       "Call Status",
+                                        callF.gender as                                   "Gender",
+                                        callF.age as                                      "Age",
+                                        callF.company_name as                             "Company Name",
+                                        callF.siret as                                    "Siret",
+                                        callF.siren as                                    "Siren",
+                                        callF.date_of_birth as                            "Date Of Birth",
+                                        callF.category as                                 "Category",
+                                        CONCAT(U.first_name, ' ', U.last_name) as         "Agent Name"
                         from callfiles as callF
-                        left join calls_historys as calls_h on callF.callfile_id = calls_h.call_file_id
-                        join listcallfiles AS LCF ON LCF.listcallfile_id = callF.listcallfile_id
-                        LEFT OUTER JOIN users AS U ON calls_h.agent_id = U.user_id
-                        LEFT OUTER JOIN callstatuses AS CS ON calls_h.call_status = CS.code 
+                                 left join calls_historys as calls_h on callF.callfile_id = calls_h.call_file_id
+                                 join listcallfiles AS LCF ON LCF.listcallfile_id = callF.listcallfile_id
+                                 LEFT OUTER JOIN users AS U ON calls_h.agent_id = U.user_id
+                                 LEFT OUTER JOIN callstatuses AS CS ON calls_h.call_status = CS.code
                         where calls_h.active = :active
                           and callF.active = :active
                           and U.active = :active
@@ -361,7 +374,7 @@ CONCAT(U.first_name, ' ', U.last_name) as "Agent Name"
         } else {
             extra_where_ListCallFile = " listcallfile_id in (:listCallFiles_ids) ";
         }
-        if(agents_ids && agents_ids.length !== 0){
+        if (agents_ids && agents_ids.length !== 0) {
             extra_where_sqlListCallFile += ' AND calls_h.agent_id in (:agents_ids)';
         }
         if (startTime && startTime !== '') {
@@ -397,7 +410,7 @@ CONCAT(U.first_name, ' ', U.last_name) as "Agent Name"
                         agents_ids: agents_ids
                     }
                 }).then(dataLeads => {
-                    if(dataLeads && dataLeads.length !== 0){
+                    if (dataLeads && dataLeads.length !== 0) {
                         let schema = [
                             {
                                 column: 'Phone Number',
@@ -502,7 +515,7 @@ CONCAT(U.first_name, ' ', U.last_name) as "Agent Name"
                             {
                                 column: 'Agent Name',
                                 type: 'String',
-                                currentColumn: 'Agent Name' ,
+                                currentColumn: 'Agent Name',
 
                             },
                             {
@@ -513,7 +526,7 @@ CONCAT(U.first_name, ' ', U.last_name) as "Agent Name"
                             }
 
                         ]
-                        const Sc = ['Phone Number','List Leads Name', 'Client Name', 'Address', 'State', 'City', 'Province', 'Postal Code', 'Client Email', 'Country Code','Note', 'Call Status', 'Gender', 'Age', 'Company Name', 'Siret', 'Siren', 'Date Of Birth', 'Agent Name', 'Category']
+                        const Sc = ['Phone Number', 'List Leads Name', 'Client Name', 'Address', 'State', 'City', 'Province', 'Postal Code', 'Client Email', 'Country Code', 'Note', 'Call Status', 'Gender', 'Age', 'Company Name', 'Siret', 'Siren', 'Date Of Birth', 'Agent Name', 'Category']
                         let ResultArray = [Sc];
                         let indexMapping = 0;
                         dataLeads.forEach(data_item => {
@@ -532,8 +545,7 @@ CONCAT(U.first_name, ' ', U.last_name) as "Agent Name"
                                 this.sendResponseError(res, ["Error.CannotGetCDRS"], 1, 403)
                             })
                         })
-                    }
-                    else{
+                    } else {
                         return res.send({
                             data: [],
                             success: false
@@ -542,19 +554,19 @@ CONCAT(U.first_name, ' ', U.last_name) as "Agent Name"
                 }).catch(err => {
                     _this.sendResponseError(res, ['Error stats'], err)
                 })
+            } else {
+                res.send({
+                    success: true,
+                    status: 200,
+                    data: [],
+                    message: 'no call file history'
+                })
             }
-            else {
-                    res.send({
-                        success: true,
-                        status: 200,
-                        data: [],
-                        message: 'no call file history'
-                    })
-                }
         }).catch(err => {
             return _this.sendResponseError(res, ['Error stats'], err)
         })
     }
+
     changeCustomFields(customField) {
         return new Promise((resolve, reject) => {
             if (Array.isArray(customField)) {
@@ -843,13 +855,13 @@ CONCAT(U.first_name, ' ', U.last_name) as "Agent Name"
                         default: item[1],
                         "readOnly": true
                     }
-                }else if (item[0] === 'comments') {
+                } else if (item[0] === 'comments') {
                     schema.properties[item[0]] = {
                         type: "string",
                         default: item[1],
-                        format : "textarea"
+                        format: "textarea"
                     }
-                }else {
+                } else {
                     schema.properties[item[0]] = {
                         type: "string",
                         default: item[1],
@@ -924,7 +936,7 @@ CONCAT(U.first_name, ' ', U.last_name) as "Agent Name"
                 let obj = {}
                 if (dataSchema[index1] && dataSchema[index2]) {
                     if (dataSchema[index1][0] === 'comments' || dataSchema[index2][0] === 'comments') {
-                        obj['comments'] = {sm : 12}
+                        obj['comments'] = {sm: 12}
                     } else {
                         obj[dataSchema[index1][0]] = {sm: 6}
                         obj[dataSchema[index2][0]] = {sm: 6}
@@ -1082,7 +1094,7 @@ CONCAT(U.first_name, ' ', U.last_name) as "Agent Name"
         })
     }
 
-    findCallFile(req,res,next){
+    findCallFile(req, res, next) {
         let _this = this
         const data = req.body;
         if (!!!data.phone_number && !!!data.callfile_id) {
@@ -1091,36 +1103,41 @@ CONCAT(U.first_name, ' ', U.last_name) as "Agent Name"
         // if (!!!data.account_id) {
         //     return _this.sendResponseError(res, ['Error empty account_id'])
         // }
-        let sqlQuerySelectLeads = `SELECT CF.*, LCF.*, C.script, C.account_id FROM callfiles AS CF 
-                                       LEFT OUTER JOIN listcallfiles AS LCF ON CF.listcallfile_id = LCF.listcallfile_id
-                                       LEFT OUTER JOIN campaigns AS C ON C.campaign_id = LCF.campaign_id
-                                       WHERE  C.active = :active AND LCF.active = :active AND length(phone_number) >=9 AND CF.active = :active AND CF.status = :active WHERE_CONDITION LIMIT :limit;`
+        let sqlQuerySelectLeads = `SELECT CF.*, LCF.*, C.script, C.account_id
+                                   FROM callfiles AS CF
+                                            LEFT OUTER JOIN listcallfiles AS LCF ON CF.listcallfile_id = LCF.listcallfile_id
+                                            LEFT OUTER JOIN campaigns AS C ON C.campaign_id = LCF.campaign_id
+                                   WHERE C.active = :active
+                                     AND LCF.active = :active
+                                     AND length(phone_number) >= 9
+                                     AND CF.active = :active
+                                     AND CF.status = :active WHERE_CONDITION LIMIT :limit;`
 
         let whereQuery = ''
-        if(data && data.phone_number){
+        if (data && data.phone_number) {
             whereQuery += `AND :phone_number like CONCAT('%',CF.phone_number, '%')`
         }
-        if(data && data.callfile_id){
+        if (data && data.callfile_id) {
             whereQuery += `AND CF.callfile_id = :callfile_id`
         }
-        sqlQuerySelectLeads = sqlQuerySelectLeads.replace('WHERE_CONDITION',whereQuery);
+        sqlQuerySelectLeads = sqlQuerySelectLeads.replace('WHERE_CONDITION', whereQuery);
         db.sequelize['crm-app'].query(sqlQuerySelectLeads, {
             type: db.sequelize['crm-app'].QueryTypes.SELECT,
             replacements: {
                 active: 'Y',
-                phone_number : data.phone_number || null,
-                callfile_id : data.callfile_id || null,
-              //  account_id : data.account_id,
-                limit : 1
+                phone_number: data.phone_number || null,
+                callfile_id: data.callfile_id || null,
+                //  account_id : data.account_id,
+                limit: 1
             }
         }).then((call_file) => {
             let cfLength = call_file.length || 0
-            if(cfLength !== 0 && data.fast_resp=== true){
+            if (cfLength !== 0 && data.fast_resp === true) {
                 return res.send({
                     success: true
                 })
             }
-            if(cfLength === 0){
+            if (cfLength === 0) {
                 return res.send({
                     success: false,
                     message: "unknown-phone-number"
@@ -1226,14 +1243,20 @@ CONCAT(U.first_name, ' ', U.last_name) as "Agent Name"
 
     getCallFileIdsByCampaignID(campaign_id) {
         return new Promise((resolve, reject) => {
-            this.db['campaigns'].findOne({where: {campaign_id: campaign_id, active: 'Y', status : 'Y'}}).then(campaign => {
+            this.db['campaigns'].findOne({
+                where: {
+                    campaign_id: campaign_id,
+                    active: 'Y',
+                    status: 'Y'
+                }
+            }).then(campaign => {
                 if (campaign && Object.keys(campaign) && Object.keys(campaign).length !== 0) {
                     let Camp_CS_ids = campaign.call_status_ids || [];
                     this.db['callstatuses'].findAll({
                         where: {
                             active: 'Y',
                             status: 'Y',
-                            callstatus_id : Camp_CS_ids
+                            callstatus_id: Camp_CS_ids
                         }
                     }).then((res_CS) => {
                         if (res_CS && res_CS.length !== 0) {
@@ -1256,7 +1279,7 @@ CONCAT(U.first_name, ' ', U.last_name) as "Agent Name"
                                             listcallfile_id: LCF_ids,
                                             active: 'Y',
                                             [Op.or]: [
-                                                { call_status: CS_codes },
+                                                {call_status: CS_codes},
                                                 {
                                                     call_status: null,
                                                     to_treat: 'Y',
@@ -1317,8 +1340,8 @@ CONCAT(U.first_name, ' ', U.last_name) as "Agent Name"
                             active: 'Y'
                         }
                     }).then((camp) => {
-                        if(camp){
-                            if(camp.status === 'N'){
+                        if (camp) {
+                            if (camp.status === 'N') {
                                 return resolve({
                                     success: false,
                                     message: 'You have to enable Campaign first !'
@@ -1329,10 +1352,10 @@ CONCAT(U.first_name, ' ', U.last_name) as "Agent Name"
                                 where: {
                                     active: 'Y',
                                     status: 'Y',
-                                    callstatus_id : Camp_CS_ids
+                                    callstatus_id: Camp_CS_ids
                                 }
                             }).then((res_CS) => {
-                                if(res_CS && res_CS.length !== 0){
+                                if (res_CS && res_CS.length !== 0) {
                                     let CS_codes = [];
                                     res_CS.map(item => {
                                         CS_codes.push(item.code);
@@ -1342,7 +1365,7 @@ CONCAT(U.first_name, ' ', U.last_name) as "Agent Name"
                                             listcallfile_id: list_call_file_id,
                                             active: 'Y',
                                             [Op.or]: [
-                                                { call_status: CS_codes },
+                                                {call_status: CS_codes},
                                                 {
                                                     call_status: null,
                                                     to_treat: 'Y',
@@ -1369,7 +1392,7 @@ CONCAT(U.first_name, ' ', U.last_name) as "Agent Name"
                                             })
                                         }
                                     }).catch(err => reject(err))
-                                }else{
+                                } else {
                                     resolve({
                                         success: false,
                                         message: 'Campaign without CS !'
@@ -1377,7 +1400,7 @@ CONCAT(U.first_name, ' ', U.last_name) as "Agent Name"
                                 }
 
                             }).catch(err => reject(err))
-                        }else{
+                        } else {
                             resolve({
                                 success: false,
                                 message: 'Campaign Not found !'
@@ -1467,7 +1490,9 @@ CONCAT(U.first_name, ' ', U.last_name) as "Agent Name"
 
     _getCFListsByIDList = (list_leads_id) => {
         return new Promise((resolve, reject) => {
-            let sqlQuerySelect = `select * from vicidial_list where list_id = :callfile_id;`
+            let sqlQuerySelect = `select *
+                                  from vicidial_list
+                                  where list_id = :callfile_id;`
             db.sequelize['crm-sql'].query(sqlQuerySelect, {
                 type: db.sequelize['crm-sql'].QueryTypes.SELECT,
                 replacements: {
