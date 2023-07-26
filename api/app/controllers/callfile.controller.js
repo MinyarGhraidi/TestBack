@@ -43,9 +43,6 @@ module.exports = {
     findCallFile: function (req, res, next){
         _itembo.findCallFile(req, res, next)
     },
-    SchemaCallFile: function (req, res, next){
-        _itembo.SchemaCallFile(req, res, next)
-    },
     RecycleCallFile: function (req, res, next){
         _itembo.RecycleCallFile(req, res, next)
     },
