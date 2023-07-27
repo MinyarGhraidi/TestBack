@@ -747,16 +747,16 @@ class agents extends baseModelbo {
         return new Promise((resolve, reject) => {
             _agent_log_eventsbo._getLastEvent(user_id).then(ALE => {
                 const action_name = ALE.data.dataValues.action_name;
+                if (action_name === crmStatus) {
+                    return resolve({
+                        success: false,
+                        status: 200,
+                        message: 'status already exists'
+                    })
+                }
                 if (uuid) {
                     this.OnConnectTelco(uuid, telcoStatus).then(result_telco => {
                         if (result_telco.success) {
-                            if (action_name === crmStatus) {
-                                return resolve({
-                                    success: false,
-                                    status: 200,
-                                    message: 'status already exists'
-                                })
-                            }
                             this.db["users"].findOne({where: {user_id: user_id}})
                                 .then(user => {
                                     if (user) {
