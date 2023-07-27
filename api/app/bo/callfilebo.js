@@ -785,7 +785,7 @@ CONCAT(U.first_name, ' ', U.last_name) as "Agent Name"
         return new Promise((resolve, reject) => {
             let AllCustomFields = []
             let idx = 0
-            for (const list_call_file of listCallfiles) {
+            listCallfiles.forEach(list_call_file => {
                 if (list_call_file.templates_id) {
                     this.db['templates_list_call_files'].findOne({
                         where: {
@@ -818,7 +818,7 @@ CONCAT(U.first_name, ' ', U.last_name) as "Agent Name"
                         return resolve(AllCustomFields)
                     }
                 }
-            }
+            })
 
         })
     }
