@@ -766,6 +766,15 @@ CONCAT(U.first_name, ' ', U.last_name) as "Agent Name"
         })
     }
 
+    _getCustomFields(resCustomFields){
+        return new Promise((resolve,reject) => {
+            if(resCustomFields && resCustomFields.length === 0){
+                return resolve([])
+            }
+            const distinctValues = [...new Set(resCustomFields.flat().map(obj => obj.label))];
+            return resolve(distinctValues)
+        })
+    }
     getCustomFields(req, res, next) {
         let resCustomFields = [];
         let campaign_id = req.body.campaign_id;
@@ -785,8 +794,7 @@ CONCAT(U.first_name, ' ', U.last_name) as "Agent Name"
                 camp_id: campaign_id,
                 active: 'Y'
             }
-        }).then(customFields => {
-            let AllFields = [];
+        }).then(async customFields => {
             const Fields = ['first_name', 'last_name', 'phone_number', 'address1', 'city', 'postal_code', 'email', 'country_code'];
             if (customFields.length === 0) {
                 res.send({
@@ -796,17 +804,17 @@ CONCAT(U.first_name, ' ', U.last_name) as "Agent Name"
                 })
                 return
             }
-            customFields.map((field) => {
+            await customFields.map((field) => {
                 resCustomFields.push(field.customfields);
             })
-            const distinctValues = [...new Set(resCustomFields.flat().map(obj => obj.label))];
-
-            AllFields = Fields.concat(distinctValues);
-            res.send({
-                success: true,
-                status: 200,
-                data: AllFields
+            this._getCustomFields(resCustomFields).then(data => {
+                res.send({
+                    success: true,
+                    status: 200,
+                    data: Fields.concat(data)
+                })
             })
+
         }).catch(err => {
             this.sendResponseError(res, ['Error Cannot get CustomFields'], err)
         })
