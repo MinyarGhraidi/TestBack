@@ -776,45 +776,40 @@ CONCAT(U.first_name, ' ', U.last_name) as "Agent Name"
         })
     }
     getCustomFields(req, res, next) {
-        let resCustomFields = [];
         let campaign_id = req.body.campaign_id;
         if (!!!campaign_id) {
             this.sendResponseError(res, ['Error.campaignIdRequired'])
             return
         }
-        let sql = `select distinct customfields
-                   from callfiles
-                   where listcallfile_id in (
-                       SELECT listcallfile_id FROM public.listcallfiles WHERE campaign_id = :camp_id and active = :active
-                   )
-                     and customfields <> '{}'`;
-        db.sequelize['crm-app'].query(sql, {
-            type: db.sequelize['crm-app'].QueryTypes.SELECT,
-            replacements: {
-                camp_id: campaign_id,
-                active: 'Y'
-            }
-        }).then(customFields => {
-            const Fields = ['first_name', 'last_name', 'phone_number', 'address1', 'city', 'postal_code', 'email', 'country_code'];
-            if (customFields.length === 0) {
-                res.send({
+        const Fields = ['first_name', 'last_name', 'phone_number', 'address1', 'city', 'postal_code', 'email', 'country_code'];
+        this.db['listcallfiles'].findOne({where : {campaign_id : campaign_id, active : 'Y'}}).then(listcallfile => {
+            if(listcallfile.templates_id){
+                this.db['templates_list_call_files'].findOne({where : {templates_list_call_files_id : listcallfile.templates_id, active : 'Y'}}).then(template => {
+                    let CF = template.custom_field ;
+                    let CustomFields = [];
+                    if(CF && CF.length !== 0){
+                        CustomFields = CF.map(c => c.label)
+                    }
+                    return res.send({
+                        success: true,
+                        status: 200,
+                        data: Fields.concat(CustomFields)
+                    })
+                }).catch(err => {
+                    this.sendResponseError(res, ['Error Cannot get CustomFields'], err)
+                })
+            }else{
+                let CF_list = listcallfile.custom_fields ;
+                let CustomFields_list = [];
+                if(CF_list && CF_list.length !== 0){
+                    CustomFields_list = CF_list.map(c => c.label)
+                }
+                return res.send({
                     success: true,
                     status: 200,
-                    data: Fields
+                    data: Fields.concat(CustomFields_list)
                 })
-                return
             }
-             customFields.map((field) => {
-                resCustomFields.push(field.customfields);
-            })
-            this._getCustomFields(resCustomFields).then(data => {
-                res.send({
-                    success: true,
-                    status: 200,
-                    data: Fields.concat(data)
-                })
-            })
-
         }).catch(err => {
             this.sendResponseError(res, ['Error Cannot get CustomFields'], err)
         })
