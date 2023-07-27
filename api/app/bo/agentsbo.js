@@ -349,7 +349,7 @@ class agents extends baseModelbo {
                                                     subscriber_uuid: dataSub.uuid,
                                                     options: options,
                                                     updated_at: new Date(),
-                                                    enabled : true
+                                                    enabled: true
                                                 }
                                                 axios
                                                     .put(`${base_url_cc_kam}api/v1/agents/${uuid}`, update_Agent, call_center_authorization)
@@ -543,45 +543,188 @@ class agents extends baseModelbo {
         })
     }
 
-    //-----------------> Telco Agent <------------------------
-    onConnect(req, res, next) {
-        let _this = this;
-        let {user_id, uuid, crmStatus, telcoStatus, pauseStatus, call_type} = req.body;
-        this.onConnectFunc(user_id, uuid, crmStatus, telcoStatus, pauseStatus)
-            .then((user) => {
-                if(user.success){
-                    let {sip_device, first_name, last_name, user_id, campaign_id, account_id} = user.agent.user;
-                    let data_agent = {
-                        user_id: user_id,
-                        first_name: first_name,
-                        last_name: last_name,
-                        uuid: sip_device.uuid,
-                        crmStatus: user.agent.user.params.status,
-                        telcoStatus: sip_device.status,
-                        timerStart: sip_device.updated_at,
-                        campaign_id: campaign_id,
-                        account_id: account_id,
-                        call_type: call_type
-                    };
-                    appSocket.emit('agent_connection', data_agent);
-                    return res.send({
-                        status: 200,
-                        message: 'success'
+    _getDomainNameByUUIDorName(domain){
+        return new Promise((resolve,reject)=> {
+            let sql_get_domain = `SELECT domain_name
+                    FROM domains
+                    WHERE 
+                    active = :active AND
+                    (domain_name = :domain OR params->>'uuid' = :domain);
+            `
+            db.sequelize['crm-app'].query(sql_get_domain, {
+                type: db.sequelize['crm-app'].QueryTypes.SELECT,
+                replacements: {
+                    active: 'Y',
+                    domain: domain
+                }
+            }).then(domain => {
+                if(domain && domain.length !== 0){
+                    return resolve({
+                        success : true,
+                        name : domain[0].domain_name
                     })
                 }else{
-                    if(user.status === 403){
-                        return _this.sendResponseError(res, ['Error.AnErrorHasOccurredUser', user.message || 'idk'], 1, 403);
-                    }
-                    return res.send({
-                        status: 200,
-                        message: user.message || "something wrong"
+                    return resolve({
+                        success : false,
+                        message : 'domain not found'
                     })
                 }
-
+            }).catch(err => {
+                reject(err)
             })
-            .catch((err) => {
-                return _this.sendResponseError(res, ['Error.AnErrorHasOccurredUser', err], 1, 403);
-            });
+        })
+    }
+
+    _getAgentByExtensionAndDomainUUID(extension, domain_name){
+        return new Promise((resolve,reject)=> {
+            let sql_get_agent = `SELECT *
+                    FROM users
+                    WHERE 
+                    active = :active AND
+                    sip_device->>'domain' = :domain_name AND
+                    sip_device->>'username' = :extension;
+            `
+            db.sequelize['crm-app'].query(sql_get_agent, {
+                type: db.sequelize['crm-app'].QueryTypes.SELECT,
+                replacements: {
+                    active: 'Y',
+                    domain_name: domain_name,
+                    extension: extension
+                }
+            }).then(agent => {
+                if(agent && agent.length !== 0){
+                    return resolve({
+                        success : true,
+                        agent : agent
+                    })
+                }else{
+                    return resolve({
+                        success : false,
+                        message : 'agent not found'
+                    })
+                }
+            }).catch(err => {
+                reject(err)
+            })
+        })
+    }
+    disconnectTelco(req, res, next) {
+        let _this = this;
+        let {extension, domain} = req.body;
+        if (!!!extension || !!!domain) {
+            return _this.sendResponseError(res, ['EmptyFields'], 1, 403);
+        }
+        this._getDomainNameByUUIDorName(domain).then(domain_response => {
+            if(domain_response.success){
+                let DomainName = domain_response.name
+                this._getAgentByExtensionAndDomainUUID(extension,DomainName).then(agent_response => {
+                    if(agent_response.success){
+                        let agentData = agent_response.agent[0]
+                        let dataConnexion = {
+                            user_id : agentData.user_id,
+                            uuid : agentData.sip_device.uuid,
+                            crmStatus : 'connected',
+                            telcoStatus : 'logged-out',
+                            pauseStatus : null,
+                            call_type : null
+                        }
+                        this._onConnect(dataConnexion).then(connexion_response => {
+                            if (connexion_response.success) {
+                                return res.send({
+                                    status: 200,
+                                    message: 'success'
+                                })
+                            } else {
+                                return res.send({
+                                    status: 403,
+                                    message: connexion_response.message
+                                })
+                            }
+                        }).catch(err => {
+                            return _this.sendResponseError(res, ['Error.AnErrorHasOccurredUser', err], 1, 403);
+                        })
+                    }else{
+                        return res.send({
+                            status : 403,
+                            success : false,
+                            message : agent_response.message
+                        })
+                    }
+                })
+            }else{
+                return res.send({
+                    status : 403,
+                    success : false,
+                    message : domain_response.message
+                })
+            }
+
+        })
+    }
+
+    //-----------------> Telco Agent <------------------------
+    _onConnect(data) {
+        return new Promise((resolve, reject) => {
+            let {user_id, uuid, crmStatus, telcoStatus, pauseStatus, call_type} = data;
+            this.onConnectFunc(user_id, uuid, crmStatus, telcoStatus, pauseStatus)
+                .then((user) => {
+                    if (user.success) {
+                        let {sip_device, first_name, last_name, user_id, campaign_id, account_id} = user.agent.user;
+                        let data_agent = {
+                            user_id: user_id,
+                            first_name: first_name,
+                            last_name: last_name,
+                            uuid: sip_device.uuid,
+                            crmStatus: user.agent.user.params.status,
+                            telcoStatus: sip_device.status,
+                            timerStart: sip_device.updated_at,
+                            campaign_id: campaign_id,
+                            account_id: account_id,
+                            call_type: call_type
+                        };
+                        appSocket.emit('agent_connection', data_agent);
+                        return resolve({
+                            success: true,
+                            status: 200,
+                            message: 'success'
+                        })
+                    } else {
+                        if (user.status === 403) {
+                            return resolve({
+                                success: false,
+                                message: user.message || 'idk'
+                            })
+                        }
+                        return resolve({
+                            success: false,
+                            message: user.message || "something wrong"
+                        })
+                    }
+
+                })
+                .catch((err) => {
+                    reject(err)
+                });
+        })
+    }
+
+    onConnect(req, res, next) {
+        let _this = this;
+        this._onConnect(req.body).then(data => {
+            if (data.success) {
+                return res.send({
+                    status: 200,
+                    message: 'success'
+                })
+            } else {
+                return res.send({
+                    status: 403,
+                    message: data.message
+                })
+            }
+        }).catch(err => {
+            return _this.sendResponseError(res, ['Error.AnErrorHasOccurredUser', err], 1, 403);
+        })
 
     }
 
@@ -609,7 +752,7 @@ class agents extends baseModelbo {
                         if (result_telco.success) {
                             if (action_name === crmStatus) {
                                 return resolve({
-                                    success : false,
+                                    success: false,
                                     status: 200,
                                     message: 'status already exists'
                                 })
@@ -633,7 +776,7 @@ class agents extends baseModelbo {
                                                         return resolve({
                                                             success: false,
                                                             status: 403,
-                                                            message : 'agent not updated !'
+                                                            message: 'agent not updated !'
                                                         });
                                                     }
                                                 })
@@ -645,7 +788,7 @@ class agents extends baseModelbo {
                                         resolve({
                                             success: false,
                                             status: 403,
-                                            message : 'user not found !'
+                                            message: 'user not found !'
                                         })
                                     }
 
@@ -838,48 +981,48 @@ class agents extends baseModelbo {
                 agents.forEach(user => {
                     // _usersbo.verifyTokenParam(user.current_session_token).then((res) => {
                     //     if (res === true) {
-                            let {sip_device, first_name, last_name, user_id, campaign_id} = user;
-                            this.db['agent_log_events'].findAll({
-                                where: {active: 'Y', user_id: user_id},
-                                order: [['agent_log_event_id', 'DESC']]
-                            })
-                                .then(events => {
-                                    if (events && events.length !== 0 && events[0].action_name !== 'logged-out') {
-                                        Users.push({
-                                            user_id: user_id,
-                                            first_name: first_name,
-                                            last_name: last_name,
-                                            uuid: sip_device.uuid,
-                                            crmStatus: user.params.status,
-                                            telcoStatus: sip_device.status,
-                                            timerStart: events[0].start_at,
-                                            campaign_id: campaign_id,
-                                            extension: sip_device.username
-                                        });
-                                    }
-                                    if (idx < agents.length - 1) {
-                                        idx++;
-                                    } else {
-                                        resolve(Users);
-                                    }
-                                })
-                                .catch(err => {
-                                    reject(err)
-                                })
+                    let {sip_device, first_name, last_name, user_id, campaign_id} = user;
+                    this.db['agent_log_events'].findAll({
+                        where: {active: 'Y', user_id: user_id},
+                        order: [['agent_log_event_id', 'DESC']]
+                    })
+                        .then(events => {
+                            if (events && events.length !== 0 && events[0].action_name !== 'logged-out') {
+                                Users.push({
+                                    user_id: user_id,
+                                    first_name: first_name,
+                                    last_name: last_name,
+                                    uuid: sip_device.uuid,
+                                    crmStatus: user.params.status,
+                                    telcoStatus: sip_device.status,
+                                    timerStart: events[0].start_at,
+                                    campaign_id: campaign_id,
+                                    extension: sip_device.username
+                                });
+                            }
+                            if (idx < agents.length - 1) {
+                                idx++;
+                            } else {
+                                resolve(Users);
+                            }
+                        })
+                        .catch(err => {
+                            reject(err)
+                        })
 
-                        // } else {
-                        //     let toUpdate = {
-                        //         channel_uuid: null,
-                        //         updated_at: moment(new Date()),
-                        //         current_session_token: null
-                        //     }
-                        //     this.db['users'].update(toUpdate, {where: {user_id: user.user_id}}).then(() => {
-                        //         idx++;
-                        //     }).catch(err => {
-                        //         reject(err)
-                        //     })
-                        // }
-                   // }).catch(err => reject(err))
+                    // } else {
+                    //     let toUpdate = {
+                    //         channel_uuid: null,
+                    //         updated_at: moment(new Date()),
+                    //         current_session_token: null
+                    //     }
+                    //     this.db['users'].update(toUpdate, {where: {user_id: user.user_id}}).then(() => {
+                    //         idx++;
+                    //     }).catch(err => {
+                    //         reject(err)
+                    //     })
+                    // }
+                    // }).catch(err => reject(err))
                 })
             } else {
                 resolve([]);
@@ -956,11 +1099,11 @@ class agents extends baseModelbo {
                         break
                 }
             })
-            inCall.sort((a,b) => a.timerStart - b.timerStart)
-            waitingCall.sort((a,b) => a.timerStart - b.timerStart)
-            inQualification.sort((a,b) => a.timerStart - b.timerStart)
-            onBreak.sort((a,b) => a.timerStart - b.timerStart)
-            connected.sort((a,b) => a.timerStart - b.timerStart)
+            inCall.sort((a, b) => a.timerStart - b.timerStart)
+            waitingCall.sort((a, b) => a.timerStart - b.timerStart)
+            inQualification.sort((a, b) => a.timerStart - b.timerStart)
+            onBreak.sort((a, b) => a.timerStart - b.timerStart)
+            connected.sort((a, b) => a.timerStart - b.timerStart)
             let Stats = inCall.concat(waitingCall, inQualification, onBreak, connected)
             resolve(Stats)
         })
@@ -970,7 +1113,7 @@ class agents extends baseModelbo {
         return new Promise((resolve, reject) => {
             this.onConnectFunc(item.user_id, item.uuid, 'connected', 'logged-out')
                 .then((user) => {
-                    if(user.success){
+                    if (user.success) {
                         let {sip_device, first_name, last_name, user_id, account_id, campaign_id} = user.agent.user;
                         let data_agent = {
                             user_id: user_id,
@@ -985,7 +1128,7 @@ class agents extends baseModelbo {
                         };
                         appSocket.emit('agent_connection', data_agent);
                         return resolve(true)
-                    }else{
+                    } else {
                         return resolve(true)
                     }
                 }).catch((err) => {
@@ -1053,7 +1196,7 @@ class agents extends baseModelbo {
                         updated_at: moment(new Date())
                     }, {where: {user_id: user_id}}).then(() => {
                         this.onConnectFunc(user.user_id, user.sip_device.uuid, 'logged-out', 'logged-out').then(() => {
-                            if(user.success){
+                            if (user.success) {
                                 appSocket.emit('reload.Permission', {
                                     user_id: user.user_id
                                 });
@@ -1061,7 +1204,7 @@ class agents extends baseModelbo {
                                     status: 200,
                                     success: true
                                 })
-                            }else{
+                            } else {
                                 return resolve({
                                     status: 200,
                                     success: true
@@ -1092,9 +1235,9 @@ class agents extends baseModelbo {
         })
     }
 
-    disconnectAgentsByAccountID(req,res,next){
+    disconnectAgentsByAccountID(req, res, next) {
         let account_id = req.body.account_id;
-        this.db['roles_crms'].findOne({where : {value : 'agent'}}).then(role => {
+        this.db['roles_crms'].findOne({where: {value: 'agent'}}).then(role => {
             let sql = `select user_id
                     FROM users
                     WHERE 
@@ -1102,8 +1245,8 @@ class agents extends baseModelbo {
                     sip_device->>'status' <> :status;`
             let where_condition = ''
 
-            if(account_id){
-                where_condition+= ' account_id = :account_id AND '
+            if (account_id) {
+                where_condition += ' account_id = :account_id AND '
             }
             where_condition += 'active = :active AND role_crm_id = :role_crm_id AND'
             sql = sql.replace('WHERE_CONDITION', where_condition)
@@ -1113,27 +1256,27 @@ class agents extends baseModelbo {
                     active: 'Y',
                     account_id: account_id,
                     role_crm_id: role.id,
-                    status : 'logged-out'
+                    status: 'logged-out'
                 }
             }).then(users => {
-                if(users && users.length !== 0){
+                if (users && users.length !== 0) {
                     let users_ids = users.map(u => u.user_id);
                     let idx = 0;
                     users_ids.forEach(user_id => {
                         appSocket.emit('destroy_session', {user_id: user_id, logged_out: true})
-                        if(idx < users_ids.length -1){
+                        if (idx < users_ids.length - 1) {
                             idx++;
-                        }else{
+                        } else {
                             res.send({
-                                status : 200,
-                                success : true
+                                status: 200,
+                                success: true
                             })
                         }
                     })
-                }else{
+                } else {
                     res.send({
-                        status : 200,
-                        success : true
+                        status: 200,
+                        success: true
                     })
                 }
             }).catch(err => {
@@ -1141,6 +1284,7 @@ class agents extends baseModelbo {
             })
         })
     }
+
     //---------------> Report <---------------------
 
     //------- Agent Details Report -------- //
@@ -1373,37 +1517,37 @@ class agents extends baseModelbo {
                         status: 200
                     })
                 }
-                    this.getReportByOneAgent({...newParams[0], agent_id: agent_ids}).then(result => {
-                        if (result.success) {
-                            agent_ids.forEach(agent=>{
-                                let currentAgent = dataAgents.filter((item) => item.user_id === agent)
-                                let AgentStatusData = []
-                                let total = 0
-                                result.data.forEach(item=>{
-                                    if(item.agent_id === agent){
-                                        total += Number(item.total)
-                                        AgentStatusData.push(item)
-                                    }
-                                })
-                                AgentStatusData.push({label: 'total', code: 'total', total: total})
-                                resultArray.push({agent: currentAgent[0], data: AgentStatusData});
+                this.getReportByOneAgent({...newParams[0], agent_id: agent_ids}).then(result => {
+                    if (result.success) {
+                        agent_ids.forEach(agent => {
+                            let currentAgent = dataAgents.filter((item) => item.user_id === agent)
+                            let AgentStatusData = []
+                            let total = 0
+                            result.data.forEach(item => {
+                                if (item.agent_id === agent) {
+                                    total += Number(item.total)
+                                    AgentStatusData.push(item)
+                                }
                             })
-                            return res.send({
-                                success: true,
-                                data: resultArray,
-                                status: 200
-                            })
-                        }else{
-                            return res.send({
-                                success: true,
-                                data: [],
-                                status: 200
-                            })
-                        }
+                            AgentStatusData.push({label: 'total', code: 'total', total: total})
+                            resultArray.push({agent: currentAgent[0], data: AgentStatusData});
+                        })
+                        return res.send({
+                            success: true,
+                            data: resultArray,
+                            status: 200
+                        })
+                    } else {
+                        return res.send({
+                            success: true,
+                            data: [],
+                            status: 200
+                        })
+                    }
 
-                    }).catch(err => {
-                        return this.sendResponseError(res, ['ErrorCannotGetStatus'], 1, 403)
-                    })
+                }).catch(err => {
+                    return this.sendResponseError(res, ['ErrorCannotGetStatus'], 1, 403)
+                })
 
             }).catch(err => {
                 return this.sendResponseError(res, ['ErrorCannotGetStatus'], 1, 403)
@@ -1962,13 +2106,13 @@ class agents extends baseModelbo {
     }
 
     changeCrmStatus(req, res, next) {
-        let {user_id, uuid, callfile, callfile_id,currentToken} = req.body;
+        let {user_id, uuid, callfile, callfile_id, currentToken} = req.body;
         _agent_log_eventsbo._getLastEvent(user_id).then(event => {
             let status = event.data.dataValues.action_name
-            if (status === 'waiting-call' || status === 'in_call' || (status === 'logged-out' && currentToken !== null ) ) {
+            if (status === 'waiting-call' || status === 'in_call' || (status === 'logged-out' && currentToken !== null)) {
                 this.onConnectFunc(user_id, uuid, 'connected', 'on-break')
                     .then((user) => {
-                        if(user.success){
+                        if (user.success) {
                             let {sip_device, first_name, last_name, user_id, campaign_id, account_id} = user.agent.user;
                             let data_agent = {
                                 user_id: user_id,
@@ -1988,8 +2132,8 @@ class agents extends baseModelbo {
                             }).catch(() => {
                                 return res.sendStatus(403)
                             })
-                        }else{
-                            if(user.status === 403){
+                        } else {
+                            if (user.status === 403) {
                                 return res.sendStatus(403)
                             }
                             return res.sendStatus(200)
@@ -2008,71 +2152,71 @@ class agents extends baseModelbo {
 
     }
 
-    callInQueue (req, res, next) {
+    callInQueue(req, res, next) {
         let {account_id, campaign_id} = req.body;
-          if(campaign_id){
-              redisClient.get(campaign_id, (err, stu) => {
-                  if (stu){
-                      let data = JSON.parse(stu)
-                      if (data.numberCall){
-                          res.send({
-                              success: true,
-                              total : parseInt(data.numberCall)
-                          })
-                      }
-                  }else if(err){
-                      res.send({
-                          success: false,
-                          message: err
-                      })
-                  }else{
-                      res.send({
-                          success: true,
-                          total:0
-                      })
-                  }
-              })
-          }else{
-             this.db['campaigns'].findAll({
-                 where:{
-                     active: 'Y',
-                     status: 'Y',
-                     account_id : account_id
-                 }
-             }).then(campaign=>{
-                 if(campaign && campaign.length !== 0){
-                     let total = 0
-                     let index = 0
-                     campaign.forEach(item=>{
-                         redisClient.get(item.campaign_id, (err, stu) => {
-                             if (stu){
-                                 let data = JSON.parse(stu)
-                                 if (data.numberCall){
-                                     total +=parseInt(data.numberCall)
-                                 }
-                             }else if(err){
-                                 res.send({
-                                     success: false,
-                                     message : err
-                                 })
-                             }
-                          if(index < campaign.length-1){
-                              index++
-                          }else{
-                              res.send({
-                                  success: true,
-                                  total : total
-                              })
-                          }
-                         })
-                     })
-                 }
-             }).catch(err => {
-                 return this.sendResponseError(res, ['Error.cannotCamp', err], 1, 403)
-             })
-          }
+        if (campaign_id) {
+            redisClient.get(campaign_id, (err, stu) => {
+                if (stu) {
+                    let data = JSON.parse(stu)
+                    if (data.numberCall) {
+                        res.send({
+                            success: true,
+                            total: parseInt(data.numberCall)
+                        })
+                    }
+                } else if (err) {
+                    res.send({
+                        success: false,
+                        message: err
+                    })
+                } else {
+                    res.send({
+                        success: true,
+                        total: 0
+                    })
+                }
+            })
+        } else {
+            this.db['campaigns'].findAll({
+                where: {
+                    active: 'Y',
+                    status: 'Y',
+                    account_id: account_id
+                }
+            }).then(campaign => {
+                if (campaign && campaign.length !== 0) {
+                    let total = 0
+                    let index = 0
+                    campaign.forEach(item => {
+                        redisClient.get(item.campaign_id, (err, stu) => {
+                            if (stu) {
+                                let data = JSON.parse(stu)
+                                if (data.numberCall) {
+                                    total += parseInt(data.numberCall)
+                                }
+                            } else if (err) {
+                                res.send({
+                                    success: false,
+                                    message: err
+                                })
+                            }
+                            if (index < campaign.length - 1) {
+                                index++
+                            } else {
+                                res.send({
+                                    success: true,
+                                    total: total
+                                })
+                            }
+                        })
+                    })
+                }
+            }).catch(err => {
+                return this.sendResponseError(res, ['Error.cannotCamp', err], 1, 403)
+            })
+        }
 
-}
+    }
 
 }
 
