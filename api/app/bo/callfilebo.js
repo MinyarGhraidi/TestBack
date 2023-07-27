@@ -794,7 +794,7 @@ CONCAT(U.first_name, ' ', U.last_name) as "Agent Name"
                 camp_id: campaign_id,
                 active: 'Y'
             }
-        }).then(async customFields => {
+        }).then(customFields => {
             const Fields = ['first_name', 'last_name', 'phone_number', 'address1', 'city', 'postal_code', 'email', 'country_code'];
             if (customFields.length === 0) {
                 res.send({
@@ -804,7 +804,7 @@ CONCAT(U.first_name, ' ', U.last_name) as "Agent Name"
                 })
                 return
             }
-            await customFields.map((field) => {
+             customFields.map((field) => {
                 resCustomFields.push(field.customfields);
             })
             this._getCustomFields(resCustomFields).then(data => {
