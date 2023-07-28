@@ -29,13 +29,13 @@ let Add_Reminder = new Cron("* * * * *", async function () {
     });
 }, null, true, 'Europe/Paris');
 
-// let Migrate_records = new Cron("* * * * *", async function () {
-//     migrateRecords.migrateRecords().then(result => {
-//         console.log(result)
-//     });
-// }, null, true, 'Europe/Paris');
+let Migrate_records = new Cron("* * * * *", async function () {
+    migrateRecords.migrateRecords().then(result => {
+        console.log(result)
+    });
+}, null, true, 'Europe/Paris');
 
 Add_CallFiles.start();
 Add_Reminder.start();
 Kill_Sessions.start();
-// Migrate_records.start()
+ Migrate_records.start()
