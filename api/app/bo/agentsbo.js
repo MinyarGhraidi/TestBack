@@ -2038,6 +2038,112 @@ class agents extends baseModelbo {
         //   }
     }
 
+    // ------------ VMD Reports ----------//
+
+    addObjectWithSum(objects, campaigns) {
+        return new Promise((resolve, reject) => {
+            let sumObject = { campaign: '' };
+            let idx_Array = 0;
+            objects.forEach((currentObject, index) => {
+                objects[index].campaign = campaigns && campaigns[objects[index].campaign]? campaigns[objects[index].campaign] : objects[index].campaign
+                let idx = 0;
+                Object.entries(currentObject).forEach(([key, value]) => {
+                    if (key !== 'campaign' && typeof value === 'number') {
+                        sumObject[key] = (sumObject[key] || 0) + value;
+                    }
+                    if (idx < Object.keys(currentObject).length - 1) {
+                        idx++
+                    }else{
+                        if (idx_Array < objects.length - 1) {
+                            idx_Array++
+                        }else{
+                            objects.push(sumObject);
+                            return resolve(objects);
+                        }
+                    }
+
+                });
+            });
+        });
+    }
+    vmdReports(req,res,next){
+        const params = req.body;
+        let {
+            campaign_ids,
+            callFile_ids,
+            selectedVmdStatus,
+            dateSelected_from,
+            dateSelected_to,
+            start_time,
+            end_time,
+            account_code
+        } = params;
+            let COUNT_VMDS = ""
+            let extra_where = ""
+            if(selectedVmdStatus.includes('HUMAN')){
+                COUNT_VMDS += `, CAST(COUNT (CASE WHEN "vmdStatus" = 'HUMAN' THEN 1 END ) AS INT) as HUMAN `
+            }
+            if(selectedVmdStatus.includes('NOTSURE')){
+                COUNT_VMDS += `, CAST(COUNT (CASE WHEN "vmdStatus" = 'NOTSURE' THEN 1 END ) AS INT) as NOTSURE `
+            }
+            if(selectedVmdStatus.includes('MACHINE')){
+                COUNT_VMDS += `, CAST(COUNT (CASE WHEN "vmdStatus" = 'MACHINE' THEN 1 END ) AS INT) as MACHINE `
+            }
+            if (start_time && start_time !== '') {
+                extra_where += ' AND start_time >= :start_time';
+            }
+            if (end_time && end_time !== '') {
+                extra_where += ' AND end_time <=  :end_time';
+            }
+            if (campaign_ids && campaign_ids.length !== 0) {
+                campaign_ids = campaign_ids.map(num => num.toString());
+                extra_where += ' AND "campaignId" in (:campaign_ids)';
+            }
+            let sqlCampaignVMD = `select CAST("campaignId" AS INT) as campaign
+                            EXTRA_COUNT_VMDS
+                            , CAST(count("vmdStatus") AS INT) as total
+from acc_cdrs WHERE SUBSTRING("custom_vars", 0 , POSITION(':' in "custom_vars") ) = :account_code
+AND "vmdStatus" in (:VMD_STATUS) AND "campaignId" notnull EXTRA_WHERE group by "campaignId" 
+                `
+            sqlCampaignVMD = sqlCampaignVMD.replace('EXTRA_COUNT_VMDS',COUNT_VMDS)
+            sqlCampaignVMD = sqlCampaignVMD.replace('EXTRA_WHERE',extra_where)
+            db.sequelize["cdr-db"]
+                .query(sqlCampaignVMD, {
+                    type: db.sequelize["cdr-db"].QueryTypes.SELECT,
+                    replacements: {
+                        start_time: moment(dateSelected_from).format('YYYY-MM-DD').concat(' ', start_time),
+                        end_time: moment(dateSelected_to).format('YYYY-MM-DD').concat(' ', end_time),
+                        account_code: account_code,
+                        VMD_STATUS : selectedVmdStatus,
+                        campaign_ids : campaign_ids
+                    }
+                }).then(resData => {
+                    if(resData && resData.length !== 0){
+                        let campaign_ids = resData.map(c => c.campaign)
+                        this.db['campaigns'].findAll({where : {campaign_id : campaign_ids}}).then(campaigns => {
+                            let C = {}
+                            campaigns.forEach( camp => {
+                                C[camp.campaign_id] = camp.campaign_name
+                            })
+                            this.addObjectWithSum(resData, C).then(res_vmd => {
+                                return res.send({success : true, data : res_vmd})
+                            })
+                        }).catch(err => {
+                            console.log(err)
+                            return this.sendResponseError(res,['cannotFindCampaigns',err],0,403)
+                        })
+                    }else{
+                        return res.send({success : false, data : []})
+                    }
+            }).catch(err => {
+                console.log(err)
+                return this.sendResponseError(res,['cannotgetDataVMD',err],1,403)
+            })
+
+    }
+
+
+    // ------------ EXTRA --------------//
     generatePassword() {
         const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
         const digits = '0123456789';
