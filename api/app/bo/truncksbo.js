@@ -24,26 +24,40 @@ class truncks extends baseModelbo {
         let trunk_kam = req.body.values;
         let data_db = req.body.db_values;
 
-        let whereCondition = {
-            active: 'Y',
-            status: 'Y'
-        };
+        let whereCondition = {};
 
         if (data_db.password && data_db.username) {
-            whereCondition.username = data_db.username
-            whereCondition.proxy = data_db.proxy
+            whereCondition = {
+                active: 'Y',
+                status: 'Y',
+                name: data_db.name
+            }
         }
 
         if (!!!data_db.password) {
-           whereCondition.proxy= data_db.proxy
+            whereCondition = {
+                active: 'Y',
+                status: 'Y',
+                $or : [
+                    {
+                        proxy : data_db.proxy,
+                    },
+                    {
+                        name : data_db.name
+                    }
+                ]
+            }
         }
-
 
         this.db['truncks'].findOne({
             where: whereCondition
         }).then(trunck => {
             if (trunck) {
-                return _this.sendResponseError(res, ['proxy already exists '], 0, 201)
+                if(!!!data_db.password){
+                    return _this.sendResponseError(res, [' name/proxy already exists '], 0, 201)
+                }else{
+                    return _this.sendResponseError(res, ['name already exists '], 0, 201)
+                }
             } else {
                 axios
                     .post(`${base_url_cc_kam}api/v1/gateways`, trunk_kam, call_center_authorization)
