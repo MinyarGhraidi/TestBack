@@ -35,16 +35,20 @@ class Callhistorybo extends baseModelbo {
                         dmt = moment((agent_event[0].finish_at || new Date()), "YYYY-MM-DD HH:mm:ss").diff(moment(agent_event[0].start_at, "YYYY-MM-DD HH:mm:ss"), 'seconds');
                         dmc=moment((agent_event[0].finish_at || new Date()), "YYYY-MM-DD HH:mm:ss").diff(moment(agent_event[0].start_at, "YYYY-MM-DD HH:mm:ss"), 'seconds');
                     }
-                    const sql_call =`update calls_historys
+                    let SETCondition = ""
+                    let sql_call =`update calls_historys
                                  set revision_id = :revision_id ,
                                  dmt = :dmt ,
                                  dmc = :dmc ,
-                                 note = :note ,
-                                 call_status = :call_status
+                                 note = :note SET_CONDITION
                                  where id = (select id from calls_historys
                                              where call_file_id =:call_file_id
                                              order by started_at DESC
                                              limit 1)`
+                    if(body.call_status){
+                        SETCondition += ', call_status = :call_status'
+                    }
+                    sql_call = sql_call.replace('SET_CONDITION', SETCondition)
                     db.sequelize['crm-app'].query(sql_call,{
                         type: db.sequelize['crm-app'].QueryTypes.SELECT,
                         replacements: {
@@ -53,7 +57,8 @@ class Callhistorybo extends baseModelbo {
                             note: body.note,
                             dmc: dmc,
                             dmt: dmt,
-                            call_status: body.call_status}
+                            call_status: body.call_status
+                        }
                     }).then(()=>{
                         resolve(true)
                     }).catch(err => {

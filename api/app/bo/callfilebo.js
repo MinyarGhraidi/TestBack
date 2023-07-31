@@ -80,7 +80,8 @@ class callfiles extends baseModelbo {
                             })
                         } else {
                             resolve({
-                                success: false
+                                success: false,
+                                message  :"cannot-update-callfile"
                             })
                         }
 
@@ -89,7 +90,8 @@ class callfiles extends baseModelbo {
                     })
                 } else {
                     resolve({
-                        success: false
+                        success: false,
+                        message  :"cannot-find-callfile"
                     })
                 }
 
@@ -127,16 +129,20 @@ class callfiles extends baseModelbo {
                     _callhistorybo._updateCall(call_history_data).then(resultHistory => {
                         res.send(resultHistory)
                     }).catch(err => {
-                        reject(err)
+                        console.log("err updateCallHistory : ", err)
+                        this.sendResponseError(res, ['cannotUpdateCallFileHistory', err], 0, 403)
                     })
                 }).catch(err => {
-                    reject(err)
+                    console.log("err saveReminder : ", err)
+                    this.sendResponseError(res, ['cannotSaveReminder', err], 1, 403)
                 })
             } else {
+                console.log("result update if false : ",result)
                 res.send(result)
             }
         }).catch(err => {
-            this.sendResponseError(res, ['cannotUpdateCallFile', err], 1, 403)
+            console.log("err UpdateCF : ", err)
+            this.sendResponseError(res, ['cannotUpdateCallFile', err], 2, 403)
         })
     }
 
