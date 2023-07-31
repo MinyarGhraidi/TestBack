@@ -418,7 +418,7 @@ let apiRouters = function (passport) {
     router.delete('/api/reminder/delete/:params', passport.authenticate('jwt', {session: false}), ReminderController.delete);
     router.post('/api/reminder/save', passport.authenticate('jwt', {session: false}), ReminderController.save);
 
-    router.post('/api/hooper/find/:params?', passport.authenticate('jwt', {session: false}), HooperController.find);
+    router.post('/api/hooper/findHooper', passport.authenticate('jwt', {session: false}), HooperController.findHooper);
     router.get('/api/hooper/findById/:entity_id', passport.authenticate('jwt', {session: false}), HooperController.findById);
     router.post('/api/campaign/deleteHooper',passport.authenticate('jwt', {session: false}),campaignController.resetHooper);
     router.post('/api/campaign/getCampaignsByDID_ID',passport.authenticate('jwt', {session: false}),campaignController.getCampaignsByDID_ID);

@@ -2129,14 +2129,12 @@ AND "vmdStatus" in (:VMD_STATUS) AND "campaignId" notnull EXTRA_WHERE group by "
                                 return res.send({success : true, data : res_vmd})
                             })
                         }).catch(err => {
-                            console.log(err)
                             return this.sendResponseError(res,['cannotFindCampaigns',err],0,403)
                         })
                     }else{
                         return res.send({success : false, data : []})
                     }
             }).catch(err => {
-                console.log(err)
                 return this.sendResponseError(res,['cannotgetDataVMD',err],1,403)
             })
 

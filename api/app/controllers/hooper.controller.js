@@ -17,4 +17,7 @@ module.exports = {
     delete: function (req, res, next) {
         hooperInst.delete(req, res, next);
     },
+    findHooper: function (req, res, next) {
+        hooperInst.findHooper(req, res, next);
+    },
 }
