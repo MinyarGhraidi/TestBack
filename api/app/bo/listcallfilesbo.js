@@ -379,10 +379,10 @@ class listcallfiles extends baseModelbo {
                 status: status,
                 updated_at: moment(new Date())
             }, {where: {listcallfile_id: listcallfile_id, active: 'Y'}}).then(() => {
-                this.db['callfiles'].update({
-                    status: status,
-                    updated_at: moment(new Date())
-                }, {where: {listcallfile_id: listcallfile_id, active: 'Y'}}).then(() => {
+                // this.db['callfiles'].update({
+                //     status: status,
+                //     updated_at: moment(new Date())
+                // }, {where: {listcallfile_id: listcallfile_id, active: 'Y'}}).then(() => {
                     if (status === 'N') {
                         this._deleteFromHooperByCallfileID(listcallfile_id).then(() => {
                             return resolve({
@@ -394,7 +394,7 @@ class listcallfiles extends baseModelbo {
                             success: true
                         })
                     }
-                }).catch(err => reject(err))
+             //   }).catch(err => reject(err))
 
             }).catch(err => reject(err))
         })

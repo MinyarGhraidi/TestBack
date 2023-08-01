@@ -350,11 +350,12 @@ class campaigns extends baseModelbo {
         return new Promise((resolve, reject) => {
             const UpdateEntities = ['pausestatuses', 'callstatuses', 'call_blundings'];
             this.changeStatusForEntities(UpdateEntities, compaign_id, status).then(() => {
-                this.changeStatus_callfiles(compaign_id, status).then(() => {
-                    resolve(true);
-                }).catch(err => {
-                    return reject(err);
-                });
+                // this.changeStatus_callfiles(compaign_id, status).then(() => {
+                //     resolve(true);
+                // }).catch(err => {
+                //     return reject(err);
+                // });
+                resolve(true);
             }).catch(err => {
                 return reject(err);
             });
