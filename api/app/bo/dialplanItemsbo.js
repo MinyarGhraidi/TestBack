@@ -1,5 +1,6 @@
 const {baseModelbo} = require('./basebo');
 const db = require("../models");
+const moment = require("moment");
 
 class dialplanItemsbo extends baseModelbo {
     constructor() {
@@ -113,6 +114,68 @@ class dialplanItemsbo extends baseModelbo {
 
         })
 
+
+    }
+
+
+    _changeStatus(dialplan_id, status){
+        return new Promise((resolve,reject) => {
+            if(status === 'N'){
+                this.db['dialplan_items'].update({updated_at : moment(new Date()), status : status},{where : {dialplan_item_id : dialplan_id}}).then(() => {
+                    return resolve({
+                        success : true
+                    })
+                }).catch(err => {
+                    return reject(err)
+                })
+            }else{
+                this.db['dialplan_items'].findOne({where : {dialplan_item_id : dialplan_id, active : 'Y'}}).then(dialPlan => {
+                    let trunck_id = dialPlan.trunck_id
+                    if(!!!trunck_id){
+                        return resolve({
+                            success : false,
+                            message : 'dialplan-without-trunck'
+                        })
+                    }else{
+                        this.db['truncks'].findOne({where : {trunck_id : trunck_id, active : 'Y'}}).then(Trunck => {
+                            if(!!!Trunck || Trunck.status === 'N'){
+                                return resolve({
+                                    success : false,
+                                    message : 'trunck-not-active'
+                                })
+                            }else{
+                                this.db['dialplan_items'].update({updated_at : moment(new Date()), status : status}, {where : {dialplan_item_id : dialplan_id}}).then(() => {
+                                    return resolve({
+                                        success : true
+                                    })
+                                }).catch(err => {
+                                    return reject(err)
+                                })
+                            }
+                        }).catch(err => {
+                            return reject(err)
+                        })
+                    }
+                }).catch(err => {
+                    return reject(err)
+                })
+            }
+        })
+    }
+    changeStatusDialPlan (req,res,next){
+        let {dialplan_id, status} = req.body;
+        if(!!!dialplan_id){
+            return this.sendResponseError(res, ['Error.DialplanNotFound'], 0, 403);
+        }
+        this._changeStatus(dialplan_id, status).then(result => {
+            return res.send({
+                success : result.success,
+                message : result.success ? 'updated ! ' : result.message,
+                status : result.success ? 200 : 403
+            })
+        }).catch(err => {
+            return this.sendResponseError(res, ['Error.cannotChangeStatusDialPlan',err], 1, 403);
+        })
 
     }
 

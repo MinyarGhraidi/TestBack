@@ -26,4 +26,7 @@ module.exports = {
     deleteTrunk: function (req, res, next) {
         truncksDaoInst.deleteTrunk(req, res, next);
     },
+    changeStatusTrunk: function (req, res, next) {
+    truncksDaoInst.changeStatusTrunk(req, res, next);
+},
 }

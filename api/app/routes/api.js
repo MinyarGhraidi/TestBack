@@ -203,6 +203,7 @@ let apiRouters = function (passport) {
     router.post("/api/trunk/saveTrunk", passport.authenticate('jwt', {session: false}), truncksController.saveTrunk);
     router.post("/api/trunk/updateTrunk", passport.authenticate('jwt', {session: false}), truncksController.updateTrunk);
     router.post("/api/trunk/deleteTrunk", passport.authenticate('jwt', {session: false}), truncksController.deleteTrunk);
+    router.post("/api/trunk/changeStatusTrunk", passport.authenticate('jwt', {session: false}), truncksController.changeStatusTrunk);
 
     //callstatus routers
     router.post("/api/callstatus/find/:params?", passport.authenticate('jwt', {session: false}), callstatusController.find);
@@ -424,6 +425,7 @@ let apiRouters = function (passport) {
     router.post('/api/campaign/getCampaignsByDID_ID',passport.authenticate('jwt', {session: false}),campaignController.getCampaignsByDID_ID);
 
     router.post('/api/dialplanItems/findTrunck', passport.authenticate('jwt', {session: false}), dialpanItemsController.getDialPlan);
+    router.post('/api/dialplanItems/changeStatusDialPlan', passport.authenticate('jwt', {session: false}), dialpanItemsController.changeStatusDialPlan);
 
     return router;
 
