@@ -36,7 +36,7 @@ app.all('*', (req, res, next) => {
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
   res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,content-type, Authorization');
 
- // res.setHeader('Cross-Origin-Resource-Policy', 'cross-site');
+  res.setHeader('Cross-Origin-Resource-Policy', 'cross-site');
 
   next();
 });
