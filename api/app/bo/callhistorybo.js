@@ -25,12 +25,13 @@ class Callhistorybo extends baseModelbo {
                 }
             }).then(agent_event=>{
                 if(agent_event && agent_event.length !== 0){
-                    console.log("last status ",agent_event[0])
                     let dmt = moment(new Date()).tz('Europe/Paris').diff(moment(agent_event[0].start_at, "YYYY-MM-DD HH:mm:ss"), 'seconds') || 0
+                    let dmc = moment((agent_event[0].finish_at || new Date()), "YYYY-MM-DD HH:mm:ss").diff(moment(agent_event[0].start_at, "YYYY-MM-DD HH:mm:ss"), 'seconds') || 0
                     let SETCondition = ""
                     let sql_call =`update calls_historys
                                  set revision_id = :revision_id ,
                                  dmt = :dmt ,
+                                 dmc = :dmc ,
                                  note = :note SET_CONDITION
                                  where id = (select id from calls_historys
                                              where call_file_id =:call_file_id
@@ -47,6 +48,7 @@ class Callhistorybo extends baseModelbo {
                             revision_id: body.revision_id || null,
                             note: body.note,
                             dmt: dmt,
+                            dmc : dmc,
                             call_status: body.call_status
                         }
                     }).then(()=>{
