@@ -788,10 +788,10 @@ class agents extends baseModelbo {
                 }
                 if (uuid) {
                     this.OnConnectTelco(uuid, telcoStatus).then(() => {
-                                this.deleteChannelUUID(user_id, crmStatus).then(() => {
+                                this.deleteChannelUUID(user.user_id, crmStatus).then(() => {
                                     let params = user.params;
                                     user.updated_at = moment(new Date());
-                                    this.updateAgentStatus(user_id, user, telcoStatus, crmStatus, params, pauseStatus)
+                                    this.updateAgentStatus(user.user_id, user, telcoStatus, crmStatus, params, pauseStatus)
                                         .then(agent => {
                                             if (agent.success) {
                                                 return resolve({
