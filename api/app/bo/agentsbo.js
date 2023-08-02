@@ -775,6 +775,8 @@ class agents extends baseModelbo {
 
     onConnectFunc(user_id, uuid, crmStatus, telcoStatus, pauseStatus = null) {
         return new Promise((resolve, reject) => {
+            this._getUserByUUID(uuid).then(userData => {
+                let user = userData.user
             _agent_log_eventsbo._getLastEvent(user_id).then(ALE => {
                 const action_name = ALE.data.dataValues.action_name;
                 if (action_name === crmStatus) {
@@ -786,8 +788,6 @@ class agents extends baseModelbo {
                 }
                 if (uuid) {
                     this.OnConnectTelco(uuid, telcoStatus).then(() => {
-                            this._getUserByUUID(uuid).then(userData => {
-                                let user = userData.user
                                 this.deleteChannelUUID(user_id, crmStatus).then(() => {
                                     let params = user.params;
                                     user.updated_at = moment(new Date());
@@ -813,13 +813,13 @@ class agents extends baseModelbo {
                                         });
                                 }).catch(err => reject(err))
                             })
-                    }).catch((err) => {
-                        reject(err);
-                    });
                 } else {
                     reject(false)
                 }
             })
+            }).catch((err) => {
+                reject(err);
+            });
         })
     }
 
@@ -828,8 +828,10 @@ class agents extends baseModelbo {
         return new Promise((resolve, reject) => {
             let agent;
             let sip_device = agent_.sip_device;
-            sip_device.status = telcoStatus;
-            sip_device.updated_at = updatedAt_tz;
+            if(telcoStatus){
+                sip_device.status = telcoStatus;
+                sip_device.updated_at = updatedAt_tz;
+            }
             agent = {user_id: user_id, sip_device: sip_device, params: params};
             agent.params.status = crmStatus;
             this.db['users'].update(agent, {
