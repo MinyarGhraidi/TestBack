@@ -10,8 +10,8 @@ const passport = require('passport');
 app.use(useragent.express());
 app.use(cors());
 
-app.use(bodyParser.json({limit: '50mb'}));
-app.use(bodyParser.urlencoded({extended: false, limit: '50mb'}));
+app.use(bodyParser.json({limit: '1024mb'}));
+app.use(bodyParser.urlencoded({extended: false, limit: '8192mb'}));
 
 require('./app/services/passportStrategy')(passport);
 app.set("view engine", "ejs");
@@ -35,9 +35,6 @@ app.all('*', (req, res, next) => {
   res.setHeader('Access-Control-Expose-Headers', 'Authorization');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
   res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,content-type, Authorization');
-
-  res.setHeader('Cross-Origin-Resource-Policy', 'cross-site');
-
   next();
 });
 
