@@ -697,7 +697,8 @@ class agents extends baseModelbo {
                             })
                         }
                         return resolve({
-                            success: false,
+                            success: true,
+                            status : 200,
                             message: user.message || "something wrong"
                         })
                     }
