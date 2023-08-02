@@ -5,7 +5,7 @@ Authorization: Bearer BomjNx8kFfZTdCFx4kH3hGECO78yS0C0KS7pgO0BUe8COxcved
 
 ###
 #GET AGENT BY ID
-GET https://92.222.147.159:1443/api/v1/agents/28379d77-96a5-4b81-969e-1109fe7e7893
+GET https://92.222.147.159:1443/api/v1/agents/c7b2b479-0ab5-4b6a-9eb4-8668f815b363
 Content-Type: application/json
 Authorization: Bearer BomjNx8kFfZTdCFx4kH3hGECO78yS0C0KS7pgO0BUe8COxcved
 
@@ -60,16 +60,14 @@ Authorization: Bearer BomjNx8kFfZTdCFx4kH3hGECO78yS0C0KS7pgO0BUe8COxcved
 
 ###
 #UPDATE AGENT
-PUT https://92.222.147.159:1443/api/v1/agents/dce9b2e4-f295-43f4-81b9-0306e81478cc
+PUT https://92.222.147.159:1443/api/v1/agents/3f885201-8b7c-44a7-a0fc-bcd33b378d49
 Content-Type: application/json
 Authorization: Bearer BomjNx8kFfZTdCFx4kH3hGECO78yS0C0KS7pgO0BUe8COxcved
 
 {
-    "name": "Anis",
-  "uuid": "dce9b2e4-f295-43f4-81b9-0306e81478cc",
-  "domain_uuid": "996d61c9-1958-4af6-b82a-1f235614fc73",
-  "subscriber_uuid": "996d63b5-e626-45ed-84ae-b939a3fa9b7c",
-  "status": "logged-out",
+  "domain_uuid": "996d6199-62c3-41e4-8c9d-4aa497ea4fe5",
+  "subscriber_uuid": "996d62f7-381d-4a18-83ea-6fe01ce20ca2",
+  "name": "1013",
     "enabled": true,
     "options": {
         "call_timeout": 60,

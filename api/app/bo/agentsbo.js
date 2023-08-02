@@ -2204,7 +2204,7 @@ AND "vmdStatus" in (:VMD_STATUS) AND "campaignId" notnull EXTRA_WHERE group by "
         _agent_log_eventsbo._getLastEvent(user_id).then(event => {
             let status = event.data.dataValues.action_name
             if (status === 'waiting-call' || status === 'in_call' || (status === 'logged-out' && currentToken !== null)) {
-                this.onConnectFunc(user_id, uuid, 'connected', 'on-break')
+                this.onConnectFunc(user_id, uuid, 'connected', 'logged-out')
                     .then((user) => {
                         if (user.success) {
                             let {sip_device, first_name, last_name, user_id, campaign_id, account_id} = user.agent.user;
