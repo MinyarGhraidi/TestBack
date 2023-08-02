@@ -52,7 +52,16 @@ class Callhistorybo extends baseModelbo {
                             call_status: body.call_status
                         }
                     }).then(()=>{
-                        resolve(true)
+                        this.db['hoopers'].destroy({
+                            where: {
+                                callfile_id: body.call_file_id,
+                            }
+                        }).then(() => {
+                            resolve(true)
+                        }).catch(err => {
+                            reject(err)
+                        })
+
                     }).catch(err => {
                         reject(err)
                     })
