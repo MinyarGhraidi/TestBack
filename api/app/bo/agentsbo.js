@@ -1017,7 +1017,10 @@ class agents extends baseModelbo {
         }
 
         if (status) {
-            where.params = {"status": status}
+            where.params = {"status": status === "in_qualification" ? 'waiting-call' : status}
+        }
+        if(status === 'in_qualification'){
+            where.channel_uuid = {[Op.not]: null}
         }
         this.db['users'].findAll({where: where})
             .then(agents => {
