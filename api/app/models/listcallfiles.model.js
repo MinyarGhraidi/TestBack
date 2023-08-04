@@ -62,7 +62,10 @@ module.exports = (sequelize, Sequelize) => {
             },
             sql_list_id: {
                 type: Sequelize.INTEGER
-            }
+            },
+            stats: {
+                type: Sequelize.JSONB,
+            },
         },
         {timestamps: false,}
     )

@@ -730,21 +730,6 @@ class agents extends baseModelbo {
 
     }
 
-    deleteChannelUUID(user_id, crmStatus) {
-        return new Promise((resolve, reject) => {
-            if (crmStatus === 'in_call') {
-                return resolve(true)
-            }
-            let toUpdate = {
-                channel_uuid: null,
-                updated_at: moment(new Date())
-            }
-            this.db['users'].update(toUpdate, {where: {user_id: user_id, active: 'Y'}}).then(() => {
-                resolve(true)
-            }).catch(err => reject(err))
-        })
-    }
-
     _getUserByUUID = (uuid) => {
         return new Promise((resolve, reject) => {
             let sql_get_user = `SELECT *
@@ -789,7 +774,6 @@ class agents extends baseModelbo {
                 }
                 if (uuid) {
                     this.OnConnectTelco(uuid, telcoStatus).then(() => {
-                                this.deleteChannelUUID(user.user_id, crmStatus).then(() => {
                                     let params = user.params;
                                     user.updated_at = moment(new Date());
                                     this.updateAgentStatus(user.user_id, user, telcoStatus, crmStatus, params, pauseStatus)
@@ -812,7 +796,6 @@ class agents extends baseModelbo {
                                         .catch((err) => {
                                             reject(err);
                                         });
-                                }).catch(err => reject(err))
                             })
                 } else {
                     reject(false)
@@ -964,7 +947,7 @@ class agents extends baseModelbo {
                 agents.forEach(user => {
                     // _usersbo.verifyTokenParam(user.current_session_token).then((res) => {
                     //     if (res === true) {
-                    let {sip_device, first_name, last_name, user_id, campaign_id} = user;
+                    let {sip_device, first_name, last_name, user_id, campaign_id, channel_uuid, updated_at} = user;
                     this.db['agent_log_events'].findAll({
                         where: {active: 'Y', user_id: user_id},
                         order: [['agent_log_event_id', 'DESC']]
@@ -980,7 +963,9 @@ class agents extends baseModelbo {
                                     telcoStatus: sip_device.status,
                                     timerStart: events[0].start_at,
                                     campaign_id: campaign_id,
-                                    extension: sip_device.username
+                                    extension: sip_device.username,
+                                    channel_uuid : channel_uuid,
+                                    updated_at : updated_at
                                 });
                             }
                             if (idx < agents.length - 1) {
