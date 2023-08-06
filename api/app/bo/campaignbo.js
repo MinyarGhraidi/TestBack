@@ -720,108 +720,169 @@ class campaigns extends baseModelbo {
 
 
     //-----------------> Assign / Unassign Agents to Campaign <--------------
+    _getAssigned_UnasignedAgentsByQueueUUIDS(campaign_id, roleCrmAgent, account_id, queue_uuids, campaign_agents, queue_uuid) {
+        return new Promise((resolve, reject) => {
+            this.db['users'].findAll({
+                where: {
+                    role_crm_id: roleCrmAgent,
+                    active: 'Y',
+                    account_id: account_id,
+                    $or: [{campaign_id: {$eq: campaign_id}}, {campaign_id: {$eq: null}}]
+                }
+            }).then(data => {
+                if (data && data.length !== 0) {
+                    let assignedToCampaign = data.filter(agent => agent.isAssigned === true) || []
+                    let assignedUUIDs = assignedToCampaign.map(agent => agent.sip_device.uuid)
+                    let notAssignedToCampaign = data.filter(agent => agent.isAssigned === false) || []
+                    if (this.areEqualArrays(queue_uuids, assignedUUIDs)) {
+                        resolve({
+                            assigned: assignedToCampaign,
+                            unassigned: notAssignedToCampaign,
+                            campaign_user_ids: campaign_agents
+                        })
+                    } else {
+                        this.fixConsistency(queue_uuids, assignedToCampaign, notAssignedToCampaign, queue_uuid, campaign_agents, campaign_id).then((res_users) => {
+                            if (res_users.data && res_users.length !== 0) {
+                                const areUnasigned = assignedToCampaign.filter(obj => res_users.data.includes(obj.user_id));
+                                const newAssigned = assignedToCampaign.filter(obj => !res_users.data.includes(obj.user_id));
+                                let newUnassigned = notAssignedToCampaign.concat(areUnasigned);
+                                resolve({
+                                    assigned: newAssigned,
+                                    unassigned: newUnassigned,
+                                    campaign_user_ids: res_users.campaign_agents
+                                })
+                            } else {
+                                resolve({
+                                    assigned: assignedToCampaign,
+                                    unassigned: notAssignedToCampaign,
+                                    campaign_user_ids: campaign_agents
+                                })
+                            }
+                        }).catch(err => reject(err))
+                    }
+                } else {
+                    resolve({
+                        assigned: [],
+                        unassigned: [],
+                        campaign_user_ids: campaign_agents
+                    })
+                }
+            }).catch(err => reject(err))
+        })
+    }
 
     getAssignedAgents(req, res, next) {
         let _this = this;
-        let {campaign_id, account_id, queue_uuid, camp_agents, roleCrmAgent} = req.body;
+        let {campaign_id, account_id, queue_uuid, roleCrmAgent} = req.body;
         this.db['campaigns'].findOne({where: {campaign_id: campaign_id}})
             .then(campaign => {
-                this.db['users'].findAll({
-                    where: {
-                        role_crm_id: roleCrmAgent,
-                        active: 'Y',
-                        account_id: account_id,
-                        $or: [{campaign_id: {$eq: campaign_id}}, {campaign_id: {$eq: null}}],
-                    }
-                })
-                    .then(agents => {
-                        axios
-                            .get(`${base_url_cc_kam}api/v1/queues/${queue_uuid}/tiers`, call_center_authorization)
-                            .then(data => {
-                                this.db['users'].findAll({where: {user_id: camp_agents, active: 'Y'}})
-                                    .then(allAgents => {
-                                        let queue_agents = data.data.result.map(el => el.agent_uuid);
-                                        let db_agents = (allAgents && allAgents.length !== 0) ? allAgents.map(el => el.sip_device.uuid) : [];
-                                        this.fixConsistency(queue_uuid, allAgents, queue_agents, db_agents, campaign_id, campaign)
-                                            .then(camp => {
-                                                let campAgents = camp.agents ? camp.agents : [];
-                                                let assignedAgents = [];
-                                                let notAssignedAgents = [];
-                                                if (campAgents && campAgents.length !== 0) {
-                                                    assignedAgents = agents.filter((agent) => campAgents.includes(agent.user_id));
-                                                    notAssignedAgents = agents.filter((agent) => !campAgents.includes(agent.user_id));
-                                                } else {
-                                                    assignedAgents = [];
-                                                    notAssignedAgents = agents;
-                                                }
-                                                let data = {
-                                                    assignedAgents,
-                                                    notAssignedAgents,
-                                                    campaign: camp
-                                                }
-                                                res.send({
-                                                    status: 200,
-                                                    message: 'success',
-                                                    data: data
-                                                })
-                                            })
-                                            .catch(err => {
-                                                return _this.sendResponseError(res, ['Error fix consistency', err], 1, 403);
-                                            })
-                                    })
-                                    .catch(err => {
-
-                                        return _this.sendResponseError(res, ['cannot get list of users', err], 1, 403);
-                                    })
+                if (campaign && Object.keys(campaign).length !== 0) {
+                    axios
+                        .get(`${base_url_cc_kam}api/v1/queues/${queue_uuid}/tiers`, call_center_authorization)
+                        .then(data => {
+                            let queue_agents_uuids = data.data.result.map(el => el.agent_uuid);
+                            this._getAssigned_UnasignedAgentsByQueueUUIDS(campaign_id, roleCrmAgent, account_id, queue_agents_uuids, campaign.agents || [], queue_uuid).then(data_agents => {
+                                let newCamp = campaign
+                                newCamp.agents = data_agents.campaign_user_ids
+                                let data = {
+                                    assignedAgents: data_agents.assigned,
+                                    notAssignedAgents: data_agents.unassigned,
+                                    campaign: newCamp
+                                }
+                                return res.send({
+                                    status: 200,
+                                    message: 'success',
+                                    data: data
+                                })
+                            }).catch(err => {
+                                return _this.sendResponseError(res, ['CannotGetAgents', err], 0, 403);
                             })
-                            .catch(err => {
-                                return _this.sendResponseError(res, ['Kamailio error', err], 1, 403);
-                            })
+                        }).catch(err => {
+                        return _this.sendResponseError(res, ['Kamailio error', err], 1, 403);
                     })
-                    .catch((err) => {
-                        return _this.sendResponseError(res, ['cannot get list agents', err], 1, 403);
-                    });
+                } else {
+                    return _this.sendResponseError(res, ['Campaign_notFound'], 1, 403);
+                }
             })
             .catch((err) => {
                 return _this.sendResponseError(res, ['cannot fetch campaign', err], 1, 403);
             });
     }
 
-    fixConsistency(queue_uuid, allAgents, queue_agents, db_agents, campaign_id, campaign) {
+    compareUUIDs(queue, db) {
         return new Promise((resolve, reject) => {
-            let areEqual = this.areEqualArrays(queue_agents, db_agents);
-            if (areEqual) {
-                resolve(campaign);
-            } else {
-                if (queue_agents.length > db_agents.length) {
-                    let agents_not_assigned = queue_agents.filter(el => !db_agents.includes(el));
-                    axios
-                        .post(`${base_url_cc_kam}api/v1/queues/${queue_uuid}/tiers/delete`, {agents: agents_not_assigned}, call_center_authorization)
-                        .then(resp => {
-                            resolve(campaign);
-                        })
-                        .catch(err => {
-                            reject(err)
-                        })
+            const diffArray1 = queue.filter(str => !db.includes(str));
+            const diffArray2 = db.filter(str => !queue.includes(str));
 
-                } else {
-                    let not_assigned = allAgents.filter(el => !queue_agents.includes(el.sip_device.uuid));
-                    let agents_list = not_assigned.map(el => el.user_id);
-                    this.db['users'].update({campaign_id: 0}, {where: {user_id: agents_list}})
-                        .then(resp => {
-                            this.db['campaigns'].update({agents: allAgents.filter(el => queue_agents.includes(el.sip_device.uuid))}, {where: {campaign_id: campaign_id}})
-                                .then(result => {
-                                    resolve(result);
-                                })
-                                .catch(err => {
-                                    reject(err)
-                                })
-                        })
-                        .catch(err => {
-                            reject(err)
-                        })
-                }
+            if (diffArray1.length === 0 && diffArray2.length === 0) {
+                resolve({message: 'equal'});
+            } else if (diffArray1.length === 0) {
+                resolve({message: 'db', data: diffArray2});
+            } else if (diffArray2.length === 0) {
+                resolve({message: 'queue', data: diffArray1});
+            } else {
+                resolve({message: 'both', data_queue: diffArray1, data_db: diffArray2});
             }
+        });
+    }
+
+    updateUnafectedUsers(user_ids, campaign_agents, campaign_id) {
+        return new Promise((resolve, reject) => {
+            this.db['users'].update({
+                updated_at: moment(new Date()),
+                isAssigned: false,
+                campaign_id: null
+            }, {where: {user_id: user_ids}}).then(() => {
+                const filteredIds = campaign_agents.filter((user_id) => !user_ids.includes(user_id));
+                this.db['campaigns'].update({
+                    updated_at: moment(new Date),
+                    agents: filteredIds
+                }, {where: {campaign_id: campaign_id}}).then(() => {
+                    return resolve({ids: filteredIds})
+                }).catch(err => reject(err))
+            }).catch(err => reject(err))
+        })
+    }
+
+    fixConsistency(queue_uuids, affected_agents_db, unnafected_agents_db, queue_uuid, campaign_agents, campaign_id) {
+        return new Promise((resolve, reject) => {
+            let affected_agents_uuids = affected_agents_db.map(agent => agent.sip_device.uuid);
+            this.compareUUIDs(queue_uuids, affected_agents_uuids).then(data_result => {
+                switch (data_result.message) {
+                    case 'queue' : {
+                        axios
+                            .post(`${base_url_cc_kam}api/v1/queues/${queue_uuid}/tiers/delete`, {"agents": data_result.data}, call_center_authorization)
+                            .then(() => {
+                                return resolve({data: [], campaign_agents: campaign_agents})
+                            }).catch(err => reject(err))
+                    }
+                        break;
+                    case 'both' : {
+                        axios
+                            .post(`${base_url_cc_kam}api/v1/queues/${queue_uuid}/tiers/delete`, {"agents": data_result.data_queue}, call_center_authorization)
+                            .then(() => {
+                                const user_ids = affected_agents_db
+                                    .filter(obj => data_result.data_db.includes(obj.sip_device.uuid))
+                                    .map(obj => obj.user_id);
+                                this.updateUnafectedUsers(user_ids, campaign_agents, campaign_id).then((data_camp_agents) => {
+                                    return resolve({data: user_ids, campaign_agents: data_camp_agents.ids})
+                                }).catch(err => reject(err))
+                            }).catch(err => reject(err))
+                    }
+                        break;
+                    case 'db' : {
+                        const user_ids = affected_agents_db
+                            .filter(obj => data_result.data.includes(obj.sip_device.uuid))
+                            .map(obj => obj.user_id);
+                        this.updateUnafectedUsers(user_ids, campaign_agents, campaign_id).then((data_camp_agents) => {
+                            return resolve({data: user_ids, campaign_agents: data_camp_agents.ids})
+                        }).catch(err => reject(err))
+                    }
+                        break;
+                    default :
+                        return resolve({data: [], campaign_agents: campaign_agents})
+                }
+            }).catch(err => reject(err))
         })
     }
 
@@ -837,93 +898,84 @@ class campaigns extends baseModelbo {
         return true;
     }
 
+    _addAgentsToQueue(tiers,queue_uuid,user_ids_toAdd,campaign_id){
+        return new Promise((resolve,reject) => {
+            if (tiers.tiers && tiers.tiers.length !== 0) {
+                this.addToQueue(tiers, queue_uuid).then(() => {
+                    this.updateIsAssignedStatus(user_ids_toAdd, campaign_id, true).then(() => {
+                        resolve(true)
+                    }).catch(err => reject(err))
+                })
+            }else{
+                resolve(true)
+            }
+
+        })
+    }
+
     assignAgents(req, res, next) {
         let _this = this;
-        let {campaign_id, queue_uuid, assignedAgents, notAssignedAgents, campaign_agents} = req.body;
-        if (!!!campaign_id || !!!queue_uuid || !!!assignedAgents || !!!notAssignedAgents || !!!campaign_agents) {
-            return _this.sendResponseError(res, ['cannot update status of assigned agents'], 1, 403);
-        }
-        let AssignIds = (assignedAgents && assignedAgents.length !== 0) ? assignedAgents.map(el => el.user_id) : [];
-        let UnassignIds = (notAssignedAgents && notAssignedAgents.length !== 0) ? notAssignedAgents.map(el => el.user_id) : [];
-        this.db.users.findAll({where: {user_id: UnassignIds}}).then((users_unassign) => {
+        let {campaign_id, queue_uuid, assignedAgents, notAssignedAgents} = req.body;
+        const ToAssign = assignedAgents.map(agent => agent.sip_device.uuid)
+        axios
+            .get(`${base_url_cc_kam}api/v1/queues/${queue_uuid}/tiers`, call_center_authorization)
+            .then(data => {
+                let queue_agents_uuids = data.data.result.map(el => el.agent_uuid);
+                if (this.areEqualArrays(queue_agents_uuids, ToAssign)) {
+                    return res.send({
+                        status: 200,
+                        message: 'success',
+                        cannot_unassign: []
+                    })
+                }
+                const toDelete = queue_agents_uuids.filter(uuid => !ToAssign.includes(uuid));
+                let toDeleteAgents = notAssignedAgents.filter(obj => toDelete.includes(obj.sip_device.uuid))
+                let UnassignAgents = toDeleteAgents.filter((agent) => agent.params.status !== 'waiting-call' && agent.params.status !== 'in_call')
+                let ToReAssign = toDeleteAgents.filter((agent) => agent.params.status === 'waiting-call' || agent.params.status === 'in_call')
+                let toAdd = ToAssign.filter(uuid => !queue_agents_uuids.includes(uuid));
+                let agentsToAdd = assignedAgents.filter(obj => toAdd.includes(obj.sip_device.uuid))
+                let toDeleteFromQueue = UnassignAgents.map(agent => agent.sip_device.uuid)
 
-            let UnassignAgents = [];
-            let ToReAssign = [];
-            if (notAssignedAgents && notAssignedAgents.length !== 0) {
-                UnassignAgents = users_unassign.filter((agent) => agent.params.status !== 'waiting-call' && agent.params.status !== 'in_call')
-                ToReAssign = users_unassign.filter((agent) => agent.params.status === 'waiting-call' || agent.params.status === 'in_call')
-            }
-            let AssignAgents = assignedAgents.concat(ToReAssign);
-            let _agents = (AssignAgents && AssignAgents.length !== 0) ? AssignAgents.map(el => el.user_id) : [];
-            let agents_arr = ['*'];
-            let agents_kam = {agents: agents_arr};
-
-            this.deleteAgentsFromQueue(campaign_agents, queue_uuid, agents_kam)
-                .then(() => {
-                    let tiers_array = (AssignAgents && AssignAgents.length !== 0) ?
-                        AssignAgents.map(el => ({
-                            agent_uuid: el.sip_device.uuid,
-                            tier_level: 1,
-                            tier_position: 1
-                        })) : [];
-                    let tiers = {tiers: tiers_array};
-                    this.addToQueue(tiers, queue_uuid)
-                        .then(() => {
-                            this.db['campaigns'].update({agents: _agents}, {
+                let user_ids_toAdd = assignedAgents.filter(obj => toAdd.includes(obj.sip_device.uuid)).map(obj => obj.user_id);
+                let user_ids_toDelete = UnassignAgents.map(obj => obj.user_id);
+                let agents_ids_added = assignedAgents.map(obj => obj.user_id);
+                this.deleteAgentsFromQueue(queue_uuid, toDeleteFromQueue)
+                    .then(() => {
+                        let tiers = {tiers: []};
+                        if (toAdd && toAdd.length !== 0) {
+                            let tiers_array = (toAdd && toAdd.length !== 0) ?
+                                toAdd.map(uuid => ({
+                                    agent_uuid: uuid,
+                                    tier_level: 1,
+                                    tier_position: 1
+                                })) : [];
+                            tiers = {tiers: tiers_array};
+                        }
+                        this._addAgentsToQueue(tiers,queue_uuid,user_ids_toAdd,campaign_id).then(() => {
+                            this.db['campaigns'].update({agents: agents_ids_added}, {
                                 where: {
                                     active: 'Y',
                                     campaign_id: campaign_id
                                 }
-                            })
-                                .then(() => {
-                                    this.updateIsAssignedStatus(AssignAgents, campaign_id, true)
-                                        .then(() => {
-                                            this.updateIsAssignedStatus(UnassignAgents, null, false)
-                                                .then(() => {
-                                                    this.UpdateCampaign(AssignAgents, UnassignAgents, campaign_id).then(() => {
-                                                        this.deleteAgentsMeetings(UnassignAgents)
-                                                            .then(() => {
-                                                                res.send({
-                                                                    status: 200,
-                                                                    message: 'success',
-                                                                    cannot_unassign: ToReAssign
-                                                                })
-                                                            })
-                                                            .catch((err) => {
-                                                                return _this.sendResponseError(res, ['cannot delete agent meetings', err], 1, 403);
-                                                            });
-                                                    }).catch((err) => {
-                                                        return _this.sendResponseError(res, ['cannot update Assigned/UnAssigned Agents', err], 1, 403);
-                                                    })
-                                                })
-                                                .catch((err) => {
-                                                    return _this.sendResponseError(res, ['cannot update status of unassigned agents', err], 1, 403);
-                                                });
+                            }).then(() => {
+                                this.updateIsAssignedStatus(user_ids_toDelete, null, false).then(() => {
+                                    this.UpdateCampaign(agentsToAdd,UnassignAgents,campaign_id).then(() => {
+                                        return res.send({
+                                            status: 200,
+                                            message: 'success',
+                                            cannot_unassign: ToReAssign
                                         })
-                                        .catch((err) => {
-                                            return _this.sendResponseError(res, ['cannot update status of assigned agents', err], 1, 403);
-                                        });
-                                })
-                                .catch((err) => {
-                                    return _this.sendResponseError(res, ['cannot update campaign', err], 1, 403);
-                                });
-                        })
-                        .catch((err) => {
-                            return _this.sendResponseError(res, ['cannot add to queue in kamailio', err], 1, 403);
-                        });
-                })
-                .catch((err) => {
-                    return _this.sendResponseError(res, ['cannot delete from queue in kamailio', err], 1, 403);
-                });
-        }).catch((err) => {
-            return _this.sendResponseError(res, ['cannot get Unassigned Agents', err], 1, 403);
-        })
+                                    }).catch(err => {return this.sendResponseError(res, ['cannotEmitUpdateAgents', err], 0, 403)})
+                                }).catch(err => {return this.sendResponseError(res, ['cannotUpdateUsers', err], 0, 403)})
+                            }).catch(err => {return this.sendResponseError(res, ['cannotUpdateCampaign', err], 0, 403)})
+                        }).catch(err => {return this.sendResponseError(res, ['cannotAddToQueue', err], 0, 403)})
+                    }).catch(err => {return this.sendResponseError(res, ['cannotDeleteQueueTiers', err], 0, 403)})
+            }).catch(err => {return this.sendResponseError(res, ['cannotGetQueueTiers', err], 0, 403)})
     }
 
-    updateIsAssignedStatus(agents, campaign_id, isAssigned) {
+    updateIsAssignedStatus(agents_ids, campaign_id, isAssigned) {
         return new Promise((resolve, reject) => {
-            if (agents && agents.length !== 0) {
-                let agents_ids = agents.map(el => el.user_id);
+            if (agents_ids && agents_ids.length !== 0) {
                 this.db['users'].update({
                     isAssigned: isAssigned,
                     campaign_id: campaign_id,
@@ -974,11 +1026,11 @@ class campaigns extends baseModelbo {
         })
     }
 
-    deleteAgentsFromQueue(campaign_agents, queue_uuid, agents) {
+    deleteAgentsFromQueue(queue_uuid, agents) {
         return new Promise((resolve, reject) => {
-            if (campaign_agents && campaign_agents.length !== 0) {
+            if (agents && agents.length !== 0) {
                 axios
-                    .post(`${base_url_cc_kam}api/v1/queues/${queue_uuid}/tiers/delete`, agents, call_center_authorization)
+                    .post(`${base_url_cc_kam}api/v1/queues/${queue_uuid}/tiers/delete`, {agents: agents}, call_center_authorization)
                     .then(resp => {
                         resolve(true);
                     })
@@ -1086,7 +1138,7 @@ class campaigns extends baseModelbo {
                                         let oldCampaign = response.dataValues;
                                         let oldCampaignUuidQueue = oldCampaign.params.queue.uuid;
                                         let oldAgentsCamp = oldCampaign.agents;
-                                        this.deleteAgentsFromQueue(oldAgentsCamp, oldCampaignUuidQueue, {agents: [oldUuidAgent]}).then(() => {
+                                        this.deleteAgentsFromQueue(oldCampaignUuidQueue, [oldUuidAgent]).then(() => {
                                             let index = oldAgentsCamp.indexOf(user_id);
                                             if (index !== -1) {
                                                 oldAgentsCamp.splice(index, 1);
@@ -1264,7 +1316,7 @@ class campaigns extends baseModelbo {
             replacements: {
                 active: 'Y',
                 account_id: account_id,
-                did_id : '['+did_id+']'
+                did_id: '[' + did_id + ']'
             }
         }).then(campaigns => {
             res.send(campaigns)
