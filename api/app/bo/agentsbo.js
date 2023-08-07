@@ -2237,6 +2237,9 @@ AND "vmdStatus" in (:VMD_STATUS) AND "campaignId" notnull EXTRA_WHERE group by "
 
     callInQueue (req, res, next) {
         let {account_id, campaign_id} = req.body;
+        if(!!!campaign_id && !!!account_id){
+            return this.sendResponseError(res, ['Error.campaign_id ou account_id '], 1, 403)
+        }
           if(campaign_id){
               this.db['campaigns'].findOne({
                   where:{
@@ -2260,15 +2263,6 @@ AND "vmdStatus" in (:VMD_STATUS) AND "campaignId" notnull EXTRA_WHERE group by "
                   return this.sendResponseError(res, ['Error.cannotCamp', err], 1, 403)
               })
           }else{
-             this.db['campaigns'].findAll({
-                 where:{
-                     active: 'Y',
-                     status: 'Y',
-                     account_id : account_id
-                 }
-             }).then(campaign=>{
-                 if(campaign && campaign.length !== 0){
-
                      let sql = `select sum(queue_count) from campaigns
                                  where account_id = :account_id and active = 'Y' and status = 'Y'`
 
@@ -2278,23 +2272,21 @@ AND "vmdStatus" in (:VMD_STATUS) AND "campaignId" notnull EXTRA_WHERE group by "
                              account_id: account_id
                          }
                      }).then(result=>{
-                         res.send({
-                             success: true,
-                             total : result[0].sum
-                         })
+                         if(result){
+                             res.send({
+                                 success: true,
+                                 total : result[0].sum
+                             })
+                         }else{
+                             res.send({
+                                 success: true,
+                                 total : 0
+                             })
+                         }
+
                      }).catch(err => {
                      return this.sendResponseError(res, ['Error.cannotSumQueue', err], 1, 403)
                  })
-
-                 }else{
-                     res.send({
-                         success: true,
-                         total:0
-                     })
-                 }
-             }).catch(err => {
-                 return this.sendResponseError(res, ['Error.cannotCamp', err], 1, 403)
-             })
           }
 
 }
