@@ -2238,19 +2238,17 @@ AND "vmdStatus" in (:VMD_STATUS) AND "campaignId" notnull EXTRA_WHERE group by "
     callInQueue (req, res, next) {
         let {account_id, campaign_id} = req.body;
           if(campaign_id){
-              redisClient.get(campaign_id, (err, stu) => {
-                  if (stu){
-                      let data = JSON.parse(stu)
-                      if (data.numberCall){
-                          res.send({
-                              success: true,
-                              total : parseInt(data.numberCall)
-                          })
-                      }
-                  }else if(err){
+              this.db['campaigns'].findOne({
+                  where:{
+                      campaign_id :campaign_id,
+                      active: 'Y',
+                      status: 'Y'
+                  }
+              }).then(result=>{
+                  if(result){
                       res.send({
-                          success: false,
-                          message: err
+                          success: true,
+                          total : result.dataValues.queue_count
                       })
                   }else{
                       res.send({
@@ -2258,6 +2256,8 @@ AND "vmdStatus" in (:VMD_STATUS) AND "campaignId" notnull EXTRA_WHERE group by "
                           total:0
                       })
                   }
+              }).catch(err=>{
+                  return this.sendResponseError(res, ['Error.cannotCamp', err], 1, 403)
               })
           }else{
              this.db['campaigns'].findAll({
@@ -2268,30 +2268,28 @@ AND "vmdStatus" in (:VMD_STATUS) AND "campaignId" notnull EXTRA_WHERE group by "
                  }
              }).then(campaign=>{
                  if(campaign && campaign.length !== 0){
-                     let total = 0
-                     let index = 0
-                     campaign.forEach(item=>{
-                         redisClient.get(item.campaign_id, (err, stu) => {
-                             if (stu){
-                                 let data = JSON.parse(stu)
-                                 if (data.numberCall){
-                                     total +=parseInt(data.numberCall)
-                                 }
-                             }else if(err){
-                                 res.send({
-                                     success: false,
-                                     message : err
-                                 })
-                             }
-                          if(index < campaign.length-1){
-                              index++
-                          }else{
-                              res.send({
-                                  success: true,
-                                  total : total
-                              })
-                          }
+
+                     let sql = `select sum(queue_count) from campaigns
+                                 where account_id = :account_id and active = 'Y' and status = 'Y'`
+
+                     db.sequelize['crm-app'].query(sql, {
+                         type: db.sequelize['crm-app'].QueryTypes.SELECT,
+                         replacements: {
+                             account_id: account_id
+                         }
+                     }).then(result=>{
+                         res.send({
+                             success: true,
+                             total : result[0].sum
                          })
+                     }).catch(err => {
+                     return this.sendResponseError(res, ['Error.cannotSumQueue', err], 1, 403)
+                 })
+
+                 }else{
+                     res.send({
+                         success: true,
+                         total:0
                      })
                  }
              }).catch(err => {

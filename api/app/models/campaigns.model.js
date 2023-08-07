@@ -71,6 +71,9 @@ module.exports = (sequelize, Sequelize) => {
             },
             sql_campaign_id: {
                 type: Sequelize.INTEGER
+            },
+            queue_count:{
+                type: Sequelize.INTEGER
             }
         },
         {timestamps: false,}
@@ -95,7 +98,8 @@ module.exports = (sequelize, Sequelize) => {
         'script',
         'call_status_ids',
         'config',
-        "sql_campaign_id"
+        "sql_campaign_id",
+        'queue_count'
 
     ]
         campaign.prototype.fieldsSearchMetas = [
@@ -115,7 +119,8 @@ module.exports = (sequelize, Sequelize) => {
             'trunck_id',
             'script',
             'call_status_ids',
-            'config'
+            'config',
+            'queue_count'
         ]
     campaign.associate = function (models) {
         campaign.belongsTo(models.accounts, {
