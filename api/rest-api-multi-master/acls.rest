@@ -13,7 +13,7 @@ Authorization: Bearer BomjNx8kFfZTdCFx4kH3hGECO78yS0C0KS7pgO0BUe8COxcved
 ###
 
 #Get Acl Nodes By Id
-GET https://92.222.147.159:1443/api/v1/acls/997283be-0d85-4475-b001-5e0bceba1cec/nodes
+GET https://92.222.147.159:1443/api/v1/acls/6f550d6f-0f03-44d0-8399-cefe0e2db5e9/nodes
 Content-Type: application/json
 Authorization: Bearer BomjNx8kFfZTdCFx4kH3hGECO78yS0C0KS7pgO0BUe8COxcved
 
@@ -34,13 +34,13 @@ Authorization: Bearer BomjNx8kFfZTdCFx4kH3hGECO78yS0C0KS7pgO0BUe8COxcved
 
 ###
 #Create Acl Node
-POST https://92.222.147.159:1443/api/v1/acls/99729d05-8ac7-4073-95b1-c76662bf6877/nodes
+POST https://92.222.147.159:1443/api/v1/acls/99cac1b4-8120-4efa-a9bc-0941441a3fad/nodes
 Content-Type: application/json
 Authorization: Bearer BomjNx8kFfZTdCFx4kH3hGECO78yS0C0KS7pgO0BUe8COxcved
 
 {
     "type": "allow",
-    "cidr": "5.39.35.232/32"
+    "cidr": "5.39.35.233/32"
 }
 
 ###

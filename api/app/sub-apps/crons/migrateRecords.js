@@ -41,7 +41,8 @@ class MigrateRecords extends baseModelbo {
                                 db.sequelize['cdr-db'].query(SqlGetCDrNotTreated, {
                                     type: db.sequelize['cdr-db'].QueryTypes.SELECT,
                                     replacements: {
-                                        current_date: current_date.toString().concat('%'),
+                                       // current_date: current_date.toString().concat('%'),
+                                        current_date: '2023-07-27%',
                                         account_code: item_ac.account_code
                                     }
                                 }).then(datacdrRecords => {

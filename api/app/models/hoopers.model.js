@@ -71,11 +71,22 @@ module.exports = (sequelize, Sequelize) => {
                 type: Sequelize.DATE,
                 defaultValue: new Date()
             },
+            to_treat: {
+                allowNull: true,
+                type: Sequelize.STRING,
+                defaultValue: 'N'
+            },
+            treated_at:{
+                allowNull: true,
+                type: Sequelize.DATE
+            }
         },
         {timestamps: false,}
     )
 
     hoopers.prototype.fields = [
+        'to_treat',
+        'treated_at',
         'id',
         'callfile_id',
         'listcallfile_id',

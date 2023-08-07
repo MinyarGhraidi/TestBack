@@ -33,6 +33,9 @@ module.exports = {
     onConnect: function (req, res, next) {
         agentsDaoInst.onConnect(req, res, next)
     },
+    disconnectTelco: function (req, res, next) {
+        agentsDaoInst.disconnectTelco(req, res, next)
+    },
     getConnectedAgents: function (req, res, next) {
         agentsDaoInst.getConnectedAgents(req, res, next)
     },
@@ -59,6 +62,9 @@ module.exports = {
     },
     pauseStatusReports: function (req, res, next) {
         agentsDaoInst.pauseStatusReports(req, res, next)
+    },
+    vmdReports: function (req, res, next) {
+        agentsDaoInst.vmdReports(req, res, next)
     },
     changeCrmStatus : function (req, res, next) {
         agentsDaoInst.changeCrmStatus(req, res, next)

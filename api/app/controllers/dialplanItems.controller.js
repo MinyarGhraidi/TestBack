@@ -22,6 +22,9 @@ module.exports = {
     },
     getDialPlan : function (req, res, next){
         _dialplanItemsbo.getDialPlan(req, res, next)
+    },
+    changeStatusDialPlan : function (req, res, next){
+        _dialplanItemsbo.changeStatusDialPlan(req, res, next)
     }
 
 

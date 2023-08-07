@@ -3,9 +3,11 @@ let db = require('../models');
 const fs = require("fs");
 const {reject} = require("bcrypt/promises");
 const efilesBo = require('./efilesbo');
+const callhistoryBo = require('./callhistorybo');
 const moment = require("moment");
 const Op = require("sequelize/lib/operators");
 const _efilebo = new efilesBo;
+const _callhistorybo = new callhistoryBo;
 const env = process.env.NODE_ENV || 'development';
 const call_center_token = require(__dirname + '/../config/config.json')[env]["call_center_token"];
 const base_url_cc_kam = require(__dirname + '/../config/config.json')[env]["base_url_cc_kam"];
@@ -78,7 +80,8 @@ class callfiles extends baseModelbo {
                             })
                         } else {
                             resolve({
-                                success: false
+                                success: false,
+                                message  :"cannot-update-callfile"
                             })
                         }
 
@@ -87,7 +90,8 @@ class callfiles extends baseModelbo {
                     })
                 } else {
                     resolve({
-                        success: false
+                        success: false,
+                        message  :"cannot-find-callfile"
                     })
                 }
 
@@ -97,12 +101,44 @@ class callfiles extends baseModelbo {
         })
     }
 
+    SaveReminder = (is_reminder, data) => {
+        return new Promise((resolve, reject) => {
+            if (is_reminder) {
+                let modalObj = this.db['reminders'].build(data)
+                modalObj
+                    .save()
+                    .then(() => {
+                        return resolve(true)
+                    })
+                    .catch(err => {
+                        reject(err)
+                    })
+            } else {
+                return resolve(true)
+            }
+        })
+    }
+
     updateCallFileQualification(req, res, next) {
-        let callfile_id = req.body.callfile_id
-        this._updateCallFileQualification(callfile_id, req.body, req).then(result => {
-            res.send(result)
+        let {call_file_data, call_history_data, is_reminder} = req.body
+        let callfile_id = call_file_data.callfile_id
+        this._updateCallFileQualification(callfile_id, call_file_data, req).then(result => {
+            if (result.success) {
+                this.SaveReminder(is_reminder, call_history_data).then(() => {
+                    call_history_data.revision_id = result.revision_id
+                    _callhistorybo._updateCall(call_history_data).then(resultHistory => {
+                        res.send(resultHistory)
+                    }).catch(err => {
+                        this.sendResponseError(res, ['cannotUpdateCallFileHistory', err], 0, 403)
+                    })
+                }).catch(err => {
+                    this.sendResponseError(res, ['cannotSaveReminder', err], 1, 403)
+                })
+            } else {
+                res.send(result)
+            }
         }).catch(err => {
-            this.sendResponseError(res, ['cannotUpdateCallFile', err], 1, 403)
+            this.sendResponseError(res, ['cannotUpdateCallFile', err], 2, 403)
         })
     }
 
@@ -193,7 +229,7 @@ class callfiles extends baseModelbo {
                         call_status: call_status
                     }
                 }).then(countAll => {
-                    if(countAll.length === 0){
+                    if (countAll.length === 0) {
                         return res.send({
                             success: true,
                             status: 200,
@@ -216,7 +252,6 @@ class callfiles extends baseModelbo {
                             call_status: call_status
                         }
                     }).then(dataLeads => {
-                        console.log(pages,countAll)
                         const attributes_res = {
                             count: countAll,
                             offset: offset,
@@ -248,6 +283,7 @@ class callfiles extends baseModelbo {
         })
 
     }
+
     ReformatOneFileCSVExport(item, schema) {
         return new Promise((resolve, reject) => {
             let dataSchema = [];
@@ -265,7 +301,8 @@ class callfiles extends baseModelbo {
             })
         })
     }
-    leadsStatsExport(req,res,next){
+
+    leadsStatsExport(req, res, next) {
         let _this = this;
         let data = req.body;
         if (!!!data.filter) {
@@ -329,7 +366,7 @@ CONCAT(U.first_name, ' ', U.last_name) as "Agent Name"
         } else {
             extra_where_ListCallFile = " listcallfile_id in (:listCallFiles_ids) ";
         }
-        if(agents_ids && agents_ids.length !== 0){
+        if (agents_ids && agents_ids.length !== 0) {
             extra_where_sqlListCallFile += ' AND calls_h.agent_id in (:agents_ids)';
         }
         if (startTime && startTime !== '') {
@@ -365,7 +402,7 @@ CONCAT(U.first_name, ' ', U.last_name) as "Agent Name"
                         agents_ids: agents_ids
                     }
                 }).then(dataLeads => {
-                    if(dataLeads && dataLeads.length !== 0){
+                    if (dataLeads && dataLeads.length !== 0) {
                         let schema = [
                             {
                                 column: 'Phone Number',
@@ -470,7 +507,7 @@ CONCAT(U.first_name, ' ', U.last_name) as "Agent Name"
                             {
                                 column: 'Agent Name',
                                 type: 'String',
-                                currentColumn: 'Agent Name' ,
+                                currentColumn: 'Agent Name',
 
                             },
                             {
@@ -481,7 +518,7 @@ CONCAT(U.first_name, ' ', U.last_name) as "Agent Name"
                             }
 
                         ]
-                        const Sc = ['Phone Number','List Leads Name', 'Client Name', 'Address', 'State', 'City', 'Province', 'Postal Code', 'Client Email', 'Country Code','Note', 'Call Status', 'Gender', 'Age', 'Company Name', 'Siret', 'Siren', 'Date Of Birth', 'Agent Name', 'Category']
+                        const Sc = ['Phone Number', 'List Leads Name', 'Client Name', 'Address', 'State', 'City', 'Province', 'Postal Code', 'Client Email', 'Country Code', 'Note', 'Call Status', 'Gender', 'Age', 'Company Name', 'Siret', 'Siren', 'Date Of Birth', 'Agent Name', 'Category']
                         let ResultArray = [Sc];
                         let indexMapping = 0;
                         dataLeads.forEach(data_item => {
@@ -500,8 +537,7 @@ CONCAT(U.first_name, ' ', U.last_name) as "Agent Name"
                                 this.sendResponseError(res, ["Error.CannotGetCDRS"], 1, 403)
                             })
                         })
-                    }
-                    else{
+                    } else {
                         return res.send({
                             data: [],
                             success: false
@@ -510,19 +546,19 @@ CONCAT(U.first_name, ' ', U.last_name) as "Agent Name"
                 }).catch(err => {
                     _this.sendResponseError(res, ['Error stats'], err)
                 })
+            } else {
+                res.send({
+                    success: true,
+                    status: 200,
+                    data: [],
+                    message: 'no call file history'
+                })
             }
-            else {
-                    res.send({
-                        success: true,
-                        status: 200,
-                        data: [],
-                        message: 'no call file history'
-                    })
-                }
         }).catch(err => {
             return _this.sendResponseError(res, ['Error stats'], err)
         })
     }
+
     changeCustomFields(customField) {
         return new Promise((resolve, reject) => {
             if (Array.isArray(customField)) {
@@ -734,47 +770,86 @@ CONCAT(U.first_name, ' ', U.last_name) as "Agent Name"
         })
     }
 
+    mergeCustomFields(_customFields) {
+        return new Promise((resolve, reject) => {
+            let customFields = _customFields.filter(elements => {
+                return elements !== null;
+            });
+            if (customFields && customFields.length === 0) {
+                return resolve([])
+            }
+            const distinctValues = [...new Set(customFields.flat().map(obj => obj.label))];
+            return resolve(distinctValues)
+        })
+    }
+
+    _getCustomFields(listCallfiles){
+        return new Promise((resolve, reject) => {
+            let AllCustomFields = []
+            let idx = 0
+            listCallfiles.forEach(list_call_file => {
+                if (list_call_file.templates_id) {
+                    this.db['templates_list_call_files'].findOne({
+                        where: {
+                            templates_list_call_files_id: list_call_file.templates_id,
+                            active: 'Y'
+                        }
+                    }).then(template => {
+                        let CF = template.custom_field;
+                        if (idx < listCallfiles.length - 1) {
+                            idx++;
+                            if (CF && CF.length !== 0) {
+                                AllCustomFields.push(CF)
+                            }
+                        } else {
+                            AllCustomFields.push(CF)
+                            return resolve(AllCustomFields)
+                        }
+                    }).catch(err => {
+                        reject(err)
+                    })
+                } else {
+                    let CF_list = list_call_file.custom_fields;
+                    if (idx < listCallfiles.length - 1) {
+                        idx++;
+                        if (CF_list && CF_list.length !== 0) {
+                            AllCustomFields.push(CF_list)
+                        }
+                    } else {
+                        AllCustomFields.push(CF_list)
+                        return resolve(AllCustomFields)
+                    }
+                }
+            })
+
+        })
+    }
+
     getCustomFields(req, res, next) {
-        let resCustomFields = [];
         let campaign_id = req.body.campaign_id;
         if (!!!campaign_id) {
             this.sendResponseError(res, ['Error.campaignIdRequired'])
             return
         }
-        let sql = `select distinct customfields
-                   from callfiles
-                   where listcallfile_id in (
-                       SELECT listcallfile_id FROM public.listcallfiles WHERE campaign_id = :camp_id and active = :active
-                   )
-                     and customfields <> '{}'`;
-        db.sequelize['crm-app'].query(sql, {
-            type: db.sequelize['crm-app'].QueryTypes.SELECT,
-            replacements: {
-                camp_id: campaign_id,
-                active: 'Y'
-            }
-        }).then(customFields => {
-            let AllFields = [];
-            const Fields = ['first_name', 'last_name', 'phone_number', 'address1', 'city', 'postal_code', 'email', 'country_code'];
-            if (customFields.length === 0) {
-                res.send({
+        const Fields = ['first_name', 'last_name', 'phone_number', 'address1', 'city', 'postal_code', 'email', 'country_code'];
+        this.db['listcallfiles'].findAll({where: {campaign_id: campaign_id, active: 'Y'}}).then(async listcallfiles => {
+            if (listcallfiles && listcallfiles.length !== 0) {
+                this._getCustomFields(listcallfiles).then(CS => {
+                    this.mergeCustomFields(CS).then(res_CS => {
+                        return res.send({
+                            success: true,
+                            status: 200,
+                            data: Fields.concat(res_CS)
+                        })
+                    })
+                })
+            } else {
+                return res.send({
                     success: true,
                     status: 200,
                     data: Fields
                 })
-                return
             }
-            customFields.map((field) => {
-                resCustomFields.push(field.customfields);
-            })
-            //let result = Object.keys(Object.assign({}, ...resCustomFields));
-            let result = resCustomFields[0].map(c => c.label)
-            AllFields = Fields.concat(result);
-            res.send({
-                success: true,
-                status: 200,
-                data: AllFields
-            })
         }).catch(err => {
             this.sendResponseError(res, ['Error Cannot get CustomFields'], err)
         })
@@ -811,13 +886,13 @@ CONCAT(U.first_name, ' ', U.last_name) as "Agent Name"
                         default: item[1],
                         "readOnly": true
                     }
-                }else if (item[0] === 'comments') {
+                } else if (item[0] === 'comments') {
                     schema.properties[item[0]] = {
                         type: "string",
                         default: item[1],
-                        format : "textarea"
+                        format: "textarea"
                     }
-                }else {
+                } else {
                     schema.properties[item[0]] = {
                         type: "string",
                         default: item[1],
@@ -892,7 +967,7 @@ CONCAT(U.first_name, ' ', U.last_name) as "Agent Name"
                 let obj = {}
                 if (dataSchema[index1] && dataSchema[index2]) {
                     if (dataSchema[index1][0] === 'comments' || dataSchema[index2][0] === 'comments') {
-                        obj['comments'] = {sm : 12}
+                        obj['comments'] = {sm: 12}
                     } else {
                         obj[dataSchema[index1][0]] = {sm: 6}
                         obj[dataSchema[index2][0]] = {sm: 6}
@@ -1050,67 +1125,72 @@ CONCAT(U.first_name, ' ', U.last_name) as "Agent Name"
         })
     }
 
-    findCallFile(req,res,next){
+    findCallFile(req, res, next) {
         let _this = this
         const data = req.body;
         if (!!!data.phone_number && !!!data.callfile_id) {
             return _this.sendResponseError(res, ['Error empty'])
         }
-        // if (!!!data.account_id) {
-        //     return _this.sendResponseError(res, ['Error empty account_id'])
-        // }
-        let sqlQuerySelectLeads = `SELECT CF.*, LCF.*, C.script, C.account_id FROM callfiles AS CF 
+        if (!!!data.account_id) {
+            return _this.sendResponseError(res, ['Error empty account_id'])
+        }
+        let sqlQuerySelectLeads = `SELECT CF.*, LCF.*, C.script, C.account_id FROM hoopers AS CF 
                                        LEFT OUTER JOIN listcallfiles AS LCF ON CF.listcallfile_id = LCF.listcallfile_id
                                        LEFT OUTER JOIN campaigns AS C ON C.campaign_id = LCF.campaign_id
-                                       WHERE  C.active = :active AND LCF.active = :active AND length(phone_number) >=9 AND CF.active = :active AND CF.status = :active WHERE_CONDITION LIMIT :limit;`
+                                       WHERE  C.active = :active AND LCF.active = :active AND length(phone_number) >=9 AND CF.active = :active WHERE_CONDITION LIMIT :limit;`
 
         let whereQuery = ''
-        if(data && data.phone_number){
-            whereQuery += `AND :phone_number like CONCAT('%',CF.phone_number, '%')`
+        if (data && data.phone_number) {
+            whereQuery += ` AND (CF.phone_number = :phone_number OR CF.phone_number like CONCAT('%',:phone_number)) `
         }
-        if(data && data.callfile_id){
-            whereQuery += `AND CF.callfile_id = :callfile_id`
+        if (data && data.callfile_id) {
+            whereQuery += ` AND CF.callfile_id = :callfile_id `
         }
-        sqlQuerySelectLeads = sqlQuerySelectLeads.replace('WHERE_CONDITION',whereQuery);
+        if (data && data.account_id) {
+            whereQuery += ` AND C.account_id = :account_id `
+        }
+        sqlQuerySelectLeads = sqlQuerySelectLeads.replace('WHERE_CONDITION', whereQuery);
         db.sequelize['crm-app'].query(sqlQuerySelectLeads, {
             type: db.sequelize['crm-app'].QueryTypes.SELECT,
             replacements: {
                 active: 'Y',
-                phone_number : data.phone_number || null,
-                callfile_id : data.callfile_id || null,
-              //  account_id : data.account_id,
-                limit : 1
+                phone_number: data.phone_number || null,
+                callfile_id: data.callfile_id || null,
+                account_id: data.account_id,
+                limit: 1
             }
         }).then((call_file) => {
             let cfLength = call_file.length || 0
-            if(cfLength === 0){
+            if (cfLength === 0) {
                 return res.send({
                     success: false,
                     message: "unknown-phone-number"
                 })
-            }
-            let schema = {
-                type: 'object',
-                properties: {}
-            }
-            let mapping = {}
-            this.createSchemaUischema(call_file[0], mapping, schema).then(result => {
-                if (result.success) {
-                    return res.send({
-                        success: true,
-                        data: call_file[0],
-                        schema: result.schema,
-                        uiSchema: result.uiSchema,
-                    })
-                } else {
-                    return res.send({
-                        success: false,
-                        message: result.message
-                    })
+            } else {
+                let schema = {
+                    type: 'object',
+                    properties: {}
                 }
-            }).catch(err => {
-                return _this.sendResponseError(res, ['Error '], err)
-            })
+                let mapping = {}
+                this.createSchemaUischema(call_file[0], mapping, schema).then(result => {
+                    if (result.success) {
+                        return res.send({
+                            success: true,
+                            data: call_file[0],
+                            schema: result.schema,
+                            uiSchema: result.uiSchema,
+                        })
+                    } else {
+                        return res.send({
+                            success: false,
+                            message: result.message
+                        })
+                    }
+                }).catch(err => {
+                    return this.sendResponseError(res, ['Error '], err)
+                })
+            }
+
         })
     }
 
@@ -1189,14 +1269,20 @@ CONCAT(U.first_name, ' ', U.last_name) as "Agent Name"
 
     getCallFileIdsByCampaignID(campaign_id) {
         return new Promise((resolve, reject) => {
-            this.db['campaigns'].findOne({where: {campaign_id: campaign_id, active: 'Y', status : 'Y'}}).then(campaign => {
+            this.db['campaigns'].findOne({
+                where: {
+                    campaign_id: campaign_id,
+                    active: 'Y',
+                    status: 'Y'
+                }
+            }).then(campaign => {
                 if (campaign && Object.keys(campaign) && Object.keys(campaign).length !== 0) {
                     let Camp_CS_ids = campaign.call_status_ids || [];
                     this.db['callstatuses'].findAll({
                         where: {
                             active: 'Y',
                             status: 'Y',
-                            callstatus_id : Camp_CS_ids
+                            callstatus_id: Camp_CS_ids
                         }
                     }).then((res_CS) => {
                         if (res_CS && res_CS.length !== 0) {
@@ -1219,7 +1305,7 @@ CONCAT(U.first_name, ' ', U.last_name) as "Agent Name"
                                             listcallfile_id: LCF_ids,
                                             active: 'Y',
                                             [Op.or]: [
-                                                { call_status: CS_codes },
+                                                {call_status: CS_codes},
                                                 {
                                                     call_status: null,
                                                     to_treat: 'Y',
@@ -1280,8 +1366,8 @@ CONCAT(U.first_name, ' ', U.last_name) as "Agent Name"
                             active: 'Y'
                         }
                     }).then((camp) => {
-                        if(camp){
-                            if(camp.status === 'N'){
+                        if (camp) {
+                            if (camp.status === 'N') {
                                 return resolve({
                                     success: false,
                                     message: 'You have to enable Campaign first !'
@@ -1292,10 +1378,10 @@ CONCAT(U.first_name, ' ', U.last_name) as "Agent Name"
                                 where: {
                                     active: 'Y',
                                     status: 'Y',
-                                    callstatus_id : Camp_CS_ids
+                                    callstatus_id: Camp_CS_ids
                                 }
                             }).then((res_CS) => {
-                                if(res_CS && res_CS.length !== 0){
+                                if (res_CS && res_CS.length !== 0) {
                                     let CS_codes = [];
                                     res_CS.map(item => {
                                         CS_codes.push(item.code);
@@ -1305,7 +1391,7 @@ CONCAT(U.first_name, ' ', U.last_name) as "Agent Name"
                                             listcallfile_id: list_call_file_id,
                                             active: 'Y',
                                             [Op.or]: [
-                                                { call_status: CS_codes },
+                                                {call_status: CS_codes},
                                                 {
                                                     call_status: null,
                                                     to_treat: 'Y',
@@ -1332,7 +1418,7 @@ CONCAT(U.first_name, ' ', U.last_name) as "Agent Name"
                                             })
                                         }
                                     }).catch(err => reject(err))
-                                }else{
+                                } else {
                                     resolve({
                                         success: false,
                                         message: 'Campaign without CS !'
@@ -1340,7 +1426,7 @@ CONCAT(U.first_name, ' ', U.last_name) as "Agent Name"
                                 }
 
                             }).catch(err => reject(err))
-                        }else{
+                        } else {
                             resolve({
                                 success: false,
                                 message: 'Campaign Not found !'

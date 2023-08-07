@@ -147,6 +147,7 @@ let apiRouters = function (passport) {
     router.post("/api/agent/updateAgent", passport.authenticate('jwt', {session: false}), agentsController.updateAgent);
     router.post("/api/agent/deleteAgent", passport.authenticate('jwt', {session: false}), agentsController.deleteAgent);
     router.post("/api/agent/onConnect", passport.authenticate('jwt', {session: false}), agentsController.onConnect);
+    router.post("/api/agent/disconnectTelco", passport.authenticate('jwt', {session: false}), agentsController.disconnectTelco);
     router.post("/api/agent/getConnectedAgents", passport.authenticate('jwt', {session: false}), agentsController.getConnectedAgents);
     router.post("/api/agent/filterDashboard", passport.authenticate('jwt', {session: false}), agentsController.filterDashboard);
     router.post("/api/agent/DisConnectAgent", passport.authenticate('jwt', {session: false}), agentsController.onDisconnectAgents);
@@ -202,6 +203,7 @@ let apiRouters = function (passport) {
     router.post("/api/trunk/saveTrunk", passport.authenticate('jwt', {session: false}), truncksController.saveTrunk);
     router.post("/api/trunk/updateTrunk", passport.authenticate('jwt', {session: false}), truncksController.updateTrunk);
     router.post("/api/trunk/deleteTrunk", passport.authenticate('jwt', {session: false}), truncksController.deleteTrunk);
+    router.post("/api/trunk/changeStatusTrunk", passport.authenticate('jwt', {session: false}), truncksController.changeStatusTrunk);
 
     //callstatus routers
     router.post("/api/callstatus/find/:params?", passport.authenticate('jwt', {session: false}), callstatusController.find);
@@ -356,6 +358,7 @@ let apiRouters = function (passport) {
     router.post('/api/acc/agentCallReports/:params?', passport.authenticate('jwt', {session: false}), agentsController.agentCallReports);
     router.post('/api/acc/listCallFileReports/:params?', passport.authenticate('jwt', {session: false}), agentsController.listCallFileReports);
     router.post('/api/acc/pauseStatusReports/:params?', passport.authenticate('jwt', {session: false}), agentsController.pauseStatusReports);
+    router.post('/api/acc/vmdReports', passport.authenticate('jwt', {session: false}), agentsController.vmdReports);
     router.post('/api/acc/getSip_codes', passport.authenticate('jwt', {session: false}), accController.getSip_codes);
     router.post('/api/acc/exportCSV', passport.authenticate('jwt', {session: false}), accController.exportCSV);
 
@@ -416,12 +419,13 @@ let apiRouters = function (passport) {
     router.delete('/api/reminder/delete/:params', passport.authenticate('jwt', {session: false}), ReminderController.delete);
     router.post('/api/reminder/save', passport.authenticate('jwt', {session: false}), ReminderController.save);
 
-    router.post('/api/hooper/find/:params?', passport.authenticate('jwt', {session: false}), HooperController.find);
+    router.post('/api/hooper/findHooper', passport.authenticate('jwt', {session: false}), HooperController.findHooper);
     router.get('/api/hooper/findById/:entity_id', passport.authenticate('jwt', {session: false}), HooperController.findById);
     router.post('/api/campaign/deleteHooper',passport.authenticate('jwt', {session: false}),campaignController.resetHooper);
     router.post('/api/campaign/getCampaignsByDID_ID',passport.authenticate('jwt', {session: false}),campaignController.getCampaignsByDID_ID);
 
     router.post('/api/dialplanItems/findTrunck', passport.authenticate('jwt', {session: false}), dialpanItemsController.getDialPlan);
+    router.post('/api/dialplanItems/changeStatusDialPlan', passport.authenticate('jwt', {session: false}), dialpanItemsController.changeStatusDialPlan);
 
     return router;
 
