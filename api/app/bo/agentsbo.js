@@ -21,8 +21,6 @@ let _messageDao = new messageDao;
 let _agent_log_eventsbo = new agent_log_eventsbo;
 const appSocket = new (require('../providers/AppSocket'))();
 const Op = require("sequelize/lib/operators");
-const AppRedis = require("../providers/AppRedis")
-const redisClient = (new AppRedis()).client;
 
 class agents extends baseModelbo {
     constructor() {
@@ -2251,7 +2249,7 @@ AND "vmdStatus" in (:VMD_STATUS) AND "campaignId" notnull EXTRA_WHERE group by "
                   if(result){
                       res.send({
                           success: true,
-                          total : result.dataValues.queue_count
+                          total : result.queue_count
                       })
                   }else{
                       res.send({
