@@ -71,7 +71,7 @@ Authorization: Bearer BomjNx8kFfZTdCFx4kH3hGECO78yS0C0KS7pgO0BUe8COxcved
 ###
 
 #Delete Acl
-DELETE https://92.222.147.159:1443/api/v1/acls/98d96167-596d-4bcc-8f57-5e0aabf379da
+DELETE https://92.222.147.159:1443/api/v1/acls/99c8c711-dbd1-4868-8e6a-0cbb10d35d4c
 Content-Type: application/json
 Authorization: Bearer BomjNx8kFfZTdCFx4kH3hGECO78yS0C0KS7pgO0BUe8COxcved
 

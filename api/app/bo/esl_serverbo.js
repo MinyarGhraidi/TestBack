@@ -33,27 +33,44 @@ class esl_servers extends baseModelbo {
         }
         axios
             .post(`${base_url_cc_kam}api/v1/servers`, Server, call_center_authorization).then((resp) => {
-            let sip_device = resp.data.result;
-            const server = this.db['esl_servers'].build(req.body);
-            server.updated_at = moment(new Date());
-            server.created_at = moment(new Date());
-            server.sip_device = sip_device;
-            server.save().then((serverSaved) => {
-                res.json({
-                    success: true,
-                    data: serverSaved,
-                    message: 'Server created with success!'
+                let formData = {
+                    "server_uuid": resp.data.result.uuid,
+                    "name": "providers",
+                    "default": "allow",
+                    "description": ""
+                }
+            axios
+                .post(`${base_url_cc_kam}api/v1/acls`, formData, call_center_authorization).then((resultAcl) => {
+                let uuid_provider = resultAcl.data.result.uuid;
+                this.creatAclNodes(uuid_provider).then(resultAclNode=>{
+                    if(resultAclNode.success){
+                        let sip_device = resp.data.result;
+                        const server = this.db['esl_servers'].build(req.body);
+                        server.updated_at = moment(new Date());
+                        server.created_at = moment(new Date());
+                        server.sip_device = sip_device;
+                        server.save().then((serverSaved) => {
+                            res.json({
+                                success: true,
+                                data: serverSaved,
+                                message: 'Server created with success!'
+                            })
+                        }).catch(err => {
+                            this.deleteEslServerByUUID(sip_device.uuid).then(() => {
+                                this.sendResponseError(res, ['Error.SaveServer', err], 1, 403)
+                            })
+                        })
+                    }
+                }).catch(err => {
+                    this.sendResponseError(res, ['Error.CannotAddAclNodeTelco', err], 1, 403)
                 })
+                }).catch(err => {
+                    this.sendResponseError(res, ['Error.CannotAddAclTelco', err], 1, 403)
+                })
+
             }).catch(err => {
-                this.deleteEslServerByUUID(sip_device.uuid).then(() => {
-                    this.sendResponseError(res, ['Error.SaveServer', err], 1, 403)
-                })
+                this.sendResponseError(res, ['Error.CannotAddServerTelco', err], 1, 403)
             })
-
-        }).catch(err => {
-            this.sendResponseError(res, ['Error.CannotAddServerTelco', err], 1, 403)
-        })
-
     }
 
     editEslServer(req, res, next) {
@@ -262,6 +279,47 @@ class esl_servers extends baseModelbo {
             })
         }).catch(err => {
             return this.sendResponseError(res, ['cannotFindEslServer', err], 6, 403)
+        })
+    }
+
+    creatAclNodes (uuid_provider) {
+        return new Promise((resolve, reject) => {
+            this.db['servers'].findAll({
+                where: {
+                    status: 'Y',
+                    active: 'Y'
+                }
+            }).then(serverDailer => {
+                if (serverDailer && serverDailer.length !== 0) {
+                    let index = 0
+                    serverDailer.forEach(item => {
+                        let DataAclNode = {
+                            cidr: item.ip,
+                            type: 'allow',
+                            created_at: moment(new Date()),
+                            updated_at: moment(new Date()),
+                        }
+                        axios
+                            .post(`${base_url_cc_kam}api/v1/acls/${uuid_provider}/nodes`, DataAclNode, call_center_authorization).then((resultAclNode) => {
+                                if(index < serverDailer.length -1){
+                                    index++;
+                                }else{
+                                    resolve({
+                                        success: true
+                                    })
+                                }
+                        }).catch(err=>{
+                            reject(err)
+                        })
+                    })
+                }else{
+                    resolve({
+                        success: true
+                    })
+                }
+            }).catch(err=>{
+                reject(err)
+            })
         })
     }
 }
