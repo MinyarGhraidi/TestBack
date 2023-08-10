@@ -71,8 +71,8 @@ class Hooperbo extends baseModelbo{
             let SORTDIR = 'order by '+sortBy+' '+sortDir
             let sqlCount = `select count(*)
                             from hoopers
-                            WHERE listcallfile_id in (:listcallfile_id)`
-            let sqlData = `select * from hoopers WHERE listcallfile_id in (:listcallfile_id) SORTDIR LIMIT :limit OFFSET :offset`
+                            WHERE to_treat = 'N' AND listcallfile_id in (:listcallfile_id)`
+            let sqlData = `select * from hoopers WHERE to_treat = 'N' AND listcallfile_id in (:listcallfile_id) SORTDIR LIMIT :limit OFFSET :offset`
             sqlData = sqlData.replace('SORTDIR',SORTDIR)
             db.sequelize['crm-app'].query(sqlCount, {
                 type: db.sequelize['crm-app'].QueryTypes.SELECT,
