@@ -260,6 +260,7 @@ let apiRouters = function (passport) {
     router.delete("/api/dids/delete/:params", passport.authenticate('jwt', {session: false}), didsController.delete);
     router.post("/api/dids/saveBulk", passport.authenticate('jwt', {session: false}), didsController.saveBulk);
     router.post("/api/dids/save", passport.authenticate('jwt', {session: false}), didsController.save);
+    router.post("/api/dids/delete", passport.authenticate('jwt', {session: false}), didsController.deleteDiD);
 
     // audios routers
     router.post("/api/audio/find", passport.authenticate('jwt', {session: false}), audiosController.find);

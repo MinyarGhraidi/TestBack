@@ -20,4 +20,7 @@ module.exports = {
     saveBulk: function (req, res, next) {
         didsDaoInst.saveBulk(req, res, next);
     },
+    deleteDiD: function (req, res, next) {
+        didsDaoInst.deleteDiD(req, res, next)
+    }
 }
