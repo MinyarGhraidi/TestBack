@@ -1,5 +1,5 @@
 const {baseModelbo} = require('./basebo');
-const { Op } = require("sequelize");
+const {Op} = require("sequelize");
 const db = require("../models");
 
 class dids extends baseModelbo {
@@ -25,29 +25,32 @@ class dids extends baseModelbo {
         })
     }
 
-    deleteDiD (req, res, next){
-       let dids = req.body;
-        if (!!!dids.did_group_id || (dids.number && dids.number.length === 0) ) {
+    deleteDiD(req, res, next) {
+        let dids = req.body;
+        if (!!!dids.did_group_id || (dids.number && dids.number.length === 0)) {
             this.sendResponseError(res, ['data_is_required'])
             return
         }
 
-                let sql = `UPDATE dids as did
-                    set active = 'N'
-                    where number in (:number) and did.did_group_id = :did_group_id `
-                db.sequelize['crm-app'].query(sql, {
-                    type: db.sequelize['crm-app'].QueryTypes.SELECT,
-                    replacements: {
-                        did_group_id:dids.did_group_id,
-                        number: dids.number
-                    }
-                }).then(result=>{
-                        res.send({
-                            success: true
-                        })
-                }).catch(err=>{
-                    this.sendResponseError(res, ['error.deleteDids'])
-                })
+        let sql = `UPDATE dids as did
+                   set active = 'N'
+                   where number in (:number)
+                     and did.did_group_id = :did_group_id `
+        db.sequelize['crm-app'].query(sql, {
+            type: db.sequelize['crm-app'].QueryTypes.SELECT,
+            replacements: {
+                did_group_id: dids.did_group_id,
+                number: dids.number
+            }
+        }).then(result => {
+            res.send({
+                success: true,
+                status: 200,
+                message: ['dids released with success']
+            })
+        }).catch(err => {
+            this.sendResponseError(res, ['error.deleteDids'])
+        })
 
     }
 }
