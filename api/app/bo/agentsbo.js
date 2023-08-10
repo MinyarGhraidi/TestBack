@@ -1055,10 +1055,7 @@ class agents extends baseModelbo {
                         inCall.push(item_ag)
                         break
                     case 'waiting-call':
-                        waitingCall.push(item_ag)
-                        break
-                    case 'in_qualification':
-                        inQualification.push(item_ag)
+                        item_ag.channel_uuid ? inQualification.push(item_ag) : waitingCall.push(item_ag)
                         break
                     case 'on-break':
                         onBreak.push(item_ag)
