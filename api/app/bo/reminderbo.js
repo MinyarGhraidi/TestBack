@@ -20,7 +20,7 @@ class Reminderbo extends baseModelbo{
         let {startTime, endTime, account_id, agentIds,dateFrom,dateTo} = filter
 
         let sqlCount = `select count(*) FROM reminders as "Rem" LEFT OUTER JOIN "users" AS "user" ON "Rem"."agent_id" = "user"."user_id" LEFT OUTER JOIN "callfiles" AS "callfile" ON "Rem"."call_file_id" = "callfile"."callfile_id" 
-                          WHERE "user".active = 'Y' and "Rem".active = 'Y' and "callfile".active = 'Y' and "Rem".time is not NULL and "Rem".date is not NULL WHEREQUERYCOUNT`
+                          WHERE "user".active = 'Y' and "Rem".active = 'Y' and "callfile".active = 'Y' and "Rem".time is not NULL and "Rem".date is not NULL and "Rem".time != '' and "Rem".date != '' WHEREQUERYCOUNT`
 
         let sqlQuery = `select "Rem".note , "Rem".agent_id, "Rem".reminder_id,"Rem".call_file_id,
                         CONCAT("Rem".date, ' ',"Rem".time) as date_time,
@@ -28,7 +28,7 @@ class Reminderbo extends baseModelbo{
                         CONCAT("callfile".first_name,' ',"callfile".last_name,' (',"callfile".phone_number,' )') as callfile,
                         AGE(CAST(CONCAT("Rem".date, ' ',"Rem".time) as timestamptz),NOW() + interval '1 hour') as diff_dateTime
                           FROM reminders as "Rem" LEFT OUTER JOIN "users" AS "user" ON "Rem"."agent_id" = "user"."user_id" LEFT OUTER JOIN "callfiles" AS "callfile" ON "Rem"."call_file_id" = "callfile"."callfile_id" 
-                          WHERE "user".active = 'Y' and "Rem".active = 'Y' and "callfile".active = 'Y' and "Rem".time is not NULL and "Rem".date is not NULL WHEREQUERY`;
+                          WHERE "user".active = 'Y' and "Rem".active = 'Y' and "callfile".active = 'Y' and "Rem".time is not NULL and "Rem".date is not NULL and "Rem".time != '' and "Rem".date != '' WHEREQUERY`;
 
         let whereQuery = '';
         let whereQueryCount = '';
