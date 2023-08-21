@@ -27,6 +27,9 @@ module.exports = {
     updateAgent: function (req, res, next) {
         agentsDaoInst.updateAgent(req, res, next)
     },
+    updateSipDeviceUser: function (req, res, next) {
+        agentsDaoInst.updateSipDeviceUser(req, res, next)
+    },
     deleteAgent: function (req, res, next) {
         agentsDaoInst.deleteAgent(req, res, next)
     },
@@ -71,5 +74,8 @@ module.exports = {
     },
     callInQueue: function (req, res, next){
         agentsDaoInst.callInQueue(req, res, next)
+    },
+    getUserBySIP_Username: function (req, res, next){
+        agentsDaoInst.getUserBySIP_Username(req, res, next)
     }
 }
