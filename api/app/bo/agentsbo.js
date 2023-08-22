@@ -827,7 +827,7 @@ class agents extends baseModelbo {
         return new Promise((resolve, reject) => {
             this._getUserByUUID(uuid).then(userData => {
                 let user = userData.user
-                if(!!!user.current_session_token){
+                if(!!!user.current_session_token && crmStatus !== 'logged-out'){
                     return resolve({
                         success: false,
                         status: 200,
