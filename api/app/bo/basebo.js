@@ -310,9 +310,18 @@ class baseModelbo {
     }
     _deleteFromHooperByCallfileID = (listcallfile_id) => {
         return new Promise((resolve,reject) => {
-            this.db['hoopers'].destroy({where : {listcallfile_id : listcallfile_id}}).then(() => {
-                resolve(true)
-            }).catch(err => reject(err))
+            this.db['hoopers'].findAll({where : {listcallfile_id : listcallfile_id}}).then(callfiles_hooper => {
+                if(callfiles_hooper && callfiles_hooper.length !== 0){
+                    let callfiles_ids = callfiles_hooper.map(cf_h => cf_h.callfile_id);
+                    this.db['hoopers'].destroy({where : {listcallfile_id : listcallfile_id}}).then(() => {
+                        this.db['callfiles'].update({save_in_hooper : 'N'},{where : {callfile_id : callfiles_ids, to_treat : 'N'}}).then(() => {
+                            resolve(true)
+                        }).catch(err => reject(err))
+                    }).catch(err => reject(err))
+                }else{
+                    resolve(true)
+                }
+            })
         })
     }
     deleteCascade(req, res, next) {

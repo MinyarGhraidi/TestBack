@@ -300,6 +300,72 @@ class agents extends baseModelbo {
         })
     }
 
+    updateSipDeviceUser(req,res,next){
+        let {user_id , extension, password} = req.body
+        if(!!!user_id || !!!extension || !!!password){
+            return this.sendResponseError(res, ['Error.EmptyData'], 0, 403);
+        }
+        this.db['users'].findOne({
+            where: {
+                user_id: user_id
+            }}).then(user => {
+                if(user && Object.keys(user).length !== 0){
+                    let {uuid} = user.sip_device
+                    axios
+                        .get(`${base_url_cc_kam}api/v1/agents/${uuid}`,
+                            call_center_authorization)
+                        .then((resp) => {
+                            let {subscriber_uuid} = resp.data.result;
+                            axios
+                                .get(`${base_url_cc_kam}api/v1/subscribers/${subscriber_uuid}`,
+                                    call_center_authorization)
+                                .then((resp) => {
+                                    let {domain_uuid, domain} = resp.data.result;
+                                    let updateSub = {
+                                        domain_uuid,
+                                        domain,
+                                        username: extension,
+                                        password,
+                                        updated_at: new Date(),
+                                        effective_caller_id_name: extension,
+                                        effective_caller_id_number: extension,
+                                        outbound_caller_id_name: extension,
+                                        outbound_caller_id_number: extension,
+                                    }
+                                    axios
+                                        .put(`${base_url_cc_kam}api/v1/subscribers/${subscriber_uuid}`,
+                                            updateSub,
+                                            call_center_authorization)
+                                        .then(() => {
+                                            let newSipDevice = user.sip_device;
+                                            newSipDevice.username = extension
+                                            newSipDevice.password = password
+                                            newSipDevice.updated_at = new Date()
+                                            this.db["users"].update({
+                                                sip_device: newSipDevice,
+                                                updated_at : new Date()
+                                            }, {where: {user_id: user_id, active: 'Y'}}).then(() => {
+                                                return res.send({success : true})
+                                            }).catch(err => {
+                                                return this.sendResponseError(res, ['Error.cannotUpdateUser',err], 1, 403);
+                                            })
+                                        }).catch(err => {
+                                        return this.sendResponseError(res, ['Error.cannotUpdateSubscriberUser',err], 2, 403);
+                                    })
+                                }).catch(err => {
+                                return this.sendResponseError(res, ['Error.cannotGetSubscriberUser',err], 3, 403);
+                            })
+                        }).catch(err => {
+                        return this.sendResponseError(res, ['Error.cannotGetTelcoAgentUser',err], 4, 403);
+                    })
+                }else{
+                    return this.sendResponseError(res, ['Error.UserNotFound'], 5, 403);
+                }
+        }).catch(err => {
+            return this.sendResponseError(res, ['Error.cannotGetUser',err], 6, 403);
+        })
+
+    }
     //---------------> Update Agent <----------------------
     updateAgent(req, res, next) {
         let _this = this;
@@ -696,7 +762,7 @@ class agents extends baseModelbo {
                         }
                         return resolve({
                             success: true,
-                            status : 200,
+                            status: 200,
                             message: user.message || "something wrong"
                         })
                     }
@@ -761,44 +827,51 @@ class agents extends baseModelbo {
         return new Promise((resolve, reject) => {
             this._getUserByUUID(uuid).then(userData => {
                 let user = userData.user
-            _agent_log_eventsbo._getLastEvent(user.user_id).then(ALE => {
-                const action_name = ALE.data.dataValues.action_name;
-                if (action_name === crmStatus) {
+                if(!!!user.current_session_token){
                     return resolve({
                         success: false,
                         status: 200,
-                        message: 'status already exists'
+                        message: 'user without token'
                     })
                 }
-                if (uuid) {
-                    this.OnConnectTelco(uuid, telcoStatus).then(() => {
-                                    let params = user.params;
-                                    user.updated_at = moment(new Date());
-                                    this.updateAgentStatus(user.user_id, user, telcoStatus, crmStatus, params, pauseStatus)
-                                        .then(agent => {
-                                            if (agent.success) {
-                                                return resolve({
-                                                    success: true,
-                                                    agent: agent,
-                                                    status: 200,
-                                                    message: 'status changed !'
-                                                });
-                                            } else {
-                                                return resolve({
-                                                    success: false,
-                                                    status: 403,
-                                                    message: 'agent not updated !'
-                                                });
-                                            }
-                                        })
-                                        .catch((err) => {
-                                            reject(err);
+                _agent_log_eventsbo._getLastEvent(user.user_id).then(ALE => {
+                    const action_name = ALE.data.dataValues.action_name;
+                    if (action_name === crmStatus) {
+                        return resolve({
+                            success: false,
+                            status: 200,
+                            message: 'status already exists'
+                        })
+                    }
+                    if (uuid) {
+                        this.OnConnectTelco(uuid, telcoStatus).then(() => {
+                            let params = user.params;
+                            user.updated_at = moment(new Date());
+                            this.updateAgentStatus(user.user_id, user, telcoStatus, crmStatus, params, pauseStatus)
+                                .then(agent => {
+                                    if (agent.success) {
+                                        return resolve({
+                                            success: true,
+                                            agent: agent,
+                                            status: 200,
+                                            message: 'status changed !'
                                         });
-                            })
-                } else {
-                    reject(false)
-                }
-            })
+                                    } else {
+                                        return resolve({
+                                            success: false,
+                                            status: 403,
+                                            message: 'agent not updated !'
+                                        });
+                                    }
+                                })
+                                .catch((err) => {
+                                    reject(err);
+                                });
+                        })
+                    } else {
+                        reject(false)
+                    }
+                })
             }).catch((err) => {
                 reject(err);
             });
@@ -810,7 +883,7 @@ class agents extends baseModelbo {
         return new Promise((resolve, reject) => {
             let agent;
             let sip_device = agent_.sip_device;
-            if(telcoStatus){
+            if (telcoStatus) {
                 sip_device.status = telcoStatus;
                 sip_device.updated_at = updatedAt_tz;
             }
@@ -823,39 +896,33 @@ class agents extends baseModelbo {
             })
                 .then(data_user => {
                     if (data_user) {
-                        this.db['agent_log_events'].findOne({
+                        this.db['agent_log_events'].findAll({
                             where: {
                                 user_id: user_id,
-                                start_at: {
-                                    $ne: null
-                                }
+                                finish_at: null
                             },
-                            order: [['start_at', 'DESC']],
-                            limit: 1,
+                            order: [['start_at', 'DESC']]
                         }).then(result => {
-                            if (result) {
+                            if (result && result.length !== 0) {
+                                let ids_agents_log_event = result.map(log => log.agent_log_event_id)
                                 this.db['agent_log_events'].update({
                                         finish_at: updatedAt_tz,
                                         updated_at: updatedAt_tz
                                     },
                                     {
                                         where: {
-                                            agent_log_event_id: result.agent_log_event_id,
-                                            start_at: {
-                                                $ne: null
-                                            }
+                                            agent_log_event_id: ids_agents_log_event
                                         },
                                         returning: true,
                                         plain: true
                                     }
-                                ).then(last_action => {
-                                    if (last_action) {
+                                ).then(() => {
                                         this.db['agent_log_events'].build({
                                             user_id: user_id,
                                             action_name: agent.params.status,
-                                            created_at: last_action[1].finish_at,
-                                            updated_at: last_action[1].finish_at,
-                                            start_at: last_action[1].finish_at,
+                                            created_at: updatedAt_tz,
+                                            updated_at: updatedAt_tz,
+                                            start_at: updatedAt_tz,
                                             pause_status_id: agent.params.status === 'on-break' ? pauseStatus : null
                                         }).save().then(agent_event => {
                                             resolve({
@@ -867,12 +934,6 @@ class agents extends baseModelbo {
                                         }).catch(err => {
                                             reject(err)
                                         })
-                                    } else {
-                                        resolve({
-                                            success: false
-                                        })
-                                    }
-
                                 }).catch(err => {
                                     reject(err)
                                 })
@@ -880,9 +941,9 @@ class agents extends baseModelbo {
                                 this.db['agent_log_events'].build({
                                     user_id: user_id,
                                     action_name: agent.params.status,
-                                    created_at: new Date(),
+                                    created_at: updatedAt_tz,
                                     updated_at: updatedAt_tz,
-                                    start_at: new Date()
+                                    start_at: updatedAt_tz
                                 }).save().then(agent_event => {
                                     resolve({
                                         success: true,
@@ -962,8 +1023,8 @@ class agents extends baseModelbo {
                                     timerStart: events[0].start_at,
                                     campaign_id: campaign_id,
                                     extension: sip_device.username,
-                                    channel_uuid : channel_uuid,
-                                    updated_at : updated_at
+                                    channel_uuid: channel_uuid,
+                                    updated_at: updated_at
                                 });
                             }
                             if (idx < agents.length - 1) {
@@ -1017,7 +1078,7 @@ class agents extends baseModelbo {
         if (status) {
             where.params = {"status": status === "in_qualification" ? 'waiting-call' : status}
         }
-        if(status === 'in_qualification'){
+        if (status === 'in_qualification') {
             where.channel_uuid = {[Op.not]: null}
         }
         this.db['users'].findAll({where: where})
@@ -1048,6 +1109,7 @@ class agents extends baseModelbo {
             let waitingCall = []
             let inQualification = []
             let onBreak = []
+            let manual = []
             let connected = []
             agents.forEach(item_ag => {
                 switch (item_ag.crmStatus) {
@@ -1060,6 +1122,9 @@ class agents extends baseModelbo {
                     case 'on-break':
                         onBreak.push(item_ag)
                         break
+                    case 'manual':
+                        manual.push(item_ag)
+                        break
                     case 'connected':
                         connected.push(item_ag)
                         break
@@ -1069,8 +1134,9 @@ class agents extends baseModelbo {
             waitingCall.sort((a, b) => a.timerStart - b.timerStart)
             inQualification.sort((a, b) => a.timerStart - b.timerStart)
             onBreak.sort((a, b) => a.timerStart - b.timerStart)
+            manual.sort((a, b) => a.timerStart - b.timerStart)
             connected.sort((a, b) => a.timerStart - b.timerStart)
-            let Stats = inCall.concat(waitingCall, inQualification, onBreak, connected)
+            let Stats = inCall.concat(waitingCall, inQualification, onBreak, manual, connected)
             resolve(Stats)
         })
     }
@@ -2230,61 +2296,93 @@ AND "vmdStatus" in (:VMD_STATUS) AND "campaignId" notnull EXTRA_WHERE group by "
 
     }
 
-    callInQueue (req, res, next) {
+    callInQueue(req, res, next) {
         let {account_id, campaign_id} = req.body;
-        if(!!!campaign_id && !!!account_id){
+        if (!!!campaign_id && !!!account_id) {
             return this.sendResponseError(res, ['Error.campaign_id ou account_id '], 1, 403)
         }
-          if(campaign_id){
-              this.db['campaigns'].findOne({
-                  where:{
-                      campaign_id :campaign_id,
-                      active: 'Y',
-                      status: 'Y'
-                  }
-              }).then(result=>{
-                  if(result){
-                      res.send({
-                          success: true,
-                          total : result.queue_count
-                      })
-                  }else{
-                      res.send({
-                          success: true,
-                          total:0
-                      })
-                  }
-              }).catch(err=>{
-                  return this.sendResponseError(res, ['Error.cannotCamp', err], 1, 403)
-              })
-          }else{
-                     let sql = `select sum(queue_count) from campaigns
+        if (campaign_id) {
+            this.db['campaigns'].findOne({
+                where: {
+                    campaign_id: campaign_id,
+                    active: 'Y',
+                    status: 'Y'
+                }
+            }).then(result => {
+                if (result) {
+                    res.send({
+                        success: true,
+                        total: result.queue_count
+                    })
+                } else {
+                    res.send({
+                        success: true,
+                        total: 0
+                    })
+                }
+            }).catch(err => {
+                return this.sendResponseError(res, ['Error.cannotCamp', err], 1, 403)
+            })
+        } else {
+            let sql = `select sum(queue_count) from campaigns
                                  where account_id = :account_id and active = 'Y' and status = 'Y'`
 
-                     db.sequelize['crm-app'].query(sql, {
-                         type: db.sequelize['crm-app'].QueryTypes.SELECT,
-                         replacements: {
-                             account_id: account_id
-                         }
-                     }).then(result=>{
-                         if(result){
-                             res.send({
-                                 success: true,
-                                 total : result[0].sum
-                             })
-                         }else{
-                             res.send({
-                                 success: true,
-                                 total : 0
-                             })
-                         }
+            db.sequelize['crm-app'].query(sql, {
+                type: db.sequelize['crm-app'].QueryTypes.SELECT,
+                replacements: {
+                    account_id: account_id
+                }
+            }).then(result => {
+                if (result) {
+                    res.send({
+                        success: true,
+                        total: result[0].sum
+                    })
+                } else {
+                    res.send({
+                        success: true,
+                        total: 0
+                    })
+                }
 
-                     }).catch(err => {
-                     return this.sendResponseError(res, ['Error.cannotSumQueue', err], 1, 403)
-                 })
-          }
+            }).catch(err => {
+                return this.sendResponseError(res, ['Error.cannotSumQueue', err], 1, 403)
+            })
+        }
 
-}
+    }
+
+    getUserBySIP_Username(req,res,next){
+        let {username,account_id} = req.body
+        if(!!!username && !!!account_id){
+            return this.sendResponseError(res,['EmptyBody'],0,403)
+        }
+        let query = `select * from users where sip_device->>'username' = :username and active = :active and account_id = :account_id and status = :active limit :limit`
+        db.sequelize["crm-app"]
+            .query(query, {
+                type: db.sequelize["crm-app"].QueryTypes.SELECT,
+                replacements: {
+                    username: username,
+                    active: 'Y',
+                    account_id: account_id,
+                    limit : 1
+                }
+            }).then(user => {
+                if(user && user.length !== 0){
+                    res.send({
+                        success : true,
+                        data : user[0]
+                    })
+                }else{
+                    res.send({
+                        success : false,
+                        data : null
+                    })
+                }
+        }).catch(err => {
+            return this.sendResponseError(res,['cannotGetUser',err],1,403)
+        })
+    }
 
 }
 

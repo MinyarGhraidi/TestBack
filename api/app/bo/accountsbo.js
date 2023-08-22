@@ -337,7 +337,7 @@ class accounts extends baseModelbo {
         let domain = isNotSuperAdmin ? JSON.parse(JSON.stringify(newAccount.domain)) : {};
 
         let {password, options, status} = sip_device ? sip_device : {};
-        let username = sip_device ? sip_device.username.username : {};
+        let username = sip_device ? sip_device.username.username || sip_device.username : {};
         if (newAccount.account_id) {
             this.db['accounts'].findOne({
                 where: {
@@ -1146,7 +1146,6 @@ class accounts extends baseModelbo {
     }
 
     AddSubscriberAgent(data_subscriber, newAccount, isNotSuperAdmin, options, status) {
-
         return new Promise((resolve, reject) => {
             if (isNotSuperAdmin) {
                 axios

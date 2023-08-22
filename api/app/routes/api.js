@@ -145,6 +145,7 @@ let apiRouters = function (passport) {
     router.post("/api/agent/changeStatus", passport.authenticate('jwt', {session: false}), agentsController.changeStatus);
     router.post("/api/agent/saveAgent", passport.authenticate('jwt', {session: false}), agentsController.saveAgent);
     router.post("/api/agent/updateAgent", passport.authenticate('jwt', {session: false}), agentsController.updateAgent);
+    router.post("/api/agent/updateSipDeviceUser", passport.authenticate('jwt', {session: false}), agentsController.updateSipDeviceUser);
     router.post("/api/agent/deleteAgent", passport.authenticate('jwt', {session: false}), agentsController.deleteAgent);
     router.post("/api/agent/onConnect", passport.authenticate('jwt', {session: false}), agentsController.onConnect);
     router.post("/api/agent/disconnectTelco", passport.authenticate('jwt', {session: false}), agentsController.disconnectTelco);
@@ -154,6 +155,7 @@ let apiRouters = function (passport) {
     router.post("/api/agent/logoutAgent", passport.authenticate('jwt', {session: false}), agentsController.logoutAgent);
     router.post("/api/agent/disconnectAgentsByAccountID", passport.authenticate('jwt', {session: false}), agentsController.disconnectAgentsByAccountID);
     router.post("/api/agent/callInQueue",passport.authenticate('jwt',{session: false}), agentsController.callInQueue)
+    router.post("/api/agent/getUserBySIP_Username", passport.authenticate('jwt', {session: false}), agentsController.getUserBySIP_Username)
 
     //Lookups
     // account routers

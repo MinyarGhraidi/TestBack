@@ -1355,29 +1355,28 @@ class users extends baseModelbo {
 
     _generateUserName(account_id, isAgent = true) {
         return new Promise((resolve, reject) => {
-            let roleUser = isAgent ? 'agent' : 'user'
-            this.db['roles_crms'].findOne({
-                where: {value: roleUser, active: 'Y'}
+            this.db['roles_crms'].findAll({
+                where: {value: isAgent ? ['agent', 'admin'] : 'user', active: 'Y'}
             }).then(role => {
                 let SQL = `select * from users where 
                 account_id = :account_id 
-                and role_crm_id = :role_crm_id 
+                and role_crm_id in (:role_crm_id) 
                 and active = 'Y' 
-                and username NOT LIKE '%[^0-9]%' 
-                and length(username) <= 4 
-                ORDER BY username DESC LIMIT 1`;
-
+                and sip_device->>'username' NOT LIKE '%[^0-9]%' 
+                and length(sip_device->>'username') <= 4 
+                ORDER BY sip_device->>'username' DESC LIMIT 1`;
+                let role_ids = isAgent ? role.map(r => r.id) : role[0].id
                 db.sequelize['crm-app'].query(SQL, {
                     type: db.sequelize['crm-app'].QueryTypes.SELECT,
                     replacements: {
-                        role_crm_id: role.id,
+                        role_crm_id: role_ids,
                         account_id: account_id
                     }
                 }).then((user) => {
                     if (user.length === 0) {
                         resolve(isAgent ? '1000' : '2000')
                     } else {
-                        let userName = parseInt(user[0].username) + 1
+                        let userName = parseInt(user[0].sip_device.username) + 1
                         resolve(userName.toString())
                     }
                 }).catch(err => {

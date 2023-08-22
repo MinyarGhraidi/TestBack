@@ -348,14 +348,27 @@ class campaigns extends baseModelbo {
 
     changeStatusComp(compaign_id, status) {
         return new Promise((resolve, reject) => {
+            let indexCallFiles = 0;
             const UpdateEntities = ['pausestatuses', 'callstatuses', 'call_blundings'];
             this.changeStatusForEntities(UpdateEntities, compaign_id, status).then(() => {
-                // this.changeStatus_callfiles(compaign_id, status).then(() => {
-                //     resolve(true);
-                // }).catch(err => {
-                //     return reject(err);
-                // });
-                resolve(true);
+                this.db['listcallfiles'].findAll({where : {campaign_id : compaign_id , active : 'Y', status : 'Y'}}).then(lcfs => {
+                    if(lcfs && lcfs.length !== 0){
+                        let lcfs_ids = lcfs.map(l => l.listcallfile_id);
+                        lcfs_ids.forEach(lcf_id => {
+                            _listcallfilesbo._changeStatusLCF(lcf_id, status).then(() => {
+                                if (indexCallFiles < lcfs_ids.length - 1) {
+                                    indexCallFiles++;
+                                } else {
+                                    return resolve(true);
+                                }
+                            }).catch(err => {
+                                return reject(err)
+                            })
+                        });
+                    }else{
+                        return resolve(true);
+                    }
+                })
             }).catch(err => {
                 return reject(err);
             });
@@ -370,7 +383,8 @@ class campaigns extends baseModelbo {
                 this.db[dbs].update({status: status, updated_at: moment(new Date())}, {
                     where: {
                         campaign_id: campaign_id,
-                        active: 'Y'
+                        active: 'Y',
+                        status : 'Y'
                     }
                 }).then(() => {
                     if (indexEntities < entities.length - 1) {
@@ -386,38 +400,6 @@ class campaigns extends baseModelbo {
             });
         })
     }
-
-    changeStatus_callfiles(campaign_id, status) {
-        return new Promise((resolve, reject) => {
-            let indexCallFiles = 0;
-            this.db['listcallfiles'].findAll({
-                where: {
-                    campaign_id: campaign_id,
-                    active: 'Y'
-                }
-            }).then((callFilesList) => {
-                if (callFilesList && callFilesList.length !== 0) {
-                    callFilesList.forEach(data => {
-                        _listcallfilesbo._changeStatusLCF(data.listcallfile_id, status).then(() => {
-                            if (indexCallFiles < callFilesList.length - 1) {
-                                indexCallFiles++;
-                            } else {
-                                return resolve(true);
-                            }
-                        }).catch(err => {
-                            return reject(err)
-                        })
-                    });
-                } else {
-                    return resolve(true);
-                }
-            }).catch(err => {
-                reject(err);
-            });
-
-        })
-    }
-
     //-------------> Default Pause Call Status Camapign <----------------------
     addDefaultPauseCallStatus(req, res, next) {
         let _this = this;
