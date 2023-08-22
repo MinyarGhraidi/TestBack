@@ -35,7 +35,7 @@ class users extends baseModelbo {
                 message: 'All fields are required !'
             })
         }
-        let webDomain = web_domain === 'localhost' ? 'admin.skycrm360.io' : web_domain
+        let webDomain = web_domain === 'localhost' ? 'preaconis.skycrm360.io' : web_domain
         this.db['accounts'].findOne({
             where: {
                 web_domain: webDomain,

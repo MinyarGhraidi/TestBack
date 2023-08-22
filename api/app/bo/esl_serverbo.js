@@ -39,12 +39,12 @@ class esl_servers extends baseModelbo {
                     "default": "allow",
                     "description": ""
                 }
+            let sip_device = resp.data.result;
             axios
                 .post(`${base_url_cc_kam}api/v1/acls`, formData, call_center_authorization).then((resultAcl) => {
                 let uuid_provider = resultAcl.data.result.uuid;
                 this.creatAclNodes(uuid_provider).then(resultAclNode=>{
                     if(resultAclNode.success){
-                        let sip_device = resp.data.result;
                         const server = this.db['esl_servers'].build(req.body);
                         server.updated_at = moment(new Date());
                         server.created_at = moment(new Date());
@@ -62,10 +62,18 @@ class esl_servers extends baseModelbo {
                         })
                     }
                 }).catch(err => {
-                    this.sendResponseError(res, ['Error.CannotAddAclNodeTelco', err], 1, 403)
+                    this.deleteEslServerByUUID(sip_device.uuid).then(() => {
+                        this.sendResponseError(res, ['Error.SaveServer', err], 1, 403)
+                    }).catch(err=>{
+                        this.sendResponseError(res, ['Error.DeleteServer', err], 1, 403)
+                    })
                 })
                 }).catch(err => {
-                    this.sendResponseError(res, ['Error.CannotAddAclTelco', err], 1, 403)
+                this.deleteEslServerByUUID(sip_device.uuid).then(() => {
+                    this.sendResponseError(res, ['Error.SaveServer', err], 1, 403)
+                }).catch(err=>{
+                    this.sendResponseError(res, ['Error.DeleteServer', err], 1, 403)
+                })
                 })
 
             }).catch(err => {
