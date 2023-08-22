@@ -827,6 +827,13 @@ class agents extends baseModelbo {
         return new Promise((resolve, reject) => {
             this._getUserByUUID(uuid).then(userData => {
                 let user = userData.user
+                if(!!!user.current_session_token){
+                    return resolve({
+                        success: false,
+                        status: 200,
+                        message: 'user without token'
+                    })
+                }
                 _agent_log_eventsbo._getLastEvent(user.user_id).then(ALE => {
                     const action_name = ALE.data.dataValues.action_name;
                     if (action_name === crmStatus) {
