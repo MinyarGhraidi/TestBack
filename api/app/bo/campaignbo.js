@@ -1240,17 +1240,34 @@ class campaigns extends baseModelbo {
 
     //--------------------> Clear Calls <-----------------------------
     clearCallsCampaign(req, res, next) {
-        let {queue_uuid} = req.body
+        let {queue_uuid, campaign_id} = req.body
         if (!!!queue_uuid) {
             return this.sendResponseError(res, ['QueueUUID_IsRequired'], 0, 403)
+        }
+        if (!!!campaign_id) {
+            return this.sendResponseError(res, ['campaign_id_IsRequired'], 0, 403)
         }
         axios
             .get(`${base_url_cc_kam}api/v1/queues/${queue_uuid}/clear`, call_center_authorization)
             .then(() => {
-                return res.json({
-                    success: true,
-                    status: 200
-                })
+                this.db['campaigns'].update({
+                    queue_count: 0
+                },
+                    {
+                        where:{
+                            campaign_id:campaign_id,
+                            active: 'Y',
+                            status: 'Y'
+                        }
+                    }).then(result=>{
+                    return res.json({
+                        success: true,
+                        status: 200
+                    })
+                }).catch((err) => {
+                    return this.sendResponseError(res, ['CannotUpdateCampaign', err], 1, 403)
+                });
+
             })
             .catch((err) => {
                 return this.sendResponseError(res, ['CannotClearCallsCampaign', err], 1, 403)
