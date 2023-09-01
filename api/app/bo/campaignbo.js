@@ -539,7 +539,9 @@ class campaigns extends baseModelbo {
                     hopper,
                     dial_level,
                     dialtimeout,
-                    config
+                    config,
+                    script,
+                    trunck_id
                 } = campaign_to_clone
                 let cloned_campaign = {
                     campaign_description,
@@ -553,6 +555,8 @@ class campaigns extends baseModelbo {
                     hopper,
                     dial_level,
                     dialtimeout,
+                    script,
+                    trunck_id,
                     config: campaign.config ? campaign.config : config
                 }
                 let {queue} = params;
