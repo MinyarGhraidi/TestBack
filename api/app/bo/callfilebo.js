@@ -1125,72 +1125,88 @@ CONCAT(U.first_name, ' ', U.last_name) as "Agent Name"
         })
     }
 
-    findCallFile(req, res, next) {
-        let _this = this
-        const data = req.body;
-        if (!!!data.phone_number && !!!data.callfile_id) {
-            return _this.sendResponseError(res, ['Error empty'])
-        }
-        if (!!!data.account_id) {
-            return _this.sendResponseError(res, ['Error empty account_id'])
-        }
-        let sqlQuerySelectLeads = `SELECT CF.*, LCF.*, C.script, C.account_id FROM hoopers AS CF 
+    _findCallFile(data,table = "hoopers"){
+        return new Promise((resolve,reject) => {
+            if (!!!data.phone_number && !!!data.callfile_id) {
+                return reject('Empty')
+            }
+            if (!!!data.account_id) {
+                return reject('Error empty account_id')
+            }
+            let sqlQuerySelectLeads = `SELECT CF.*, LCF.*, C.script, C.account_id FROM ${table} AS CF 
                                        LEFT OUTER JOIN listcallfiles AS LCF ON CF.listcallfile_id = LCF.listcallfile_id
                                        LEFT OUTER JOIN campaigns AS C ON C.campaign_id = LCF.campaign_id
                                        WHERE  C.active = :active AND LCF.active = :active AND length(phone_number) >=9 AND CF.active = :active WHERE_CONDITION LIMIT :limit;`
 
-        let whereQuery = ''
-        if (data && data.phone_number) {
-            whereQuery += ` AND (CF.phone_number = :phone_number OR CF.phone_number like CONCAT('%',:phone_number)) `
-        }
-        if (data && data.callfile_id) {
-            whereQuery += ` AND CF.callfile_id = :callfile_id `
-        }
-        if (data && data.account_id) {
-            whereQuery += ` AND C.account_id = :account_id `
-        }
-        sqlQuerySelectLeads = sqlQuerySelectLeads.replace('WHERE_CONDITION', whereQuery);
-        db.sequelize['crm-app'].query(sqlQuerySelectLeads, {
-            type: db.sequelize['crm-app'].QueryTypes.SELECT,
-            replacements: {
-                active: 'Y',
-                phone_number: data.phone_number || null,
-                callfile_id: data.callfile_id || null,
-                account_id: data.account_id,
-                limit: 1
-            }
-        }).then((call_file) => {
-            let cfLength = call_file.length || 0
-            if (cfLength === 0) {
-                return res.send({
-                    success: false,
-                    message: "unknown-phone-number"
-                })
-            } else {
-                let schema = {
-                    type: 'object',
-                    properties: {}
-                }
-                let mapping = {}
-                this.createSchemaUischema(call_file[0], mapping, schema).then(result => {
-                    if (result.success) {
-                        return res.send({
-                            success: true,
-                            data: call_file[0],
-                            schema: result.schema,
-                            uiSchema: result.uiSchema,
-                        })
-                    } else {
-                        return res.send({
-                            success: false,
-                            message: result.message
-                        })
-                    }
-                }).catch(err => {
-                    return this.sendResponseError(res, ['Error '], err)
-                })
-            }
 
+            let whereQuery = ''
+            if (data && data.phone_number) {
+                whereQuery += ` AND (CF.phone_number = :phone_number OR CF.phone_number like CONCAT('%',:phone_number)) `
+            }
+            if (data && data.callfile_id) {
+                whereQuery += ` AND CF.callfile_id = :callfile_id `
+            }
+            if (data && data.account_id) {
+                whereQuery += ` AND C.account_id = :account_id `
+            }
+            sqlQuerySelectLeads = sqlQuerySelectLeads.replace('WHERE_CONDITION', whereQuery);
+            db.sequelize['crm-app'].query(sqlQuerySelectLeads, {
+                type: db.sequelize['crm-app'].QueryTypes.SELECT,
+                replacements: {
+                    active: 'Y',
+                    phone_number: data.phone_number || null,
+                    callfile_id: data.callfile_id || null,
+                    account_id: data.account_id,
+                    limit: 1
+                }
+            }).then((call_file) => {
+                let cfLength = call_file.length || 0
+                if (cfLength === 0) {
+                    return resolve({
+                        success: false,
+                        message : 'unknown-number'
+                    })
+                } else {
+                    let schema = {
+                        type: 'object',
+                        properties: {}
+                    }
+                    let mapping = {}
+                    this.createSchemaUischema(call_file[0], mapping, schema).then(result => {
+                        if (result.success) {
+                            return resolve({
+                                success: true,
+                                data: call_file[0],
+                                schema: result.schema,
+                                uiSchema: result.uiSchema,
+                            })
+                        } else {
+                            return resolve({
+                                success: false,
+                                message: result.message
+                            })
+                        }
+                    }).catch(err => {
+                        return reject('Error, ',err)
+                    })
+                }
+
+            })
+        })
+    }
+    findCallFile(req, res, next) {
+        let _this = this
+        const data = req.body;
+        this._findCallFile(data).then(resp_data => {
+            if(resp_data.success){
+                return res.send(resp_data)
+            }else{
+                this._findCallFile(data,'callfiles').then(resp_data2 => {
+                    return res.send(resp_data2)
+                })
+            }
+        }).catch(err => {
+            _this.sendResponseError(res,['Error',err],1,403)
         })
     }
 
