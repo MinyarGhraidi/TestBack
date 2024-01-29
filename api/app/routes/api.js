@@ -1,5 +1,6 @@
 let multer = require("multer");
 const path = require("path");
+const ivrController = require("../controllers/ivr.controller");
 let appDir = path.dirname(require.main.filename);
 
 let storage = multer.diskStorage({
@@ -63,6 +64,7 @@ CallhistoryController = require('../controllers/callhistory.controller');
 NotificationsController = require('../controllers/notifications.controller');
 ReminderController = require('../controllers/reminder.controller');
 HooperController = require('../controllers/hooper.controller');
+IVRController = require('../controllers/ivr.controller');
 
 let apiRouters = function (passport) {
 
@@ -220,7 +222,7 @@ let apiRouters = function (passport) {
     router.put("/api/pausestatus/update", passport.authenticate('jwt', {session: false}), pausestatusController.update);
     router.delete("/api/pausestatus/delete/:params", passport.authenticate('jwt', {session: false}), pausestatusController.delete);
     router.post("/api/pausestatus/save", passport.authenticate('jwt', {session: false}), pausestatusController.save);
-    router.post("/api/pausestatus/findByCampaignId", passport.authenticate('jwt', {session: false}), pausestatusController.findByCampaignId);
+    router.post("/api/pausestatus/findByCampaignId/:params", passport.authenticate('jwt', {session: false}), pausestatusController.findByCampaignId);
     router.post("/api/pausestatus/findByCampaignIdAndSystem", passport.authenticate('jwt', {session: false}), pausestatusController.findByCampIdsAndSystem);
 
     // callfiles routers
@@ -429,6 +431,18 @@ let apiRouters = function (passport) {
 
     router.post('/api/dialplanItems/findTrunck', passport.authenticate('jwt', {session: false}), dialpanItemsController.getDialPlan);
     router.post('/api/dialplanItems/changeStatusDialPlan', passport.authenticate('jwt', {session: false}), dialpanItemsController.changeStatusDialPlan);
+
+
+//-------------------------------------> IVR_MENU
+    router.post('/api/ivr_menus/save',passport.authenticate('jwt', {session: false}),IVRController.saveIVR);
+    //router.post("/api/ivr_menus/find/:params?",passport.authenticate('jwt', {session: false}), IVRController.find);
+    router.put('/api/ivr_menus/update',passport.authenticate('jwt', {session: false}), IVRController.updateIVR);
+    router.delete("/api/ivr_menus/delete/:params", passport.authenticate('jwt', {session: false}), IVRController.deleteIVR);
+    router.get('/api/ivr_menus/findById/:ivr_menu_id', passport.authenticate('jwt',{session: false}), IVRController.findById);
+    router.post("/api/ivr_menus/findByCampaignId/:params", passport.authenticate('jwt', {session: false}), IVRController.findByCID);
+    router.post("/api/ivr_menus/find/:params?", passport.authenticate('jwt', {session: false}), IVRController.find);
+    
+
 
     return router;
 
