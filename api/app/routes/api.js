@@ -434,15 +434,14 @@ let apiRouters = function (passport) {
 
 
 //-------------------------------------> IVR_MENU
-    router.post('/api/ivr_menus/save',passport.authenticate('jwt', {session: false}),IVRController.saveIVR);
-    //router.post("/api/ivr_menus/find/:params?",passport.authenticate('jwt', {session: false}), IVRController.find);
+    
     router.put('/api/ivr_menus/update',passport.authenticate('jwt', {session: false}), IVRController.updateIVR);
     router.delete("/api/ivr_menus/delete/:params", passport.authenticate('jwt', {session: false}), IVRController.deleteIVR);
-    router.get('/api/ivr_menus/findById/:ivr_menu_id', passport.authenticate('jwt',{session: false}), IVRController.findById);
+    
     router.post("/api/ivr_menus/findByCampaignId/:params", passport.authenticate('jwt', {session: false}), IVRController.findByCID);
     router.post("/api/ivr_menus/find/:params?", passport.authenticate('jwt', {session: false}), IVRController.find);
-    
-
+    router.get("/api/ivr_menus/findById/:entity_id", passport.authenticate('jwt', {session: false}), IVRController.findById);
+    router.post('/api/ivr_menus/save', passport.authenticate('jwt', {session: false}), IVRController.saveIVR);
 
     return router;
 
