@@ -2,29 +2,33 @@
 module.exports = {
   up: (queryInterface, Sequelize) => {
     return queryInterface.createTable('ivr_menus', {
-      ivr_menu_id: {
-        allowNull: false,
-        autoIncrement: true,
-        primaryKey: true,
+      
+      ivr_menu_id:{
+        primaryKey : true ,
+        autoIncrement : true,
         type: Sequelize.INTEGER
-      },
-      name: {
+    },
+    name:{
         type: Sequelize.STRING
-      },
-      extension: {
+    },
+    extension:{
         type: Sequelize.STRING
-      },
-      active: {
+    },
+    active: {
         allowNull: true,
         type: Sequelize.STRING,
         defaultValue: "Y",
     },
-      flow: {
+    flow:{
         type: Sequelize.JSONB
-      },
-      campaign_id: {
+    },
+    campaign_id: {
         type: Sequelize.INTEGER
-      },
+    },
+    status :{
+        type: Sequelize.STRING,
+        defaultValue: 'Y',
+    }
     });
   },
   down: (queryInterface, Sequelize) => {

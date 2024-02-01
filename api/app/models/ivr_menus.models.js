@@ -22,6 +22,10 @@ module.exports=(sequelize,Sequelize) =>{
         campaign_id: {
             type: Sequelize.INTEGER
         },
+        status :{
+            type: Sequelize.STRING,
+            defaultValue: 'Y',
+        }
     },
     {timestamps: false,}
     )
@@ -31,6 +35,7 @@ module.exports=(sequelize,Sequelize) =>{
         'extension',
         'active',
         'flow',
+        'status',
         'campaign_id'
 
 
@@ -41,6 +46,7 @@ module.exports=(sequelize,Sequelize) =>{
         'extension',
         'active',
         'flow',
+        'status',
         'campaign_id'
     ]
     return ivr_menus;
